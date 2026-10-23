@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web Performance Journal — Mayank Thakur</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: #f0f2f5;
+      --bg-card: #ffffff;
+      --text-primary: #000000;
+      --text-secondary: #5f6368;
+      --text-muted: #9aa0a6;
+      --accent-black: #000000;
+      --accent-white: #ffffff;
+      --pastel-yellow: #ffeab6;
+      --pastel-mint: #dcf0eb;
+      --pastel-purple: #e6daff;
+      --pastel-pink: #ffd6e8;
+      --pastel-blue: #d6eaff;
+      --pastel-orange: #ffe4cc;
+      --pastel-green: #d4edda;
+      --pastel-teal: #ccf5f0;
+      --pastel-yellow-hover: #f5dfa9;
+      --border-radius-lg: 24px;
+      --border-radius-md: 16px;
+      --border-radius-pill: 9999px;
+      --font-sans: 'Outfit', 'Inter', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { max-width: 1200px; margin: 0 auto; background: var(--bg-main); font-family: var(--font-sans); color: var(--text-primary); min-height: 100vh; -webkit-font-smoothing: antialiased; line-height: 1.5; }
+
+    .cover { padding: 4rem 2.5rem 2rem; }
+    .cover-subtitle { font-size: 14px; letter-spacing: .05em; color: var(--text-secondary); font-weight: 500; margin-bottom: .5rem; }
+    .cover-title { font-size: 40px; font-weight: 700; letter-spacing: -.02em; margin-bottom: .5rem; }
+    .cover-name { font-size: 16px; color: var(--text-secondary); font-weight: 500; margin-bottom: 2rem; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .badge { font-size: 13px; font-weight: 500; padding: 2px 8px; border-radius: 6px; white-space: nowrap; }
+    .badge-cwv  { background: #22c55e22; color: #15803d; border: 1px solid #22c55e44; }
+    .badge-react { background: var(--pastel-blue); color: #1a3a7a; }
+    .badge-2026 { background: var(--pastel-mint); color: #1a5a3a; }
+
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1.25rem; margin-bottom: 2rem; padding: 0 2.5rem; }
+    .stat { background: var(--bg-card); padding: 1.5rem; border-radius: var(--border-radius-lg); box-shadow: 0 4px 20px rgba(0,0,0,.03); }
+    .stat-val { font-size: 36px; font-weight: 600; line-height: 1.1; margin-bottom: 8px; }
+    .stat-label { font-size: 14px; color: var(--text-secondary); font-weight: 500; }
+    .streak-box { display: inline-flex; align-items: center; gap: 8px; background: #16a34a; padding: 8px 16px; border-radius: var(--border-radius-pill); margin: 0 2.5rem 2rem; }
+    .streak-text { font-size: 14px; font-weight: 600; color: #fff; }
+
+    .phase-nav { display: flex; gap: .75rem; overflow-x: auto; scrollbar-width: none; margin: 0 2rem 1.5rem; flex-wrap: nowrap; }
+    .phase-nav::-webkit-scrollbar { display: none; }
+    .phase-tab { font-size: 14px; font-weight: 500; padding: 10px 20px; cursor: pointer; color: var(--text-secondary); background: var(--bg-card); border-radius: var(--border-radius-pill); border: 1px solid transparent; white-space: nowrap; transition: all .2s; box-shadow: 0 2px 10px rgba(0,0,0,.02); flex-shrink: 0; }
+    .phase-tab.active { color: var(--accent-white); background: var(--accent-black); }
+    .phase-tab:hover:not(.active) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.05); }
+    .phase-tab .tab-lang { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; opacity: .7; display: block; margin-bottom: 1px; }
+
+    .content { padding: 0 2.5rem 4rem; max-width: 900px; margin-inline: auto; }
+
+    .phase-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1.5rem; padding: 2rem; border-radius: var(--border-radius-lg); }
+    .phase-num { font-size: 13px; font-weight: 600; opacity: .7; margin-bottom: .4rem; }
+    .phase-title { font-size: 28px; font-weight: 700; letter-spacing: -.01em; }
+    .phase-meta { text-align: right; }
+    .phase-level { font-size: 16px; font-weight: 700; }
+    .phase-count { font-size: 13px; opacity: .7; margin-top: 4px; font-weight: 500; }
+
+    .phase-progress-wrap { margin-bottom: 1rem; }
+    .phase-progress-label { font-size: 13px; color: var(--text-secondary); font-weight: 500; margin-bottom: 6px; }
+    .phase-progress-bar { height: 6px; background: var(--bg-card); border-radius: var(--border-radius-pill); overflow: hidden; }
+    .phase-progress-fill { height: 100%; background: var(--accent-black); transition: width .4s ease; border-radius: var(--border-radius-pill); }
+
+    .filter-bar { display: flex; flex-wrap: wrap; gap: 16px 28px; align-items: center; margin-bottom: 1.25rem; margin-top: .25rem; padding: 0 2px; }
+    .filter-group { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+    .filter-label { font-size: 13px; font-weight: 600; color: var(--text-muted); white-space: nowrap; margin-right: 4px; }
+    .flt-btn { font-size: 12px; font-weight: 500; padding: 5px 12px; border-radius: var(--border-radius-pill); border: none; cursor: pointer; background: var(--bg-card); color: var(--text-secondary); font-family: var(--font-sans); transition: all .12s; white-space: nowrap; }
+    .flt-btn:hover { background: #e8e8e8; color: var(--text-primary); }
+    .flt-btn.flt-active { background: var(--accent-black); color: var(--accent-white); }
+    .flt-btn.diff-easy.flt-active { background: #155724; color: #fff; }
+    .flt-btn.diff-medium.flt-active { background: #856404; color: #fff; }
+    .flt-btn.diff-hard.flt-active { background: #7a1a4a; color: #fff; }
+
+    .section-head { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--text-muted); margin-bottom: 12px; }
+
+    /* TOPIC CARD */
+    .topic-card { background: var(--bg-card); border-radius: var(--border-radius-md); margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.03); overflow: hidden; transition: box-shadow .2s; }
+    .topic-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.07); }
+    .topic-card.mastered { background: var(--pastel-mint); }
+    .topic-card.in-progress { background: #fffbeb; border-left: 3px solid #f59e0b; }
+    .topic-card.in-progress .topic-name { color: #92400e; }
+    .topic-header { display: flex; align-items: center; gap: 14px; padding: 16px 18px; cursor: pointer; user-select: none; }
+    .topic-check { width: 22px; height: 22px; flex-shrink: 0; border-radius: 4px; border: 1.5px solid #d0d0d0; display: flex; align-items: center; justify-content: center; background: var(--bg-card); transition: all .15s; }
+    .topic-check[data-state="mastered"] { background: var(--accent-black); border-color: var(--accent-black); }
+    .topic-check[data-state="in-progress"] { background: #f59e0b; border-color: #f59e0b; }
+    .chk-icon { display: none; font-size: 13px; font-weight: 700; color: #fff; line-height: 1; }
+    .topic-check[data-state="mastered"] .chk-icon.mastered { display: block; }
+    .topic-check[data-state="in-progress"] .chk-icon.in-progress { display: block; }
+    .topic-info { flex: 1; min-width: 0; }
+    .topic-name { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+    .topic-desc { font-size: 12px; color: var(--text-secondary); font-weight: 500; line-height: 1.4; }
+    .topic-card.mastered .topic-name { text-decoration: line-through; color: var(--text-secondary); }
+    .topic-badges { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+    .expand-btn { background: var(--bg-main); border: none; border-radius: var(--border-radius-pill); padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; color: var(--text-secondary); transition: all .2s; flex-shrink: 0; }
+    .expand-btn:hover { background: var(--pastel-mint); }
+    .expand-btn.open { background: var(--accent-black); color: #fff; }
+
+    .practice-panel { display: none; padding: 0 18px 18px; border-top: 1px solid var(--bg-main); }
+    .practice-panel.open { display: block; }
+    .tp-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+    @media(max-width:600px) { .tp-fields { grid-template-columns: 1fr; } }
+    .tp-fields .field-group.full { grid-column: 1/-1; }
+    .field-group { display: flex; flex-direction: column; gap: 6px; }
+    .field-label-text { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-secondary); display: flex; align-items: center; gap: 5px; }
+    .field-input { width: 100%; background: var(--bg-main); border: 1.5px solid transparent; border-radius: 12px; padding: 11px 13px; font-family: inherit; font-size: 13px; color: var(--text-primary); resize: vertical; min-height: 80px; transition: border-color .2s, background .2s; line-height: 1.6; }
+    .field-input:focus { outline: none; border-color: var(--accent-black); background: #fff; }
+    .field-input.filled { background: #fff; border-color: rgba(0,0,0,.1); }
+    .field-input::placeholder { color: var(--text-muted); font-style: italic; }
+    .tp-score-row { display: flex; align-items: center; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    .tp-score-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+    .tp-score-btn { font-size: 11px; font-weight: 700; padding: 5px 12px; border-radius: var(--border-radius-pill); border: none; cursor: pointer; font-family: inherit; transition: all .2s; }
+    .tp-score-btn.s1 { background: var(--pastel-pink); color: #7a1a4a; }
+    .tp-score-btn.s2 { background: var(--pastel-yellow); color: #7a5200; }
+    .tp-score-btn.s3 { background: var(--pastel-mint); color: #1a5a3a; }
+    .tp-score-btn.s4 { background: var(--accent-black); color: #fff; }
+    .tp-score-btn.selected { box-shadow: 0 0 0 2.5px var(--accent-black); }
+    .tp-save-btn { margin-left: auto; background: var(--accent-black); color: #fff; border: none; border-radius: var(--border-radius-pill); padding: 6px 18px; font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; }
+    .tp-saved { font-size: 12px; color: #1a5a3a; font-weight: 600; display: none; }
+    .tp-saved.show { display: inline; }
+
+    /* PROBLEM CARD */
+    .problem-card { background: var(--bg-card); border-radius: var(--border-radius-md); margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,.03); overflow: hidden; transition: box-shadow .2s; }
+    .problem-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.07); }
+    .problem-card.done { background: var(--pastel-mint); }
+    .problem-card.inprogress { background: #fffbeb; border-left: 3px solid #f59e0b; }
+    .card-header { display: flex; align-items: center; gap: 14px; padding: 16px 20px; cursor: pointer; user-select: none; }
+    .card-num { font-size: 13px; font-weight: 700; color: var(--text-muted); flex-shrink: 0; min-width: 28px; }
+    .card-info { flex: 1; min-width: 0; }
+    .card-title { font-size: 15px; font-weight: 600; margin-bottom: 3px; }
+    .problem-card.done .card-title { text-decoration: line-through; color: var(--text-secondary); }
+    .card-brief { font-size: 12px; color: var(--text-secondary); font-weight: 500; line-height: 1.4; }
+    .card-badges { display: flex; gap: 6px; align-items: center; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+    .diff-badge { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: var(--border-radius-pill); white-space: nowrap; }
+    .diff-easy   { background: var(--pastel-green);  color: #155724; }
+    .diff-medium { background: var(--pastel-yellow); color: #856404; }
+    .diff-hard   { background: var(--pastel-pink);   color: #7a1a4a; }
+    .time-badge { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: var(--border-radius-pill); background: var(--bg-main); color: var(--text-secondary); white-space: nowrap; }
+    .prob-expand-btn { background: var(--bg-main); border: none; border-radius: var(--border-radius-pill); padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; color: var(--text-secondary); transition: all .2s; flex-shrink: 0; }
+    .prob-expand-btn:hover { background: var(--pastel-mint); }
+    .prob-expand-btn.open { background: var(--accent-black); color: #fff; }
+
+    .problem-panel { display: none; padding: 0 20px 20px; border-top: 1px solid var(--bg-main); }
+    .problem-panel.open { display: block; }
+
+    .statement-box { background: var(--bg-main); border-radius: var(--border-radius-md); padding: 16px 18px; margin: 16px 0 4px; }
+    .statement-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); margin-bottom: 10px; }
+    .statement-text { font-size: 14px; color: var(--text-primary); line-height: 1.7; font-weight: 500; }
+
+    .req-section { margin: 14px 0; }
+    .req-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); margin-bottom: 8px; }
+    .req-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 12px; background: var(--bg-card); border-radius: 10px; margin-bottom: 6px; cursor: pointer; transition: background .15s; }
+    .problem-card.done .req-item { background: rgba(255,255,255,.6); }
+    .req-item:hover { background: #f8f8f8; }
+    .req-cb { width: 16px; height: 16px; accent-color: var(--accent-black); cursor: pointer; flex-shrink: 0; margin-top: 2px; }
+    .req-text { font-size: 13px; color: var(--text-primary); font-weight: 500; line-height: 1.4; }
+    .req-text.checked { text-decoration: line-through; color: var(--text-muted); }
+
+    .concepts-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 16px; }
+    .concept-tag { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: var(--border-radius-pill); background: var(--pastel-teal); color: #0d4a3a; white-space: nowrap; }
+
+    .hints-wrap { margin: 0 0 16px; }
+    .hint-toggle { display: inline-flex; align-items: center; gap: 6px; background: var(--pastel-yellow); border: none; border-radius: var(--border-radius-pill); padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; color: #7a5200; transition: all .15s; }
+    .hint-toggle:hover { background: var(--pastel-yellow-hover); }
+    .hint-content { display: none; margin-top: 10px; }
+    .hint-content.show { display: block; }
+    .hint-item { display: flex; gap: 10px; padding: 10px 14px; background: var(--pastel-yellow); border-radius: 12px; margin-bottom: 8px; font-size: 13px; color: #7a5200; font-weight: 500; line-height: 1.5; }
+    .hint-num { font-weight: 700; flex-shrink: 0; }
+
+    .timer-section { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: var(--bg-main); border-radius: var(--border-radius-md); margin: 0 0 16px; flex-wrap: wrap; }
+    .timer-label { font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .06em; }
+    .timer-display { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text-primary); min-width: 80px; }
+    .timer-display.warning { color: #d97706; }
+    .timer-display.over { color: #dc2626; }
+    .timer-bar-wrap { flex: 1; min-width: 100px; height: 6px; background: rgba(0,0,0,.08); border-radius: 6px; overflow: hidden; }
+    .timer-bar { height: 100%; border-radius: 6px; background: #16a34a; transition: width 1s linear, background .4s; }
+    .timer-controls { display: flex; gap: 6px; }
+    .timer-btn { font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: var(--border-radius-pill); border: 1px solid rgba(0,0,0,.12); cursor: pointer; background: var(--bg-card); color: var(--text-primary); font-family: inherit; transition: background .15s; }
+    .timer-btn:hover { background: #f0f0f0; }
+    .timer-btn.running { background: var(--pastel-yellow); border-color: #f59e0b; color: #92400e; }
+
+    .sol-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    @media(max-width:600px) { .sol-fields { grid-template-columns: 1fr; } }
+    .sol-fields .field-group.full { grid-column: 1/-1; }
+
+    .action-row { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+    .score-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+    .score-btn { font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: var(--border-radius-pill); border: none; cursor: pointer; font-family: inherit; transition: all .2s; }
+    .score-btn.s1 { background: var(--pastel-pink); color: #7a1a4a; }
+    .score-btn.s2 { background: var(--pastel-yellow); color: #7a5200; }
+    .score-btn.s3 { background: var(--pastel-mint); color: #1a5a3a; }
+    .score-btn.s4 { background: var(--accent-black); color: #fff; }
+    .score-btn:hover { transform: translateY(-1px); box-shadow: 0 3px 8px rgba(0,0,0,.1); }
+    .score-btn.selected { box-shadow: 0 0 0 2.5px var(--accent-black); }
+    .status-btns { display: flex; gap: 6px; margin-left: auto; }
+    .status-btn { font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: var(--border-radius-pill); border: none; cursor: pointer; font-family: inherit; background: var(--bg-main); color: var(--text-secondary); transition: all .2s; }
+    .status-btn.wip.active  { background: #fef3c7; color: #92400e; border: 1.5px solid #f59e0b; }
+    .status-btn.done.active { background: var(--accent-black); color: #fff; }
+    .save-btn { background: var(--accent-black); color: #fff; border: none; border-radius: var(--border-radius-pill); padding: 8px 20px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; transition: opacity .2s; }
+    .save-btn:hover { opacity: .85; }
+    .saved-flash { font-size: 12px; color: #1a5a3a; font-weight: 600; display: none; }
+    .saved-flash.show { display: inline; }
+
+    .quote { text-align: center; padding: 4rem 2.5rem 3rem; font-size: 18px; font-weight: 500; line-height: 1.6; }
+    .quote cite { display: block; font-size: 14px; font-style: normal; color: var(--text-secondary); margin-top: 1rem; font-weight: 600; }
+
+    @media(max-width:640px) {
+      .cover { padding: 2rem 1.25rem 1rem; }
+      .cover-title { font-size: 28px; }
+      .stats-row { padding: 0 1.25rem; }
+      .streak-box { margin-left: 1.25rem; }
+      .content { padding: 0 1.25rem 3rem; }
+      .phase-nav { margin: 0 1rem 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+<div id="nav-container"></div>
+
+<div class="cover">
+  <div class="cover-subtitle">INTERVIEW PREP — WEB PERFORMANCE</div>
+  <div class="cover-title">Performance Journal ⚡</div>
+  <div class="cover-name">
+    Mayank Thakur
+    <span class="badge badge-cwv">Core Web Vitals</span>
+    <span class="badge badge-react">React Perf</span>
+    <span class="badge badge-2026">2026 Ready</span>
+  </div>
+</div>
+
+<div class="stats-row">
+  <div class="stat"><div class="stat-val" id="stat-done">0</div><div class="stat-label">Problems solved</div></div>
+  <div class="stat"><div class="stat-val" id="stat-total">25</div><div class="stat-label">Total problems</div></div>
+  <div class="stat"><div class="stat-val" id="stat-topics">0</div><div class="stat-label">Topics mastered</div></div>
+  <div class="stat"><div class="stat-val" id="stat-phases">0/5</div><div class="stat-label">Phases complete</div></div>
+</div>
+<div class="streak-box">
+  <span>⚡</span><span class="streak-text">Fast sites win. Every millisecond matters.</span>
+</div>
+
+<div class="phase-nav" id="phase-nav"></div>
+<div class="content" id="content"></div>
+
+<div class="quote">
+  "Performance is not a feature — it's the foundation everything else rests on."
+  <cite>— Addy Osmani</cite>
+</div>
+
+<script src="../../nav.js"></script>
+<script>
+  const STATE_KEY = 'performance_journal_v1';
+
+  const SOLUTION_FIELDS = [
+    { k:'diagnosis', icon:'🔍', label:'How I Diagnosed the Problem', full:true },
+    { k:'fix',       icon:'🔧', label:'The Fix / Implementation' },
+    { k:'metrics',   icon:'📊', label:'Before vs After Metrics' },
+    { k:'gotchas',   icon:'⚠️', label:'Gotchas & Trade-offs' }
+  ];
+
+  const PHASES = [
+    {
+      id:'p0', label:'Phase 0', color:'#22c55e', level:'Beginner',
+      title:'Core Web Vitals', subtitle:'LCP, INP, CLS, FCP, TTFB — Measure First',
+      topics:[
+        { id:'t0_0', name:'Largest Contentful Paint (LCP)', desc:'Measures load performance of the largest image or text block. Target: < 2.5s. Key causes: slow server, render-blocking resources, slow resource load, client-side rendering.' },
+        { id:'t0_1', name:'Interaction to Next Paint (INP)', desc:'Measures responsiveness — time from user interaction to next visual update. Target: < 200ms. Replaced FID in 2024.' },
+        { id:'t0_2', name:'Cumulative Layout Shift (CLS)', desc:'Measures visual stability — unexpected layout shifts during page load. Target: < 0.1. Causes: images without dimensions, injected content, font swap.' },
+        { id:'t0_3', name:'First Contentful Paint (FCP)', desc:'First pixel of content painted. Target: < 1.8s. Leading indicator for LCP. Affected by TTFB and render-blocking resources.' },
+        { id:'t0_4', name:'Time to First Byte (TTFB)', desc:'Server response time. Target: < 800ms. Affected by server processing, CDN, database queries. Foundation for all other metrics.' },
+        { id:'t0_5', name:'Measuring with DevTools & CrUX', desc:'Chrome DevTools Performance panel, Lighthouse, PageSpeed Insights, Web Vitals extension, CrUX dashboard, RUM via web-vitals.js' }
+      ],
+      problems:[
+        {
+          id:'perf0_0', title:'Core Web Vitals Audit', diff:'Easy', time:45,
+          brief:'Run a full CWV audit on a real site and document every issue found',
+          statement:'Pick any public website (ideally one you\'ve built or used professionally). Run it through PageSpeed Insights, Lighthouse, and the Web Vitals Chrome extension. Document each failing metric, identify the root cause, and propose a fix. Then implement at least 2 fixes and re-measure.',
+          requirements:['Capture baseline scores: LCP, INP, CLS, FCP, TTFB (mobile + desktop)','Identify the #1 root cause for each failing metric','Screenshot the Lighthouse report and annotate the issues','Implement fix #1: improve LCP (hint: it\'s almost always images or fonts)','Implement fix #2: eliminate CLS (hint: add width/height to images)','Re-run Lighthouse — show before/after score comparison','Write a 1-page audit report: findings, root causes, fixes applied, remaining work'],
+          concepts:['Lighthouse','PageSpeed Insights','CrUX','LCP','CLS','INP','web-vitals.js'],
+          hints:['LCP element is highlighted in DevTools Performance panel — look for the green LCP marker','CLS: "Avoid large layout shifts" in Lighthouse lists every element that shifted','INP: use "Interactions" section in DevTools Performance panel — sort by longest','PageSpeed Insights shows both lab data (Lighthouse) and field data (CrUX) — they often differ']
+        },
+        {
+          id:'perf0_1', title:'Fix Slow LCP', diff:'Medium', time:60,
+          brief:'Identify and fix the LCP element to achieve < 2.5s on mobile',
+          statement:'Take a page with LCP > 4s (create one if needed — a hero image without priority, loaded via CSS background-image). Diagnose the LCP element using DevTools. Fix it by: (1) using <img> instead of background-image, (2) adding fetchpriority="high", (3) preloading the font, (4) removing render-blocking scripts above the fold.',
+          requirements:['Reproduce slow LCP: hero image as CSS background-image, deferred font load','Measure baseline LCP in DevTools Performance panel','Fix 1: move image to <img> tag with fetchpriority="high"','Fix 2: add <link rel="preload"> for the hero image','Fix 3: add <link rel="preconnect"> for the image CDN','Fix 4: audit and defer render-blocking scripts with async/defer','Measure final LCP — target < 2.5s on simulated mobile throttling'],
+          concepts:['fetchpriority','preload','render-blocking','LCP element','background-image pitfall'],
+          hints:['CSS background-image is NOT discovered by the preload scanner — the browser can\'t preload it','`<link rel="preload" as="image" href="hero.webp">` tells the browser to fetch it immediately','fetchpriority="high" on the LCP image tells the browser to prioritize this fetch over others','render-blocking: scripts in <head> without async/defer block HTML parsing — move them or add defer']
+        },
+        {
+          id:'perf0_2', title:'Eliminate CLS', diff:'Easy', time:30,
+          brief:'Fix every layout shift on a page — achieve CLS < 0.1',
+          statement:'Build a page with 5 common CLS causes: images without dimensions, a late-loading banner, web font swap, dynamically injected content above existing content, and an ad slot without reserved space. Then fix each one and verify CLS = 0.',
+          requirements:['Reproduce 5 CLS causes (CLS should be > 0.5 before fixes)','Fix 1: add width/height attributes to all images','Fix 2: reserve space for the banner with min-height CSS','Fix 3: use font-display: optional or preload the font to prevent FOUT shift','Fix 4: append dynamic content at the BOTTOM, not insert at top','Fix 5: reserve ad slot dimensions with placeholder div','Measure CLS after each fix — target cumulative CLS < 0.1'],
+          concepts:['CLS','font-display','aspect-ratio','layout shift','image dimensions','FOUT'],
+          hints:['Add `width` and `height` to <img> — browsers use this to reserve space before the image loads','CSS `aspect-ratio: 16/9` on image containers prevents shift even without explicit dimensions','font-display: optional never causes a layout shift — the fallback font is shown until the custom font is cached','NEVER insert content above existing content (e.g. cookie banners that push content down) — reserve space first']
+        },
+        {
+          id:'perf0_3', title:'Measure INP with Custom Tracing', diff:'Medium', time:60,
+          brief:'Find and fix slow interactions that hurt INP',
+          statement:'Build a page with intentionally bad INP: a button click that runs 200ms of synchronous JavaScript (heavy sort), a filter dropdown that triggers a massive re-render, and a scroll handler that does expensive work. Measure INP using the web-vitals library. Then fix each interaction.',
+          requirements:['Instrument page with web-vitals.js — log INP with onINP callback','Reproduce slow interactions — INP should be > 500ms','Fix 1: move heavy sort to a Web Worker (remove from main thread)','Fix 2: wrap expensive React re-render in startTransition (mark as non-urgent)','Fix 3: debounce or throttle the scroll handler','Fix 4: defer non-critical work with setTimeout(fn, 0) or scheduler.yield()','Measure INP after fixes — target < 200ms'],
+          concepts:['INP','web-vitals.js','startTransition','Web Worker','scheduler.yield','debounce'],
+          hints:['`import {onINP} from "web-vitals"` — logs each interaction with its duration','startTransition: `startTransition(() => setFilter(value))` — marks re-render as non-urgent, yields to user input','scheduler.yield(): `await scheduler.yield()` — gives the browser a chance to handle pending input mid-task','Long tasks (> 50ms) block INP — break them up or move to Web Worker']
+        },
+        {
+          id:'perf0_4', title:'RUM Dashboard with web-vitals.js', diff:'Medium', time:60,
+          brief:'Build a Real User Monitoring dashboard that collects CWV from real users',
+          statement:'Instrument a site with the web-vitals library to collect LCP, INP, CLS, FCP, and TTFB from real users. Send the data to a simple analytics endpoint. Build a dashboard that shows p75 scores (the threshold Google uses for "Good") broken down by page, device type, and connection speed.',
+          requirements:['Install web-vitals.js — `import {onLCP, onINP, onCLS, onFCP, onTTFB} from "web-vitals"`','Send each metric to /api/vitals endpoint on metric finalization','Store in a database with: metric name, value, page URL, device type, timestamp','Dashboard: p75 per metric per page (if p75 < threshold → green, else red)','Alert: if p75 LCP > 4s on any page, log a warning','Export data as CSV for offline analysis'],
+          concepts:['web-vitals.js','RUM','p75','onLCP','sendBeacon','field data'],
+          hints:['Use `navigator.sendBeacon` to send data — it works even when the page is unloading','web-vitals.js reports metrics on finalization: LCP fires on first user interaction, CLS on page hide','p75 = the 75th percentile — Google considers "Good" if p75 is under the threshold (LCP < 2.5s, INP < 200ms, CLS < 0.1)','Collect user agent + connection type (navigator.connection.effectiveType) with each metric for segmentation']
+        }
+      ]
+    },
+    {
+      id:'p1', label:'Phase 1', color:'#3B82F6', level:'Beginner-Intermediate',
+      title:'React Performance', subtitle:'memo, useMemo, useCallback, Profiler, Virtualization',
+      topics:[
+        { id:'t1_0', name:'React Rendering Mental Model', desc:'When does React re-render? State change, parent re-render, context change. What triggers a reconciliation vs a full re-mount.' },
+        { id:'t1_1', name:'React.memo & Bailout', desc:'memo() wraps a component to skip re-render if props are referentially equal. When it helps, when it hurts, when it\'s unnecessary.' },
+        { id:'t1_2', name:'useMemo & useCallback', desc:'Memoize expensive values (useMemo) and stable function references (useCallback). The real cost: memory + comparison overhead.' },
+        { id:'t1_3', name:'React DevTools Profiler', desc:'Flame chart, ranked chart, why-did-this-render, interaction timing. Finding unnecessary re-renders in production.' },
+        { id:'t1_4', name:'Virtualization / Windowing', desc:'react-window, react-virtual (TanStack) — render only visible rows. Critical for lists > 100 items.' },
+        { id:'t1_5', name:'useTransition & startTransition', desc:'Mark state updates as non-urgent. The UI stays responsive during heavy re-renders. Concurrent rendering in practice.' }
+      ],
+      problems:[
+        {
+          id:'perf1_0', title:'Find Unnecessary Re-renders', diff:'Easy', time:45,
+          brief:'Use React DevTools Profiler to find and fix 5 unnecessary re-renders',
+          statement:'Take a medium-complexity React component tree (a data table with filters, sorting, and pagination) and use the React DevTools Profiler to record an interaction. Identify every component that re-renders unnecessarily. Fix each one with the appropriate tool: memo, useMemo, or useCallback. Verify the fix in the Profiler.',
+          requirements:['Build a table with: 100 rows, 5 column sorts, text filter, pagination','Record a "type in filter" interaction in React DevTools Profiler','Identify all components that rendered when only the filter changed','Fix 1: wrap TableRow in React.memo (it should not re-render when filter changes)','Fix 2: useMemo for the sorted+filtered data (expensive computation)','Fix 3: useCallback for the sort handler passed as prop to header','Verify: after fixes, only the filter input and the data slice re-render on each keystroke'],
+          concepts:['React.memo','useMemo','useCallback','Profiler','unnecessary re-render'],
+          hints:['Enable "Highlight updates when components render" in React DevTools — see which components flash','memo() only prevents re-render if ALL props are referentially equal — one new function reference breaks it','useCallback: `const handleSort = useCallback((col) => setSort(col), [])` — stable reference across renders','The Profiler "why did this render?" section tells you exactly which prop changed — use it before guessing']
+        },
+        {
+          id:'perf1_1', title:'Virtualized List (10,000 rows)', diff:'Medium', time:60,
+          brief:'Render 10,000 items without freezing the browser using windowing',
+          statement:'Build a contact list with 10,000 entries. First render all 10,000 DOM nodes (naive approach) and measure: FPS, memory usage, and time-to-interactive. Then replace with react-virtual (TanStack Virtual) to render only visible items. Measure the improvement.',
+          requirements:['Naive: render 10,000 <div> rows — measure FPS while scrolling (target: < 30 FPS)','Measure memory: DevTools Memory tab heap snapshot (naive will be ~50MB+)','Virtualized: replace with `useVirtualizer` from @tanstack/react-virtual','Measure FPS while scrolling (target: 60 FPS)','Measure memory (target: < 5MB for the list)','Add search: filter virtualizer to show only matching rows','Add variable row height: some rows have extra details (expandable)'],
+          concepts:['virtualization','react-virtual','windowing','FPS','DOM nodes','useVirtualizer'],
+          hints:['`useVirtualizer({count: items.length, getScrollElement: () => ref.current, estimateSize: () => 48})`','The virtualizer gives you `virtualItems` — only render those, positioned with `transform: translateY(offset)px`','Variable heights: implement `measureElement` — TanStack Virtual measures each row after render','Never use index as key in virtualized lists — use the item\'s stable ID']
+        },
+        {
+          id:'perf1_2', title:'Context Performance Fix', diff:'Medium', time:60,
+          brief:'Fix a React Context that causes the entire tree to re-render on every state update',
+          statement:'Build an app with a global UserContext that stores user data, theme, notifications, and cart. When the cart updates, everything re-renders (even components that only use the theme). Fix this by splitting context, memoizing context values, and using selectors.',
+          requirements:['Build a single UserContext with 4 unrelated state slices','Demonstrate the problem: updating cart re-renders all 50 components','Fix 1: split into separate contexts: UserContext, ThemeContext, CartContext, NotificationContext','Fix 2: memoize context value with useMemo so it only changes when the relevant slice changes','Fix 3: create useCartSelector hook — components subscribe to only the fields they need','Verify: updating cart only re-renders Cart-related components','Measure: re-render count before vs after with Profiler'],
+          concepts:['Context re-render','context splitting','useMemo context value','selector','subscription'],
+          hints:['Every consumer of a Context re-renders when the context VALUE changes — even if the consumer\'s data didn\'t change','`useMemo` on the context value: `const value = useMemo(() => ({user, updateUser}), [user])` — only re-creates when user changes','Context splitting is the simplest fix — put frequently-changing state in its own context','For advanced cases: use Zustand, Jotai, or Redux Toolkit — they have built-in selectors and fine-grained subscriptions']
+        },
+        {
+          id:'perf1_3', title:'Concurrent UI with useTransition', diff:'Medium', time:45,
+          brief:'Keep the UI responsive during expensive re-renders using useTransition',
+          statement:'Build a search interface where filtering 50,000 items freezes the UI (typing feels laggy). Fix it using useTransition to mark the filtering as a non-urgent update. The input must remain responsive while the list re-renders in the background.',
+          requirements:['Demonstrate lag: filtering 50,000 items synchronously — input feels stuck','Add useTransition: `const [isPending, startTransition] = useTransition()`','Wrap the filter state update in startTransition','Show isPending spinner while the list is updating','Input stays at 60 FPS during filtering','Add a "No results" message that also appears without blocking input','Compare with and without useTransition using the DevTools Profiler'],
+          concepts:['useTransition','startTransition','isPending','concurrent rendering','non-urgent update'],
+          hints:['Without transition: `setFilter(value)` — synchronous, blocks the input','With transition: `startTransition(() => setFilter(value))` — deferred, input stays fast','isPending is true between when startTransition is called and when the re-render completes — show a spinner','This works because React can interrupt the deferred render to handle urgent input events']
+        },
+        {
+          id:'perf1_4', title:'Memoization Audit', diff:'Hard', time:90,
+          brief:'Profile a real app, identify over-memoization and under-memoization, fix both',
+          statement:'Take a dashboard app with 20+ components. Run a comprehensive memoization audit: find cases where memo() is wasteful (the component re-renders anyway because a prop function is new every render), and find cases where expensive calculations are missing useMemo. Fix both. Document the performance impact of each change.',
+          requirements:['Profile app: record 5 different interactions in DevTools Profiler','Identify 3 cases of over-memoization: memo() that never bails out (all props change every render)','Identify 3 cases of under-memoization: expensive calculations run on every render','Fix over-memoization cases: remove memo(), add useCallback to fix the root cause (unstable function props)','Fix under-memoization cases: add useMemo for genuinely expensive computations','Document: for each fix, what was the re-render count before and after?','Rule of thumb: only memo() components that (1) render often and (2) with the same props'],
+          concepts:['memoization audit','over-memoization','under-memoization','referential equality','performance profiling'],
+          hints:['Why-did-this-render library: logs exactly which prop changed and caused a re-render — use this before adding memo','Over-memoization: if a component always re-renders despite memo(), the fix is often useCallback on the parent function','The cost of memo: React must shallow-compare all props on every parent re-render — if props always change, it\'s pure overhead','Expensive calculation threshold: > 1ms is a candidate for useMemo. Use console.time() to measure.']
+        }
+      ]
+    },
+    {
+      id:'p2', label:'Phase 2', color:'#8B5CF6', level:'Intermediate',
+      title:'Bundle & Network', subtitle:'Code Splitting, Tree Shaking, Compression, HTTP/2',
+      topics:[
+        { id:'t2_0', name:'Bundle Analysis', desc:'webpack-bundle-analyzer, Vite bundle visualizer, rollup-plugin-visualizer. Reading treemaps. Finding duplicates and dead code.' },
+        { id:'t2_1', name:'Code Splitting & Lazy Loading', desc:'Dynamic import(), React.lazy + Suspense, route-based splitting, component-level splitting, interaction-based loading' },
+        { id:'t2_2', name:'Tree Shaking', desc:'ESM static imports enable tree shaking. Named imports, barrel file pitfalls, sideEffects flag in package.json, dead code elimination.' },
+        { id:'t2_3', name:'Compression & Encoding', desc:'Gzip vs Brotli (Brotli is 15-25% smaller). Static pre-compression vs on-the-fly. AVIF/WebP for images. woff2 for fonts.' },
+        { id:'t2_4', name:'HTTP/2 & Resource Hints', desc:'Multiplexing, header compression, server push (deprecated). preload, prefetch, preconnect, dns-prefetch — when each applies.' },
+        { id:'t2_5', name:'Caching Strategy', desc:'Cache-Control headers, immutable assets, stale-while-revalidate, service worker caching, content-addressable filenames' }
+      ],
+      problems:[
+        {
+          id:'perf2_0', title:'Bundle Size Reduction — 50% Target', diff:'Hard', time:120,
+          brief:'Cut First Load JS by 50% using a systematic bundle analysis workflow',
+          statement:'Start with a bloated React app (or build one with moment.js, lodash, a full icon library, and an unoptimized chart library). Run bundle analysis. Apply fixes systematically until First Load JS drops by 50%. Document every fix and its impact.',
+          requirements:['Baseline: measure First Load JS with `npm run build` output','Install and configure bundle analyzer (vite-bundle-analyzer or webpack-bundle-analyzer)','Fix 1: replace moment.js with date-fns (tree-shakeable) — saves ~200KB','Fix 2: replace lodash import with `import debounce from "lodash/debounce"` (avoid barrel import)','Fix 3: lazy load the chart library — `const Chart = lazy(() => import("./Chart"))` with Suspense','Fix 4: replace full icon library with individual icon imports','Fix 5: enable Brotli compression — show compressed vs uncompressed sizes','Verify: First Load JS drops ≥ 50% from baseline'],
+          concepts:['bundle-analyzer','date-fns','lodash tree-shaking','lazy import','Brotli','icon optimization'],
+          hints:['moment.js is NOT tree-shakeable — every locale is bundled. date-fns is fully tree-shakeable.','`import _ from "lodash"` pulls in 500KB. `import {debounce} from "lodash"` with proper tree-shaking OR `import debounce from "lodash/debounce"` for CJS','Gzip vs Brotli: a 100KB JS file → ~35KB gzip → ~28KB Brotli. Enable Brotli on your CDN/server.','Vite: `rollupOptions.output.manualChunks` lets you control code splitting manually']
+        },
+        {
+          id:'perf2_1', title:'Route-based Code Splitting', diff:'Easy', time:45,
+          brief:'Lazy-load every route so users only download code for the page they visit',
+          statement:'Take a React Router (or Next.js) app with 8 routes where all routes are eagerly imported. Implement route-based code splitting so each route is loaded on demand. Measure the impact on initial bundle size and implement prefetching on hover.',
+          requirements:['Before: all routes imported at top of App.tsx — measure total bundle size','After: each route lazy loaded with React.lazy + dynamic import','Wrap routes in Suspense with a page skeleton fallback','Prefetch route on Link hover: onMouseEnter triggers the dynamic import','Measure: initial bundle before vs after (target: 70%+ reduction in initial JS)','Verify chunk names are readable: `import(/* webpackChunkName: "dashboard" */ "./Dashboard")`','Add route-level error boundary in case a chunk fails to load (network error)'],
+          concepts:['React.lazy','dynamic import','Suspense','code splitting','prefetch on hover','chunk naming'],
+          hints:['`const Dashboard = lazy(() => import("./Dashboard"))` — creates a separate chunk automatically','Prefetch on hover: `const prefetch = () => import("./Dashboard")` — calling it triggers the fetch without rendering','Vite: dynamic imports automatically create named chunks based on file name','Error boundary for chunk load failures: catch ChunkLoadError and show a "Reload page" button — network errors are common']
+        },
+        {
+          id:'perf2_2', title:'Tree-shaking Audit & Fix', diff:'Medium', time:60,
+          brief:'Find and fix broken tree-shaking caused by barrel files and CJS imports',
+          statement:'Take a codebase with a shared UI library exported via barrel files (index.ts that re-exports everything). Profile that importing one Button component pulls in the entire library. Fix the import chain so only the Button is bundled.',
+          requirements:['Demonstrate: `import {Button} from "@/components"` bundles ALL components (50+ KB)','Check: does the library use ESM? Does package.json have "sideEffects: false"?','Fix 1: change to direct import: `import Button from "@/components/Button"`','Fix 2: add "sideEffects: false" to package.json','Fix 3: ensure all exports use ESM (not CJS require())','Fix 4: configure Vite/webpack to optimize the package (optimizeDeps)','Verify: bundle analyzer shows only Button code in the final bundle'],
+          concepts:['tree shaking','barrel file','sideEffects','ESM','named export','dead code elimination'],
+          hints:['Barrel files (index.ts exporting everything) PREVENT tree shaking in many bundlers — they\'re an anti-pattern at scale','`"sideEffects": false` in package.json tells the bundler it\'s safe to drop unused exports','ESM (`export`/`import`) = tree-shakeable. CJS (`module.exports`/`require()`) = not tree-shakeable','Check the "Module format" column in bundle-analyzer — CJS modules show up as non-tree-shakeable']
+        },
+        {
+          id:'perf2_3', title:'Caching Headers & Content Hashing', diff:'Medium', time:60,
+          brief:'Implement aggressive caching for static assets while ensuring instant cache busting on deploy',
+          statement:'Implement a caching strategy where: JS/CSS/image assets are cached for 1 year (immutable), HTML files are never cached, and fonts are cached for 30 days. All JS/CSS filenames include a content hash so cache busting is automatic on every deploy.',
+          requirements:['Configure build to generate content-hashed filenames: bundle.[hash].js','Set Cache-Control: public, max-age=31536000, immutable for all hashed assets','Set Cache-Control: no-cache for index.html (always fetch fresh HTML)','Set Cache-Control: public, max-age=2592000 for font files','Test: deploy a change — old cached assets still work, new assets are fetched','Measure: repeat visitor load time (should be near-zero JS/CSS transfer)','Add Stale-While-Revalidate for API responses: Cache-Control: max-age=60, stale-while-revalidate=3600'],
+          concepts:['Cache-Control','content hash','immutable','cache busting','stale-while-revalidate','CDN caching'],
+          hints:['Content hash in filename: `bundle.a1b2c3d4.js` — any code change produces a new hash, breaking the cache naturally','`immutable` tells the browser: "Even if max-age expires, don\'t bother revalidating — this URL\'s content never changes"','HTML must be no-cache: it\'s the entry point that references the new hashed assets — if it\'s cached, users get stale asset references','`stale-while-revalidate`: serve the stale cached response immediately, refresh in the background — great for API data']
+        },
+        {
+          id:'perf2_4', title:'Resource Hints Optimization', diff:'Medium', time:45,
+          brief:'Add preload, preconnect, prefetch hints to eliminate resource discovery delays',
+          statement:'Audit a page\'s waterfall chart in DevTools and identify all resources that start loading late because the browser didn\'t know about them early. Add the appropriate resource hints to eliminate the delay. Measure the impact on LCP and FCP.',
+          requirements:['Capture waterfall chart baseline: screenshot every resource and when it starts','Identify: late-starting LCP image (add preload)','Identify: Google Fonts CSS (add preconnect to fonts.googleapis.com and fonts.gstatic.com)','Identify: third-party analytics script (add dns-prefetch)','Identify: next page the user will likely visit (add prefetch for that page\'s JS)','Add <link> tags for each hint in <head>','Re-capture waterfall: LCP image and critical fonts should start loading earlier','Measure: LCP improvement after adding preload for the hero image'],
+          concepts:['preload','preconnect','prefetch','dns-prefetch','waterfall chart','resource discovery'],
+          hints:['preload: "I need this resource SOON, download it immediately" — use for LCP image, critical fonts','preconnect: "I will fetch from this origin soon — establish the connection now" — use for CDN and font origins','dns-prefetch: "I might fetch from this origin — do the DNS lookup now" — lighter than preconnect, use for third parties','prefetch: "The user will probably navigate here next — download it in the browser\'s idle time" — use for next page JS']
+        }
+      ]
+    },
+    {
+      id:'p3', label:'Phase 3', color:'#F59E0B', level:'Intermediate',
+      title:'Images & Assets', subtitle:'Formats, Lazy Loading, Responsive Images, Critical CSS',
+      topics:[
+        { id:'t3_0', name:'Modern Image Formats', desc:'AVIF vs WebP vs JPEG — size comparison, browser support, <picture> with fallbacks, quality vs size tradeoffs' },
+        { id:'t3_1', name:'Responsive Images', desc:'srcset with w descriptors, sizes attribute, art direction with <picture>, DPR (devicePixelRatio) optimization' },
+        { id:'t3_2', name:'Lazy Loading & Decoding', desc:'loading="lazy", loading="eager", decoding="async", Intersection Observer for custom lazy loading, LCP element must NOT be lazy' },
+        { id:'t3_3', name:'Critical CSS & Render-blocking', desc:'Inline above-the-fold CSS, defer non-critical CSS, remove unused CSS, PurgeCSS, critical npm package' },
+        { id:'t3_4', name:'Font Performance', desc:'font-display: swap/optional/block, subsetting, preloading, FOUT vs FOIT vs FOFT, variable fonts' },
+        { id:'t3_5', name:'Video & Animation Performance', desc:'<video> vs GIF (always prefer video), preload="none" for below-fold video, will-change, compositor layers, CSS transforms over position' }
+      ],
+      problems:[
+        {
+          id:'perf3_0', title:'Image Format & Responsive Images', diff:'Easy', time:45,
+          brief:'Replace JPEG images with AVIF+WebP and implement proper srcset',
+          statement:'Take a page with 10 JPEG images. Convert all to AVIF and WebP. Implement <picture> elements with AVIF as preferred format, WebP as fallback, JPEG as last resort. Add responsive srcset with sizes matching the CSS layout. Measure total image payload before and after.',
+          requirements:['Baseline: measure total image bytes (network tab)','Convert images to AVIF and WebP using sharp or squoosh','Implement <picture> with AVIF + WebP + JPEG sources','Add srcset for each format: 480w, 800w, 1200w, 1600w versions','Add sizes attribute matching CSS layout widths','Add loading="lazy" to all images EXCEPT the hero','Add decoding="async" to all images','Measure: total image bytes after (target: 60%+ reduction)'],
+          concepts:['AVIF','WebP','picture','srcset','sizes','loading=lazy','decoding=async'],
+          hints:['AVIF is typically 50% smaller than JPEG at the same quality. WebP is 25-35% smaller.','<picture> serves AVIF to browsers that support it, WebP to others, JPEG as universal fallback','`sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"` — must match your CSS','NEVER use loading="lazy" on the LCP image — it delays the most important image. Use loading="eager" and fetchpriority="high".']
+        },
+        {
+          id:'perf3_1', title:'Critical CSS Extraction', diff:'Hard', time:90,
+          brief:'Inline critical CSS and defer the rest to eliminate render-blocking stylesheets',
+          statement:'Take a page with a large CSS file (> 100KB, many unused rules) that blocks rendering. Extract the critical CSS (above-the-fold styles only) using the "critical" npm package. Inline it in <style> tags. Load the full CSS asynchronously. Measure FCP improvement.',
+          requirements:['Baseline: identify render-blocking CSS in Lighthouse (Coverage section shows unused bytes)','Install "critical" npm package — extract above-the-fold CSS automatically','Inline critical CSS as <style> in <head>','Load full CSS asynchronously: `<link rel="stylesheet" media="print" onload="this.media=\'all\'" href="styles.css">`','Add <noscript> fallback for browsers without JS','Remove unused CSS with PurgeCSS (integrate with build pipeline)','Measure: FCP improvement (target: 0.5-1s faster) and CSS payload reduction'],
+          concepts:['critical CSS','render-blocking','inline CSS','PurgeCSS','unused CSS','FCP'],
+          hints:['Critical CSS = CSS required to render above-the-fold content — everything else can be deferred','`npx critical index.html --inline` extracts and inlines critical CSS automatically','The async CSS load trick: set media="print" (loaded but not applied), then switch to media="all" in onload','PurgeCSS removes any CSS selector not found in your HTML/JS — reduces Tailwind from 3MB to < 10KB in production']
+        },
+        {
+          id:'perf3_2', title:'Font Performance Deep Dive', diff:'Medium', time:60,
+          brief:'Optimize font loading to achieve zero FOUT and zero CLS from fonts',
+          statement:'Audit a page that uses 3 Google Fonts (loaded via @import). Implement the optimal font loading strategy: self-host the fonts, subset to only needed characters, use font-display: optional to prevent layout shift, preload the fonts, and use a system font stack as fallback.',
+          requirements:['Baseline: measure FOUT, CLS from fonts, and font request waterfall','Self-host fonts: download with google-webfonts-helper, serve from /fonts/','Use woff2 format only (99%+ browser support)','Subset fonts to Latin characters only (reduces file size ~70%)','font-display: optional — eliminates FOUT completely (no swap = no shift)','<link rel="preload"> for the primary font (above fold)','System font fallback stack that matches the custom font metrics','Measure: CLS = 0, FOUT eliminated, LCP font load time reduced'],
+          concepts:['self-hosted fonts','font subsetting','font-display','FOUT','FOIT','woff2','system font stack'],
+          hints:['`font-display: optional`: the browser uses the fallback font if the custom font isn\'t available in a short window (~100ms) — no swap, no shift','`font-display: swap`: always swaps — causes FOUT but text is visible immediately','Subsetting: `pyftsubset font.woff2 --unicodes="U+0020-007F" --output-file="font-subset.woff2"` — Latin only is usually enough','Match fallback metrics: use `size-adjust`, `ascent-override`, `descent-override` CSS descriptors to match fallback font dimensions to custom font']
+        },
+        {
+          id:'perf3_3', title:'Sprite Sheet & Icon Optimization', diff:'Medium', time:45,
+          brief:'Reduce icon HTTP requests and bundle size by 80% with an SVG sprite system',
+          statement:'A site makes 40 separate HTTP requests for 40 SVG icons. Replace with: (1) an SVG sprite sheet (one HTTP request, cached), (2) an icon font comparison, (3) inline SVG for critical icons. Measure request count and total icon payload before and after.',
+          requirements:['Baseline: 40 HTTP requests for 40 SVG icons','Create an SVG sprite: combine all SVGs with <symbol> + <use> pattern','Load the sprite as a single file — 1 HTTP request instead of 40','Critical icons (nav icons): inline SVG in HTML for instant render','Non-critical icons: lazy load via sprite after page load','Compare with icon font: measure bytes, render quality, accessibility','Choose the winner: sprite vs inline vs icon font — justify the decision'],
+          concepts:['SVG sprite','<symbol>','<use>','icon font','inline SVG','HTTP request reduction'],
+          hints:['SVG sprite: `<svg style="display:none"><symbol id="icon-arrow" viewBox="0 0 24 24">...</symbol></svg>` then `<svg><use href="#icon-arrow"/></svg>`','Inline SVG in HTML: best for hero/above-fold icons — zero HTTP requests, CSS-styleable, accessible','Icon fonts (Font Awesome): rendered as text — can be blurry at non-integer sizes, accessibility challenges','Prefer SVG sprite for most cases — single HTTP request, scalable, accessible, small file size']
+        },
+        {
+          id:'perf3_4', title:'Animations & Compositor Performance', diff:'Hard', time:60,
+          brief:'Fix janky animations by using only compositor-accelerated CSS properties',
+          statement:'Build a page with 4 animation types: (1) animating margin/padding/width (jank — triggers layout), (2) animating background-color (less jank — triggers paint), (3) animating transform+opacity only (smooth — compositor only), (4) Web Animation API. Fix the janky animations and verify all run at 60 FPS.',
+          requirements:['Animate margin-left from 0 to 100px — measure FPS (it will drop)','Replace with transform: translateX(100px) — measure FPS improvement','Build a "scroll-jittery" background parallax effect — identify the cause','Fix with position: sticky or CSS scroll-driven animation (no JS)','Use will-change: transform to promote element to its own compositor layer','Verify with DevTools: Rendering > Show paint flashing — compositor-only animations show no paint flash','Measure: all animations at 60 FPS after fixes'],
+          concepts:['compositor layer','transform','opacity','will-change','paint flashing','layout thrashing','scroll-driven animation'],
+          hints:['ONLY transform and opacity are compositor-accelerated — everything else triggers layout or paint','`will-change: transform` promotes an element to its own GPU layer — but use sparingly (memory cost per layer)','Paint flashing: DevTools Rendering tab → Show paint flashing — green flash = browser repainted that area (bad for animations)','Layout thrashing: reading layout properties (offsetWidth) then writing (style.width) in a loop forces sync layout — avoid']
+        }
+      ]
+    },
+    {
+      id:'p4', label:'Phase 4', color:'#EC4899', level:'Advanced',
+      title:'Advanced & Monitoring', subtitle:'Performance Budgets, Lighthouse CI, RUM, Service Workers',
+      topics:[
+        { id:'t4_0', name:'Performance Budgets', desc:'Setting limits: max JS bundle size, max LCP, max CLS. Failing the build if budgets are exceeded. Lighthouse CI thresholds.' },
+        { id:'t4_1', name:'Lighthouse CI', desc:'Automated Lighthouse in CI/CD. GitHub Actions integration, assertions, score thresholds, PR comments with scores.' },
+        { id:'t4_2', name:'Service Workers & Offline', desc:'Cache-first, network-first, stale-while-revalidate strategies. Workbox. Offline fallback pages. Background sync.' },
+        { id:'t4_3', name:'Prerendering & Hydration Optimization', desc:'Selective hydration, islands architecture, resumability (Qwik). Reducing TBT by deferring hydration of below-fold components.' },
+        { id:'t4_4', name:'Third-party Script Impact', desc:'Measuring third-party script cost. Tag Manager audit. Lazy loading analytics. Facade patterns for embeds (YouTube, maps).' },
+        { id:'t4_5', name:'Performance Culture & Dashboards', desc:'Sharing perf wins with the team. Automated regression detection. Grafana dashboards for RUM. Performance as a KPI.' }
+      ],
+      problems:[
+        {
+          id:'perf4_0', title:'Lighthouse CI in GitHub Actions', diff:'Medium', time:90,
+          brief:'Fail PRs that regress performance — automate Lighthouse in CI',
+          statement:'Set up Lighthouse CI to run on every PR. Configure it to fail if: LCP > 2.5s, CLS > 0.1, INP > 200ms, First Load JS > 150KB. Post Lighthouse scores as a PR comment. Store historical reports on Lighthouse CI server (or LHCI public storage).',
+          requirements:['Install @lhci/cli and configure lighthouserc.js','GitHub Actions workflow: checkout → build → lhci autorun','Assert: `performance >= 0.9`, `lcp <= 2500`, `cls <= 0.1`, `interactive <= 3800`','Fail the check if any assertion fails — block PR merge','Post a PR comment with the scores using lhci GitHub App','Store reports: `upload.target = "lhci"` with a server or `temporary-public-storage`','Test: make a deliberate regression (add a 500KB library) — verify PR fails'],
+          concepts:['Lighthouse CI','GitHub Actions','performance budget','assertions','PR comment','regression detection'],
+          hints:['lighthouserc.js assertions: `{"audits": [{"auditId": "largest-contentful-paint", "operator": "<=", "numericValue": 2500}]}`','LHCI runs Lighthouse multiple times (default: 3) and takes the median — avoids flaky results','`lhci autorun` does: collect (run Lighthouse) + assert (check budgets) + upload (store report) in one command','The LHCI GitHub app adds a check to the PR with a direct link to the report — much better UX than raw logs']
+        },
+        {
+          id:'perf4_1', title:'Service Worker with Workbox', diff:'Hard', time:120,
+          brief:'Build an offline-capable app with Workbox caching strategies',
+          statement:'Implement a Service Worker using Workbox that makes an app work offline. Strategy: App Shell (cache-first for HTML/CSS/JS), API responses (stale-while-revalidate), images (cache-first with expiry), and an offline fallback page for navigation requests that fail.',
+          requirements:['Install workbox-webpack-plugin or vite-plugin-workbox','Cache shell (index.html, main.js, main.css) using CacheFirst strategy','Cache API responses using StaleWhileRevalidate (serve cached, refresh in background)','Cache images with CacheFirst + ExpirationPlugin (max 50 entries, 30 day TTL)','Offline fallback: catch failed navigation requests and serve /offline.html','Background sync: queue failed form submissions and retry when online','Test: open app, go offline, verify it still works'],
+          concepts:['Service Worker','Workbox','cache-first','stale-while-revalidate','offline fallback','background sync'],
+          hints:['Workbox strategies: CacheFirst (fast, serves from cache), NetworkFirst (fresh, falls back to cache), StaleWhileRevalidate (both)','`new StaleWhileRevalidate({cacheName: "api-cache"})` — serves stale immediately, updates in background','Offline fallback: `setCatchHandler(async () => matchPrecache("/offline.html"))` — serves offline page for failed navigations','Background sync: `new BackgroundSyncPlugin("form-queue")` — retries failed POSTs automatically when connectivity returns']
+        },
+        {
+          id:'perf4_2', title:'Third-party Script Audit & Facade', diff:'Medium', time:60,
+          brief:'Audit third-party scripts and implement facades to defer their load',
+          statement:'Audit a page with: Google Analytics, a YouTube embed, a Intercom chat widget, and a Twitter embed. Measure their combined performance cost: JS bytes, CPU time, blocking time. Replace the YouTube embed and Intercom with facades that load the real script only on user interaction.',
+          requirements:['Baseline: measure total third-party JS bytes and main thread blocking time','Identify: which third party costs the most (usually chat widgets)','Facade 1: replace YouTube <iframe> with a thumbnail image + play button — load real player on click','Facade 2: replace Intercom widget with a "Chat" button — load Intercom only on click','Defer Google Analytics: load after the page is interactive (setTimeout or requestIdleCallback)','Measure: total JS saved, LCP improvement, INP improvement from reduced main thread work','Document: total bytes saved and CrUX impact (projected)'],
+          concepts:['facade pattern','third-party audit','requestIdleCallback','YouTube lite embed','script deferral'],
+          hints:['YouTube Lite embed: `paulirish/lite-youtube-embed` — thumbnail + play button, loads the real player on click (saves ~500KB)','Intercom and similar widgets typically block the main thread for 200-500ms — deferring saves significant INP','`requestIdleCallback(() => loadAnalytics())` — loads analytics only when the browser is idle, doesn\'t compete with user interactions','Block third-party scripts in DevTools: Network tab → right-click a request → Block request URL — see how the site performs without them']
+        },
+        {
+          id:'perf4_3', title:'Performance Budget Enforcement', diff:'Medium', time:60,
+          brief:'Implement automated performance budgets that block deploys on regression',
+          statement:'Implement a performance budget system at 3 levels: (1) build time — fail if JS bundle exceeds 200KB, (2) CI — fail if Lighthouse performance score drops below 90, (3) monitoring — alert if p75 LCP exceeds 2.5s in production. Make all 3 automated with zero manual steps.',
+          requirements:['Build budget: configure bundlesize or size-limit to fail build if main.js > 200KB','CI budget: Lighthouse CI asserts performance >= 0.9 — blocks PR merge on failure','Production monitoring: web-vitals.js sends LCP to /api/vitals, a nightly cron checks if p75 > 2.5s and sends Slack alert','Add a "Performance" badge to README.md that shows current Lighthouse score','Create a performance changelog: document every significant metric change and its cause','Simulate a regression: add a 500KB library — verify all 3 budget systems trigger'],
+          concepts:['size-limit','bundlesize','performance budget','automated monitoring','Slack alert','p75'],
+          hints:['size-limit: add to package.json: `"size-limit": [{"path": "dist/main.js", "limit": "200 KB"}]` — `npx size-limit` fails if exceeded','Lighthouse CI + GitHub Actions: the check turns red, PR cannot be merged — zero developer overhead','Slack alert: `fetch(SLACK_WEBHOOK_URL, {method:"POST", body: JSON.stringify({text: "🚨 LCP p75 exceeded 2.5s on production"})})` from a cron job','Performance changelog is a cultural artifact — it normalizes caring about perf as a team practice']
+        },
+        {
+          id:'perf4_4', title:'Island Architecture', diff:'Hard', time:120,
+          brief:'Implement islands architecture to reduce JavaScript by 90% on a content site',
+          statement:'Take a blog or marketing site built as a full React SPA (hydrates everything). Refactor it to use islands architecture: static HTML for content, interactive React islands only where needed. Compare total JS shipped, TBT, and TTI before and after.',
+          requirements:['Baseline: measure total JS, TBT, and TTI on a blog post page','Identify interactive islands: search box, newsletter signup, comment count, social share buttons','Convert the static content to server-rendered HTML (no hydration needed)','Each interactive component is an "island" — hydrated independently','Implement using Astro (or manually with selective hydration pattern)','Add `client:idle` for below-fold islands (hydrate when browser is idle)','Measure: JS shipped (target: < 10KB for a typical blog post)','Verify: static content renders instantly, islands hydrate progressively'],
+          concepts:['islands architecture','selective hydration','Astro','client:idle','TBT','TTI','partial hydration'],
+          hints:['Islands architecture: most of the page is static HTML, only "islands" of interactivity are hydrated','Astro: `client:load` = hydrate immediately, `client:idle` = hydrate when idle, `client:visible` = hydrate when in viewport','Without islands: React hydrates the ENTIRE page tree — even static text that will never change','The result: a blog post page might go from 150KB JS to 2KB JS — 98% reduction in JS shipped']
+        }
+      ]
+    }
+  ];
+
+  // ── STATE ──────────────────────────────────────────────────────
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STATE_KEY)) || {}; } catch { return {}; }
+  }
+  function saveState() { localStorage.setItem(STATE_KEY, JSON.stringify(state)); }
+  let state = loadState();
+  if (!state.problems)   state.problems   = {};
+  if (!state.topics)     state.topics     = {};
+  if (!state.reqs)       state.reqs       = {};
+  if (!state.topicNotes) state.topicNotes = {};
+
+  let activePhase = 0;
+  let diffFilter  = 'all';
+  const timers    = {};
+
+  // ── STATS ──────────────────────────────────────────────────────
+  function updateStats() {
+    let done = 0, topicsDone = 0, phasesDone = 0;
+    PHASES.forEach(ph => {
+      let phaseDone = true;
+      ph.problems.forEach(pr => { if ((state.problems[pr.id]||{}).status==='done') done++; else phaseDone=false; });
+      ph.topics.forEach(t => { if ((state.topics[t.id]||{}).state==='mastered') topicsDone++; else phaseDone=false; });
+      if (phaseDone) phasesDone++;
+    });
+    document.getElementById('stat-done').textContent   = done;
+    document.getElementById('stat-topics').textContent = topicsDone;
+    document.getElementById('stat-phases').textContent = phasesDone + '/5';
+  }
+
+  // ── PHASE NAV ──────────────────────────────────────────────────
+  function renderPhaseNav() {
+    const nav = document.getElementById('phase-nav');
+    nav.innerHTML = PHASES.map((ph, i) => {
+      const done = ph.problems.filter(pr => (state.problems[pr.id]||{}).status==='done').length;
+      return `<div class="phase-tab${i===activePhase?' active':''}" onclick="switchPhase(${i})">
+        <span class="tab-lang">${ph.level}</span>
+        ${ph.title} <span style="opacity:.6;font-size:11px">(${done}/${ph.problems.length})</span>
+      </div>`;
+    }).join('');
+  }
+  function switchPhase(i) { activePhase = i; renderPhaseNav(); renderContent(); }
+
+  // ── FILTER ─────────────────────────────────────────────────────
+  function buildFilterBar() {
+    return `<div class="filter-bar"><div class="filter-group">
+      <span class="filter-label">Difficulty:</span>
+      <button class="flt-btn${diffFilter==='all'?' flt-active':''}" onclick="setFilter('all')">All</button>
+      <button class="flt-btn diff-easy${diffFilter==='Easy'?' flt-active':''}" onclick="setFilter('Easy')">Easy</button>
+      <button class="flt-btn diff-medium${diffFilter==='Medium'?' flt-active':''}" onclick="setFilter('Medium')">Medium</button>
+      <button class="flt-btn diff-hard${diffFilter==='Hard'?' flt-active':''}" onclick="setFilter('Hard')">Hard</button>
+    </div></div>`;
+  }
+  function setFilter(f) { diffFilter = f; renderContent(); }
+
+  // ── TOPIC CARD ─────────────────────────────────────────────────
+  function buildTopicCard(t) {
+    const ts = state.topics[t.id] || {};
+    const st = ts.state || 'untouched';
+    const tn = state.topicNotes[t.id] || {};
+    const cardCls = st==='mastered' ? ' mastered' : st==='in-progress' ? ' in-progress' : '';
+    const chkSt   = st==='mastered' ? 'mastered' : st==='in-progress' ? 'in-progress' : 'untouched';
+    const hasNote = !!(tn.approach || tn.code || tn.gotchas);
+    const confBtns = ['😰 Shaky','🤔 Getting There','👍 Solid','🚀 Expert']
+      .map((l,ci) => `<button class="tp-score-btn s${ci+1}${(tn.score||0)===ci+1?' selected':''}" onclick="setTopicScore('${t.id}',${ci+1})">${l}</button>`).join('');
+    return `<div class="topic-card${cardCls}" id="tcard_${t.id}">
+      <div class="topic-header" onclick="toggleTopicPanel('${t.id}')">
+        <div class="topic-check" data-state="${chkSt}" id="tchk_${t.id}" onclick="event.stopPropagation();cycleTopicState('${t.id}')">
+          <span class="chk-icon mastered">✓</span><span class="chk-icon in-progress">~</span>
+        </div>
+        <div class="topic-info">
+          <div class="topic-name">${t.name}</div>
+          <div class="topic-desc">${t.desc}</div>
+        </div>
+        <div class="topic-badges">
+          ${hasNote?'<span style="width:7px;height:7px;border-radius:50%;background:#1a5a3a;display:inline-block;"></span>':''}
+          <span class="expand-btn" id="tpbtn_${t.id}">Practice</span>
+        </div>
+      </div>
+      <div class="practice-panel" id="tpanel_${t.id}">
+        <div class="tp-fields">
+          <div class="field-group full">
+            <div class="field-label-text">🧠 My Understanding</div>
+            <textarea class="field-input${tn.approach?' filled':''}" id="tn_approach_${t.id}" placeholder="Explain this concept in your own words...">${tn.approach||''}</textarea>
+          </div>
+          <div class="field-group">
+            <div class="field-label-text">💻 Code / Pattern</div>
+            <textarea class="field-input${tn.code?' filled':''}" id="tn_code_${t.id}" placeholder="Key snippet or technique...">${tn.code||''}</textarea>
+          </div>
+          <div class="field-group">
+            <div class="field-label-text">⚠️ Gotchas</div>
+            <textarea class="field-input${tn.gotchas?' filled':''}" id="tn_gotchas_${t.id}" placeholder="Common mistakes or misconceptions...">${tn.gotchas||''}</textarea>
+          </div>
+        </div>
+        <div class="tp-score-row">
+          <span class="tp-score-label">Confidence:</span>${confBtns}
+          <button class="tp-save-btn" onclick="saveTopicNote('${t.id}')">Save</button>
+          <span class="tp-saved" id="tpsaved_${t.id}">Saved ✓</span>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // ── PROBLEM CARD ───────────────────────────────────────────────
+  function buildProblemCard(pr, idx) {
+    const ps = state.problems[pr.id] || {};
+    const cls = ps.status==='done' ? ' done' : ps.status==='inprogress' ? ' inprogress' : '';
+    const diffCls = pr.diff==='Easy'?'diff-easy':pr.diff==='Medium'?'diff-medium':'diff-hard';
+    const reqsHtml = pr.requirements.map((r,ri) => {
+      const rKey = pr.id+'_r'+ri, checked = state.reqs[rKey]||false;
+      return `<div class="req-item" onclick="toggleReq('${rKey}',this)">
+        <input class="req-cb" type="checkbox" ${checked?'checked':''} onclick="event.stopPropagation()">
+        <span class="req-text${checked?' checked':''}">${r}</span>
+      </div>`;
+    }).join('');
+    const conceptsHtml = pr.concepts.map(c => `<span class="concept-tag">${c}</span>`).join('');
+    const hintsHtml    = pr.hints.map((h,hi) => `<div class="hint-item"><span class="hint-num">${hi+1}.</span>${h}</div>`).join('');
+    const solHtml = SOLUTION_FIELDS.map(f => {
+      const val = ps[f.k]||'';
+      return `<div class="field-group${f.full?' full':''}">
+        <div class="field-label-text">${f.icon} ${f.label}</div>
+        <textarea class="field-input${val?' filled':''}" id="sol_${pr.id}_${f.k}" placeholder="${getSolPlaceholder(f.k)}">${val}</textarea>
+      </div>`;
+    }).join('');
+    return `<div class="problem-card${cls}" id="pcard_${pr.id}">
+      <div class="card-header" onclick="toggleProblem('${pr.id}')">
+        <span class="card-num">${String(idx+1).padStart(2,'0')}</span>
+        <div class="card-info">
+          <div class="card-title">${pr.title}</div>
+          <div class="card-brief">${pr.brief}</div>
+        </div>
+        <div class="card-badges">
+          <span class="diff-badge ${diffCls}">${pr.diff}</span>
+          <span class="time-badge">⏱ ${pr.time}m</span>
+          <button class="prob-expand-btn" id="pexpbtn_${pr.id}">Open</button>
+        </div>
+      </div>
+      <div class="problem-panel" id="ppanel_${pr.id}">
+        <div class="statement-box">
+          <div class="statement-label">Problem Statement</div>
+          <div class="statement-text">${pr.statement}</div>
+        </div>
+        <div class="req-section">
+          <div class="req-label">✅ Requirements</div>${reqsHtml}
+        </div>
+        <div class="req-label" style="margin-top:14px">🏷 Concepts</div>
+        <div class="concepts-row">${conceptsHtml}</div>
+        <div class="hints-wrap">
+          <button class="hint-toggle" onclick="toggleHints('${pr.id}')">💡 Show Hints</button>
+          <div class="hint-content" id="hints_${pr.id}">${hintsHtml}</div>
+        </div>
+        <div class="timer-section">
+          <span class="timer-label">Timer</span>
+          <span class="timer-display" id="tdisp_${pr.id}">${fmtTime(pr.time*60)}</span>
+          <div class="timer-bar-wrap"><div class="timer-bar" id="tbar_${pr.id}" style="width:100%"></div></div>
+          <div class="timer-controls">
+            <button class="timer-btn" id="tbtn_${pr.id}" onclick="toggleTimer('${pr.id}',${pr.time})">▶ Start</button>
+            <button class="timer-btn" onclick="resetTimer('${pr.id}',${pr.time})">↺ Reset</button>
+          </div>
+        </div>
+        <div class="sol-fields">${solHtml}</div>
+        <div class="action-row">
+          <span class="score-label">Confidence:</span>
+          ${[1,2,3,4].map(n=>`<button class="score-btn s${n}${(ps.score||0)===n?' selected':''}" onclick="setScore('${pr.id}',${n})">${['😰','🤔','👍','🚀'][n-1]}</button>`).join('')}
+          <div class="status-btns">
+            <button class="status-btn wip${ps.status==='inprogress'?' active':''}" onclick="setStatus('${pr.id}','inprogress')">In Progress</button>
+            <button class="status-btn done${ps.status==='done'?' active':''}" onclick="setStatus('${pr.id}','done')">Done ✓</button>
+          </div>
+          <button class="save-btn" onclick="saveSolution('${pr.id}')">Save</button>
+          <span class="saved-flash" id="flash_${pr.id}">Saved ✓</span>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function getSolPlaceholder(k) {
+    return {diagnosis:'How did you find the issue? What tools / metrics led you here?',fix:'What did you change? Key code or config...',metrics:'Numbers before and after. Be specific: LCP 4.2s → 1.8s.',gotchas:'What surprised you? What trade-offs did you make?'}[k]||'';
+  }
+
+  // ── RENDER ─────────────────────────────────────────────────────
+  function renderContent() {
+    const ph = PHASES[activePhase];
+    const filtered = diffFilter==='all' ? ph.problems : ph.problems.filter(pr => pr.diff===diffFilter);
+    const done   = ph.problems.filter(pr => (state.problems[pr.id]||{}).status==='done').length;
+    const doneTp = ph.topics.filter(t => (state.topics[t.id]||{}).state==='mastered').length;
+    const pct    = Math.round((done + doneTp) / (ph.problems.length + ph.topics.length) * 100);
+    document.getElementById('content').innerHTML = `
+      <div class="phase-head" style="background:${ph.color}15">
+        <div>
+          <div class="phase-num">${ph.label} — ${ph.subtitle}</div>
+          <div class="phase-title">${ph.title}</div>
+        </div>
+        <div class="phase-meta">
+          <div class="phase-level" style="color:${ph.color}">${ph.level}</div>
+          <div class="phase-count">${done}/${ph.problems.length} solved</div>
+        </div>
+      </div>
+      <div class="phase-progress-wrap">
+        <div class="phase-progress-label" id="phase-prog-label">${pct}% complete</div>
+        <div class="phase-progress-bar"><div class="phase-progress-fill" id="phase-prog-fill" style="width:${pct}%;background:${ph.color}"></div></div>
+      </div>
+      <div class="section-head" style="margin-top:1.5rem">Topics to study</div>
+      <div>${ph.topics.map(buildTopicCard).join('')}</div>
+      <div class="section-head" style="margin-top:2rem">Problems (${ph.problems.length})</div>
+      ${buildFilterBar()}
+      <div>${filtered.map((pr,i)=>buildProblemCard(pr,i)).join('')}</div>`;
+    updateStats();
+  }
+
+  function refreshProgress() {
+    const ph     = PHASES[activePhase];
+    const donePr = ph.problems.filter(pr => (state.problems[pr.id]||{}).status === 'done').length;
+    const doneTp = ph.topics.filter(t => (state.topics[t.id]||{}).state === 'mastered').length;
+    const pct    = Math.round((donePr + doneTp) / (ph.problems.length + ph.topics.length) * 100);
+    const label  = document.getElementById('phase-prog-label');
+    const fill   = document.getElementById('phase-prog-fill');
+    if (label) label.textContent = pct + '% complete';
+    if (fill)  fill.style.width  = pct + '%';
+  }
+
+  // ── TOPIC INTERACTIONS ─────────────────────────────────────────
+  function toggleTopicPanel(id) {
+    const panel=document.getElementById('tpanel_'+id), btn=document.getElementById('tpbtn_'+id);
+    if(!panel) return;
+    const open=panel.classList.toggle('open');
+    if(btn){btn.classList.toggle('open',open);btn.textContent=open?'Close':'Practice';}
+    if(open) setTimeout(()=>document.getElementById('tn_approach_'+id)?.focus(),50);
+  }
+  function cycleTopicState(id) {
+    const ts=state.topics[id]||{}, cur=ts.state||'untouched';
+    const next=cur==='untouched'?'in-progress':cur==='in-progress'?'mastered':'untouched';
+    state.topics[id]={...ts,state:next}; saveState();
+    const card=document.getElementById('tcard_'+id), chk=document.getElementById('tchk_'+id);
+    if(card) card.className='topic-card'+(next==='mastered'?' mastered':next==='in-progress'?' in-progress':'');
+    if(chk) chk.dataset.state=next==='mastered'?'mastered':next==='in-progress'?'in-progress':'untouched';
+    updateStats(); refreshProgress();
+  }
+  function setTopicScore(id,score) {
+    const panel=document.getElementById('tpanel_'+id); if(panel) panel.dataset.pendingScore=score;
+    document.querySelectorAll(`#tpanel_${id} .tp-score-btn`).forEach((b,i)=>b.classList.toggle('selected',i+1===score));
+  }
+  function saveTopicNote(id) {
+    const approach=document.getElementById('tn_approach_'+id)?.value||'';
+    const code=document.getElementById('tn_code_'+id)?.value||'';
+    const gotchas=document.getElementById('tn_gotchas_'+id)?.value||'';
+    const panel=document.getElementById('tpanel_'+id);
+    const score=parseInt(panel?.dataset.pendingScore||(state.topicNotes[id]||{}).score||0)||0;
+    state.topicNotes[id]={approach,code,gotchas,score}; saveState();
+    [['tn_approach_','approach'],['tn_code_','code'],['tn_gotchas_','gotchas']].forEach(([p,f])=>{
+      const el=document.getElementById(p+id); if(el) el.classList.toggle('filled',!!(state.topicNotes[id][f]));
+    });
+    const flash=document.getElementById('tpsaved_'+id);
+    if(flash){flash.classList.add('show');setTimeout(()=>flash.classList.remove('show'),1500);}
+  }
+
+  // ── PROBLEM INTERACTIONS ───────────────────────────────────────
+  function toggleProblem(id) {
+    const panel=document.getElementById('ppanel_'+id), btn=document.getElementById('pexpbtn_'+id);
+    if(!panel) return;
+    const open=panel.classList.toggle('open');
+    if(btn){btn.classList.toggle('open',open);btn.textContent=open?'Close':'Open';}
+  }
+  function toggleHints(id) { document.getElementById('hints_'+id)?.classList.toggle('show'); }
+  function toggleReq(rKey,rowEl) {
+    state.reqs[rKey]=!state.reqs[rKey]; saveState();
+    const cb=rowEl.querySelector('.req-cb'), text=rowEl.querySelector('.req-text');
+    if(cb) cb.checked=state.reqs[rKey];
+    if(text) text.classList.toggle('checked',state.reqs[rKey]);
+  }
+  function setScore(id,score) {
+    state.problems[id]=state.problems[id]||{}; state.problems[id].score=score; saveState();
+    document.querySelectorAll(`#pcard_${id} .action-row .score-btn`).forEach((b,i)=>b.classList.toggle('selected',i+1===score));
+  }
+  function setStatus(id,status) {
+    state.problems[id]=state.problems[id]||{};
+    state.problems[id].status=state.problems[id].status===status?null:status; saveState();
+    const card=document.getElementById('pcard_'+id);
+    if(card) card.className='problem-card'+(state.problems[id].status==='done'?' done':state.problems[id].status==='inprogress'?' inprogress':'');
+    document.querySelector(`#pcard_${id} .status-btn.wip`)?.classList.toggle('active',state.problems[id].status==='inprogress');
+    document.querySelector(`#pcard_${id} .status-btn.done`)?.classList.toggle('active',state.problems[id].status==='done');
+    updateStats(); refreshProgress();
+  }
+  function saveSolution(id) {
+    state.problems[id]=state.problems[id]||{};
+    SOLUTION_FIELDS.forEach(f=>{
+      const el=document.getElementById('sol_'+id+'_'+f.k);
+      if(el){state.problems[id][f.k]=el.value;el.classList.toggle('filled',!!el.value);}
+    }); saveState();
+    const flash=document.getElementById('flash_'+id);
+    if(flash){flash.classList.add('show');setTimeout(()=>flash.classList.remove('show'),1500);}
+  }
+
+  // ── TIMER ──────────────────────────────────────────────────────
+  function fmtTime(s){const m=Math.floor(Math.abs(s)/60),sec=Math.abs(s)%60;return(s<0?'-':'')+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');}
+  function toggleTimer(id,limitMin){
+    const btn=document.getElementById('tbtn_'+id);
+    if(timers[id]?.running){clearInterval(timers[id].interval);timers[id].running=false;if(btn){btn.textContent='▶ Resume';btn.classList.remove('running');}}
+    else{
+      if(!timers[id]) timers[id]={remaining:limitMin*60,running:false};
+      timers[id].running=true; if(btn){btn.textContent='⏸ Pause';btn.classList.add('running');}
+      timers[id].interval=setInterval(()=>{
+        timers[id].remaining--;
+        const disp=document.getElementById('tdisp_'+id), bar=document.getElementById('tbar_'+id);
+        if(disp){disp.textContent=fmtTime(timers[id].remaining);disp.className='timer-display'+(timers[id].remaining<0?' over':timers[id].remaining<limitMin*60*.2?' warning':'');}
+        if(bar){const pct=Math.max(0,timers[id].remaining/(limitMin*60)*100);bar.style.width=pct+'%';bar.style.background=timers[id].remaining<0?'#dc2626':timers[id].remaining<limitMin*60*.2?'#d97706':'#16a34a';}
+      },1000);
+    }
+  }
+  function resetTimer(id,limitMin){
+    if(timers[id]){clearInterval(timers[id].interval);delete timers[id];}
+    const disp=document.getElementById('tdisp_'+id),bar=document.getElementById('tbar_'+id),btn=document.getElementById('tbtn_'+id);
+    if(disp){disp.textContent=fmtTime(limitMin*60);disp.className='timer-display';}
+    if(bar){bar.style.width='100%';bar.style.background='#16a34a';}
+    if(btn){btn.textContent='▶ Start';btn.classList.remove('running');}
+  }
+
+  // ── INIT ───────────────────────────────────────────────────────
+  renderPhaseNav();
+  renderContent();
+</script>
+
+<!-- ── TAB-TITLE TIMER ──────────────────────────────────────────────
+     Mirrors whichever timer card is currently counting into the
+     browser tab title, so you can see it while working in another tab.
+     Watches .timer-display for changes; touches no timer logic. -->
+<script>
+(function () {
+  const BASE = document.title;
+  const isTime = s => /^-?\d{1,3}:\d{2}$/.test(s);
+  let restore = null, blink = null, flip = false;
+
+  function stop() {
+    clearInterval(blink); blink = null;
+    document.title = BASE;
+  }
+
+  function show(txt, over) {
+    clearTimeout(restore);
+
+    if (over) {
+      // time is up: blink so it is noticeable from another tab
+      if (!blink) {
+        blink = setInterval(() => {
+          flip = !flip;
+          document.title = (flip ? "⏰ TIME UP " : "⏱ ") + txt + " · " + BASE;
+        }, 900);
+      }
+    } else {
+      clearInterval(blink); blink = null;
+      document.title = "⏱ " + txt + " · " + BASE;
+    }
+
+    // if nothing ticks for 3s the timer is paused or gone: put the title back
+    restore = setTimeout(stop, 3000);
+  }
+
+  new MutationObserver(muts => {
+    for (const m of muts) {
+      const el = m.target.nodeType === 1 ? m.target : m.target.parentElement;
+      if (!el || !el.classList || !el.classList.contains("timer-display")) continue;
+      const txt = (el.textContent || "").trim();
+      if (!isTime(txt)) continue;
+      show(txt, txt.startsWith("-") || el.classList.contains("over"));
+    }
+  }).observe(document.body, { childList: true, characterData: true, subtree: true });
+
+  window.addEventListener("beforeunload", stop);
+})();
+</script>
+
+</body>
+</html>

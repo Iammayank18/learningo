@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Syllabus v3 — Google Frontend Prep — Mayank Thakur</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ctrl-h:150px;
+  --bg:#eef0f4; --card:#fff; --ink:#0d0f12; --ink2:#5a6069; --ink3:#9aa0aa;
+  --line:#e7e9ed; --line2:#f1f2f5; --lock:#f4f5f7;
+  --ok:#1a7f37; --okbg:#f2fbf5; --warn:#b45309; --bad:#b42318;
+
+  --p-yellow:#ffeab6; --p-mint:#dcf0eb; --p-purple:#e6daff; --p-pink:#ffd6e8;
+  --p-blue:#d6eaff; --p-orange:#ffe4cc; --p-coral:#ffd9d9; --p-green:#d6f5d6;
+  --s-purple:#8b5cf6; --s-yellow:#e0a800; --s-blue:#3b82f6; --s-orange:#f97316;
+  --s-mint:#14b8a6; --s-coral:#ef4444; --s-pink:#ec4899; --s-green:#22c55e;
+
+  --r-lg:20px; --r-md:14px; --r-sm:9px; --r-pill:9999px;
+  --font:'Outfit','Inter',system-ui,sans-serif;
+  --sh:0 1px 2px rgba(13,15,18,.04), 0 6px 20px rgba(13,15,18,.05);
+  --gut:2.25rem;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{max-width:1160px;margin:0 auto;background:var(--bg);font-family:var(--font);
+  color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;line-height:1.5;padding-bottom:5rem;}
+a{color:inherit;}
+button,input,textarea{font-family:var(--font);}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;background:#f1f2f5;
+  padding:1.5px 5px;border-radius:5px;color:#1f2937;}
+pre{background:#fafbfc;border:1px solid var(--line);border-radius:var(--r-sm);padding:.75rem .95rem;
+  overflow-x:auto;margin:.55rem 0;}
+pre code{background:none;padding:0;font-size:12px;line-height:1.6;}
+
+/* ---------------- cover ---------------- */
+.cover{padding:3.2rem var(--gut) 0;}
+.kicker{display:inline-flex;align-items:center;gap:7px;flex-wrap:wrap;max-width:100%;font-size:11px;letter-spacing:.1em;
+  color:var(--ink2);font-weight:700;text-transform:uppercase;background:var(--card);
+  padding:5px 12px;border-radius:var(--r-pill);box-shadow:var(--sh);margin-bottom:.85rem;}
+.kicker b{color:var(--ink);}
+.cover-title{font-size:clamp(30px,5vw,44px);font-weight:700;letter-spacing:-.03em;line-height:1.08;margin-bottom:.55rem;}
+.cover-lede{font-size:14.5px;color:var(--ink2);font-weight:500;max-width:660px;line-height:1.62;}
+
+/* ---------------- hero + stats ---------------- */
+.hero{margin:1.5rem var(--gut) 0;display:grid;grid-template-columns:auto 1fr;gap:1.4rem;
+  background:var(--card);border-radius:var(--r-lg);padding:1.4rem 1.6rem;box-shadow:var(--sh);align-items:center;}
+.ring{position:relative;width:112px;height:112px;flex:none;}
+.ring svg{transform:rotate(-90deg);display:block;}
+.ring-c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.ring-n{font-size:26px;font-weight:700;letter-spacing:-.03em;line-height:1;}
+.ring-l{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);margin-top:3px;}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:.6rem 1.1rem;}
+.tile-k{font-size:9.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink3);font-weight:700;}
+.tile-v{font-size:21px;font-weight:700;letter-spacing:-.025em;margin-top:1px;line-height:1.15;}
+.tile-v small{font-size:13px;color:var(--ink3);font-weight:600;}
+.tile-s{font-size:11px;color:var(--ink2);font-weight:500;margin-top:1px;}
+
+/* ---------------- cards ---------------- */
+.card{margin:.85rem var(--gut) 0;background:var(--card);border-radius:var(--r-lg);
+  padding:1.25rem 1.5rem;box-shadow:var(--sh);}
+.card h2{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);margin-bottom:1rem;}
+.sp-row{display:grid;grid-template-columns:132px 1fr 84px;align-items:center;gap:12px;
+  margin-bottom:9px;font-size:12.5px;font-weight:600;}
+.sp-row:last-child{margin-bottom:0;}
+.sp-name{display:flex;align-items:center;gap:7px;}
+.sp-dot{width:8px;height:8px;border-radius:3px;flex:none;}
+.bar{height:7px;border-radius:var(--r-pill);background:#edeff2;overflow:hidden;}
+.bar>i{display:block;height:100%;border-radius:var(--r-pill);transition:width .45s cubic-bezier(.4,0,.2,1);}
+.sp-num{text-align:right;color:var(--ink2);font-weight:600;font-size:11.5px;font-variant-numeric:tabular-nums;}
+
+details.card summary{cursor:pointer;font-size:11px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--ink3);list-style:none;display:flex;align-items:center;gap:8px;}
+details.card summary::-webkit-details-marker{display:none;}
+details.card summary::after{content:'';width:6px;height:6px;border-right:1.8px solid currentColor;
+  border-bottom:1.8px solid currentColor;transform:rotate(45deg);margin-left:auto;transition:transform .2s;}
+details.card[open] summary::after{transform:rotate(-135deg);}
+details.card[open] summary{color:var(--ink);}
+.rules-body{margin-top:1.1rem;font-size:13.5px;color:var(--ink2);line-height:1.65;}
+.rules-body b{color:var(--ink);}
+.rules-body p{margin-bottom:.8rem;}
+.rules-body p:last-child{margin-bottom:0;}
+.gt{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;margin:.7rem 0 1.1rem;font-size:12.5px;
+  border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden;}
+.gt th,.gt td{padding:7px 10px;text-align:left;border-bottom:1px solid var(--line2);vertical-align:top;overflow-wrap:anywhere;}
+.gt tr:last-child th,.gt tr:last-child td{border-bottom:none;}
+.gt th{background:#fafbfc;font-weight:700;color:var(--ink);font-size:10.5px;
+  text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;}
+
+/* ---------------- controls ---------------- */
+.controls{position:sticky;top:0;z-index:40;margin:1.3rem 0 0;padding:.7rem var(--gut) .75rem;
+  background:rgba(238,240,244,.9);backdrop-filter:saturate(180%) blur(14px);
+  -webkit-backdrop-filter:saturate(180%) blur(14px);border-bottom:1px solid var(--line);}
+.row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+.row+.row{margin-top:7px;}
+.chip{font-size:12px;font-weight:600;padding:5px 12px;border-radius:var(--r-pill);background:var(--card);
+  border:1px solid var(--line);cursor:pointer;transition:.14s;white-space:nowrap;color:var(--ink2);}
+.chip:hover{border-color:#cbd0d8;color:var(--ink);}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink);}
+.chip[class*="sc-"]::before{content:'';display:inline-block;width:7px;height:7px;border-radius:2.5px;
+  margin-right:6px;vertical-align:1px;background:var(--cd);}
+.sc-purple{--cd:var(--s-purple);} .sc-yellow{--cd:var(--s-yellow);} .sc-blue{--cd:var(--s-blue);}
+.sc-orange{--cd:var(--s-orange);} .sc-mint{--cd:var(--s-mint);} .sc-coral{--cd:var(--s-coral);}
+.sc-pink{--cd:var(--s-pink);}
+.seg{display:flex;background:var(--card);border:1px solid var(--line);border-radius:var(--r-pill);padding:2px;gap:2px;}
+.seg .chip{border:none;background:none;padding:4px 11px;box-shadow:none;}
+.seg .chip.on{background:var(--ink);}
+.weeks{display:flex;gap:5px;overflow-x:auto;padding-bottom:2px;flex:1;min-width:0;
+  scrollbar-width:thin;-ms-overflow-style:none;}
+.weeks::-webkit-scrollbar{height:4px;}
+.weeks::-webkit-scrollbar-thumb{background:#d3d7de;border-radius:9999px;}
+.wk{position:relative;flex:none;min-width:34px;height:28px;border-radius:9px;background:var(--card);
+  border:1px solid var(--line);font-size:11.5px;font-weight:700;color:var(--ink2);cursor:pointer;
+  overflow:hidden;transition:.14s;}
+.wk:hover{border-color:#cbd0d8;}
+.wk.on{background:var(--ink);color:#fff;border-color:var(--ink);}
+.wk.lk{color:#c2c7cf;background:var(--lock);}
+.wk.dn{border-color:#bfe6c9;}
+.wk>i{position:absolute;left:0;bottom:0;height:3px;background:var(--ok);transition:width .4s;}
+.wk.on>i{background:#7ee39a;}
+.search{flex:1;min-width:180px;font-size:12.5px;font-weight:500;padding:6px 13px;
+  border-radius:var(--r-pill);border:1px solid var(--line);background:var(--card);outline:none;color:var(--ink);}
+.search::placeholder{color:var(--ink3);}
+.search:focus{border-color:var(--ink);}
+.lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);}
+.dt{font-size:11.5px;font-weight:600;padding:5px 10px;border-radius:var(--r-pill);
+  border:1px solid var(--line);background:var(--card);outline:none;color:var(--ink2);}
+
+/* ---------------- term / week ---------------- */
+.term-head{margin:2rem var(--gut) .7rem;font-size:10.5px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.1em;color:var(--ink3);display:flex;align-items:center;gap:10px;}
+.term-head::after{content:'';flex:1;height:1px;background:var(--line);}
+.termlock{margin:0 var(--gut) 1rem;background:var(--lock);border:1px dashed #d2d6dd;
+  border-radius:var(--r-lg);padding:2rem 1.6rem;text-align:center;}
+.tl-t{font-size:15px;font-weight:700;color:var(--ink2);}
+.tl-s{font-size:12.5px;color:var(--ink3);font-weight:500;margin-top:.45rem;line-height:1.65;}
+
+.week{scroll-margin-top:calc(var(--ctrl-h) + 12px);margin:0 var(--gut) .85rem;background:var(--card);border-radius:var(--r-lg);
+  box-shadow:var(--sh);overflow:hidden;transition:box-shadow .2s;}
+.week.open{box-shadow:0 1px 2px rgba(13,15,18,.04),0 12px 40px rgba(13,15,18,.07);}
+.week.lk{background:var(--lock);box-shadow:none;border:1px dashed #dcdfe4;}
+.week-head{padding:1rem 1.4rem;display:flex;align-items:center;gap:13px;flex-wrap:wrap;cursor:pointer;
+  transition:background .15s;}
+.week-head:hover{background:#fafbfc;}
+.week.lk .week-head{cursor:default;}
+.week.lk .week-head:hover{background:none;}
+.week.open .week-head{border-bottom:1px solid var(--line2);}
+.wnum{width:32px;height:32px;border-radius:11px;background:var(--ink);color:#fff;font-size:12.5px;
+  font-weight:700;display:flex;align-items:center;justify-content:center;flex:none;}
+.week.lk .wnum{background:#cdd2d9;}
+.week.done .wnum{background:var(--ok);}
+.wtitle{font-size:16px;font-weight:700;letter-spacing:-.015em;flex:1;min-width:180px;}
+.week.lk .wtitle{color:var(--ink3);font-weight:600;}
+.wmeta{display:flex;align-items:center;gap:14px;flex:none;}
+.wstat{display:flex;flex-direction:column;gap:2px;}
+.wstat .lbl{font-size:8.5px;}
+.wstat b{font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums;}
+.wstat b.ok{color:var(--ok);}
+.dsawrap{display:flex;align-items:center;gap:5px;}
+.dsain{width:46px;font-size:12px;font-weight:700;padding:2px 5px;border-radius:6px;
+  border:1px solid var(--line);outline:none;text-align:center;color:var(--ink);}
+.dsain:focus{border-color:var(--ink);}
+.wbar{width:96px;}
+.week-body{padding:.55rem 1.4rem 1.3rem;}
+.week:not(.open) .week-body{display:none;}
+.lockmsg{font-size:12.5px;font-weight:600;color:var(--ink3);padding:0 1.4rem 1.1rem;margin-top:-.55rem;
+  display:flex;gap:7px;align-items:flex-start;}
+
+/* ---------------- day ---------------- */
+.day{margin-top:.7rem;border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden;background:var(--card);}
+.day-head{display:flex;align-items:center;gap:10px;padding:.5rem .85rem;background:#fafbfc;
+  border-bottom:1px solid var(--line2);font-size:11.5px;font-weight:700;flex-wrap:wrap;}
+.dname{font-size:11px;letter-spacing:.09em;text-transform:uppercase;min-width:30px;}
+.dmeta{font-size:11px;font-weight:600;color:var(--ink3);}
+.dmeta em{font-style:normal;color:var(--ink2);}
+.tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:var(--r-pill);background:var(--p-blue);color:#1e40af;}
+.tag.warn{background:var(--p-orange);color:var(--warn);}
+.tag.gr{background:var(--p-green);color:var(--ok);}
+.dright{margin-left:auto;display:flex;align-items:center;gap:9px;}
+.dright .bar{width:56px;}
+.dcount{font-size:10.5px;font-weight:700;color:var(--ink3);font-variant-numeric:tabular-nums;}
+
+/* ---------------- period ---------------- */
+.per{display:flex;align-items:flex-start;gap:11px;padding:.6rem .85rem .6rem .7rem;
+  border-top:1px solid var(--line2);flex-wrap:wrap;position:relative;transition:background .15s;}
+.per:first-of-type{border-top:none;}
+.per::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--sc,transparent);}
+.per:hover{background:#fcfcfd;}
+.per.mastered{background:var(--okbg);}
+.per.mastered .ptitle{color:var(--ink2);}
+.per.dropped{opacity:.45;}
+.per.hide{display:none;}
+.sb-purple{--sc:var(--s-purple);} .sb-yellow{--sc:var(--s-yellow);} .sb-blue{--sc:var(--s-blue);}
+.sb-orange{--sc:var(--s-orange);} .sb-mint{--sc:var(--s-mint);} .sb-coral{--sc:var(--s-coral);}
+.sb-pink{--sc:var(--s-pink);} .sb-green{--sc:var(--s-green);} .sb-grey{--sc:#d4d8de;}
+.pnum{width:20px;height:20px;border-radius:6px;background:#f1f2f5;font-size:10.5px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;flex:none;margin-top:2px;color:var(--ink3);}
+.pmain{flex:1;min-width:210px;}
+.ptitle{font-size:13.5px;font-weight:600;line-height:1.4;letter-spacing:-.005em;}
+.pmeta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:4px;}
+.pill{font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:var(--r-pill);white-space:nowrap;letter-spacing:.02em;}
+.c-purple{background:var(--p-purple);color:#5b21b6;} .c-yellow{background:var(--p-yellow);color:#854d0e;}
+.c-blue{background:var(--p-blue);color:#1e40af;}     .c-orange{background:var(--p-orange);color:#9a3412;}
+.c-mint{background:var(--p-mint);color:#0f766e;}     .c-coral{background:var(--p-coral);color:#991b1b;}
+.c-pink{background:var(--p-pink);color:#9d174d;}     .c-green{background:var(--p-green);color:#166534;}
+.c-grey{background:#f1f2f5;color:var(--ink3);}
+.wt{font-size:9.5px;font-weight:700;color:var(--ink3);letter-spacing:.03em;text-transform:uppercase;}
+.wt.H{color:var(--ink);}
+.wt.H::before{content:'▲ ';font-size:8px;}
+.pchapter{font-size:11.5px;font-weight:500;color:var(--ink3);text-decoration:none;
+  border-bottom:1px solid transparent;transition:.14s;}
+.pchapter:hover{color:var(--ink);border-bottom-color:var(--line);}
+.pchapter::after{content:' ↗';font-size:9px;opacity:.55;}
+.gates{display:flex;gap:4px;flex:none;margin-top:1px;}
+.gate{width:26px;height:26px;border-radius:7px;border:1.5px solid var(--line);background:#fff;cursor:pointer;
+  font-size:10.5px;font-weight:700;color:var(--ink3);transition:.12s;}
+.gate:hover{border-color:#aeb4bd;color:var(--ink2);}
+.gate.on{background:var(--ok);border-color:var(--ok);color:#fff;}
+.gate:active{transform:scale(.92);}
+.bufin{width:100%;font-size:12.5px;font-weight:500;padding:5px 10px;border-radius:var(--r-sm);
+  border:1px dashed #cfd3da;background:#fbfcfd;outline:none;color:var(--ink);}
+.bufin::placeholder{color:var(--ink3);}
+.bufin:focus{border-color:var(--ink);border-style:solid;background:#fff;}
+
+/* ---------------- exam ---------------- */
+.exam-bar{padding:.7rem .85rem;display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+  border-bottom:1px solid var(--line2);}
+.ename{font-size:13px;font-weight:700;flex:1;min-width:150px;letter-spacing:-.01em;}
+.ein{width:64px;font-size:12px;font-weight:700;padding:4px 8px;border-radius:var(--r-sm);
+  border:1px solid var(--line);outline:none;text-align:center;color:var(--ink);}
+.ein:focus{border-color:var(--ink);}
+.ein:disabled{background:#f4f5f7;color:var(--ink3);cursor:not-allowed;}
+.gap{font-size:11px;font-weight:700;padding:3px 10px;border-radius:var(--r-pill);background:#f1f2f5;color:var(--ink3);}
+.gap.pass{background:var(--p-green);color:var(--ok);}
+.gap.fail{background:var(--p-coral);color:var(--bad);}
+.examlock{padding:1.5rem 1.2rem;background:var(--lock);text-align:center;}
+.el-t{font-size:13.5px;font-weight:700;color:var(--ink2);}
+.el-s{font-size:12.5px;color:var(--ink3);font-weight:500;margin-top:.4rem;line-height:1.6;max-width:520px;margin-inline:auto;}
+.qsec{padding:.85rem .95rem;border-top:1px solid var(--line2);}
+.qsec-h{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink3);margin-bottom:.55rem;}
+.qlist{list-style:none;counter-reset:q;}
+.qlist li{counter-increment:q;position:relative;padding:.5rem 0 .5rem 28px;font-size:13.5px;
+  line-height:1.62;border-top:1px solid var(--line2);}
+.qlist li:first-child{border-top:none;padding-top:.15rem;}
+.qlist li::before{content:counter(q);position:absolute;left:0;top:.55rem;width:19px;height:19px;
+  border-radius:6px;background:var(--ink);color:#fff;font-size:9.5px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;}
+.qlist li:first-child::before{top:.2rem;}
+
+/* ---------------- footer ---------------- */
+.footer{margin:2.2rem var(--gut) 0;background:var(--card);border-radius:var(--r-lg);
+  padding:1.25rem 1.5rem;box-shadow:var(--sh);}
+.footer h2{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);margin-bottom:.85rem;}
+.btn{font-size:12px;font-weight:600;padding:6px 14px;border-radius:var(--r-pill);
+  border:1px solid var(--line);background:#fff;cursor:pointer;color:var(--ink2);transition:.14s;}
+.btn:hover{border-color:var(--ink);color:var(--ink);}
+.btn.dark{background:var(--ink);color:#fff;border-color:var(--ink);}
+.io{width:100%;margin-top:.8rem;min-height:66px;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+  padding:.7rem;border-radius:var(--r-sm);border:1px solid var(--line);outline:none;resize:vertical;color:var(--ink2);}
+.note{font-size:12px;color:var(--ink3);margin-top:.7rem;}
+
+@media (max-width:720px){
+  :root{--gut:1rem;}
+  .kicker{font-size:9.5px;letter-spacing:.06em;gap:4px;}
+  .gt{font-size:11.5px;}
+  .gt th,.gt td{padding:6px 7px;}
+  .gt th{white-space:normal;}
+  .cover{padding-top:2.2rem;}
+  .hero{grid-template-columns:1fr;justify-items:center;text-align:center;gap:1.1rem;}
+  .tiles{width:100%;text-align:left;}
+  .sp-row{grid-template-columns:104px 1fr 70px;}
+  .wmeta{width:100%;justify-content:space-between;}
+  .wbar{width:100%;flex:1;}
+}
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="kicker">v3 · <b>16 weeks</b> · <b>288 periods</b> · <b>190 DSA problems</b> · <b>263 exam questions</b></div>
+  <h1 class="cover-title">Syllabus — Google Frontend Prep</h1>
+  <p class="cover-lede">Har period ek atomic topic. Content journals mein hai — har row wahin point karti hai.
+  Exam locked hai: week ke saare topics mastered hone chahiye <b>aur</b> exam ka din hona chahiye.
+  Agla week tabhi khulega jab pichhla exam pass ho.</p>
+</div>
+
+<div class="hero">
+  <div class="ring">
+    <svg width="112" height="112" viewBox="0 0 112 112">
+      <circle cx="56" cy="56" r="48" fill="none" stroke="#edeff2" stroke-width="11"/>
+      <circle id="ringArc" cx="56" cy="56" r="48" fill="none" stroke="#1a7f37" stroke-width="11"
+        stroke-linecap="round" stroke-dasharray="301.6" stroke-dashoffset="301.6"
+        style="transition:stroke-dashoffset .6s cubic-bezier(.4,0,.2,1)"/>
+    </svg>
+    <div class="ring-c"><div class="ring-n" id="ringPct">0%</div><div class="ring-l">mastered</div></div>
+  </div>
+  <div class="tiles" id="tiles"></div>
+</div>
+
+<div class="card">
+  <h2>Subject Progress</h2>
+  <div id="subprog"></div>
+</div>
+
+<details class="card">
+  <summary>Rules — atomic topic · 6-unit budget · mastery gate · lock system</summary>
+  <div class="rules-body">
+    <p><b>1 — Atomic topic.</b> Ek period mein ek hi topic. Agar explain karte waqt doosra topic samjhana pad raha hai,
+    toh woh do topics the — todo, doosre ko buffer mein daalo.</p>
+
+    <p><b>2 — Din ka budget 6 unit.</b> Light 1 · Medium 1.5 · Heavy ▲ 2.
+    Din ka total budget se upar gaya toh <b>aakhir se period gir jaate hain</b> buffer mein. Har din ke header pe uske units likhe hain.
+    Isliye zyadatar din 3 period ke hain, kuch 4 ke.</p>
+
+    <p><b>3 — Weekly grid.</b> DSA 4 · JavaScript 3 · React/FE 3 · Machine Coding 3 · Browser/Web 2 · SysDesign 2 · Behavioral 1
+    = <b>18 sessions</b> + <b>2 buffer</b> (10%).</p>
+    <table class="gt">
+      <tr><th></th><th>P1</th><th>P2</th><th>P3</th><th>P4</th></tr>
+      <tr><th>Mon</th><td>DSA</td><td>JavaScript</td><td>Browser/Web</td><td>Machine Coding</td></tr>
+      <tr><th>Tue</th><td>DSA</td><td>React/FE</td><td>Browser/Web</td><td>Machine Coding</td></tr>
+      <tr><th>Wed</th><td>DSA</td><td>JavaScript</td><td>SysDesign</td><td><i>buffer</i></td></tr>
+      <tr><th>Thu</th><td>DSA</td><td>JavaScript</td><td>React/FE</td><td>Machine Coding</td></tr>
+      <tr><th>Fri</th><td>React/FE</td><td>SysDesign</td><td>Behavioral</td><td><i>buffer</i></td></tr>
+      <tr><th>Sat</th><td>Spiral Revision</td><td>DSA Volume Block</td><td>Machine Coding Lab</td><td></td></tr>
+      <tr><th>Sun</th><td colspan="4"><b>EXAM</b></td></tr>
+    </table>
+
+    <p><b>4 — Mastery gate.</b> <b>E</b> bina notes 3 min bolkar explain · <b>I</b> khaali file se implement ·
+    <b>A</b> unseen problem pe apply · <b>Q</b> 2 follow-up jhelo. Chaaron hare tabhi topic complete.</p>
+
+    <p><b>5 — Lock system.</b> Main strict examiner hu:</p>
+    <table class="gt">
+      <tr><th>Kya</th><th>Kab khulega</th></tr>
+      <tr><td>Week ka exam</td><td>Week ke <b>saare</b> topics mastered <b>aur</b> exam ka din aa gaya</td></tr>
+      <tr><td>Agla week</td><td>Pichhle week ka exam pass (≥ <span id="pmk"></span>)</td></tr>
+      <tr><td>Agla term</td><td>Pichhle term ke chaaron week cleared</td></tr>
+    </table>
+    <p>Start date set kar doge toh exam us week ke Sunday se khulega. Nahi set kiya toh sirf Sunday ko khulega.
+    Jaldi khatam kar loge toh bhi exam apne din se pehle nahi khulega — aur agla term dikhega hi nahi.</p>
+
+    <p><b>6 — Spiral revision.</b> D+7, D+21, D+56. Har Saturday: is hafta + pichhla hafta + 3 hafte pehle.</p>
+
+    <p><b>7 — Predicted score pehle likho.</b> Actual ka box tab tak band rahega. Asli data gap hai, score nahi.</p>
+
+    <p><b>8 — Google Doc rule.</b> DSA aur frontend-round ki saari practice ek <b>plain Google Doc</b> mein —
+    no autocomplete, no syntax highlighting, no run button. Google ka asli interview isi mein hota hai.
+    IDE mein practice karke doc mein fail hona sabse common trap hai.</p>
+
+    <p><b>9 — Speed rule.</b> Ek medium <b>20 minute</b> mein na aaye toh woh topic <b>mastered nahi</b> hai.
+    Google ka bar "eventually solve" nahi, "15–20 min mein solve" hai. A-gate ka matlab hi timed solve hai.</p>
+
+    <p><b>10 — DSA problem volume.</b> 16 hafte ka target <b>190 problems</b>. Har week ke header pe uska apna
+    target hai aur counter bhi — number wahin bharo. Sirf topic samajhna kaafi nahi, volume chahiye
+    (Grind 75 = 75 problems, NeetCode 150 = 150).</p>
+  </div>
+</details>
+
+<details class="card">
+  <summary>Kya-kya badla — aur kya abhi bhi risk hai</summary>
+  <div class="rules-body">
+    <p>Sources: Google FE guide (Frontend Interview Handbook), NeetCode roadmap, Tech Interview Handbook / Grind&nbsp;75,
+    javascript.info, web.dev Learn CSS / HTML / Accessibility / Performance, GreatFrontEnd, MDN curriculum, roadmap.sh, react.dev.</p>
+
+    <p><b>v1 → v2 — research ke baad</b></p>
+    <table class="gt">
+      <tr><th>Badla</th><th>Kyun</th></tr>
+      <tr><td>React 31 slot → 15</td><td>Google ka FE round framework-agnostic hai; Fiber / render-phase / React Query reported <i>over-studied</i></td></tr>
+      <tr><td>Machine Coding: polyfill 30 → 14, vanilla UI W11 → W4</td><td>Google ka round hi hai <i>live vanilla UI banao</i></td></tr>
+      <tr><td>OS + DB ke 6 slot hataye</td><td>Google FE loop mein report hi nahi hote</td></tr>
+      <tr><td>Web security W14 → W8</td><td>Google ki apni guide mein XSS/XSRF naam lekar likha hai</td></tr>
+      <tr><td>DSA: Dijkstra, Union-Find, Bit Manipulation cut; LRU, rotated search, Top-K, K-way merge, combinations, Min Stack add</td><td>NeetCode / Grind-75 core jo v1 mein tha hi nahi</td></tr>
+      <tr><td>JS: Execution Context W1, Prototypes W5, try/catch async se pehle</td><td>Prerequisite violations theek kiye</td></tr>
+    </table>
+
+    <p><b>v2 → v3 — aapke level ke hisab se (working FE dev, DSA kamzor) + adversarial audit</b></p>
+    <table class="gt">
+      <tr><th>Badla</th><th>Kyun</th></tr>
+      <tr><td><b>CSS/HTML 24 slot → 14</b> — box model, selectors, units, media-query basics, pseudo-classes cut</td>
+          <td>Aapko ye aata hai. Sirf woh bache jo React devs ka aksar kamzor hota hai: stacking context, container queries, focus management, ARIA, accessible forms, compositor animation</td></tr>
+      <tr><td><b>15 slot timed FE-round drills</b> (Week 11–16)</td>
+          <td>Google ka FE round <i>performance</i> hai, knowledge nahi. Aapki taakat ko speed mein badalna hai</td></tr>
+      <tr><td><b>4 slot vanilla-DOM rustiness</b></td>
+          <td>React dev ka sabse bada blind spot — bina framework DOM banana, delegation, state, teardown</td></tr>
+      <tr><td><b>DSA problem volume target — 190 problems</b>, har week ka apna number + counter</td>
+          <td>v2 mein volume ka koi target hi nahi tha. Sirf topic padhna kaafi nahi</td></tr>
+      <tr><td><b>Saturday ab 3 block</b> — spiral revision + <b>DSA volume block</b> + MC lab</td>
+          <td>DSA weekly touch 4 se 6 ho gaya, bina aapka weekday grid chhede</td></tr>
+      <tr><td><b>Day budget 4 → 6 unit</b> (arithmetic fix)</td>
+          <td>Mera pehla rule galat tha: 18 sessions × avg 1.68 = ~30 unit/week = 6 unit/din. 4 likhna meri galti thi</td></tr>
+      <tr><td><b>Google Doc rule</b> + <b>Speed rule</b></td>
+          <td>Google ka interview plain doc mein hota hai, aur bar speed hai — yahi sabse likely rejection reason hai</td></tr>
+    </table>
+
+    <p><b>Jo abhi bhi risk hai — honest</b></p>
+    <table class="gt">
+      <tr><th>Risk</th><th>Baat</th></tr>
+      <tr><td>DSA 22% study time, ~50% loop weight</td>
+          <td>Aapne DSA 4/week fix rakha. Phone screen aur onsite DSA rounds pure gate hain — wahan frontend ki taakat ka credit nahi milta. Saturday block se weekly touch 6 ho gaya, lekin mismatch bacha hua hai. <b>Agar Week 4 ke exam mein DSA section 60% se neeche aaye toh DSA 5–6 sessions/week karna padega.</b></td></tr>
+      <tr><td>Content ≈ capacity</td>
+          <td>30.3 unit/week content vs 30 unit capacity. ~39 period buffer mein girenge, buffer capacity 32 — yaani 16 hafte mein ~7 topic week-extension mein jayenge. Ye plan hai, failure nahi.</td></tr>
+      <tr><td>System design round inconsistent</td>
+          <td>Google FE ka design round kabhi frontend-specific hota hai kabhi generic backend HLD — reports conflict karti hain. Plan sirf frontend side cover karta hai.</td></tr>
+    </table>
+  </div>
+</details>
+
+<div class="controls" id="ctrl">
+  <div class="row">
+    <div class="seg">
+      <button class="chip on" data-term="all">All</button>
+      <button class="chip" data-term="1">T1</button>
+      <button class="chip" data-term="2">T2</button>
+      <button class="chip" data-term="3">T3</button>
+      <button class="chip" data-term="4">T4</button>
+    </div>
+    <input class="search" id="q" type="search" placeholder="Search — closures, grid, CORS, focus trap…">
+    <input class="dt" id="sd" type="date" title="Start date — isse exam ka din tay hota hai">
+    <button class="chip" id="jump">↓ Current week</button>
+  </div>
+  <div class="row">
+    <span class="lbl">Week</span>
+    <div class="weeks" id="weekchips"></div>
+  </div>
+  <div class="row">
+    <span id="subjchips" style="display:contents"></span>
+    <span style="flex:1"></span>
+    <div class="seg">
+      <button class="chip on" data-status="all">All</button>
+      <button class="chip" data-status="todo">Todo</button>
+      <button class="chip" data-status="wip">Doing</button>
+      <button class="chip" data-status="done">Done</button>
+    </div>
+  </div>
+</div>
+
+<div id="content"></div>
+
+<div class="footer">
+  <h2>Backup</h2>
+  <button class="btn dark" id="expBtn">Export progress</button>
+  <button class="btn" id="impBtn">Import</button>
+  <button class="btn" id="clrBtn">Reset everything</button>
+  <textarea class="io" id="io" placeholder="Export dabao — JSON yahan aayega. Import ke liye JSON paste karke Import dabao."></textarea>
+  <p class="note">Progress isi browser mein save hota hai. Browser badalne se pehle export kar lena.</p>
+</div>
+
+<script>
+const DATA = {"weeks": [{"n": 1, "title": "Complexity, Strings & HTML/CSS ki neev", "days": [{"d": "Mon", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Big-O & Space Complexity", "w": "L", "jl": "DSA → Foundation", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w1-Mon-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Execution Context & Call Stack", "w": "H", "jl": "JS → Functions & Execution", "jh": "journal/frontend/js-mastery-journal.html", "id": "w1-Mon-2"}, {"p": 3, "buffer": false, "sub": "Browser/Web", "sc": "mint", "t": "DOM — tree, nodes, traversal", "w": "M", "jl": "CSS/HTML → Rendering & Performance", "jh": "journal/frontend/css-mastery-journal.html", "id": "w1-Mon-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Polyfill — Array.prototype.map", "w": "M", "jl": "MachineCoding → Polyfill Core", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w1-Mon-4"}], "heavy": 1, "units": 6.0, "drop": [], "kept": 4}, {"d": "Tue", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Arrays in JS — index, read, write", "w": "L", "jl": "DSA → Foundation", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w1-Tue-1"}, {"p": 2, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "Cascade, Specificity & Inheritance — interview level", "w": "M", "jl": "CSS/HTML → CSS Core", "jh": "journal/frontend/css-mastery-journal.html", "id": "w1-Tue-2"}, {"p": 3, "buffer": false, "sub": "Browser/Web", "sc": "mint", "t": "CSSOM & computed styles", "w": "M", "jl": "CSS/HTML → Rendering & Performance", "jh": "journal/frontend/css-mastery-journal.html", "id": "w1-Tue-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Polyfill — Array.prototype.filter", "w": "M", "jl": "MachineCoding → Polyfill Core", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w1-Tue-4"}], "heavy": 0, "units": 5.5, "drop": [], "kept": 4}, {"d": "Wed", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Strings & Characters — immutability, charCode", "w": "M", "jl": "DSA → Core Data Structures", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w1-Wed-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "var / let / const & Hoisting", "w": "M", "jl": "JS → Foundations & Types", "jh": "journal/frontend/js-mastery-journal.html", "id": "w1-Wed-2"}, {"p": 3, "buffer": false, "sub": "SysDesign", "sc": "coral", "t": "RADIO framework — FE system design ka structure", "w": "H", "jl": "FE SysDesign → Component Design", "jh": "journal/frontend/frontend-system-design-journal.html", "id": "w1-Wed-3"}, {"p": 4, "buffer": true, "id": "w1-Wed-4"}], "heavy": 1, "units": 5.0, "drop": [], "kept": 3}, {"d": "Thu", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "String building & reversal", "w": "M", "jl": "DSA → Core Data Structures → Arrays & Strings", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w1-Thu-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Primitive vs Reference Types", "w": "M", "jl": "JS → Foundations & Types", "jh": "journal/frontend/js-mastery-journal.html", "id": "w1-Thu-2"}, {"p": 3, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "Normal Flow & Margin Collapsing", "w": "M", "jl": "CSS/HTML → CSS Core", "jh": "journal/frontend/css-mastery-journal.html", "id": "w1-Thu-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Polyfill — Array.prototype.reduce", "w": "H", "jl": "MachineCoding → Polyfill Core", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w1-Thu-4"}], "heavy": 1, "units": 6.5, "drop": [4], "kept": 3}, {"d": "Fri", "periods": [{"p": 1, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "DOM bina framework — create, insert, mutate", "w": "M", "jl": "JS → Advanced & Browser APIs", "jh": "journal/frontend/js-mastery-journal.html", "id": "w1-Fri-1"}, {"p": 2, "buffer": false, "sub": "SysDesign", "sc": "coral", "t": "Requirements Gathering — functional vs non-functional", "w": "M", "jl": "FE SysDesign → Component Design", "jh": "journal/frontend/frontend-system-design-journal.html", "id": "w1-Fri-2"}, {"p": 3, "buffer": false, "sub": "Behavioral", "sc": "pink", "t": "STAR Mechanics — Situation, Task, Action, Result", "w": "M", "jl": "Behavioral → Phase 0 — STAR Framework", "jh": "behavioral-roadmap.html", "id": "w1-Fri-3"}, {"p": 4, "buffer": true, "id": "w1-Fri-4"}], "heavy": 0, "units": 4.5, "drop": [], "kept": 3}], "spiral": [1], "mcLab": {"t": "Is hafte ke 3 MC problems mein se 1 — 45 min timed, bina notes", "jl": "MachineCoding → Polyfill Core", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w1-sat-mc"}, "satId": "w1-sat-rev", "satDsa": {"t": "DSA volume block — is hafte ke pattern se 3 problem + 1 purana, timed", "jl": "DSA → Interview Ready → Timed Mock Sessions", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w1-sat-dsa"}, "dsaTarget": 8, "exam": {"n": 1, "term": false, "final": false, "sections": [{"h": "A — DSA · 45 min", "q": ["Ek function likho jo string ko reverse kare **bina** built-in reverse() ke. Fir uski time aur space complexity batao aur justify karo.", "`for (let i = 0; i < arr.length; i++)` vs `arr.forEach()` — dono ka Big-O same hai. Fir bhi ek interview mein kaunsa likhoge aur kyun?", "Given `[1,2,3,4]`, in-place `[4,3,2,1]` banao — O(1) extra space mein. Code likho, fir bolkar samjhao.", "Ye teen loops ki complexity batao: (a) nested loop jahan andar wala `j = i` se shuru ho, (b) `while (n > 1) n = n / 2`, (c) recursion jo har call mein 2 calls kare depth n tak."]}, {"h": "B — JavaScript · 20 min", "q": ["Output batao aur **kyun** batao:\n```js\nconsole.log(a); var a = 1;\nconsole.log(b); let b = 2;\n```", "Execution context create hone ke 2 phase kaunse hain? Hoisting inme se kis phase ka result hai?", "```js\nlet x = {n:1}; let y = x; y.n = 2; console.log(x.n);\nlet p = 1; let q = p; q = 2; console.log(p);\n```\nDono ka output aur ek line ka reason.", "`typeof null` kya deta hai? Ye bug hai ya design? Ek line mein."]}, {"h": "C — React / Frontend · 20 min", "q": ["`<div>` ki jagah `<section>`, `<article>`, `<nav>` kab use karoge? Ek chhota page ka semantic markup likho — header, nav, main content, sidebar, footer.", "`box-sizing: border-box` aur `content-box` mein farak — ek box jiska `width: 200px; padding: 20px; border: 5px` hai, dono cases mein rendered width kya hogi?", "`display: block`, `inline`, `inline-block` — teeno mein width/height aur margin ka behaviour kaise alag hai? Ek-ek example."]}, {"h": "D — Machine Coding · 30 min · bina notes", "q": ["`Array.prototype.myMap` likho. Callback ko `(element, index, array)` teeno mile, `thisArg` support ho, aur sparse array (`[1,,3]`) sahi handle ho.", "Fir `myReduce` likho — initialValue diya ho tab aur na diya ho tab, dono. Khali array + no initialValue pe kya hona chahiye?"]}, {"h": "E — Browser & System Design · 15 min", "q": ["DOM aur CSSOM alag-alag kyun bante hain? Agar CSS `<body>` ke end mein ho to kya hota hai?", "RADIO ke 5 letters kya hain? Ek line har ek ke liye.", "'Design a search box' — sirf **requirements gathering** karo. 4 functional aur 4 non-functional requirement likho, koi solution mat do."]}, {"h": "F — Behavioral · 10 min · bolkar", "q": ["STAR format mein ek story bolo — koi bhi technical problem. Timer laga ke 2 minute. Fir khud sun ke batao: kitni baar 'we' bola aur kitni baar 'I'?"]}]}}, {"n": 2, "title": "Two Pointers, Sliding Window & Cascade", "days": [{"d": "Mon", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Two Pointers — opposite ends", "w": "M", "jl": "DSA → Core Patterns → Two Pointers", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w2-Mon-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Type Coercion", "w": "M", "jl": "JS → Foundations & Types", "jh": "journal/frontend/js-mastery-journal.html", "id": "w2-Mon-2"}, {"p": 3, "buffer": false, "sub": "Browser/Web", "sc": "mint", "t": "Critical Rendering Path", "w": "H", "jl": "CSS/HTML → Rendering & Performance", "jh": "journal/frontend/css-mastery-journal.html", "id": "w2-Mon-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Polyfill — call / apply / bind", "w": "H", "jl": "MachineCoding → Polyfill Core", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w2-Mon-4"}], "heavy": 2, "units": 7.0, "drop": [4], "kept": 3}, {"d": "Tue", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Two Pointers — same direction", "w": "M", "jl": "DSA → Core Patterns → Two Pointers", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w2-Tue-1"}, {"p": 2, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "Flexbox — grow / shrink / basis (asli confusing part)", "w": "M", "jl": "CSS/HTML → Layout", "jh": "journal/frontend/css-mastery-journal.html", "id": "w2-Tue-2"}, {"p": 3, "buffer": false, "sub": "Browser/Web", "sc": "mint", "t": "Reflow vs Repaint vs Composite", "w": "H", "jl": "CSS/HTML → Rendering & Performance", "jh": "journal/frontend/css-mastery-journal.html", "id": "w2-Tue-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Flatten Nested Array", "w": "M", "jl": "MachineCoding → JavaScript Beginner", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w2-Tue-4"}], "heavy": 1, "units": 6.5, "drop": [4], "kept": 3}, {"d": "Wed", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Sliding Window — fixed size", "w": "M", "jl": "DSA → Core Patterns → Sliding Window", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w2-Wed-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "== vs === (Abstract vs Strict Equality)", "w": "M", "jl": "JS → Foundations & Types", "jh": "journal/frontend/js-mastery-journal.html", "id": "w2-Wed-2"}, {"p": 3, "buffer": false, "sub": "SysDesign", "sc": "coral", "t": "Component API Design", "w": "H", "jl": "FE SysDesign → Component Design", "jh": "journal/frontend/frontend-system-design-journal.html", "id": "w2-Wed-3"}, {"p": 4, "buffer": true, "id": "w2-Wed-4"}], "heavy": 1, "units": 5.0, "drop": [], "kept": 3}, {"d": "Thu", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Sliding Window — variable size", "w": "H", "jl": "DSA → Core Patterns → Sliding Window", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w2-Thu-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "null vs undefined vs NaN", "w": "L", "jl": "JS → Foundations & Types", "jh": "journal/frontend/js-mastery-journal.html", "id": "w2-Thu-2"}, {"p": 3, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "CSS Grid — tracks, areas, auto-placement", "w": "M", "jl": "CSS/HTML → Layout", "jh": "journal/frontend/css-mastery-journal.html", "id": "w2-Thu-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "DOM Tree Traversal — DFS, predicate se node dhundo", "w": "H", "jl": "MachineCoding → Vanilla Medium", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w2-Thu-4"}], "heavy": 2, "units": 6.5, "drop": [4], "kept": 3}, {"d": "Fri", "periods": [{"p": 1, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "Event listeners, delegation & custom events", "w": "M", "jl": "JS → Advanced & Browser APIs", "jh": "journal/frontend/js-mastery-journal.html", "id": "w2-Fri-1"}, {"p": 2, "buffer": false, "sub": "SysDesign", "sc": "coral", "t": "Composition over Configuration", "w": "M", "jl": "FE SysDesign → Component Design", "jh": "journal/frontend/frontend-system-design-journal.html", "id": "w2-Fri-2"}, {"p": 3, "buffer": false, "sub": "Behavioral", "sc": "pink", "t": "Googliness & Leadership — 8 traits jinpe judge hoga", "w": "M", "jl": "Behavioral → Phase 3 → Google / Meta / LinkedIn", "jh": "behavioral-roadmap.html", "id": "w2-Fri-3"}, {"p": 4, "buffer": true, "id": "w2-Fri-4"}], "heavy": 0, "units": 4.5, "drop": [], "kept": 3}], "spiral": [2, 1], "mcLab": {"t": "Is hafte ke 3 MC problems mein se 1 — 45 min timed, bina notes", "jl": "MachineCoding → Polyfill Core", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w2-sat-mc"}, "satId": "w2-sat-rev", "satDsa": {"t": "DSA volume block — is hafte ke pattern se 3 problem + 1 purana, timed", "jl": "DSA → Interview Ready → Timed Mock Sessions", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w2-sat-dsa"}, "dsaTarget": 12, "exam": {"n": 2, "term": false, "final": false, "sections": [{"h": "A — DSA · 45 min", "q": ["Sorted array mein do numbers dhundo jinka sum target ho — O(n) time, O(1) space. Two pointers kyun kaam karta hai, prove karo.", "Longest substring without repeating characters — variable sliding window se. Window kab shrink hoti hai?", "Array of size n, k size ka maximum sum subarray — fixed window. Naive O(n·k) se O(n) tak kaise pahunche?", "**Recall (W1):** `[3,1,2]` ko in-place sort kiye bina batao ki uska reverse kya hoga aur complexity kya hai."]}, {"h": "B — JavaScript · 20 min", "q": ["```js\nconsole.log(1 + '1');  console.log(1 - '1');\nconsole.log([] + {}); console.log([] == false);\n```\nChaaron ka output + coercion ka rule jo lagta hai.", "`==` ka algorithm 4 steps mein likho (jab types alag ho).", "`NaN === NaN` false kyun hai? NaN check karne ka sahi tarika kya hai?", "`null == undefined` true hai lekin `null === undefined` false. Kyun?"]}, {"h": "C — React / Frontend · 20 min", "q": ["`p { color: red }`, `.text { color: blue }`, `#main p { color: green }` — teeno match karte hain. Kaunsa jeetega aur specificity ka number kya hai?", "`em` aur `rem` mein farak. Nested `font-size: 1.5em` teen level deep — final size kya?", "`!important` kab justified hai? Ek case batao jahan usse bachne ka behtar tarika hai."]}, {"h": "D — Machine Coding · 30 min · bina notes", "q": ["`myBind` likho — partial application support kare, aur `new` ke saath call hone par bound `this` ignore ho (asli bind ka behaviour).", "Ek DOM tree diya hai. Aisa function likho jo root se DFS kare aur pehla node return kare jo predicate satisfy kare. Recursive aur iterative — dono."]}, {"h": "E — Browser & System Design · 15 min", "q": ["Critical Rendering Path ke steps naam lo — HTML aane se pixel dikhne tak.", "Render-blocking resource kya hai? CSS aur JS dono kaise block karte hain, aur kaise rokoge?", "Component API design: ek `<Rating>` component ka API socho. Kitne props? Controlled bhi ho sake aur uncontrolled bhi — signature likho."]}, {"h": "F — Behavioral · 10 min", "q": ["Google ke 8 Googliness traits mein se 4 naam lo. Apni ek story ko unme se 2 ke against map karo."]}]}}, {"n": 3, "title": "Hashing, Closures & Flexbox", "days": [{"d": "Mon", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Hash Map — lookup & frequency counting", "w": "M", "jl": "DSA → Core Data Structures → Hash Map", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w3-Mon-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Scope Chain & Lexical Environment", "w": "M", "jl": "JS → Foundations & Types", "jh": "journal/frontend/js-mastery-journal.html", "id": "w3-Mon-2"}, {"p": 3, "buffer": false, "sub": "Browser/Web", "sc": "mint", "t": "Layout Thrashing — reads/writes batch karo", "w": "H", "jl": "CSS/HTML → Rendering & Performance", "jh": "journal/frontend/css-mastery-journal.html", "id": "w3-Mon-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Polyfill — find / includes / some / every", "w": "M", "jl": "MachineCoding → Polyfill Core", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w3-Mon-4"}], "heavy": 1, "units": 6.5, "drop": [4], "kept": 3}, {"d": "Tue", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Hash Set — membership & dedupe", "w": "M", "jl": "DSA → Core Data Structures → Hash Set", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w3-Tue-1"}, {"p": 2, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "Positioning & Stacking Contexts — z-index kyun fail hota hai", "w": "H", "jl": "CSS/HTML → Layout", "jh": "journal/frontend/css-mastery-journal.html", "id": "w3-Tue-2"}, {"p": 3, "buffer": false, "sub": "Browser/Web", "sc": "mint", "t": "Core Web Vitals — LCP / INP / CLS", "w": "M", "jl": "Performance → Core Web Vitals", "jh": "journal/devops/performance-journal.html", "id": "w3-Tue-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Implement debounce(fn, delay)", "w": "M", "jl": "MachineCoding → JavaScript Beginner", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w3-Tue-4"}], "heavy": 1, "units": 6.5, "drop": [4], "kept": 3}, {"d": "Wed", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Map/Set vs Object — perf & insertion order", "w": "M", "jl": "DSA → Foundation → Objects, Map and Set", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w3-Wed-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Closures", "w": "H", "jl": "JS → Foundations & Types", "jh": "journal/frontend/js-mastery-journal.html", "id": "w3-Wed-2"}, {"p": 3, "buffer": false, "sub": "SysDesign", "sc": "coral", "t": "Controlled vs Uncontrolled — API design view", "w": "M", "jl": "FE SysDesign → Component Design", "jh": "journal/frontend/frontend-system-design-journal.html", "id": "w3-Wed-3"}, {"p": 4, "buffer": true, "id": "w3-Wed-4"}], "heavy": 1, "units": 5.0, "drop": [], "kept": 3}, {"d": "Thu", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Hash Table Implementation — buckets & collisions", "w": "H", "jl": "DSA → Core Data Structures", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w3-Thu-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "this Keyword", "w": "H", "jl": "JS → Functions & Execution", "jh": "journal/frontend/js-mastery-journal.html", "id": "w3-Thu-2"}, {"p": 3, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "Fluid sizing — clamp() / min() / max()", "w": "M", "jl": "CSS/HTML → Responsive Design", "jh": "journal/frontend/css-mastery-journal.html", "id": "w3-Thu-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Implement throttle(fn, delay)", "w": "M", "jl": "MachineCoding → JavaScript Beginner", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w3-Thu-4"}], "heavy": 2, "units": 7.0, "drop": [4], "kept": 3}, {"d": "Fri", "periods": [{"p": 1, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "Container Queries", "w": "M", "jl": "CSS/HTML → Layout", "jh": "journal/frontend/css-mastery-journal.html", "id": "w3-Fri-1"}, {"p": 2, "buffer": false, "sub": "SysDesign", "sc": "coral", "t": "State Colocation", "w": "M", "jl": "FE SysDesign → Component Design", "jh": "journal/frontend/frontend-system-design-journal.html", "id": "w3-Fri-2"}, {"p": 3, "buffer": false, "sub": "Behavioral", "sc": "pink", "t": "Story Bank — top 5 projects, 8 story slots map karo", "w": "L", "jl": "Behavioral → Phase 1 → Story Research", "jh": "behavioral-roadmap.html", "id": "w3-Fri-3"}, {"p": 4, "buffer": true, "id": "w3-Fri-4"}], "heavy": 0, "units": 4.0, "drop": [], "kept": 3}], "spiral": [3, 2], "mcLab": {"t": "Is hafte ke 3 MC problems mein se 1 — 45 min timed, bina notes", "jl": "MachineCoding → Polyfill Core", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w3-sat-mc"}, "satId": "w3-sat-rev", "satDsa": {"t": "DSA volume block — is hafte ke pattern se 3 problem + 1 purana, timed", "jl": "DSA → Interview Ready → Timed Mock Sessions", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w3-sat-dsa"}, "dsaTarget": 12, "exam": {"n": 3, "term": false, "final": false, "sections": [{"h": "A — DSA · 45 min", "q": ["Group Anagrams — hash map se. Key kya banaoge? Sorting-based key vs count-based key, dono ki complexity.", "Ek array mein woh element dhundo jo sirf ek baar aaya ho, baaki sab do baar. Hash se O(n) space, fir bina extra space ke.", "Apna Hash Table implement karo — `set`, `get`, `delete`. Collision handling batao. Load factor kya hai?", "**Recall (W2):** Sliding window aur two pointers mein structural farak kya hai? Ek problem batao jahan window galat jawab dega."]}, {"h": "B — JavaScript · 20 min", "q": ["Classic: loop mein `var` se 3 setTimeout — output kya, aur `let` se kya? Bina `let` use kiye `var` wale ko fix karo.", "Closure ki ek line definition do jo interviewer ko convince kare. Fir ek counter banao jisme count private ho.", "```js\nconst obj = { name:'a', f(){ return function(){ return this.name; } } };\nconsole.log(obj.f()());\n```\nOutput kya? Teen alag tareeke se fix karo.", "`this` ke 4 binding rules priority order mein likho."]}, {"h": "C — React / Frontend · 20 min", "q": ["Flexbox: 3 items horizontally, beech wala 2x jagah le, aur sab vertically center ho. CSS likho.", "`flex: 1` ka expansion kya hai? `flex-basis: 0` aur `flex-basis: auto` mein farak ek example se.", "Grid mein 12-column responsive layout — `grid-template-columns` ki ek line likho jo bina media query ke responsive ho."]}, {"h": "D — Machine Coding · 30 min · bina notes", "q": ["`debounce(fn, delay)` likho — `.cancel()` aur `.flush()` ke saath. Leading edge option bhi support karo.", "`throttle(fn, delay)` likho. Debounce se kab alag behave karega — ek concrete UI example."]}, {"h": "E — Browser & System Design · 15 min", "q": ["Layout thrashing kya hai? Ye code fix karo:\n```js\nitems.forEach(el => { el.style.height = el.offsetHeight + 10 + 'px'; });\n```", "LCP, INP, CLS — teeno ka 'good' threshold kya hai aur har ek ko kya cheez kharab karti hai?", "Controlled vs uncontrolled component — API design ke nazariye se, ek component dono kaise support kar sakta hai?"]}, {"h": "F — Behavioral · 10 min", "q": ["Apne 8 story slots mein se kaunse 5 project cover karenge — list bolo, har ek ka ek-line result quantified."]}]}}, {"n": 4, "title": "Stack, call/apply/bind & Grid", "days": [{"d": "Mon", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Stack — LIFO & valid parentheses", "w": "M", "jl": "DSA → Core Data Structures → Stack", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w4-Mon-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "call / apply / bind", "w": "M", "jl": "JS → Functions & Execution", "jh": "journal/frontend/js-mastery-journal.html", "id": "w4-Mon-2"}, {"p": 3, "buffer": false, "sub": "Browser/Web", "sc": "mint", "t": "DevTools — flame chart, paint flashing, profiling", "w": "H", "jl": "Performance → Advanced & Monitoring", "jh": "journal/devops/performance-journal.html", "id": "w4-Mon-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Accordion — vanilla DOM", "w": "M", "jl": "MachineCoding → Vanilla Beginner", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w4-Mon-4"}], "heavy": 1, "units": 6.5, "drop": [4], "kept": 3}, {"d": "Tue", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Stack — expression evaluation & parsing", "w": "H", "jl": "DSA → Core Data Structures → Stack", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w4-Tue-1"}, {"p": 2, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "Animation Performance — compositor-friendly", "w": "H", "jl": "CSS/HTML → Animations & Transitions", "jh": "journal/frontend/css-mastery-journal.html", "id": "w4-Tue-2"}, {"p": 3, "buffer": false, "sub": "Browser/Web", "sc": "mint", "t": "Event Capturing & Bubbling", "w": "M", "jl": "JS → Advanced & Browser APIs", "jh": "journal/frontend/js-mastery-journal.html", "id": "w4-Tue-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Tabs with keyboard navigation", "w": "H", "jl": "MachineCoding → Vanilla Beginner", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w4-Tue-4"}], "heavy": 3, "units": 7.5, "drop": [4], "kept": 3}, {"d": "Wed", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Monotonic Stack", "w": "H", "jl": "DSA → Core Data Structures → Monotonic Stack", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w4-Wed-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Arrow Functions", "w": "L", "jl": "JS → Functions & Execution", "jh": "journal/frontend/js-mastery-journal.html", "id": "w4-Wed-2"}, {"p": 3, "buffer": false, "sub": "SysDesign", "sc": "coral", "t": "State Management Architecture", "w": "H", "jl": "FE SysDesign → App Architecture", "jh": "journal/frontend/frontend-system-design-journal.html", "id": "w4-Wed-3"}, {"p": 4, "buffer": true, "id": "w4-Wed-4"}], "heavy": 2, "units": 5.0, "drop": [], "kept": 3}, {"d": "Thu", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Queue & Deque", "w": "M", "jl": "DSA → Core Data Structures → Queue", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w4-Thu-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Higher-Order Functions", "w": "M", "jl": "JS → Functions & Execution", "jh": "journal/frontend/js-mastery-journal.html", "id": "w4-Thu-2"}, {"p": 3, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "Semantic HTML & Landmarks", "w": "L", "jl": "CSS/HTML → HTML Foundations", "jh": "journal/frontend/css-mastery-journal.html", "id": "w4-Thu-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Implement curry(fn)", "w": "H", "jl": "MachineCoding → JavaScript Beginner", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w4-Thu-4"}], "heavy": 1, "units": 6.0, "drop": [], "kept": 4}, {"d": "Fri", "periods": [{"p": 1, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "Forms & Native Validation", "w": "M", "jl": "CSS/HTML → HTML Foundations", "jh": "journal/frontend/css-mastery-journal.html", "id": "w4-Fri-1"}, {"p": 2, "buffer": false, "sub": "SysDesign", "sc": "coral", "t": "Accessibility-first Design", "w": "M", "jl": "FE SysDesign → Component Design", "jh": "journal/frontend/frontend-system-design-journal.html", "id": "w4-Fri-2"}, {"p": 3, "buffer": false, "sub": "Behavioral", "sc": "pink", "t": "Story 1 — Biggest Technical Challenge", "w": "M", "jl": "Behavioral → Phase 1 → Story Writing", "jh": "behavioral-roadmap.html", "id": "w4-Fri-3"}, {"p": 4, "buffer": true, "id": "w4-Fri-4"}], "heavy": 0, "units": 4.5, "drop": [], "kept": 3}], "spiral": [4, 3, 1], "mcLab": {"t": "Is hafte ke 3 MC problems mein se 1 — 45 min timed, bina notes", "jl": "MachineCoding → Vanilla Beginner", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w4-sat-mc"}, "satId": "w4-sat-rev", "satDsa": {"t": "DSA volume block — is hafte ke pattern se 3 problem + 1 purana, timed", "jl": "DSA → Interview Ready → Timed Mock Sessions", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w4-sat-dsa"}, "dsaTarget": 12, "exam": {"n": 4, "term": true, "final": false, "sections": [{"h": "A — DSA · 60 min · cumulative", "q": ["Valid Parentheses — stack se. Fir extend karo: `{[()]}` ke saath-saath `<>` bhi. Edge cases kaunse?", "Daily Temperatures — monotonic stack. Stack mein kya store kar rahe ho aur kyun?", "Basic Calculator II — `\"3+2*2\"` evaluate karo bina eval() ke.", "**Cumulative W1–W3:** Longest substring without repeat (window), Group Anagrams (hash), string reversal (W1) — teeno ek saath, 30 min mein."]}, {"h": "B — JavaScript · 25 min · cumulative", "q": ["`call`, `apply`, `bind` — teeno ka farak aur ek-ek use case. Fir `bind` ko `call` se implement karo.", "Arrow function mein `this` kahan se aata hai? Ek case batao jahan arrow function galat choice hai.", "**Cumulative:** hoisting + closure + this — ek hi snippet jisme teeno ka effect ho, uska output predict karo (main dunga exam mein)."]}, {"h": "C — React / Frontend · 25 min", "q": ["`position: sticky` kab kaam nahi karta? 3 common reasons.", "Stacking context kaunse properties banati hain? `z-index: 9999` kaam kyun nahi kar raha — 3 possible reasons.", "Grid template areas se ek holy-grail layout likho (header, sidebar, main, aside, footer)."]}, {"h": "D — Machine Coding · 45 min · bina notes · cumulative", "q": ["Accordion banao — vanilla DOM. Ek hi item khule ya multiple, dono mode ka option. Keyboard accessible ho (Enter/Space).", "Tabs component — Arrow keys se navigate ho, Home/End kaam kare, `role=\"tablist\"` sahi ho, aur `aria-selected` update ho."]}, {"h": "E — Browser & System Design · 20 min", "q": ["Event capturing aur bubbling — ek nested div structure diya jaye to listener order batao. `stopPropagation` vs `stopImmediatePropagation`.", "State colocation ka rule kya hai? Ek example jahan state ko upar uthana galti thi.", "'Design a Modal system' — RADIO ke R aur A cover karo, 8 minute mein."]}, {"h": "F — Behavioral · 15 min", "q": ["Story 1 (Biggest Technical Challenge) bolo — 2 minute, timed. Fir main 2 follow-up puchhunga."]}]}}, {"n": 5, "title": "Binary Search, Prototypes & Responsive", "days": [{"d": "Mon", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Linear & Binary Search — exact match", "w": "M", "jl": "DSA → Core Algorithms → Binary Search", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w5-Mon-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Prototype Chain & new Keyword", "w": "H", "jl": "JS → OOP & Prototypes", "jh": "journal/frontend/js-mastery-journal.html", "id": "w5-Mon-2"}, {"p": 3, "buffer": false, "sub": "Browser/Web", "sc": "mint", "t": "Event Delegation", "w": "M", "jl": "JS → Advanced & Browser APIs", "jh": "journal/frontend/js-mastery-journal.html", "id": "w5-Mon-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Modal with focus trap", "w": "H", "jl": "MachineCoding → Vanilla Medium", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w5-Mon-4"}], "heavy": 2, "units": 7.0, "drop": [4], "kept": 3}, {"d": "Tue", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Binary Search — rotated sorted array", "w": "H", "jl": "DSA → Core Patterns → Binary Search", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w5-Tue-1"}, {"p": 2, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "ARIA Roles — kab lagana, kab nahi", "w": "M", "jl": "CSS/HTML → HTML Foundations → Accessibility Roles & ARIA", "jh": "journal/frontend/css-mastery-journal.html", "id": "w5-Tue-2"}, {"p": 3, "buffer": false, "sub": "Browser/Web", "sc": "mint", "t": "fetch / XHR — request, abort, streaming", "w": "M", "jl": "JS → Advanced & Browser APIs", "jh": "journal/frontend/js-mastery-journal.html", "id": "w5-Tue-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Toast Notification System", "w": "M", "jl": "MachineCoding → Vanilla Medium", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w5-Tue-4"}], "heavy": 1, "units": 6.5, "drop": [4], "kept": 3}, {"d": "Wed", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Binary Search — on answer / search space", "w": "H", "jl": "DSA → Core Algorithms → Binary Search on a Range", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w5-Wed-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Object.create / assign / freeze / seal", "w": "M", "jl": "JS → OOP & Prototypes", "jh": "journal/frontend/js-mastery-journal.html", "id": "w5-Wed-2"}, {"p": 3, "buffer": false, "sub": "SysDesign", "sc": "coral", "t": "Keyboard Navigation Design", "w": "M", "jl": "FE SysDesign → Search & Input", "jh": "journal/frontend/frontend-system-design-journal.html", "id": "w5-Wed-3"}, {"p": 4, "buffer": true, "id": "w5-Wed-4"}], "heavy": 1, "units": 5.0, "drop": [], "kept": 3}, {"d": "Thu", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Kadane's Algorithm", "w": "M", "jl": "DSA → Core Algorithms", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w5-Thu-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Property Descriptors, Getters & Setters", "w": "M", "jl": "JS → OOP & Prototypes", "jh": "journal/frontend/js-mastery-journal.html", "id": "w5-Thu-2"}, {"p": 3, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "Keyboard Focus Management — tabindex & focus trap", "w": "H", "jl": "CSS/HTML → HTML Foundations", "jh": "journal/frontend/css-mastery-journal.html", "id": "w5-Thu-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Implement once(fn)", "w": "L", "jl": "MachineCoding → JavaScript Beginner", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w5-Thu-4"}], "heavy": 1, "units": 6.0, "drop": [], "kept": 4}, {"d": "Fri", "periods": [{"p": 1, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "Accessible Forms — labels, errors, live regions", "w": "M", "jl": "CSS/HTML → HTML Foundations", "jh": "journal/frontend/css-mastery-journal.html", "id": "w5-Fri-1"}, {"p": 2, "buffer": false, "sub": "SysDesign", "sc": "coral", "t": "Loading / Error / Empty States", "w": "L", "jl": "FE SysDesign → Data Display", "jh": "journal/frontend/frontend-system-design-journal.html", "id": "w5-Fri-2"}, {"p": 3, "buffer": false, "sub": "Behavioral", "sc": "pink", "t": "Story 2 — Handling Ambiguity (Google ka #1 trait)", "w": "M", "jl": "Behavioral → Phase 1 → Story Writing", "jh": "behavioral-roadmap.html", "id": "w5-Fri-3"}, {"p": 4, "buffer": true, "id": "w5-Fri-4"}], "heavy": 0, "units": 4.0, "drop": [], "kept": 3}], "spiral": [5, 4, 2], "mcLab": {"t": "Is hafte ke 3 MC problems mein se 1 — 45 min timed, bina notes", "jl": "MachineCoding → Vanilla Medium", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w5-sat-mc"}, "satId": "w5-sat-rev", "satDsa": {"t": "DSA volume block — is hafte ke pattern se 3 problem + 1 purana, timed", "jl": "DSA → Interview Ready → Timed Mock Sessions", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w5-sat-dsa"}, "dsaTarget": 12, "exam": {"n": 5, "term": false, "final": false, "sections": [{"h": "A — DSA · 45 min", "q": ["Search in Rotated Sorted Array — O(log n). Kaunsa half sorted hai, ye kaise pata karoge?", "Koko Eating Bananas — binary search on answer. Search space kya hai aur predicate kya?", "Maximum Subarray (Kadane's) — DP se relate karke samjhao, sirf formula mat batao.", "Binary search likhte waqt `mid = (lo+hi)/2` mein kya bug ho sakta hai? JS mein bhi?"]}, {"h": "B — JavaScript · 20 min", "q": ["`new` keyword ke 4 internal steps likho. Fir `myNew(Constructor, ...args)` implement karo.", "`__proto__` aur `prototype` mein farak — ek diagram bolkar samjhao.", "`Object.freeze` shallow hai — deep freeze likho.", "Getter/setter kis situation mein plain property se behtar hai? `Object.defineProperty` se ek read-only property banao."]}, {"h": "C — React / Frontend · 20 min", "q": ["Mobile-first vs desktop-first — CSS mein practical farak kya, aur mobile-first ko default kyun maante hain?", "`clamp(1rem, 2.5vw, 2rem)` ka matlab exactly kya hai? Fluid typography ka ek real example likho.", "Container query aur media query — kab container query hi sahi jawab hai?"]}, {"h": "D — Machine Coding · 30 min · bina notes", "q": ["Modal banao focus trap ke saath — Tab/Shift+Tab modal ke andar hi ghume, Escape se band ho, aur band hone par focus wapas trigger button pe jaye. Background scroll lock bhi.", "Toast notification system — stack ho, auto-dismiss ho, manually close ho, aur ek saath max 3 dikhein."]}, {"h": "E — Browser & System Design · 15 min", "q": ["`fetch` request ko abort kaise karoge? AbortController ka code likho.", "GET, POST, PUT, PATCH, DELETE — kaunse idempotent hain aur kaunse safe? Farak samjhao.", "Loading, error, empty state — 3 alag states kyun chahiye? 'Empty' aur 'error' ko merge karna kab galti hai?"]}, {"h": "F — Behavioral · 10 min", "q": ["Story 2 — Handling Ambiguity. Aisa moment jahan requirement clear nahi thi aur tumne aage badhne ka faisla liya. 2 min."]}]}}, {"n": 6, "title": "Prefix Sum, Inheritance & Animations", "days": [{"d": "Mon", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Prefix Sum — 1D", "w": "M", "jl": "DSA → Core Patterns → Prefix Sum", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w6-Mon-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Prototypal vs Classical Inheritance", "w": "H", "jl": "JS → OOP & Prototypes", "jh": "journal/frontend/js-mastery-journal.html", "id": "w6-Mon-2"}, {"p": 3, "buffer": false, "sub": "Browser/Web", "sc": "mint", "t": "HTTP methods & status codes", "w": "L", "jl": "API Design → What is an API? (Week 0)", "jh": "journal/backend/api-design-journal.html", "id": "w6-Mon-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Implement memoize(fn)", "w": "M", "jl": "MachineCoding → JavaScript Beginner", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w6-Mon-4"}], "heavy": 1, "units": 6.0, "drop": [], "kept": 4}, {"d": "Tue", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Intervals — sort, merge, overlap", "w": "M", "jl": "DSA → Core Patterns → Intervals", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w6-Tue-1"}, {"p": 2, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "Color, Contrast & a11y audit — axe / Lighthouse", "w": "M", "jl": "CSS/HTML → HTML Foundations", "jh": "journal/frontend/css-mastery-journal.html", "id": "w6-Tue-2"}, {"p": 3, "buffer": false, "sub": "Browser/Web", "sc": "mint", "t": "HTTP Headers & Content Negotiation", "w": "M", "jl": "API Design → Request & Response Patterns", "jh": "journal/backend/api-design-journal.html", "id": "w6-Tue-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Implement deepEqual(a, b)", "w": "H", "jl": "MachineCoding → JavaScript Medium", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w6-Tue-4"}], "heavy": 1, "units": 6.5, "drop": [4], "kept": 3}, {"d": "Wed", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "2D Matrix Traversal", "w": "M", "jl": "DSA → Core Data Structures", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w6-Wed-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "ES6 Classes & static members", "w": "M", "jl": "JS → OOP & Prototypes", "jh": "journal/frontend/js-mastery-journal.html", "id": "w6-Wed-2"}, {"p": 3, "buffer": false, "sub": "SysDesign", "sc": "coral", "t": "Optimistic Updates", "w": "H", "jl": "FE SysDesign → Data Display", "jh": "journal/frontend/frontend-system-design-journal.html", "id": "w6-Wed-3"}, {"p": 4, "buffer": true, "id": "w6-Wed-4"}], "heavy": 1, "units": 5.0, "drop": [], "kept": 3}, {"d": "Thu", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Matrix Rotation — in place", "w": "H", "jl": "DSA → Core Data Structures → 2D Matrix Traversal", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w6-Thu-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Mixins & Composition", "w": "M", "jl": "JS → OOP & Prototypes", "jh": "journal/frontend/js-mastery-journal.html", "id": "w6-Thu-2"}, {"p": 3, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "Vanilla component — state manage karna bina framework", "w": "H", "jl": "JS → Advanced & Browser APIs", "jh": "journal/frontend/js-mastery-journal.html", "id": "w6-Thu-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Implement groupBy(array, key)", "w": "M", "jl": "MachineCoding → JavaScript Beginner", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w6-Thu-4"}], "heavy": 2, "units": 7.0, "drop": [4], "kept": 3}, {"d": "Fri", "periods": [{"p": 1, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "Vanilla component — teardown & memory leaks", "w": "H", "jl": "JS → Memory & Performance", "jh": "journal/frontend/js-mastery-journal.html", "id": "w6-Fri-1"}, {"p": 2, "buffer": false, "sub": "SysDesign", "sc": "coral", "t": "Pagination vs Infinite Scroll", "w": "M", "jl": "FE SysDesign → Data Display", "jh": "journal/frontend/frontend-system-design-journal.html", "id": "w6-Fri-2"}, {"p": 3, "buffer": false, "sub": "Behavioral", "sc": "pink", "t": "Story 3 — Ownership: jo kaam tumhara tha hi nahi", "w": "M", "jl": "Behavioral → Phase 1 → Story Writing", "jh": "behavioral-roadmap.html", "id": "w6-Fri-3"}, {"p": 4, "buffer": true, "id": "w6-Fri-4"}], "heavy": 1, "units": 5.0, "drop": [], "kept": 3}], "spiral": [6, 5, 3], "mcLab": {"t": "Is hafte ke 3 MC problems mein se 1 — 45 min timed, bina notes", "jl": "MachineCoding → JavaScript Beginner", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w6-sat-mc"}, "satId": "w6-sat-rev", "satDsa": {"t": "DSA volume block — is hafte ke pattern se 3 problem + 1 purana, timed", "jl": "DSA → Interview Ready → Timed Mock Sessions", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w6-sat-dsa"}, "dsaTarget": 12, "exam": {"n": 6, "term": false, "final": false, "sections": [{"h": "A — DSA · 45 min", "q": ["Subarray Sum Equals K — prefix sum + hash map. Hash map mein kya store kar rahe ho?", "Merge Intervals — sort kis basis pe? Overlap ki condition exactly likho.", "Rotate Image (n×n matrix) 90° clockwise, in-place. Transpose + reverse wala trick derive karo, ratto mat.", "Spiral Matrix traversal — 4 boundaries se. Off-by-one kahan hota hai?"]}, {"h": "B — JavaScript · 20 min", "q": ["Prototypal inheritance ES6 class se kaise alag hai — internally same hai kya? `class` sirf syntactic sugar hai, ye statement kitna sach hai?", "`super` kaam kaise karta hai? Constructor mein `super()` se pehle `this` use karne pe kya hota hai?", "Mixin pattern likho — do behaviours ek class mein daalo bina inheritance ke.", "`instanceof` internally kya check karta hai?"]}, {"h": "C — React / Frontend · 20 min", "q": ["`transition` aur `animation` mein farak. Ek hover effect jo `transform` se ho vs `left` se — performance mein farak kyun?", "Compositor-friendly properties kaunsi hain? `will-change` ka sahi aur galat use.", "`::before` se ek tooltip banao bina extra DOM ke."]}, {"h": "D — Machine Coding · 30 min · bina notes", "q": ["`memoize(fn)` likho jo multiple arguments handle kare aur cache key sahi banaye. Object arguments ke liye kya karoge?", "`deepEqual(a, b)` likho — nested objects, arrays, Date, NaN, circular reference sab handle karo."]}, {"h": "E — Browser & System Design · 15 min", "q": ["HTTP header `Content-Type` aur `Accept` mein farak. `application/json` vs `text/plain` bhejne se kya badalta hai (CORS ke context mein bhi)?", "`304 Not Modified` kab aata hai aur browser tab kya karta hai?", "Optimistic update kya hai? Fail hone par rollback ka design kaise karoge — ek like-button ka example."]}, {"h": "F — Behavioral · 10 min", "q": ["Story 3 — Ownership. Aisa kaam jo tumhara nahi tha lekin tumne uthaya. Quantified result ke saath, 2 min."]}]}}, {"n": 7, "title": "Sorting, HOF & Forms", "days": [{"d": "Mon", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Sorting fundamentals & sort() comparator gotchas", "w": "M", "jl": "DSA → Core Algorithms", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w7-Mon-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Currying & Partial Application", "w": "M", "jl": "JS → Functions & Execution", "jh": "journal/frontend/js-mastery-journal.html", "id": "w7-Mon-2"}, {"p": 3, "buffer": false, "sub": "Browser/Web", "sc": "mint", "t": "Same Origin Policy", "w": "M", "jl": "Security → Web Security", "jh": "journal/devops/security-journal.html", "id": "w7-Mon-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Star Rating — event delegation", "w": "M", "jl": "MachineCoding → Vanilla Beginner", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w7-Mon-4"}], "heavy": 0, "units": 6.0, "drop": [], "kept": 4}, {"d": "Tue", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Merge Sort", "w": "M", "jl": "DSA → Core Algorithms", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w7-Tue-1"}, {"p": 2, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "React — State & Re-renders, bolkar samjhao", "w": "M", "jl": "React → Core Fundamentals", "jh": "journal/frontend/react-mastery-journal.html", "id": "w7-Tue-2"}, {"p": 3, "buffer": false, "sub": "Browser/Web", "sc": "mint", "t": "CORS — preflight, credentials", "w": "H", "jl": "API Design → API Security & Governance", "jh": "journal/backend/api-design-journal.html", "id": "w7-Tue-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Implement pipe() and compose()", "w": "M", "jl": "MachineCoding → JavaScript Beginner", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w7-Tue-4"}], "heavy": 1, "units": 6.5, "drop": [4], "kept": 3}, {"d": "Wed", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Quick Select — Kth largest / Top-K", "w": "H", "jl": "DSA → Core Algorithms", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w7-Wed-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Memoization", "w": "M", "jl": "JS → Functions & Execution", "jh": "journal/frontend/js-mastery-journal.html", "id": "w7-Wed-2"}, {"p": 3, "buffer": false, "sub": "SysDesign", "sc": "coral", "t": "Virtualization / Windowing", "w": "H", "jl": "FE SysDesign → Data Display", "jh": "journal/frontend/frontend-system-design-journal.html", "id": "w7-Wed-3"}, {"p": 4, "buffer": true, "id": "w7-Wed-4"}], "heavy": 2, "units": 5.5, "drop": [], "kept": 3}, {"d": "Thu", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Timed Practice 1 — arrays, strings, window, stack", "w": "H", "jl": "DSA → Interview Ready → Timed Mock Sessions", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w7-Thu-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Debounce & Throttle", "w": "M", "jl": "JS → Memory & Performance", "jh": "journal/frontend/js-mastery-journal.html", "id": "w7-Thu-2"}, {"p": 3, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "React — Lists, Keys & Reconciliation", "w": "M", "jl": "React → Core Fundamentals", "jh": "journal/frontend/react-mastery-journal.html", "id": "w7-Thu-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Deep Clone an Object", "w": "H", "jl": "MachineCoding → JavaScript Beginner", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w7-Thu-4"}], "heavy": 2, "units": 7.0, "drop": [4], "kept": 3}, {"d": "Fri", "periods": [{"p": 1, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "React — Controlled vs Uncontrolled forms", "w": "M", "jl": "React → Core Fundamentals", "jh": "journal/frontend/react-mastery-journal.html", "id": "w7-Fri-1"}, {"p": 2, "buffer": false, "sub": "SysDesign", "sc": "coral", "t": "Data Normalization", "w": "H", "jl": "FE SysDesign → Data Display", "jh": "journal/frontend/frontend-system-design-journal.html", "id": "w7-Fri-2"}, {"p": 3, "buffer": false, "sub": "Behavioral", "sc": "pink", "t": "Story 4 — Conflict / manager se disagree", "w": "M", "jl": "Behavioral → Phase 1 → Story Writing", "jh": "behavioral-roadmap.html", "id": "w7-Fri-3"}, {"p": 4, "buffer": true, "id": "w7-Fri-4"}], "heavy": 1, "units": 5.0, "drop": [], "kept": 3}], "spiral": [7, 6, 4], "mcLab": {"t": "Is hafte ke 3 MC problems mein se 1 — 45 min timed, bina notes", "jl": "MachineCoding → Vanilla Beginner", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w7-sat-mc"}, "satId": "w7-sat-rev", "satDsa": {"t": "DSA volume block — is hafte ke pattern se 3 problem + 1 purana, timed", "jl": "DSA → Interview Ready → Timed Mock Sessions", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w7-sat-dsa"}, "dsaTarget": 14, "exam": {"n": 7, "term": false, "final": false, "sections": [{"h": "A — DSA · 45 min", "q": ["`[10, 9, 100, 1].sort()` ka output kya aur kyun? Sahi comparator likho. Objects ko multiple fields pe sort karo.", "Merge Sort likho. Stable hai ya nahi — prove karo. Space complexity kyun O(n) hai?", "Kth Largest Element — Quick Select se. Average O(n) kyun aur worst case kya?", "**Timed block:** 2 unseen mediums, 20 min each — arrays/strings/window/stack ke andar se."]}, {"h": "B — JavaScript · 20 min", "q": ["`map`, `filter`, `reduce`, `flatMap`, `some`, `every` — sabka return type aur mutating hai ya nahi. `sort` aur `reverse` kaunse hain?", "`reduce` se `groupBy` likho ek line mein.", "Currying kya hai? `sum(1)(2)(3)` aur `sum(1,2)(3)` dono kaam kare — aisa function likho.", "Debounce aur throttle — search box, scroll handler, resize, button double-click: har ek ke liye kaunsa?"]}, {"h": "C — React / Frontend · 20 min", "q": ["`<label>` ko input se jodne ke 2 tarike. Kaunsa behtar aur kyun?", "Native form validation ke attributes gino. `:invalid` styling ka ek problem batao aur `:user-invalid` usse kaise theek karta hai.", "Error message screen reader ko announce ho — kaunse ARIA attributes chahiye? Code likho."]}, {"h": "D — Machine Coding · 30 min · bina notes", "q": ["Star rating widget — event delegation se (5 stars, hover preview, click to set, keyboard accessible). Sirf ek listener parent pe.", "`pipe()` aur `compose()` likho. Async functions ke liye `pipeAsync` bhi."]}, {"h": "E — Browser & System Design · 15 min", "q": ["Same Origin Policy — 'origin' kis teen cheezon se banta hai? `<img>` aur `fetch` par SOP alag kyun lagta hai?", "CORS preflight kab trigger hota hai? Woh 3 conditions batao jinse simple request ban jaati hai.", "Virtualization — 100k rows ki list. Kya-kya calculate karna padega? Variable height ho to kya badlega?"]}, {"h": "F — Behavioral · 10 min", "q": ["Story 4 — Conflict / manager se disagree. Result mein dikhao ki relationship bacha aur decision behtar hua."]}]}}, {"n": 8, "title": "Linked List, Event Loop & Accessibility", "days": [{"d": "Mon", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Singly Linked List — traverse & insert", "w": "M", "jl": "DSA → Core Data Structures → Singly Linked List", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w8-Mon-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Array methods & sort() comparator gotchas", "w": "M", "jl": "JS → Modern JS & Utilities", "jh": "journal/frontend/js-mastery-journal.html", "id": "w8-Mon-2"}, {"p": 3, "buffer": false, "sub": "Browser/Web", "sc": "mint", "t": "XSS — reflected, stored, DOM-based", "w": "H", "jl": "Security → Web Security", "jh": "journal/devops/security-journal.html", "id": "w8-Mon-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Build Promise from scratch", "w": "H", "jl": "MachineCoding → JavaScript Medium", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w8-Mon-4"}], "heavy": 2, "units": 7.0, "drop": [4], "kept": 3}, {"d": "Tue", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Singly Linked List — reverse", "w": "M", "jl": "DSA → Core Data Structures → Singly Linked List", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w8-Tue-1"}, {"p": 2, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "React — useEffect deps & cleanup", "w": "H", "jl": "React → Hooks — Deep Dive", "jh": "journal/frontend/react-mastery-journal.html", "id": "w8-Tue-2"}, {"p": 3, "buffer": false, "sub": "Browser/Web", "sc": "mint", "t": "CSRF & SameSite cookies", "w": "H", "jl": "Security → Web Security", "jh": "journal/devops/security-journal.html", "id": "w8-Tue-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Implement Promise.all / race / allSettled / any", "w": "H", "jl": "MachineCoding → JavaScript Medium", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w8-Tue-4"}], "heavy": 3, "units": 7.5, "drop": [4], "kept": 3}, {"d": "Wed", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Fast & Slow Pointer — cycle & middle", "w": "M", "jl": "DSA → Core Data Structures → Linked List", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w8-Wed-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Event Loop — call stack & queues", "w": "H", "jl": "JS → Async JavaScript", "jh": "journal/frontend/js-mastery-journal.html", "id": "w8-Wed-2"}, {"p": 3, "buffer": false, "sub": "SysDesign", "sc": "coral", "t": "Table Design Patterns", "w": "M", "jl": "FE SysDesign → Data Display", "jh": "journal/frontend/frontend-system-design-journal.html", "id": "w8-Wed-3"}, {"p": 4, "buffer": true, "id": "w8-Wed-4"}], "heavy": 1, "units": 5.0, "drop": [], "kept": 3}, {"d": "Thu", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "LRU Cache — DLL + HashMap design", "w": "H", "jl": "DSA → Interview Ready", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w8-Thu-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Microtasks vs Macrotasks", "w": "H", "jl": "JS → Async JavaScript", "jh": "journal/frontend/js-mastery-journal.html", "id": "w8-Thu-2"}, {"p": 3, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "React — useRef & DOM interop", "w": "M", "jl": "React → Hooks — Deep Dive", "jh": "journal/frontend/react-mastery-journal.html", "id": "w8-Thu-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Async Concurrency Limiter", "w": "H", "jl": "MachineCoding → JavaScript Medium", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w8-Thu-4"}], "heavy": 3, "units": 7.5, "drop": [4], "kept": 3}, {"d": "Fri", "periods": [{"p": 1, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "React — Custom Hooks", "w": "M", "jl": "React → Hooks — Deep Dive", "jh": "journal/frontend/react-mastery-journal.html", "id": "w8-Fri-1"}, {"p": 2, "buffer": false, "sub": "SysDesign", "sc": "coral", "t": "SPA Routing Architecture", "w": "M", "jl": "FE SysDesign → App Architecture", "jh": "journal/frontend/frontend-system-design-journal.html", "id": "w8-Fri-2"}, {"p": 3, "buffer": false, "sub": "Behavioral", "sc": "pink", "t": "Story 5 — Failure + intellectual humility", "w": "M", "jl": "Behavioral → Phase 1 → Story Writing", "jh": "behavioral-roadmap.html", "id": "w8-Fri-3"}, {"p": 4, "buffer": true, "id": "w8-Fri-4"}], "heavy": 0, "units": 4.5, "drop": [], "kept": 3}], "spiral": [8, 7, 5], "mcLab": {"t": "Is hafte ke 3 MC problems mein se 1 — 45 min timed, bina notes", "jl": "MachineCoding → JavaScript Medium", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w8-sat-mc"}, "satId": "w8-sat-rev", "satDsa": {"t": "DSA volume block — is hafte ke pattern se 3 problem + 1 purana, timed", "jl": "DSA → Interview Ready → Timed Mock Sessions", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w8-sat-dsa"}, "dsaTarget": 12, "exam": {"n": 8, "term": true, "final": false, "sections": [{"h": "A — DSA · 60 min · cumulative", "q": ["Reverse Linked List — iterative aur recursive dono. Pointers ka order galat ho to kya tootta hai?", "Linked List Cycle detect karo aur cycle ka start node bhi batao (Floyd's). Proof bolkar.", "LRU Cache implement karo — `get`/`put` dono O(1). Kaunsi do data structures aur kyun?", "**Cumulative W5–W7:** rotated binary search + merge intervals + Kth largest — 35 min."]}, {"h": "B — JavaScript · 25 min · cumulative", "q": ["Event loop: ye snippet ka **exact** output order batao —\n```js\nconsole.log(1);\nsetTimeout(()=>console.log(2),0);\nPromise.resolve().then(()=>console.log(3));\nqueueMicrotask(()=>console.log(4));\nconsole.log(5);\n```", "Microtask queue macrotask se pehle kyun drain hoti hai? Infinite microtask loop se kya hoga?", "`async function` return karta kya hai? `await` ke baad ka code kis queue mein jaata hai?", "**Cumulative:** prototype + closure + coercion ka mixed snippet."]}, {"h": "C — React / Frontend · 25 min", "q": ["Focus trap manually implement karne ke steps batao — kaunse elements focusable hain, list kaise banaoge?", "`aria-live` ke `polite` aur `assertive` mein farak. Toast ke liye kaunsa?", "Ek button `<div onclick>` se bana hai. Isme kya-kya galat hai — 4 cheezein."]}, {"h": "D — Machine Coding · 45 min · bina notes · cumulative", "q": ["Promise zero se implement karo — `then` chaining, state transitions, async resolution, aur `then` ke andar return kiya hua promise bhi handle ho.", "`Promise.all` aur `Promise.allSettled` dono likho. `all` mein ek fail ho jaye to baaki ka kya hota hai?", "Async concurrency limiter — max N parallel, baaki queue mein."]}, {"h": "E — Browser & Security · 20 min", "q": ["XSS ke 3 types samjhao. DOM-based XSS ka ek concrete example likho aur usko fix karo.", "`innerHTML` vs `textContent` — kab kaunsa. `DOMPurify` kya karta hai?", "CSRF kaise kaam karta hai? SameSite=Lax se kaunse attacks rukte hain aur kaunse nahi?", "CSP header likho jo inline script block kare lekin ek specific CDN allow kare. `nonce` kaise use hota hai?"]}, {"h": "F — Behavioral · 15 min", "q": ["Story 5 — Failure. Rule: blame kisi aur pe nahi. Batao kya seekha aur agli baar kya alag kiya. 2 min + 2 follow-up."]}]}}, {"n": 9, "title": "Recursion, Trees, Promises & React shuru", "days": [{"d": "Mon", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Recursion — base case & call stack", "w": "H", "jl": "DSA → Foundation → Recursion", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w9-Mon-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Try / Catch / Finally & Custom Error Classes", "w": "M", "jl": "JS → Error Handling & Debugging", "jh": "journal/frontend/js-mastery-journal.html", "id": "w9-Mon-2"}, {"p": 3, "buffer": false, "sub": "Browser/Web", "sc": "mint", "t": "Content Security Policy (CSP)", "w": "H", "jl": "Security → Web Security", "jh": "journal/devops/security-journal.html", "id": "w9-Mon-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Retry with exponential backoff", "w": "M", "jl": "MachineCoding → JavaScript Medium", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w9-Mon-4"}], "heavy": 2, "units": 7.0, "drop": [4], "kept": 3}, {"d": "Tue", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Recursion drills — iterative vs recursive, timed", "w": "M", "jl": "DSA → Interview Ready → Timed Mock Sessions", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w9-Tue-1"}, {"p": 2, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "React — useReducer & Context, practical", "w": "M", "jl": "React → State Management", "jh": "journal/frontend/react-mastery-journal.html", "id": "w9-Tue-2"}, {"p": 3, "buffer": false, "sub": "Browser/Web", "sc": "mint", "t": "Clickjacking & X-Frame-Options", "w": "M", "jl": "Security → Web Security", "jh": "journal/devops/security-journal.html", "id": "w9-Tue-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Promise with timeout", "w": "M", "jl": "MachineCoding → JavaScript Medium", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w9-Tue-4"}], "heavy": 0, "units": 6.0, "drop": [], "kept": 4}, {"d": "Wed", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Binary Tree — structure & DFS pre/in/post", "w": "H", "jl": "DSA → Trees", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w9-Wed-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Callbacks & Callback Hell", "w": "L", "jl": "JS → Async JavaScript", "jh": "journal/frontend/js-mastery-journal.html", "id": "w9-Wed-2"}, {"p": 3, "buffer": false, "sub": "SysDesign", "sc": "coral", "t": "Auth & Authorization — frontend side", "w": "H", "jl": "FE SysDesign → App Architecture", "jh": "journal/frontend/frontend-system-design-journal.html", "id": "w9-Wed-3"}, {"p": 4, "buffer": true, "id": "w9-Wed-4"}], "heavy": 2, "units": 5.0, "drop": [], "kept": 3}, {"d": "Thu", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "BFS — level order traversal", "w": "M", "jl": "DSA → Trees", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w9-Thu-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Promises — states & then chain", "w": "H", "jl": "JS → Async JavaScript", "jh": "journal/frontend/js-mastery-journal.html", "id": "w9-Thu-2"}, {"p": 3, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "React — Error Boundaries", "w": "M", "jl": "React → Patterns & Architecture", "jh": "journal/frontend/react-mastery-journal.html", "id": "w9-Thu-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Build EventEmitter (on / off / emit / once)", "w": "M", "jl": "MachineCoding → JavaScript Medium", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w9-Thu-4"}], "heavy": 1, "units": 6.5, "drop": [4], "kept": 3}, {"d": "Fri", "periods": [{"p": 1, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "React — memo / useMemo / useCallback: kab aur kab nahi", "w": "H", "jl": "React → Performance Optimization", "jh": "journal/frontend/react-mastery-journal.html", "id": "w9-Fri-1"}, {"p": 2, "buffer": false, "sub": "SysDesign", "sc": "coral", "t": "WebSockets vs SSE vs Polling", "w": "H", "jl": "FE SysDesign → Real-Time Features", "jh": "journal/frontend/frontend-system-design-journal.html", "id": "w9-Fri-2"}, {"p": 3, "buffer": false, "sub": "Behavioral", "sc": "pink", "t": "Story 6 — Data-Driven Decision", "w": "M", "jl": "Behavioral → Phase 1 → Story Writing", "jh": "behavioral-roadmap.html", "id": "w9-Fri-3"}, {"p": 4, "buffer": true, "id": "w9-Fri-4"}], "heavy": 2, "units": 5.5, "drop": [], "kept": 3}], "spiral": [9, 8, 6], "mcLab": {"t": "Is hafte ke 3 MC problems mein se 1 — 45 min timed, bina notes", "jl": "MachineCoding → JavaScript Medium", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w9-sat-mc"}, "satId": "w9-sat-rev", "satDsa": {"t": "DSA volume block — is hafte ke pattern se 3 problem + 1 purana, timed", "jl": "DSA → Interview Ready → Timed Mock Sessions", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w9-sat-dsa"}, "dsaTarget": 12, "exam": {"n": 9, "term": false, "final": false, "sections": [{"h": "A — DSA · 45 min", "q": ["Binary tree ke teeno DFS traversals recursive likho, fir inorder ko iterative (stack se) likho.", "Level order traversal — har level ko alag array mein. Queue size ka trick samjhao.", "Recursion ka call stack draw karo `fib(5)` ke liye. Kitne calls, kitni depth?", "Kab recursion ko iteration mein badalna zaroori hai? Stack overflow ka JS mein limit kya hai?"]}, {"h": "B — JavaScript · 20 min", "q": ["`try/catch` async code mein kab kaam nahi karta? 2 examples.", "Custom Error class banao jo `instanceof` sahi de aur stack trace bache.", "Promise ke 3 states aur transitions. `then` ke andar throw karne se kya hota hai?", "Callback hell ke 3 concrete problems — sirf 'nesting' mat kehna."]}, {"h": "C — React / Frontend · 20 min", "q": ["React kyun bana? Vanilla DOM se kaunsi problem solve karta hai — ek concrete example.", "JSX compile hoke kya banta hai? `React.createElement` ka signature.", "Props aur state mein farak. Ek component ko controlled se uncontrolled banane ka natija kya hoga?"]}, {"h": "D — Machine Coding · 30 min · bina notes", "q": ["Retry with exponential backoff — jitter ke saath, max attempts, aur retry-able errors ka filter.", "`EventEmitter` likho — `on`, `off`, `once`, `emit`. `once` ke andar `off` call ho jaye to kya hoga, handle karo."]}, {"h": "E — Browser & System Design · 15 min", "q": ["Cookie ke attributes gino — `HttpOnly`, `Secure`, `SameSite`, `Path`, `Domain`, `Max-Age`. Auth token cookie ke liye ideal combination kya?", "localStorage mein JWT rakhna kyun risky hai?", "Auth flow frontend pe design karo — token refresh, race condition (2 requests ek saath 401), aur logout across tabs."]}, {"h": "F — Behavioral · 10 min", "q": ["Story 6 — Data-Driven Decision. Number pehle bolo, kahani baad mein."]}]}}, {"n": 10, "title": "BST, Trie, async/await & React state", "days": [{"d": "Mon", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Binary Search Tree", "w": "M", "jl": "DSA → Trees", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w10-Mon-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Promise Combinators — all / allSettled / race / any", "w": "M", "jl": "JS → Async JavaScript", "jh": "journal/frontend/js-mastery-journal.html", "id": "w10-Mon-2"}, {"p": 3, "buffer": false, "sub": "Browser/Web", "sc": "mint", "t": "Cookies — attributes, HttpOnly, Secure", "w": "M", "jl": "JS → Advanced & Browser APIs", "jh": "journal/frontend/js-mastery-journal.html", "id": "w10-Mon-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "LRU Cache — O(1) get & put", "w": "H", "jl": "MachineCoding → JavaScript Medium", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w10-Mon-4"}], "heavy": 1, "units": 6.5, "drop": [4], "kept": 3}, {"d": "Tue", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Height, Depth, Diameter", "w": "M", "jl": "DSA → Trees", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w10-Tue-1"}, {"p": 2, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "React — Code splitting & Suspense", "w": "M", "jl": "React → Performance Optimization", "jh": "journal/frontend/react-mastery-journal.html", "id": "w10-Tue-2"}, {"p": 3, "buffer": false, "sub": "Browser/Web", "sc": "mint", "t": "localStorage & sessionStorage", "w": "L", "jl": "JS → Advanced & Browser APIs", "jh": "journal/frontend/js-mastery-journal.html", "id": "w10-Tue-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Polyfill — Object.create", "w": "M", "jl": "MachineCoding → Polyfill Core", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w10-Tue-4"}], "heavy": 0, "units": 5.5, "drop": [], "kept": 4}, {"d": "Wed", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Trie — insert, search, prefix", "w": "M", "jl": "DSA → Tries & Bit Manipulation", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w10-Wed-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "async / await", "w": "M", "jl": "JS → Async JavaScript", "jh": "journal/frontend/js-mastery-journal.html", "id": "w10-Wed-2"}, {"p": 3, "buffer": false, "sub": "SysDesign", "sc": "coral", "t": "Reconnection & Offline Strategy", "w": "H", "jl": "FE SysDesign → Real-Time Features", "jh": "journal/frontend/frontend-system-design-journal.html", "id": "w10-Wed-3"}, {"p": 4, "buffer": true, "id": "w10-Wed-4"}], "heavy": 1, "units": 5.0, "drop": [], "kept": 3}, {"d": "Thu", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Timed Practice 2 — trees, linked list, recursion", "w": "H", "jl": "DSA → Interview Ready → Timed Mock Sessions", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w10-Thu-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Async Error Handling — unhandled rejections", "w": "M", "jl": "JS → Error Handling & Debugging", "jh": "journal/frontend/js-mastery-journal.html", "id": "w10-Thu-2"}, {"p": 3, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "TypeScript — type vs interface & generics", "w": "M", "jl": "TypeScript → Core Type System", "jh": "journal/frontend/typescript-mastery-journal.html", "id": "w10-Thu-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Polyfill — Object.assign", "w": "M", "jl": "MachineCoding → Polyfill Core", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w10-Thu-4"}], "heavy": 1, "units": 6.5, "drop": [4], "kept": 3}, {"d": "Fri", "periods": [{"p": 1, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "TypeScript — typing props, hooks & DOM events", "w": "H", "jl": "TypeScript → TypeScript with React", "jh": "journal/frontend/typescript-mastery-journal.html", "id": "w10-Fri-1"}, {"p": 2, "buffer": false, "sub": "SysDesign", "sc": "coral", "t": "Notification Architecture", "w": "M", "jl": "FE SysDesign → Real-Time Features", "jh": "journal/frontend/frontend-system-design-journal.html", "id": "w10-Fri-2"}, {"p": 3, "buffer": false, "sub": "Behavioral", "sc": "pink", "t": "Story 7 — Influencing Without Authority", "w": "M", "jl": "Behavioral → Phase 1 → Story Writing", "jh": "behavioral-roadmap.html", "id": "w10-Fri-3"}, {"p": 4, "buffer": true, "id": "w10-Fri-4"}], "heavy": 1, "units": 5.0, "drop": [], "kept": 3}], "spiral": [10, 9, 7], "mcLab": {"t": "Is hafte ke 3 MC problems mein se 1 — 45 min timed, bina notes", "jl": "MachineCoding → JavaScript Medium", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w10-sat-mc"}, "satId": "w10-sat-rev", "satDsa": {"t": "DSA volume block — is hafte ke pattern se 3 problem + 1 purana, timed", "jl": "DSA → Interview Ready → Timed Mock Sessions", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w10-sat-dsa"}, "dsaTarget": 14, "exam": {"n": 10, "term": false, "final": false, "sections": [{"h": "A — DSA · 45 min", "q": ["Validate BST — galat solution (sirf left<root<right check) kyun fail hota hai? Sahi likho.", "Diameter of Binary Tree — ek hi traversal mein. Return value aur global update alag kyun hain?", "Trie implement karo — `insert`, `search`, `startsWith`. Autocomplete mein kaise use hoga?", "**Timed block:** 2 unseen tree/linked-list mediums, 20 min each."]}, {"h": "B — JavaScript · 20 min", "q": ["`Promise.all` vs `allSettled` vs `race` vs `any` — chaar alag scenario batao jahan har ek best fit ho.", "`await` ko loop mein use karne ka problem. Sequential vs parallel — dono ka code.", "Unhandled promise rejection — Node aur browser mein kya hota hai? Global handler kaise lagta hai?", "`async/await` ko `.then()` se kab replace karna behtar hai?"]}, {"h": "C — React / Frontend · 20 min", "q": ["`key` mein index use karne se kaunsa bug aata hai? Ek concrete list example.", "Conditional rendering ke 3 tarike aur `&&` wala classic bug (`0 && <X/>`).", "Ek form React mein controlled banao — 5 fields, validation on blur, submit disabled jab tak valid na ho."]}, {"h": "D — Machine Coding · 30 min · bina notes", "q": ["LRU Cache — Map ke insertion order se O(1) mein. Fir bina Map ke, DLL + object se likho.", "`Object.create` aur `Object.assign` ke polyfill likho. `Object.assign` getters ko copy karta hai ya invoke?"]}, {"h": "E — Browser & System Design · 15 min", "q": ["IndexedDB kab localStorage se behtar hai? 3 concrete reasons.", "IntersectionObserver se infinite scroll banane ka pura flow batao — sentinel kahan lagega, cleanup kab?", "WebSocket vs SSE vs long polling — chat app ke liye kaunsa aur kyun? Reconnection strategy kya?"]}, {"h": "F — Behavioral · 10 min", "q": ["Story 7 — Influencing Without Authority. Kisko convince kiya, kaise, aur proof kya hai ki convince hua."]}]}}, {"n": 11, "title": "Heap, Backtracking, Generators & Hooks", "days": [{"d": "Mon", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Heap / Priority Queue — usage & Top-K", "w": "H", "jl": "DSA → Advanced Patterns → Heap", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w11-Mon-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Generators & Iterators", "w": "H", "jl": "JS → Async JavaScript", "jh": "journal/frontend/js-mastery-journal.html", "id": "w11-Mon-2"}, {"p": 3, "buffer": false, "sub": "Browser/Web", "sc": "mint", "t": "IndexedDB", "w": "M", "jl": "JS → Advanced & Browser APIs", "jh": "journal/frontend/js-mastery-journal.html", "id": "w11-Mon-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Autocomplete with debounce + keyboard", "w": "H", "jl": "MachineCoding → Vanilla Medium", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w11-Mon-4"}], "heavy": 3, "units": 7.5, "drop": [4], "kept": 3}, {"d": "Tue", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Backtracking — subsets vs combinations", "w": "H", "jl": "DSA → Advanced Patterns → Backtracking", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w11-Tue-1"}, {"p": 2, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "Testing — RTL philosophy & queries", "w": "M", "jl": "Testing → React Testing Library", "jh": "journal/devops/testing-journal.html", "id": "w11-Tue-2"}, {"p": 3, "buffer": false, "sub": "Browser/Web", "sc": "mint", "t": "IntersectionObserver & MutationObserver", "w": "M", "jl": "JS → Advanced & Browser APIs", "jh": "journal/frontend/js-mastery-journal.html", "id": "w11-Tue-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Infinite Scroll — IntersectionObserver", "w": "M", "jl": "MachineCoding → Vanilla Medium", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w11-Tue-4"}], "heavy": 1, "units": 6.5, "drop": [4], "kept": 3}, {"d": "Wed", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Backtracking — permutations", "w": "M", "jl": "DSA → Advanced Patterns → Backtracking", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w11-Wed-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Iterable & Iterator Protocol", "w": "M", "jl": "JS → Advanced & Browser APIs", "jh": "journal/frontend/js-mastery-journal.html", "id": "w11-Wed-2"}, {"p": 3, "buffer": false, "sub": "SysDesign", "sc": "coral", "t": "Client-side caching — SWR, dedup, invalidation", "w": "H", "jl": "FE SysDesign → App Architecture", "jh": "journal/frontend/frontend-system-design-journal.html", "id": "w11-Wed-3"}, {"p": 4, "buffer": true, "id": "w11-Wed-4"}], "heavy": 1, "units": 5.0, "drop": [], "kept": 3}, {"d": "Thu", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "K-way Merge — heap based", "w": "H", "jl": "DSA → Advanced Patterns", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w11-Thu-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Destructuring & Spread / Rest", "w": "L", "jl": "JS → Advanced & Browser APIs", "jh": "journal/frontend/js-mastery-journal.html", "id": "w11-Thu-2"}, {"p": 3, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "Testing — vanilla DOM code", "w": "M", "jl": "Testing → Vitest Fundamentals", "jh": "journal/devops/testing-journal.html", "id": "w11-Thu-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Client-side Pagination", "w": "M", "jl": "MachineCoding → Vanilla Medium", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w11-Thu-4"}], "heavy": 1, "units": 6.0, "drop": [], "kept": 4}, {"d": "Fri", "periods": [{"p": 1, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "FE Round Drill 1 — 45 min, plain doc, no autocomplete", "w": "H", "jl": "MachineCoding → Vanilla Medium", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w11-Fri-1"}, {"p": 2, "buffer": false, "sub": "SysDesign", "sc": "coral", "t": "Performance Budget & Monitoring", "w": "M", "jl": "FE SysDesign → App Architecture", "jh": "journal/frontend/frontend-system-design-journal.html", "id": "w11-Fri-2"}, {"p": 3, "buffer": false, "sub": "Behavioral", "sc": "pink", "t": "Story 8 — Quality bar uthana / process improvement", "w": "M", "jl": "Behavioral → Phase 1 → Story Writing", "jh": "behavioral-roadmap.html", "id": "w11-Fri-3"}, {"p": 4, "buffer": true, "id": "w11-Fri-4"}], "heavy": 1, "units": 5.0, "drop": [], "kept": 3}], "spiral": [11, 10, 8], "mcLab": {"t": "Is hafte ke 3 MC problems mein se 1 — 45 min timed, bina notes", "jl": "MachineCoding → Vanilla Medium", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w11-sat-mc"}, "satId": "w11-sat-rev", "satDsa": {"t": "DSA volume block — is hafte ke pattern se 3 problem + 1 purana, timed", "jl": "DSA → Interview Ready → Timed Mock Sessions", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w11-sat-dsa"}, "dsaTarget": 12, "exam": {"n": 11, "term": false, "final": false, "sections": [{"h": "A — DSA · 45 min", "q": ["Top K Frequent Elements — heap se aur bucket sort se. Kab kaunsa behtar?", "Subsets aur Combinations ka backtracking template likho. Duplicate handling kaise?", "Permutations — swap-based aur used-array-based, dono. Complexity same hai?", "Merge k sorted lists — heap se. Complexity derive karo."]}, {"h": "B — JavaScript · 20 min", "q": ["Generator function likho jo infinite fibonacci de. `yield` pe execution kahan rukta hai?", "Custom iterable banao — ek object jo `for...of` mein chal sake.", "Generator se async flow control kaise hota tha (async/await se pehle)? Ek chhota runner likho.", "Destructuring mein default value, rename, aur nested — teeno ek example mein."]}, {"h": "C — React / Frontend · 20 min", "q": ["`useEffect` ka dependency array khali, missing, aur bhara — teeno ka farak.", "Cleanup function kab chalta hai? Ek subscription leak ka example likho aur fix karo.", "`useRef` ko state ki tarah use karne se kya galat hoga? Ek valid `useRef` use case jo DOM se related nahi hai."]}, {"h": "D — Machine Coding · 30 min · bina notes", "q": ["Autocomplete banao — debounce, keyboard navigation (up/down/enter/escape), highlighted match, loading state, aur race condition handling (purana response naya ko overwrite na kare).", "Client-side pagination — page size change ho sake, current page valid rahe."]}, {"h": "E — Browser & System Design · 15 min", "q": ["`Cache-Control: max-age` vs `s-maxage` vs `stale-while-revalidate`.", "`no-cache` aur `no-store` mein farak — naam ulta lagta hai, kyun?", "Notification centre design karo — unread count, real-time push, aur pagination ek saath kaise?"]}, {"h": "F — Behavioral · 10 min", "q": ["Story 8 — Quality bar uthana. Kya standard tha, tumne kya badla, team ne kaise adopt kiya."]}]}}, {"n": 12, "title": "Graphs, Collections & React architecture", "days": [{"d": "Mon", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Graph Representation & BFS", "w": "M", "jl": "DSA → Graphs", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w12-Mon-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Map & Set (incl. WeakMap / WeakSet)", "w": "M", "jl": "JS → Modern JS & Utilities", "jh": "journal/frontend/js-mastery-journal.html", "id": "w12-Mon-2"}, {"p": 3, "buffer": false, "sub": "Browser/Web", "sc": "mint", "t": "HTTP Caching — Cache-Control", "w": "H", "jl": "API Design → Performance & Reliability", "jh": "journal/backend/api-design-journal.html", "id": "w12-Mon-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Sortable + Filterable Data Table", "w": "H", "jl": "MachineCoding → Vanilla Advanced", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w12-Mon-4"}], "heavy": 2, "units": 7.0, "drop": [4], "kept": 3}, {"d": "Tue", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Graph DFS", "w": "M", "jl": "DSA → Graphs", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w12-Tue-1"}, {"p": 2, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "CSS Layout Challenge — 30 min timed", "w": "M", "jl": "CSS/HTML → Layout", "jh": "journal/frontend/css-mastery-journal.html", "id": "w12-Tue-2"}, {"p": 3, "buffer": false, "sub": "Browser/Web", "sc": "mint", "t": "ETag & Conditional Requests", "w": "M", "jl": "API Design → Performance & Reliability", "jh": "journal/backend/api-design-journal.html", "id": "w12-Tue-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Nested Comments — Reddit style", "w": "H", "jl": "MachineCoding → Vanilla Advanced", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w12-Tue-4"}], "heavy": 1, "units": 6.5, "drop": [4], "kept": 3}, {"d": "Wed", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Grid Problems — islands, flood fill", "w": "M", "jl": "DSA → Graphs", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w12-Wed-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "ES Modules vs CommonJS", "w": "M", "jl": "JS → Design Patterns & Modules", "jh": "journal/frontend/js-mastery-journal.html", "id": "w12-Wed-2"}, {"p": 3, "buffer": false, "sub": "SysDesign", "sc": "coral", "t": "Analytics / metrics SDK design", "w": "H", "jl": "FE SysDesign → App Architecture", "jh": "journal/frontend/frontend-system-design-journal.html", "id": "w12-Wed-3"}, {"p": 4, "buffer": true, "id": "w12-Wed-4"}], "heavy": 1, "units": 5.0, "drop": [], "kept": 3}, {"d": "Thu", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Topological Sort", "w": "H", "jl": "DSA → Graphs", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w12-Thu-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Garbage Collection & Memory Leaks", "w": "H", "jl": "JS → Memory & Performance", "jh": "journal/frontend/js-mastery-journal.html", "id": "w12-Thu-2"}, {"p": 3, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "FE Round Drill 2 — 45 min, plain doc", "w": "H", "jl": "MachineCoding → Vanilla Medium", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w12-Thu-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Virtual Scroll List", "w": "H", "jl": "MachineCoding → Vanilla Advanced", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w12-Thu-4"}], "heavy": 4, "units": 8.0, "drop": [4], "kept": 3}, {"d": "Fri", "periods": [{"p": 1, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "FE Round Drill 3 — 45 min, plain doc", "w": "H", "jl": "MachineCoding → Vanilla Medium", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w12-Fri-1"}, {"p": 2, "buffer": false, "sub": "SysDesign", "sc": "coral", "t": "REST vs GraphQL & BFF pattern for frontend", "w": "M", "jl": "API Design → Performance & Reliability", "jh": "journal/backend/api-design-journal.html", "id": "w12-Fri-2"}, {"p": 3, "buffer": false, "sub": "Behavioral", "sc": "pink", "t": "Story Calibration — har story mein quantified result", "w": "M", "jl": "Behavioral → Phase 1 → Story Calibration", "jh": "behavioral-roadmap.html", "id": "w12-Fri-3"}, {"p": 4, "buffer": true, "id": "w12-Fri-4"}], "heavy": 1, "units": 5.0, "drop": [], "kept": 3}], "spiral": [12, 11, 9], "mcLab": {"t": "Is hafte ke 3 MC problems mein se 1 — 45 min timed, bina notes", "jl": "MachineCoding → Vanilla Advanced", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w12-sat-mc"}, "satId": "w12-sat-rev", "satDsa": {"t": "DSA volume block — is hafte ke pattern se 3 problem + 1 purana, timed", "jl": "DSA → Interview Ready → Timed Mock Sessions", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w12-sat-dsa"}, "dsaTarget": 12, "exam": {"n": 12, "term": true, "final": false, "sections": [{"h": "A — DSA · 60 min · cumulative", "q": ["Number of Islands — BFS aur DFS dono. In-place marking vs visited set.", "Course Schedule (cycle detection) aur Course Schedule II (topological order) — dono.", "Rotting Oranges — multi-source BFS. Single-source se kya alag hai?", "**Cumulative W9–W11:** validate BST + top-K + subsets — 35 min."]}, {"h": "B — JavaScript · 25 min · cumulative", "q": ["Memory leak ke 4 common sources JS mein. Har ek ka ek-line fix.", "`WeakMap` kab `Map` se behtar? DOM node metadata ka example.", "ES Modules vs CommonJS — hoisting, circular imports, aur tree-shaking mein farak.", "**Cumulative:** event loop + closure + prototype ka mixed output question."]}, {"h": "C — React / Frontend · 25 min", "q": ["`useReducer` kab `useState` se behtar? Ek form ka example jahan reducer clearly jeetega.", "Context ka performance problem kya hai aur usko kaise kam karte ho (bina library ke)?", "Error Boundary kya catch nahi karta — 4 cheezein."]}, {"h": "D — Machine Coding · 45 min · bina notes · cumulative", "q": ["Sortable + filterable data table — multi-column sort, text filter, aur 10k rows pe smooth. Vanilla DOM.", "Nested comments (Reddit style) — collapse/expand, reply, aur deep nesting pe indent cap."]}, {"h": "E — Browser & System Design · 20 min", "q": ["DNS resolution ke steps. TTL kaam kaise karta hai?", "TLS handshake ke steps aur kitne RTT lagte hain (TLS 1.2 vs 1.3)?", "Client-side caching design karo — stale-while-revalidate, request dedup, aur invalidation. React Query kya karti hai internally?"]}, {"h": "F — Behavioral · 15 min", "q": ["8 stories mein se main 3 randomly maangunga. Har ek 2 min. Predicted score pehle likho."]}]}}, {"n": 13, "title": "Greedy vs DP, Regex & React performance", "days": [{"d": "Mon", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Greedy vs DP — kaunsa kab", "w": "H", "jl": "DSA → Advanced Patterns → Greedy", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w13-Mon-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Deep Clone & structuredClone", "w": "M", "jl": "JS → Advanced & Browser APIs", "jh": "journal/frontend/js-mastery-journal.html", "id": "w13-Mon-2"}, {"p": 3, "buffer": false, "sub": "Browser/Web", "sc": "mint", "t": "DNS + TCP handshake — latency & RTT", "w": "M", "jl": "WebProtocols → Networking Foundations", "jh": "journal/cs-fundamentals/web-protocols-journal.html", "id": "w13-Mon-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "File Explorer — folder tree", "w": "H", "jl": "MachineCoding → Vanilla Advanced", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w13-Mon-4"}], "heavy": 2, "units": 7.0, "drop": [4], "kept": 3}, {"d": "Tue", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Interval Scheduling — greedy", "w": "M", "jl": "DSA → Core Patterns → Intervals", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w13-Tue-1"}, {"p": 2, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "A11y audit drill — ek toota component fix karo", "w": "M", "jl": "CSS/HTML → HTML Foundations", "jh": "journal/frontend/css-mastery-journal.html", "id": "w13-Tue-2"}, {"p": 3, "buffer": false, "sub": "Browser/Web", "sc": "mint", "t": "HTTPS & TLS handshake", "w": "H", "jl": "WebProtocols → HTTP Protocol Evolution", "jh": "journal/cs-fundamentals/web-protocols-journal.html", "id": "w13-Tue-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Drag-and-sort list — vanilla", "w": "H", "jl": "MachineCoding → Vanilla Medium", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w13-Tue-4"}], "heavy": 2, "units": 7.0, "drop": [4], "kept": 3}, {"d": "Wed", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Memoization vs Tabulation", "w": "H", "jl": "DSA → Dynamic Programming", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w13-Wed-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "JSON — parse, stringify, reviver, replacer", "w": "M", "jl": "JS → Advanced & Browser APIs", "jh": "journal/frontend/js-mastery-journal.html", "id": "w13-Wed-2"}, {"p": 3, "buffer": false, "sub": "SysDesign", "sc": "coral", "t": "Design a Data Table", "w": "H", "jl": "FE SysDesign → Design a Data Table", "jh": "journal/frontend/frontend-system-design-journal.html", "id": "w13-Wed-3"}, {"p": 4, "buffer": true, "id": "w13-Wed-4"}], "heavy": 2, "units": 5.5, "drop": [], "kept": 3}, {"d": "Thu", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Identifying DP — state & transition", "w": "H", "jl": "DSA → Dynamic Programming", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w13-Thu-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Regular Expressions — groups, lookaheads", "w": "H", "jl": "JS → Advanced & Browser APIs", "jh": "journal/frontend/js-mastery-journal.html", "id": "w13-Thu-2"}, {"p": 3, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "FE Round Drill 4 — 45 min, plain doc", "w": "H", "jl": "MachineCoding → Vanilla Advanced", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w13-Thu-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Todo App — vanilla DOM + localStorage", "w": "M", "jl": "MachineCoding → Vanilla Beginner", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w13-Thu-4"}], "heavy": 3, "units": 7.5, "drop": [4], "kept": 3}, {"d": "Fri", "periods": [{"p": 1, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "FE Round Drill 5 — 45 min, plain doc", "w": "H", "jl": "MachineCoding → Vanilla Advanced", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w13-Fri-1"}, {"p": 2, "buffer": false, "sub": "SysDesign", "sc": "coral", "t": "Design an Autocomplete / Typeahead", "w": "H", "jl": "FE SysDesign → Design an Autocomplete / Typeahead", "jh": "journal/frontend/frontend-system-design-journal.html", "id": "w13-Fri-2"}, {"p": 3, "buffer": false, "sub": "Behavioral", "sc": "pink", "t": "Delivery — 90–120 second answer, result pehle", "w": "M", "jl": "Behavioral → Phase 4 → Delivery Skills", "jh": "behavioral-roadmap.html", "id": "w13-Fri-3"}, {"p": 4, "buffer": true, "id": "w13-Fri-4"}], "heavy": 2, "units": 5.5, "drop": [], "kept": 3}], "spiral": [13, 12, 10], "mcLab": {"t": "Is hafte ke 3 MC problems mein se 1 — 45 min timed, bina notes", "jl": "MachineCoding → Vanilla Advanced", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w13-sat-mc"}, "satId": "w13-sat-rev", "satDsa": {"t": "DSA volume block — is hafte ke pattern se 3 problem + 1 purana, timed", "jl": "DSA → Interview Ready → Timed Mock Sessions", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w13-sat-dsa"}, "dsaTarget": 10, "exam": {"n": 13, "term": false, "final": false, "sections": [{"h": "A — DSA · 45 min", "q": ["Jump Game aur Jump Game II — greedy se. Greedy sahi hai, ye prove kaise karoge?", "Non-overlapping Intervals — kis field pe sort? Ulta sort karne se kya tootega?", "Ek problem do jahan greedy fail hota hai lekin DP chalta hai. Kyun?", "Memoization aur tabulation — ek hi problem dono se likho aur space compare karo."]}, {"h": "B — JavaScript · 20 min", "q": ["Regex likho: email validate (simple), ek string se saare numbers nikalo, aur camelCase ko kebab-case banao.", "Lookahead aur lookbehind ka ek-ek practical example.", "`JSON.stringify` kin cheezon ko drop kar deta hai? `replacer` aur `toJSON` ka use.", "`structuredClone` aur `JSON.parse(JSON.stringify())` mein farak — 4 cases jahan JSON wala tootta hai."]}, {"h": "C — React / Frontend · 20 min", "q": ["`React.memo` kab kaam nahi karta? Props mein object/function pass karne se kya hota hai?", "`useMemo` ko galat jagah use karne ka nuksan. Kab wo actually loss hai?", "`React.lazy` + `Suspense` se route-based splitting ka code. Loading fallback ka UX kaise handle karoge?"]}, {"h": "D — Machine Coding · 30 min · bina notes", "q": ["File explorer / folder tree — lazy expand, nested indent, aur select karne pe path dikhe. Vanilla.", "Drag-and-sort list — vanilla, HTML5 drag events se. Drop indicator dikhao."]}, {"h": "E — Browser & System Design · 15 min", "q": ["HTTP/1.1 ka head-of-line blocking kya tha, HTTP/2 ne kaise fix kiya, aur HTTP/2 mein bhi kya bacha tha jo HTTP/3 ne fix kiya?", "CDN cache invalidate karne ke tarike. Cache-busting hash kaise kaam karta hai?", "Analytics SDK design karo — batching, retry, offline queue, aur page unload pe data bhejne ka reliable tarika."]}, {"h": "F — Behavioral · 10 min", "q": ["Ek story lo aur usko 90 second mein compress karo — result pehle, context baad mein. Record karke suno."]}]}}, {"n": 14, "title": "DP patterns, Proxy & TypeScript", "days": [{"d": "Mon", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "1D DP — climbing stairs, house robber", "w": "M", "jl": "DSA → Dynamic Programming", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w14-Mon-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Observer / PubSub Pattern", "w": "M", "jl": "JS → Design Patterns & Modules", "jh": "journal/frontend/js-mastery-journal.html", "id": "w14-Mon-2"}, {"p": 3, "buffer": false, "sub": "Browser/Web", "sc": "mint", "t": "HTTP/2 & HTTP/3 — multiplexing, QUIC, kab kya", "w": "H", "jl": "WebProtocols → HTTP Protocol Evolution", "jh": "journal/cs-fundamentals/web-protocols-journal.html", "id": "w14-Mon-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Kanban Board — drag & drop", "w": "H", "jl": "MachineCoding → React Medium", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w14-Mon-4"}], "heavy": 2, "units": 7.0, "drop": [4], "kept": 3}, {"d": "Tue", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Unbounded Knapsack — coin change", "w": "H", "jl": "DSA → Dynamic Programming", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w14-Tue-1"}, {"p": 2, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "Explain-out-loud drill — CSS/React concepts bolkar", "w": "M", "jl": "React → (progress log se chuno)", "jh": "journal/frontend/react-mastery-journal.html", "id": "w14-Tue-2"}, {"p": 3, "buffer": false, "sub": "Browser/Web", "sc": "mint", "t": "CDN — edge caching, origin shield", "w": "M", "jl": "WebProtocols → Load Balancing & Proxies", "jh": "journal/cs-fundamentals/web-protocols-journal.html", "id": "w14-Tue-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Undo / Redo — command pattern", "w": "H", "jl": "MachineCoding → React Advanced", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w14-Tue-4"}], "heavy": 2, "units": 7.0, "drop": [4], "kept": 3}, {"d": "Wed", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "2D Grid DP — unique paths, min path sum", "w": "M", "jl": "DSA → Dynamic Programming", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w14-Wed-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Proxy & Reflect", "w": "H", "jl": "JS → Design Patterns & Modules", "jh": "journal/frontend/js-mastery-journal.html", "id": "w14-Wed-2"}, {"p": 3, "buffer": false, "sub": "SysDesign", "sc": "coral", "t": "Design a Real-Time Chat UI", "w": "H", "jl": "FE SysDesign → Design a Real-Time Chat UI", "jh": "journal/frontend/frontend-system-design-journal.html", "id": "w14-Wed-3"}, {"p": 4, "buffer": true, "id": "w14-Wed-4"}], "heavy": 2, "units": 5.5, "drop": [], "kept": 3}, {"d": "Thu", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "0-1 Knapsack", "w": "H", "jl": "DSA → Dynamic Programming", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w14-Thu-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Debugging — console, debugger, DevTools", "w": "L", "jl": "JS → Error Handling & Debugging", "jh": "journal/frontend/js-mastery-journal.html", "id": "w14-Thu-2"}, {"p": 3, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "FE Round Drill 6 — 45 min, plain doc", "w": "H", "jl": "MachineCoding → Vanilla Advanced", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w14-Thu-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Form builder with validation — vanilla", "w": "H", "jl": "MachineCoding → Vanilla Advanced", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w14-Thu-4"}], "heavy": 3, "units": 7.0, "drop": [4], "kept": 3}, {"d": "Fri", "periods": [{"p": 1, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "FE Round Drill 7 — 45 min, plain doc", "w": "H", "jl": "MachineCoding → React Medium", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w14-Fri-1"}, {"p": 2, "buffer": false, "sub": "SysDesign", "sc": "coral", "t": "Design a Social Media Feed", "w": "H", "jl": "FE SysDesign → Design a Social Media Feed", "jh": "journal/frontend/frontend-system-design-journal.html", "id": "w14-Fri-2"}, {"p": 3, "buffer": false, "sub": "Behavioral", "sc": "pink", "t": "Handling Follow-Ups — 'kya alag karte?'", "w": "M", "jl": "Behavioral → Phase 4 → Handling Follow-Ups", "jh": "behavioral-roadmap.html", "id": "w14-Fri-3"}, {"p": 4, "buffer": true, "id": "w14-Fri-4"}], "heavy": 2, "units": 5.5, "drop": [], "kept": 3}], "spiral": [14, 13, 11], "mcLab": {"t": "Is hafte ke 3 MC problems mein se 1 — 45 min timed, bina notes", "jl": "MachineCoding → React Medium", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w14-sat-mc"}, "satId": "w14-sat-rev", "satDsa": {"t": "DSA volume block — is hafte ke pattern se 3 problem + 1 purana, timed", "jl": "DSA → Interview Ready → Timed Mock Sessions", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w14-sat-dsa"}, "dsaTarget": 12, "exam": {"n": 14, "term": false, "final": false, "sections": [{"h": "A — DSA · 45 min", "q": ["House Robber aur House Robber II — circular constraint kaise handle kiya?", "Coin Change (min coins) aur Coin Change II (number of ways) — loop order alag kyun hai? Ye sabse common galti hai.", "Unique Paths + Minimum Path Sum — 2D grid DP. Space O(n) tak optimize karo.", "Partition Equal Subset Sum — 0/1 knapsack ki tarah kaise dekha?"]}, {"h": "B — JavaScript · 20 min", "q": ["Observer pattern likho. EventEmitter se conceptually kaise alag hai?", "`Proxy` se ek object banao jo undefined property access pe error throw kare.", "`Reflect` kyun exist karta hai jab `Object` methods already the?", "DevTools mein memory leak dhundhne ke steps — heap snapshot workflow."]}, {"h": "C — React / Frontend · 20 min", "q": ["`type` vs `interface` — 4 concrete farak. Kab kaunsa?", "Ek generic `<List<T>>` component type karo jisme `renderItem` bhi typed ho.", "`React.ChangeEvent<HTMLInputElement>` vs `React.FormEvent` — kab kaunsa? `useRef` ko type kaise karte ho DOM ke liye?"]}, {"h": "D — Machine Coding · 45 min · bina notes", "q": ["Kanban board — drag & drop, columns ke beech move, aur order persist.", "Undo/Redo — command pattern se. Kitna history rakhoge aur memory ka kya?", "Form builder — schema se form render ho, validation rules schema mein hi ho. Vanilla."]}, {"h": "E — Browser & System Design · 15 min", "q": ["`preload`, `prefetch`, `preconnect`, `dns-prefetch` — chaaron kab.", "Responsive images — `srcset`, `sizes`, `<picture>`. Art direction aur resolution switching mein farak.", "REST vs GraphQL frontend ke nazariye se — over-fetching, caching, aur error handling mein kya badalta hai? BFF kab banate ho?"]}, {"h": "F — Behavioral · 10 min", "q": ["Follow-up drill — main ek story pe 5 'why' puchhunga. Har level pe specific rehna hai."]}]}}, {"n": 15, "title": "Pitfalls, Drills & Testing", "days": [{"d": "Mon", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "JS interview pitfalls — precision, sort, closures in recursion", "w": "M", "jl": "DSA → Interview Ready", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w15-Mon-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Drill — closures + prototype + this combo", "w": "H", "jl": "JS → Foundations & Types", "jh": "journal/frontend/js-mastery-journal.html", "id": "w15-Mon-2"}, {"p": 3, "buffer": false, "sub": "Browser/Web", "sc": "mint", "t": "Resource hints & image optimization — preload, srcset, lazy", "w": "M", "jl": "Performance → Images & Assets", "jh": "journal/devops/performance-journal.html", "id": "w15-Mon-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Serialize / deserialize a DOM tree", "w": "H", "jl": "MachineCoding → Vanilla Advanced", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w15-Mon-4"}], "heavy": 2, "units": 7.0, "drop": [4], "kept": 3}, {"d": "Tue", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Design a Data Structure — Min Stack, Design HashMap", "w": "M", "jl": "DSA → Core Data Structures", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w15-Tue-1"}, {"p": 2, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "FE Round Drill 8 — 45 min, plain doc", "w": "H", "jl": "MachineCoding → Vanilla Advanced", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w15-Tue-2"}, {"p": 3, "buffer": false, "sub": "Browser/Web", "sc": "mint", "t": "Compression & bundle delivery — gzip, brotli", "w": "M", "jl": "Performance → Bundle & Network", "jh": "journal/devops/performance-journal.html", "id": "w15-Tue-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Prototype-based widget — bina framework", "w": "H", "jl": "MachineCoding → JavaScript Advanced", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w15-Tue-4"}], "heavy": 2, "units": 7.0, "drop": [4], "kept": 3}, {"d": "Wed", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Timed Practice 3 — graph & DP mediums", "w": "H", "jl": "DSA → Interview Ready → Timed Mock Sessions", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w15-Wed-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Drill — async / promise / event-loop combo", "w": "H", "jl": "JS → Async JavaScript", "jh": "journal/frontend/js-mastery-journal.html", "id": "w15-Wed-2"}, {"p": 3, "buffer": false, "sub": "SysDesign", "sc": "coral", "t": "Design a File Upload System", "w": "H", "jl": "FE SysDesign → Design a File Upload System", "jh": "journal/frontend/frontend-system-design-journal.html", "id": "w15-Wed-3"}, {"p": 4, "buffer": true, "id": "w15-Wed-4"}], "heavy": 3, "units": 6.0, "drop": [], "kept": 3}, {"d": "Thu", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Weak-area targeted drill", "w": "M", "jl": "DSA → Interview Ready → Spaced Repetition", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w15-Thu-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Drill — DOM API bolkar samjhana", "w": "M", "jl": "JS → Advanced & Browser APIs", "jh": "journal/frontend/js-mastery-journal.html", "id": "w15-Thu-2"}, {"p": 3, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "FE Round Drill 9 — 45 min, plain doc", "w": "H", "jl": "MachineCoding → React Advanced", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w15-Thu-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Timed Mock 1 — 45 min, unseen", "w": "H", "jl": "MachineCoding → Vanilla Advanced", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w15-Thu-4"}], "heavy": 2, "units": 7.0, "drop": [4], "kept": 3}, {"d": "Fri", "periods": [{"p": 1, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "Spiral Revision — CSS / React weak topics", "w": "M", "jl": "CSS/HTML → (progress log se chuno)", "jh": "journal/frontend/css-mastery-journal.html", "id": "w15-Fri-1"}, {"p": 2, "buffer": false, "sub": "SysDesign", "sc": "coral", "t": "Design a Video Player", "w": "H", "jl": "FE SysDesign → Design a Video Player", "jh": "journal/frontend/frontend-system-design-journal.html", "id": "w15-Fri-2"}, {"p": 3, "buffer": false, "sub": "Behavioral", "sc": "pink", "t": "\"Tell me about yourself\" + \"Why Google\" — 2 min pitch", "w": "M", "jl": "Behavioral → Phase 0 / Phase 3", "jh": "behavioral-roadmap.html", "id": "w15-Fri-3"}, {"p": 4, "buffer": true, "id": "w15-Fri-4"}], "heavy": 1, "units": 5.0, "drop": [], "kept": 3}], "spiral": [15, 14, 12], "mcLab": {"t": "Is hafte ke 3 MC problems mein se 1 — 45 min timed, bina notes", "jl": "MachineCoding → Vanilla Advanced", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w15-sat-mc"}, "satId": "w15-sat-rev", "satDsa": {"t": "DSA volume block — is hafte ke pattern se 3 problem + 1 purana, timed", "jl": "DSA → Interview Ready → Timed Mock Sessions", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w15-sat-dsa"}, "dsaTarget": 14, "exam": {"n": 15, "term": false, "final": false, "sections": [{"h": "A — DSA · 45 min", "q": ["`0.1 + 0.2 !== 0.3` — kyun, aur interview mein isko kaise handle karoge? `Number.MAX_SAFE_INTEGER` kab tootta hai?", "Min Stack — `getMin()` O(1) mein. Do approach.", "Design HashMap bina built-in ke.", "**Timed block:** 2 unseen graph/DP mediums, 20 min each."]}, {"h": "B — JavaScript · 20 min", "q": ["Mixed drill: ek snippet jisme closure + prototype + `this` teeno ka effect ho — output aur reason.", "Mixed drill: event loop + promise + setTimeout + async function ka exact order.", "DOM API bolkar samjhao — `querySelector` vs `getElementById` performance, `NodeList` vs `HTMLCollection` (live vs static), `createDocumentFragment` ka fayda."]}, {"h": "C — React / Frontend · 20 min", "q": ["RTL mein `getBy`, `queryBy`, `findBy` — teeno kab. Kaunsa throw karta hai aur kaunsa null deta hai?", "`user-event` `fireEvent` se behtar kyun? Ek case jahan `fireEvent` galat pass ho jaata hai.", "Ek vanilla DOM widget ka test likho — bina React ke, jsdom mein."]}, {"h": "D — Machine Coding · 45 min · bina notes", "q": ["DOM tree ko JSON mein serialize karo aur wapas DOM banao. Attributes, text nodes, nesting sab.", "Ek widget banao purely prototype-based (koi class syntax nahi, koi framework nahi) — constructor function, prototype methods, instance state.", "**Timed Mock 1:** main ek unseen component dunga, 45 min."]}, {"h": "E — Browser & System Design · 15 min", "q": ["Web Worker mein kya nahi kar sakte? Main thread se data pass karne ka cost kya (structured clone vs transferable)?", "Service Worker lifecycle — install, activate, fetch. Stale cache ka problem kaise fix karoge?", "Design a Video Player — buffering strategy, adaptive bitrate, aur seek ka UX. RADIO se."]}, {"h": "F — Behavioral · 10 min", "q": ["\"Tell me about yourself\" — 2 minute, timed. Fir \"Why Google\" — 90 second. Dono record karo."]}]}}, {"n": 16, "title": "Mock Week — Google Simulation", "days": [{"d": "Mon", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Full Mock 1 — 45 min, 2 mediums", "w": "H", "jl": "DSA → Interview Ready → Timed Mock Sessions", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w16-Mon-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Spiral Revision — JS weak topics (1)", "w": "M", "jl": "JS → (progress log se chuno)", "jh": "journal/frontend/js-mastery-journal.html", "id": "w16-Mon-2"}, {"p": 3, "buffer": false, "sub": "Browser/Web", "sc": "mint", "t": "Web Workers", "w": "H", "jl": "JS → Memory & Performance", "jh": "journal/frontend/js-mastery-journal.html", "id": "w16-Mon-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Timed Mock 2 — 45 min, unseen", "w": "H", "jl": "MachineCoding → Vanilla Advanced", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w16-Mon-4"}], "heavy": 3, "units": 7.5, "drop": [4], "kept": 3}, {"d": "Tue", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Full Mock 2 — 45 min, 2 mediums", "w": "H", "jl": "DSA → Interview Ready → Timed Mock Sessions", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w16-Tue-1"}, {"p": 2, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "Google FE Mock 1 — 45 min, plain doc", "w": "H", "jl": "MachineCoding → Vanilla Advanced", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w16-Tue-2"}, {"p": 3, "buffer": false, "sub": "Browser/Web", "sc": "mint", "t": "Service Workers, Cache API & PWA basics", "w": "H", "jl": "JS → Advanced & Browser APIs", "jh": "journal/frontend/js-mastery-journal.html", "id": "w16-Tue-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Timed Mock 3 — 45 min, unseen", "w": "H", "jl": "MachineCoding → React Advanced", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w16-Tue-4"}], "heavy": 4, "units": 8.0, "drop": [4], "kept": 3}, {"d": "Wed", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Spaced repetition — arrays, hashing, pointers, window, stack", "w": "M", "jl": "DSA → Interview Ready", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w16-Wed-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "Spiral Revision — JS weak topics (2)", "w": "M", "jl": "JS → (progress log se chuno)", "jh": "journal/frontend/js-mastery-journal.html", "id": "w16-Wed-2"}, {"p": 3, "buffer": false, "sub": "SysDesign", "sc": "coral", "t": "Analytics SDK mock — poora RADIO run", "w": "H", "jl": "FE SysDesign → App Architecture", "jh": "journal/frontend/frontend-system-design-journal.html", "id": "w16-Wed-3"}, {"p": 4, "buffer": true, "id": "w16-Wed-4"}], "heavy": 1, "units": 5.0, "drop": [], "kept": 3}, {"d": "Thu", "periods": [{"p": 1, "buffer": false, "sub": "DSA", "sc": "purple", "t": "Spaced repetition — trees, graphs, DP", "w": "M", "jl": "DSA → Interview Ready", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w16-Thu-1"}, {"p": 2, "buffer": false, "sub": "JavaScript", "sc": "yellow", "t": "JS Mock — 30 min rapid fire", "w": "H", "jl": "JS → Advanced & Browser APIs", "jh": "journal/frontend/js-mastery-journal.html", "id": "w16-Thu-2"}, {"p": 3, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "Google FE Mock 2 — 45 min, plain doc", "w": "H", "jl": "MachineCoding → Vanilla Advanced", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w16-Thu-3"}, {"p": 4, "buffer": false, "sub": "Machine Coding", "sc": "orange", "t": "Timed Mock 4 — cumulative, examiner style", "w": "H", "jl": "MachineCoding → Vanilla Advanced", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w16-Thu-4"}], "heavy": 3, "units": 7.5, "drop": [4], "kept": 3}, {"d": "Fri", "periods": [{"p": 1, "buffer": false, "sub": "React/FE", "sc": "blue", "t": "Google FE Mock 3 — 45 min, plain doc", "w": "H", "jl": "MachineCoding → React Advanced", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w16-Fri-1"}, {"p": 2, "buffer": false, "sub": "SysDesign", "sc": "coral", "t": "Timed synthesis mock — 35 min, apni choice", "w": "H", "jl": "FE SysDesign → Component Design", "jh": "journal/frontend/frontend-system-design-journal.html", "id": "w16-Fri-2"}, {"p": 3, "buffer": false, "sub": "Behavioral", "sc": "pink", "t": "Behavioral Mock — 8 stories, timed, recorded", "w": "H", "jl": "Behavioral → Phase 4 → Mock Practice", "jh": "behavioral-roadmap.html", "id": "w16-Fri-3"}, {"p": 4, "buffer": true, "id": "w16-Fri-4"}], "heavy": 3, "units": 6.0, "drop": [], "kept": 3}], "spiral": [16, 15, 13], "mcLab": {"t": "Is hafte ke 3 MC problems mein se 1 — 45 min timed, bina notes", "jl": "MachineCoding → Vanilla Advanced", "jh": "journal/machine-coding/machine-coding-journal.html", "id": "w16-sat-mc"}, "satId": "w16-sat-rev", "satDsa": {"t": "DSA volume block — is hafte ke pattern se 3 problem + 1 purana, timed", "jl": "DSA → Interview Ready → Timed Mock Sessions", "jh": "journal/cs-fundamentals/dsa-journal.html", "id": "w16-sat-dsa"}, "dsaTarget": 10, "exam": {"n": 16, "term": true, "final": true, "sections": [{"h": "A — DSA Round 1 · 45 min · interviewer ke saamne bolte hue", "q": ["2 unseen mediums. Rule: brute force pehle bolo, complexity batao, fir optimize karo, fir code likho, fir test karo. Chup ho ke code likhna = fail."]}, {"h": "B — DSA Round 2 · 45 min", "q": ["2 unseen mediums, alag topics se. Ek graph ya DP zaroor."]}, {"h": "C — Frontend Coding Round · 45 min · vanilla JS only", "q": ["Ek UI component zero se — no React, no library. Google ke reported prompts se: nested checkbox tree (parent/child indeterminate state), color swatch + slider, ya tic-tac-toe with history. Accessibility aur edge cases count honge."]}, {"h": "D — Frontend System Design · 40 min", "q": ["RADIO se poora design. Prompt in mein se ek: emoji autocomplete, analytics SDK, ya infinite news feed. Requirements se shuru, trade-offs bolo, aur numbers do."]}, {"h": "E — Rapid Fire · 25 min", "q": ["20 questions, 60 second each: closures, prototypal inheritance, event delegation, event loop, CORS, XSS, CSRF, CSP, caching headers, LCP/INP/CLS, reflow vs repaint, specificity, flexbox vs grid, ARIA, focus management, debounce vs throttle, Promise combinators, `this` binding, memory leaks, service workers."]}, {"h": "F — Googliness & Leadership · 30 min", "q": ["5 random stories, har ek 2 min + follow-ups. Ambiguity, ownership, failure, conflict, aur influence — paanchon cover hone chahiye."]}]}}], "terms": [{"n": 1, "t": "TERM 1 — Neev: complexity, JS core, HTML/CSS, polyfills", "from": 1, "to": 4}, {"n": 2, "t": "TERM 2 — Machinery: search, prototypes, async, layout, security", "from": 5, "to": 8}, {"n": 3, "t": "TERM 3 — Depth: trees, graphs, React, UI components, system design", "from": 9, "to": 12}, {"n": 4, "t": "TERM 4 — Advanced & Google Simulation", "from": 13, "to": 16}], "pass": 60, "budget": 6.0, "dsaTotal": 190};
+
+const KEY='gfe-syllabus-v2';
+const GATES=['E','I','A','Q'];
+const PASS=DATA.pass;
+let S={gates:{},buffers:{},exams:{},expanded:{},startDate:'',dsa:{}};
+try{const r=localStorage.getItem(KEY); if(r) S=Object.assign(S,JSON.parse(r));}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+
+const F={term:'all',week:'all',subject:'all',status:'all',q:''};
+const SUBJECTS=['DSA','JavaScript','React/FE','Machine Coding','Browser/Web','SysDesign','Behavioral'];
+const SUBJ_COLOR={'DSA':'purple','JavaScript':'yellow','React/FE':'blue','Machine Coding':'orange',
+  'Browser/Web':'mint','SysDesign':'coral','Behavioral':'pink'};
+const BAR={'DSA':'#a78bfa','JavaScript':'#f4c542','React/FE':'#5aa9f5','Machine Coding':'#f59e5a',
+  'Browser/Web':'#5cc4ab','SysDesign':'#f07f7f','Behavioral':'#f07fb0'};
+
+/* ---------- state helpers ---------- */
+function gc(id){const g=S.gates[id];return g?g.length:0;}
+function isDone(id){return gc(id)===4;}
+function statusOf(id){const c=gc(id);return c===4?'done':(c>0?'wip':'todo');}
+
+function weekIds(n){
+  const w=DATA.weeks[n-1],out=[];
+  w.days.forEach(d=>d.periods.forEach(p=>{if(!p.buffer)out.push(p.id);}));
+  out.push(w.satId, w.satDsa.id, w.mcLab.id);
+  return out;
+}
+function weekMastered(n){return weekIds(n).every(isDone);}
+function examScore(n){const e=S.exams[n];return (e&&e.act!=null&&e.act!=='')?+e.act:null;}
+function examPassed(n){const s=examScore(n);return s!=null&&s>=PASS;}
+function weekCleared(n){return weekMastered(n)&&examPassed(n);}
+function weekUnlocked(n){return n===1?true:weekCleared(n-1);}
+function termOf(n){return Math.ceil(n/4);}
+function termCleared(t){for(let n=t*4-3;n<=t*4;n++) if(!weekCleared(n))return false;return true;}
+function termOpen(t){return t===1?true:termCleared(t-1);}
+
+function today0(){const d=new Date();d.setHours(0,0,0,0);return d;}
+function sundayOf(n){
+  if(!S.startDate) return null;
+  const p=S.startDate.split('-').map(Number);
+  const d=new Date(p[0],p[1]-1,p[2]);
+  d.setDate(d.getDate()+(n-1)*7+6); d.setHours(0,0,0,0); return d;
+}
+function fmt(d){return d.toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'});}
+function examDayOK(n){
+  const s=sundayOf(n);
+  if(s) return today0().getTime()>=s.getTime();
+  return new Date().getDay()===0;
+}
+function examLockReason(n){
+  if(!weekUnlocked(n)) return 'Ye week abhi locked hai.';
+  if(!weekMastered(n)){
+    const ids=weekIds(n), left=ids.filter(x=>!isDone(x)).length;
+    return left+' topic abhi mastery gate se nahi nikle. Pehle woh poore karo — chaaron E·I·A·Q.';
+  }
+  const s=sundayOf(n);
+  if(s) return 'Topics poore ho gaye. Ab exam ka din chahiye — '+fmt(s)+'. Tab tak questions nahi milenge.';
+  return 'Topics poore ho gaye. Exam sirf Sunday ko hota hai. Ya upar start date set karo, taaki main exact din bata saku.';
+}
+function currentWeek(){for(let n=1;n<=16;n++) if(!weekCleared(n)) return n; return 16;}
+
+/* ---------- stats ---------- */
+function allPeriods(){
+  const out=[];
+  DATA.weeks.forEach(w=>w.days.forEach(d=>d.periods.forEach(p=>{if(!p.buffer)out.push({w:w.n,p:p});})));
+  return out;
+}
+function dsaSolved(){let t=0;for(const k in (S.dsa||{}))t+=(+S.dsa[k]||0);return t;}
+function renderStats(){
+  const all=allPeriods();
+  const done=all.filter(x=>isDone(x.p.id)).length;
+  const wip=all.filter(x=>statusOf(x.p.id)==='wip').length;
+  const exams=DATA.weeks.filter(w=>examPassed(w.n)).length;
+  const cw=currentWeek();
+  const terms=[1,2,3,4].filter(termCleared).length;
+  const pct=Math.round(done/all.length*100);
+  const C=2*Math.PI*48;
+  const arc=document.getElementById('ringArc');
+  if(arc) arc.setAttribute('stroke-dashoffset', C*(1-pct/100));
+  const pe=document.getElementById('ringPct'); if(pe) pe.textContent=pct+'%';
+  document.getElementById('tiles').innerHTML=[
+    ['Topics', done+' <small>/ '+all.length+'</small>', wip+' abhi chal rahe'],
+    ['DSA problems', dsaSolved()+' <small>/ '+DATA.dsaTotal+'</small>', 'volume target'],
+    ['Exams passed', exams+' <small>/ 16</small>', '≥ '+PASS+' chahiye'],
+    ['Terms cleared', terms+' <small>/ 4</small>', 'agla term khulne ko'],
+    ['Current week', 'Week '+cw, S.startDate?('exam '+fmt(sundayOf(cw))):'start date set karo'],
+  ].map(a=>'<div><div class="tile-k">'+a[0]+'</div><div class="tile-v">'+a[1]+'</div><div class="tile-s">'+a[2]+'</div></div>').join('');
+}
+function renderSubProg(){
+  const all=allPeriods();
+  document.getElementById('subprog').innerHTML=SUBJECTS.map(s=>{
+    const l=all.filter(x=>x.p.sub===s), d=l.filter(x=>isDone(x.p.id)).length;
+    const pct=l.length?Math.round(d/l.length*100):0;
+    return '<div class="sp-row"><span class="sp-name"><i class="sp-dot" style="background:'+BAR[s]+'"></i>'+s+'</span>'
+      +'<span class="bar"><i style="width:'+pct+'%;background:'+BAR[s]+'"></i></span>'
+      +'<span class="sp-num">'+d+'/'+l.length+' · '+pct+'%</span></div>';
+  }).join('');
+}
+
+/* ---------- chips ---------- */
+function renderWeekChips(){
+  const el=document.getElementById('weekchips');
+  el.innerHTML='<button class="wk'+(F.week==='all'?' on':'')+'" data-week="all" style="min-width:42px">All</button>'
+   +DATA.weeks.map(w=>{
+      const ids=weekIds(w.n), pct=Math.round(ids.filter(isDone).length/ids.length*100);
+      const lk=!weekUnlocked(w.n), dn=weekCleared(w.n);
+      return '<button class="wk'+(F.week===w.n?' on':'')+(lk?' lk':'')+(dn?' dn':'')+'" data-week="'+w.n+'" title="Week '+w.n+(lk?' — locked':'')+'">'
+        +(dn?'✓':w.n)+'<i style="width:'+pct+'%"></i></button>';
+   }).join('');
+  el.querySelectorAll('[data-week]').forEach(b=>b.onclick=()=>{
+    const v=b.dataset.week; F.week=(v==='all'?'all':+v); renderWeekChips(); apply();
+  });
+}
+function renderSubjChips(){
+  const SH={'DSA':'DSA','JavaScript':'JS','React/FE':'React/FE','Machine Coding':'Machine Coding',
+    'Browser/Web':'Browser','SysDesign':'SysDesign','Behavioral':'Behavioral'};
+  document.getElementById('subjchips').innerHTML='<span class="lbl">Subject</span>'
+    +'<button class="chip'+(F.subject==='all'?' on':'')+'" data-subj="all">All</button>'
+    +SUBJECTS.map(s=>'<button class="chip sc-'+SUBJ_COLOR[s]+(F.subject===s?' on':'')+'" data-subj="'+s+'">'+SH[s]+'</button>').join('');
+  document.querySelectorAll('[data-subj]').forEach(b=>b.onclick=()=>{F.subject=b.dataset.subj;renderSubjChips();apply();});
+}
+
+/* ---------- render ---------- */
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function rich(s){
+  let h=esc(s);
+  h=h.replace(/```js\n([\s\S]*?)```/g,(m,c)=>'<pre><code>'+c+'</code></pre>');
+  h=h.replace(/`([^`\n]+)`/g,'<code>$1</code>');
+  h=h.replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>');
+  h=h.replace(/\n/g,'<br>');
+  return h;
+}
+function gatesHTML(id,locked){
+  const set=S.gates[id]||[];
+  const tip={E:'Explain — bina notes ke 3 min',I:'Implement — khaali file se',A:'Apply — unseen problem',Q:'Interview answer — 2 follow-up'};
+  return '<div class="gates">'+GATES.map(g=>'<button class="gate'+(set.indexOf(g)>=0?' on':'')+'" data-gate="'+g+'" data-for="'+id+'"'+(locked?' disabled':'')+' title="'+tip[g]+'">'+g+'</button>').join('')+'</div>';
+}
+function periodHTML(p,day,wn){
+  if(p.buffer){
+    const v=S.buffers[p.id]||'';
+    return '<div class="per sb-grey" data-week="'+wn+'"><span class="pnum">'+p.p+'</span><div class="pmain">'
+      +'<input class="bufin" data-buf="'+p.id+'" value="'+esc(v)+'" placeholder="Buffer — jo topic gate pass nahi kara, yahan likho">'
+      +'</div></div>';
+  }
+  const st=statusOf(p.id), dropped=(day.drop||[]).indexOf(p.p)>=0;
+  return '<div class="per sb-'+p.sc+(st==='done'?' mastered':'')+(dropped?' dropped':'')+'"'
+    +' data-id="'+p.id+'" data-subj="'+esc(p.sub)+'" data-week="'+wn+'"'
+    +' data-text="'+esc((p.t+' '+p.sub+' '+p.jl).toLowerCase())+'">'
+    +'<span class="pnum">'+p.p+'</span><div class="pmain">'
+    +'<div class="ptitle">'+esc(p.t)+'</div><div class="pmeta">'
+    +'<span class="pill c-'+p.sc+'">'+esc(p.sub)+'</span>'
+    +'<span class="wt '+p.w+'">'+(p.w==='H'?'Heavy':(p.w==='M'?'Medium':'Light'))+'</span>'
+    +(dropped?'<span class="pill c-orange">→ buffer</span>':'')
+    +'<a class="pchapter" href="'+p.jh+'" target="_blank" rel="noopener">'+esc(p.jl)+'</a>'
+    +'</div></div>'+gatesHTML(p.id,false)+'</div>';
+}
+function examUnlockedFor(n){return weekUnlocked(n)&&weekMastered(n)&&examDayOK(n);}
+
+function examHTML(w){
+  const n=w.n, unlocked=examUnlockedFor(n);
+  const name=w.exam.final?'EXAM 16 — FINAL GOOGLE SIMULATION':(w.exam.term?'EXAM '+n+' — TERM EXAM':'EXAM '+n);
+  let h='<div class="day exam"><div class="day-head"><span class="dname">Sun</span>'
+    +'<span class="tag'+(w.exam.term?' warn':'')+'">'+(w.exam.term?'Term exam':'Weekly exam')+'</span>'
+    +(unlocked?'<span class="tag gr">unlocked</span>':'<span class="tag">🔒 locked</span>')+'</div>';
+  if(!unlocked){
+    h+='<div class="examlock"><div class="el-t">🔒 '+name+'</div>'
+      +'<div class="el-s">'+esc(examLockReason(n))+'</div></div></div>';
+    return h;
+  }
+  const e=S.exams[n]||{};
+  const hasPred=(e.pred!=null&&e.pred!=='');
+  const sc=examScore(n);
+  const gap=(hasPred&&sc!=null)?(sc-e.pred):null;
+  let gcls='',gtxt='gap —';
+  if(gap!==null){gtxt='gap '+(gap>0?'+':'')+gap; gcls=(sc>=PASS?' pass':' fail');}
+  h+='<div class="exam-bar"><span class="ename">'+name+'</span>'
+    +'<span class="lbl">Predicted</span><input class="ein" type="number" min="0" max="100" data-exam="'+n+'" data-f="pred" value="'+(hasPred?e.pred:'')+'">'
+    +'<span class="lbl">Actual</span><input class="ein" type="number" min="0" max="100" data-exam="'+n+'" data-f="act" value="'+(e.act!=null?e.act:'')+'"'+(hasPred?'':' disabled title="Pehle predicted score likho"')+'>'
+    +'<span class="gap'+gcls+'">'+gtxt+'</span></div>';
+  w.exam.sections.forEach(s=>{
+    h+='<div class="qsec"><div class="qsec-h">'+esc(s.h)+'</div><ol class="qlist">'
+      +s.q.map(q=>'<li>'+rich(q)+'</li>').join('')+'</ol></div>';
+  });
+  return h+'</div>';
+}
+
+function weekHTML(w){
+  const n=w.n, ids=weekIds(n), dn=ids.filter(isDone).length, pct=Math.round(dn/ids.length*100);
+  const unlocked=weekUnlocked(n), cleared=weekCleared(n);
+  const open=unlocked&&!!S.expanded[n];
+
+  let head='<div class="week-head" data-toggle="'+n+'"><span class="wnum">'+(cleared?'✓':(unlocked?n:'🔒'))+'</span>'
+    +'<span class="wtitle">Week '+n+' — '+esc(w.title)+'</span>';
+  if(unlocked){
+    const solved=(S.dsa&&S.dsa[n])||0;
+    head+='<span class="wmeta">'
+      +'<span class="wstat"><span class="lbl">DSA problems</span>'
+        +'<span class="dsawrap"><input class="dsain" type="number" min="0" data-dsa="'+n+'" value="'+solved+'">'
+        +'<b class="'+(solved>=w.dsaTarget?'ok':'')+'">/ '+w.dsaTarget+'</b></span></span>'
+      +'<span class="wstat"><span class="lbl">Mastered '+dn+'/'+ids.length+'</span>'
+        +'<span class="bar wbar"><i style="width:'+pct+'%;background:'+(pct===100?'#1a7f37':'#111')+'"></i></span></span>'
+      +'</span>';
+  }
+  head+='</div>';
+
+  if(!unlocked){
+    const prev=n-1;
+    let why;
+    if(!weekMastered(prev)) why='Week '+prev+' ke '+weekIds(prev).filter(x=>!isDone(x)).length+' topic abhi baaki hain.';
+    else if(!examPassed(prev)) why='Week '+prev+' ka exam abhi pass nahi hua (≥ '+PASS+' chahiye).';
+    else why='Week '+prev+' pehle poora karo.';
+    return '<section class="week lk" data-weeksec="'+n+'">'+head
+      +'<div class="lockmsg"><span>🔒</span><span>'+why+'</span></div></section>';
+  }
+
+  let body='';
+  w.days.forEach(d=>{
+    const dids=d.periods.filter(x=>!x.buffer).map(x=>x.id);
+    const dd=dids.filter(isDone).length, dp=Math.round(dd/dids.length*100);
+    const over=d.drop.length>0;
+    body+='<div class="day"><div class="day-head"><span class="dname">'+d.d+'</span>'
+      +'<span class="dmeta"><em>'+d.kept+'</em> periods · <em>'+d.units+'</em> units</span>'
+      +(over?'<span class="tag warn">budget se upar — aakhri '+d.drop.length+' buffer mein</span>':'')
+      +'<span class="dright"><span class="bar" style="width:56px"><i style="width:'+dp+'%;background:'+(dp===100?'#1a7f37':'#c9cdd4')+'"></i></span>'
+      +'<span class="dcount">'+dd+'/'+dids.length+'</span></span></div>';
+    d.periods.forEach(p=>{body+=periodHTML(p,d,n);});
+    body+='</div>';
+  });
+
+  const sp='Spiral revision — '+w.spiral.map(x=>'Week '+x).join(' + ')+' ke topics';
+  const satDone=[w.satId,w.satDsa.id,w.mcLab.id].filter(isDone).length;
+  body+='<div class="day"><div class="day-head"><span class="dname">Sat</span>'
+    +'<span class="tag gr">Revision + DSA + Lab</span>'
+    +'<span class="dright"><span class="dcount">'+satDone+'/3</span></span></div>'
+
+    +'<div class="per sb-green'+(isDone(w.satId)?' mastered':'')+'" data-id="'+w.satId+'" data-week="'+n+'" data-subj="Revision" data-text="revision spiral">'
+      +'<span class="pnum">1</span><div class="pmain"><div class="ptitle">'+sp+'</div>'
+      +'<div class="pmeta"><span class="pill c-green">Revision</span><span class="wt">spaced repetition</span></div></div>'
+      +gatesHTML(w.satId,false)+'</div>'
+
+    +'<div class="per sb-purple'+(isDone(w.satDsa.id)?' mastered':'')+'" data-id="'+w.satDsa.id+'" data-week="'+n+'" data-subj="DSA" data-text="dsa volume block timed problems">'
+      +'<span class="pnum">2</span><div class="pmain"><div class="ptitle">'+esc(w.satDsa.t)+'</div>'
+      +'<div class="pmeta"><span class="pill c-purple">DSA Lab</span><span class="wt">timed</span>'
+      +'<a class="pchapter" href="'+w.satDsa.jh+'" target="_blank" rel="noopener">'+esc(w.satDsa.jl)+'</a></div></div>'
+      +gatesHTML(w.satDsa.id,false)+'</div>'
+
+    +'<div class="per sb-orange'+(isDone(w.mcLab.id)?' mastered':'')+'" data-id="'+w.mcLab.id+'" data-week="'+n+'" data-subj="Machine Coding" data-text="machine coding lab timed">'
+      +'<span class="pnum">3</span><div class="pmain"><div class="ptitle">'+esc(w.mcLab.t)+'</div>'
+      +'<div class="pmeta"><span class="pill c-orange">MC Lab</span><span class="wt">45 min timed</span>'
+      +'<a class="pchapter" href="'+w.mcLab.jh+'" target="_blank" rel="noopener">'+esc(w.mcLab.jl)+'</a></div></div>'
+      +gatesHTML(w.mcLab.id,false)+'</div></div>';
+
+  body+=examHTML(w);
+
+  return '<section class="week'+(open?' open':'')+(cleared?' done':'')+'" data-weeksec="'+n+'">'
+    +head+'<div class="week-body">'+body+'</div></section>';
+}
+
+function render(){
+  let h='';
+  DATA.terms.forEach(t=>{
+    const open=termOpen(t.n);
+    h+='<div class="term-head" data-termsec="'+t.n+'">'+esc(t.t)+' · Week '+t.from+'–'+t.to+(open?'':' · 🔒 locked')+'</div>';
+    if(!open){
+      const p=t.n-1, left=[];
+      for(let n=p*4-3;n<=p*4;n++) if(!weekCleared(n)) left.push(n);
+      h+='<div class="termlock" data-weeksec="t'+t.n+'"><div class="tl-t">🔒 Ye term abhi band hai</div>'
+        +'<div class="tl-s">Term '+p+' pehle poora karo — Week '+left.join(', ')+' abhi cleared nahi.<br>Ek waqt pe ek term. Aage ka syllabus dekh ke overload lene ka koi fayda nahi.</div></div>';
+      return;
+    }
+    DATA.weeks.filter(w=>w.n>=t.from&&w.n<=t.to).forEach(w=>h+=weekHTML(w));
+  });
+  document.getElementById('content').innerHTML=h;
+  bind(); apply();
+}
+
+function bind(){
+  document.querySelectorAll('.gate').forEach(b=>b.onclick=e=>{
+    e.stopPropagation();
+    const id=b.dataset.for,g=b.dataset.gate;
+    const set=new Set(S.gates[id]||[]);
+    set.has(g)?set.delete(g):set.add(g);
+    S.gates[id]=[...set]; if(!S.gates[id].length) delete S.gates[id];
+    save(); rerenderKeepScroll();
+  });
+  document.querySelectorAll('[data-buf]').forEach(i=>i.oninput=()=>{S.buffers[i.dataset.buf]=i.value;save();});
+  document.querySelectorAll('[data-dsa]').forEach(i=>{
+    i.onclick=e=>e.stopPropagation();
+    i.oninput=()=>{S.dsa=S.dsa||{};S.dsa[i.dataset.dsa]=i.value===''?0:+i.value;save();
+      const t=DATA.weeks[+i.dataset.dsa-1].dsaTarget;
+      const bb=i.parentElement.querySelector('b'); if(bb) bb.classList.toggle('ok',(+i.value||0)>=t);
+      renderStats();};
+  });
+  document.querySelectorAll('[data-exam]').forEach(i=>i.onchange=()=>{
+    const n=i.dataset.exam; S.exams[n]=S.exams[n]||{};
+    S.exams[n][i.dataset.f]=i.value===''?null:+i.value; save(); rerenderKeepScroll();
+  });
+  document.querySelectorAll('[data-toggle]').forEach(hd=>hd.onclick=e=>{
+    if(e.target.closest('.gate')||e.target.closest('input'))return;
+    const n=hd.dataset.toggle;
+    if(!weekUnlocked(+n))return;
+    S.expanded[n]=!S.expanded[n]; save();
+    hd.parentElement.classList.toggle('open',!!S.expanded[n]);
+  });
+}
+function rerenderKeepScroll(){
+  const y=window.scrollY; render(); renderStats(); renderSubProg(); renderWeekChips();
+  window.scrollTo(0,y);
+}
+
+function apply(){
+  const q=F.q.trim().toLowerCase();
+  document.querySelectorAll('.per').forEach(row=>{
+    let show=true; const wk=+row.dataset.week;
+    if(F.week!=='all'&&wk!==F.week)show=false;
+    if(show&&F.term!=='all'&&termOf(wk)!==+F.term)show=false;
+    if(show&&F.subject!=='all'&&row.dataset.subj!==F.subject)show=false;
+    if(show&&F.status!=='all'){const id=row.dataset.id; if(!id)show=false; else if(statusOf(id)!==F.status)show=false;}
+    if(show&&q&&!(row.dataset.text||'').includes(q))show=false;
+    row.classList.toggle('hide',!show);
+  });
+  document.querySelectorAll('.day').forEach(d=>{
+    if(d.classList.contains('exam')){
+      const vis=(F.subject==='all'&&F.status==='all'&&!q);
+      d.style.display=vis?'':'none'; return;
+    }
+    const vis=[...d.querySelectorAll('.per')].some(r=>!r.classList.contains('hide'));
+    d.style.display=vis?'':'none';
+  });
+  document.querySelectorAll('[data-weeksec]').forEach(sec=>{
+    const v=sec.dataset.weeksec;
+    if(String(v).charAt(0)==='t'){
+      const tn=+String(v).slice(1);
+      sec.style.display=(F.term==='all'||+F.term===tn)&&F.week==='all'&&!q&&F.subject==='all'&&F.status==='all'?'':'none';
+      return;
+    }
+    const n=+v;
+    if(sec.classList.contains('lk')){
+      sec.style.display=(F.term==='all'||termOf(n)===+F.term)&&(F.week==='all'||F.week===n)&&!q&&F.subject==='all'&&F.status==='all'?'':'none';
+      return;
+    }
+    const vis=[...sec.querySelectorAll('.day')].some(d=>d.style.display!=='none');
+    sec.style.display=vis?'':'none';
+  });
+  DATA.terms.forEach(t=>{
+    const head=document.querySelector('[data-termsec="'+t.n+'"]');
+    if(!head)return;
+    const any=[...document.querySelectorAll('[data-weeksec]')].some(s=>{
+      const v=s.dataset.weeksec;
+      const n=String(v).charAt(0)==='t'?+String(v).slice(1)*4:+v;
+      return termOf(n)===t.n&&s.style.display!=='none';
+    });
+    head.style.display=any?'':'none';
+  });
+}
+
+/* ---------- controls ---------- */
+document.querySelectorAll('[data-term]').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('[data-term]').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); F.term=b.dataset.term; F.week='all'; renderWeekChips(); apply();
+});
+document.querySelectorAll('[data-status]').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('[data-status]').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); F.status=b.dataset.status; apply();
+});
+document.getElementById('q').oninput=e=>{F.q=e.target.value;apply();};
+document.getElementById('sd').value=S.startDate||'';
+document.getElementById('sd').onchange=e=>{S.startDate=e.target.value;save();rerenderKeepScroll();};
+document.getElementById('jump').onclick=()=>{
+  const n=currentWeek(); S.expanded[n]=true; save(); render(); renderStats(); renderWeekChips();
+  const el=document.querySelector('[data-weeksec="'+n+'"]');
+  if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+};
+document.getElementById('expBtn').onclick=()=>{document.getElementById('io').value=JSON.stringify(S);};
+document.getElementById('impBtn').onclick=()=>{
+  try{S=Object.assign({gates:{},buffers:{},exams:{},expanded:{},startDate:'',dsa:{}},JSON.parse(document.getElementById('io').value));
+      save();document.getElementById('sd').value=S.startDate||'';rerenderKeepScroll();}
+  catch(e){alert('JSON theek nahi hai.');}
+};
+document.getElementById('clrBtn').onclick=()=>{
+  if(!confirm('Saara progress mit jayega. Pakka?'))return;
+  S={gates:{},buffers:{},exams:{},expanded:{},startDate:'',dsa:{}};save();document.getElementById('sd').value='';rerenderKeepScroll();
+};
+
+document.getElementById('pmk').textContent=PASS;
+function measure(){
+  const c=document.getElementById('ctrl');
+  if(c) document.documentElement.style.setProperty('--ctrl-h', c.offsetHeight+'px');
+}
+window.addEventListener('resize',measure);
+
+renderSubjChips(); renderWeekChips(); render(); renderStats(); renderSubProg(); measure();
+setTimeout(measure,300);
+
+</script>
+<script src="nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,1454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Build a Real-Time Voice RAG — From Scratch</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: #f0f2f5;
+      --bg-card: #ffffff;
+      --text-primary: #000000;
+      --text-secondary: #5f6368;
+      --text-muted: #9aa0a6;
+      --accent-black: #000000;
+      --accent-white: #ffffff;
+      --pastel-yellow: #ffeab6;
+      --pastel-mint: #dcf0eb;
+      --pastel-purple: #e6daff;
+      --pastel-pink: #ffd6e8;
+      --pastel-blue: #d6eaff;
+      --pastel-orange: #ffe4cc;
+      --pastel-teal: #ccf5f0;
+      --pastel-green: #d4edda;
+      --border-radius-lg: 24px;
+      --border-radius-md: 16px;
+      --border-radius-pill: 9999px;
+      --font-sans: 'Outfit', 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', 'SFMono-Regular', monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { max-width: 1200px; margin: 0 auto; background: var(--bg-main); font-family: var(--font-sans); color: var(--text-primary); min-height: 100vh; -webkit-font-smoothing: antialiased; line-height: 1.5; }
+
+    .cover { padding: 4rem 2.5rem 2rem; }
+    .cover-subtitle { font-size: 14px; letter-spacing: .05em; color: var(--text-secondary); font-weight: 500; margin-bottom: .5rem; }
+    .cover-title { font-size: 40px; font-weight: 700; letter-spacing: -.02em; margin-bottom: .5rem; }
+    .cover-name { font-size: 16px; color: var(--text-secondary); font-weight: 500; margin-bottom: 2rem; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .badge { font-size: 13px; font-weight: 500; padding: 2px 8px; border-radius: 6px; white-space: nowrap; }
+    .badge-ai { background: var(--pastel-purple); color: #3C3489; }
+    .badge-build { background: var(--pastel-mint); color: #1a5a3a; }
+    .badge-scratch { background: var(--pastel-yellow); color: #7a5200; }
+
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1.25rem; margin-bottom: 2rem; padding: 0 2.5rem; }
+    .stat { background: var(--bg-card); padding: 1.5rem; border-radius: var(--border-radius-lg); box-shadow: 0 4px 20px rgba(0,0,0,.03); }
+    .stat-val { font-size: 36px; font-weight: 600; line-height: 1.1; margin-bottom: 8px; }
+    .stat-label { font-size: 14px; color: var(--text-secondary); font-weight: 500; }
+    .streak-box { display: inline-flex; align-items: center; gap: 8px; background: var(--pastel-purple); padding: 8px 16px; border-radius: var(--border-radius-pill); margin: 0 2.5rem 2rem; }
+    .streak-text { font-size: 14px; font-weight: 600; color: #3C3489; }
+
+    .phase-nav { display: flex; gap: .75rem; overflow-x: auto; scrollbar-width: none; margin: 0 2rem 1.5rem; flex-wrap: nowrap; }
+    .phase-nav::-webkit-scrollbar { display: none; }
+    .phase-tab { font-size: 14px; font-weight: 500; padding: 10px 20px; cursor: pointer; color: var(--text-secondary); background: var(--bg-card); border-radius: var(--border-radius-pill); border: 1px solid transparent; white-space: nowrap; transition: all .2s; box-shadow: 0 2px 10px rgba(0,0,0,.02); flex-shrink: 0; }
+    .phase-tab.active { color: var(--accent-white); background: var(--accent-black); box-shadow: 0 4px 15px rgba(0,0,0,.1); }
+    .phase-tab:hover:not(.active) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.05); }
+    .phase-tab .tab-lang { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; opacity: .7; display: block; margin-bottom: 1px; }
+
+    .content { padding: 0 2.5rem 4rem; max-width: 900px; margin-inline: auto; }
+    .phase-section { display: none; }
+    .phase-section.active { display: block; }
+
+    .phase-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: .75rem; padding: 2rem; border-radius: var(--border-radius-lg); }
+    .phase-num { font-size: 13px; font-weight: 600; opacity: .7; margin-bottom: .4rem; }
+    .phase-title { font-size: 28px; font-weight: 700; letter-spacing: -.01em; }
+    .phase-meta { text-align: right; }
+    .phase-level { font-size: 16px; font-weight: 700; }
+    .phase-count { font-size: 13px; opacity: .7; margin-top: 4px; font-weight: 500; }
+
+    .phase-intro { background: var(--bg-card); border-radius: var(--border-radius-md); padding: 18px 20px; margin-bottom: 1.5rem; font-size: 14px; color: var(--text-secondary); line-height: 1.7; box-shadow: 0 2px 8px rgba(0,0,0,.03); }
+    .phase-intro strong { color: var(--text-primary); }
+
+    .phase-progress-wrap { margin-bottom: 1.5rem; }
+    .phase-progress-label { font-size: 13px; color: var(--text-secondary); font-weight: 500; margin-bottom: 6px; }
+    .phase-progress-bar { height: 6px; background: var(--bg-card); border-radius: var(--border-radius-pill); overflow: hidden; }
+    .phase-progress-fill { height: 100%; background: var(--accent-black); transition: width .4s ease; border-radius: var(--border-radius-pill); }
+
+    .section-head { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--text-muted); margin-bottom: 12px; margin-top: 2rem; }
+
+    /* ── LESSON CARD ── */
+    .lesson-card { background: var(--bg-card); border-radius: var(--border-radius-md); margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.03); overflow: hidden; transition: box-shadow .2s; }
+    .lesson-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.07); }
+    .lesson-card.mastered { background: var(--pastel-mint); }
+    .lesson-card.in-progress { background: #fffbeb; border-left: 3px solid #f59e0b; }
+    .lesson-card.in-progress .lesson-name { color: #92400e; }
+    .lesson-header { display: flex; align-items: center; gap: 14px; padding: 15px 18px; cursor: pointer; user-select: none; }
+    .lesson-check { width: 22px; height: 22px; flex-shrink: 0; border-radius: 4px; border: 1.5px solid #d0d0d0; display: flex; align-items: center; justify-content: center; background: var(--bg-card); transition: all .15s; }
+    .lesson-check[data-state="mastered"] { background: var(--accent-black); border-color: var(--accent-black); }
+    .lesson-check[data-state="in-progress"] { background: #f59e0b; border-color: #f59e0b; }
+    .chk-icon { display: none; font-size: 13px; font-weight: 700; color: #fff; line-height: 1; }
+    .lesson-check[data-state="mastered"] .chk-icon.mastered { display: block; }
+    .lesson-check[data-state="in-progress"] .chk-icon.in-progress { display: block; }
+    .lesson-info { flex: 1; min-width: 0; }
+    .lesson-name { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+    .lesson-desc { font-size: 12px; color: var(--text-secondary); font-weight: 500; line-height: 1.4; }
+    .lesson-card.mastered .lesson-name { text-decoration: line-through; color: var(--text-secondary); }
+    .lesson-badges { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+    .lesson-expand { background: var(--bg-main); border: none; border-radius: var(--border-radius-pill); padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; color: var(--text-secondary); transition: all .2s; flex-shrink: 0; }
+    .lesson-expand:hover { background: var(--pastel-purple); }
+    .lesson-expand.open { background: var(--accent-black); color: #fff; }
+
+    .lesson-panel { display: none; padding: 0 18px 18px; border-top: 1px solid var(--bg-main); }
+    .lesson-panel.open { display: block; }
+
+    .teach-block { margin-top: 16px; }
+    .teach-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); margin-bottom: 6px; }
+    .teach-text { font-size: 13px; color: var(--text-primary); line-height: 1.7; font-weight: 500; }
+    .teach-text p { margin-bottom: 8px; }
+    .teach-text .analogy { background: var(--pastel-yellow); border-radius: 10px; padding: 10px 14px; margin: 8px 0; color: #7a5200; }
+
+    .lvis { background: var(--bg-main); border-radius: 12px; padding: 13px 13px 9px; }
+    .lvis svg { width: 100%; height: auto; display: block; border-radius: 9px; background: var(--bg-card); }
+    .lvis-cap { font-size: 11.5px; color: var(--text-secondary); line-height: 1.55; font-weight: 500; margin-top: 9px; padding: 0 2px; }
+    .gotchas-list { list-style: none; display: grid; gap: 6px; }
+    .gotchas-list li { display: flex; gap: 8px; align-items: flex-start; background: var(--pastel-pink); color: #7a1a4a; border-radius: 10px; padding: 8px 12px; font-size: 12.5px; font-weight: 500; line-height: 1.5; }
+    .gotchas-list li::before { content: '⚠'; flex-shrink: 0; }
+
+    /* code blocks */
+    .code-wrap { background: #17191f; border-radius: 12px; overflow: hidden; margin: 8px 0; }
+    .code-head { display: flex; align-items: center; justify-content: space-between; padding: 7px 14px; background: #1f222b; }
+    .code-title { font-size: 11px; font-weight: 600; color: #8b93a5; font-family: var(--font-mono); }
+    .code-copy { background: none; border: 1px solid rgba(255,255,255,.15); color: #c6cddb; border-radius: 7px; padding: 3px 10px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all .15s; }
+    .code-copy:hover { background: rgba(255,255,255,.08); }
+    .code-copy.copied { background: #16a34a; border-color: #16a34a; color: #fff; }
+    .code-block { padding: 14px 16px; overflow-x: auto; margin: 0; }
+    .code-block code { font-family: var(--font-mono); font-size: 12.5px; line-height: 1.65; color: #e6e9f0; white-space: pre; }
+
+    /* ── CHECK YOURSELF (quiz) ── */
+    .quiz-box { background: var(--bg-card); border-radius: var(--border-radius-lg); padding: 22px 24px; margin-top: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,.03); }
+    .quiz-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
+    .quiz-title { font-size: 15px; font-weight: 700; }
+    .quiz-progress { font-size: 12px; font-weight: 600; color: var(--text-muted); }
+    .quiz-intro { font-size: 12.5px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 14px; font-weight: 500; }
+    .quiz-q { display: flex; gap: 13px; padding: 13px 0; border-top: 1px solid var(--bg-main); }
+    .quiz-num { flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; background: var(--bg-main); color: var(--text-secondary); font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+    .quiz-q.got .quiz-num { background: var(--pastel-mint); color: #1a5a3a; }
+    .quiz-q.review .quiz-num { background: var(--pastel-yellow); color: #7a5200; }
+    .quiz-main { flex: 1; min-width: 0; }
+    .quiz-text { font-size: 14px; font-weight: 500; line-height: 1.6; margin-bottom: 9px; }
+    .quiz-text code { font-family: var(--font-mono); font-size: 12.5px; background: var(--bg-main); padding: 1px 5px; border-radius: 5px; }
+    .quiz-btn { background: var(--bg-main); border: none; border-radius: var(--border-radius-pill); padding: 5px 14px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; color: var(--text-secondary); transition: all .15s; }
+    .quiz-btn:hover { background: var(--pastel-purple); color: #3C3489; }
+    .quiz-ans { display: none; margin-top: 10px; background: var(--pastel-mint); border-radius: 12px; padding: 12px 15px; font-size: 13px; line-height: 1.7; color: #14483a; font-weight: 500; }
+    .quiz-ans.open { display: block; }
+    .quiz-ans code { font-family: var(--font-mono); font-size: 12px; background: rgba(255,255,255,.6); padding: 1px 5px; border-radius: 4px; }
+    .quiz-ans b { color: #0c3227; }
+    .quiz-marks { display: flex; gap: 7px; margin-top: 10px; }
+    .qm-btn { border: none; border-radius: var(--border-radius-pill); padding: 4px 12px; font-size: 11.5px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all .15s; }
+    .qm-btn.got { background: var(--pastel-mint); color: #1a5a3a; }
+    .qm-btn.review { background: var(--pastel-yellow); color: #7a5200; }
+    .qm-btn.on { box-shadow: 0 0 0 2px var(--accent-black); }
+
+    .note-inline { background: var(--pastel-teal); border-radius: 10px; padding: 10px 14px; margin-top: 8px; font-size: 12.5px; color: #1a5a5a; font-weight: 500; line-height: 1.6; }
+
+    .lesson-note-row { display: flex; gap: 10px; align-items: flex-start; margin-top: 14px; flex-wrap: wrap; }
+    .lesson-note-input { flex: 1; min-width: 220px; background: var(--bg-main); border: 1.5px solid transparent; border-radius: 12px; padding: 10px 12px; font-family: inherit; font-size: 13px; color: var(--text-primary); resize: vertical; min-height: 54px; line-height: 1.6; }
+    .lesson-note-input:focus { outline: none; border-color: var(--accent-black); background: #fff; }
+    .lesson-note-input.filled { background: #fff; border-color: rgba(0,0,0,.1); }
+
+    .mini-score { display: flex; align-items: center; gap: 6px; }
+    .mini-score-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; }
+    .ms-btn { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: var(--border-radius-pill); border: none; cursor: pointer; font-family: inherit; transition: all .15s; }
+    .ms-btn.s1 { background: var(--pastel-pink); color: #7a1a4a; }
+    .ms-btn.s2 { background: var(--pastel-yellow); color: #7a5200; }
+    .ms-btn.s3 { background: var(--pastel-mint); color: #1a5a3a; }
+    .ms-btn.s4 { background: var(--accent-black); color: #fff; }
+    .ms-btn.selected { box-shadow: 0 0 0 2px var(--accent-black); }
+    .note-save-btn { background: var(--accent-black); color: #fff; border: none; border-radius: var(--border-radius-pill); padding: 6px 16px; font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; transition: opacity .2s; }
+    .note-save-btn:hover { opacity: .85; }
+    .note-saved { font-size: 12px; color: #1a5a3a; font-weight: 600; display: none; }
+    .note-saved.show { display: inline; }
+
+    /* ── BUILD CARD ── */
+    .build-card { background: var(--bg-card); border-radius: var(--border-radius-lg); margin-top: 8px; box-shadow: 0 2px 10px rgba(0,0,0,.04); overflow: hidden; transition: box-shadow .2s; border: 1px solid transparent; }
+    .build-card.done { background: var(--pastel-mint); }
+    .build-card.inprogress { border-left: 4px solid #f59e0b; }
+    .build-header { display: flex; align-items: center; gap: 14px; padding: 18px 22px; cursor: pointer; user-select: none; }
+    .build-flag { font-size: 22px; flex-shrink: 0; }
+    .build-info { flex: 1; min-width: 0; }
+    .build-title { font-size: 17px; font-weight: 700; margin-bottom: 3px; }
+    .build-card.done .build-title { text-decoration: line-through; color: var(--text-secondary); }
+    .build-brief { font-size: 12.5px; color: var(--text-secondary); font-weight: 500; line-height: 1.4; }
+    .build-meta { display: flex; gap: 6px; align-items: center; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+    .build-badge { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: var(--border-radius-pill); white-space: nowrap; }
+    .build-badge.time { background: var(--bg-main); color: var(--text-secondary); }
+    .build-badge.brain { background: var(--pastel-purple); color: #3C3489; }
+    .build-expand { background: var(--bg-main); border: none; border-radius: var(--border-radius-pill); padding: 7px 16px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; color: var(--text-secondary); transition: all .2s; flex-shrink: 0; }
+    .build-expand:hover { background: var(--pastel-purple); }
+    .build-expand.open { background: var(--accent-black); color: #fff; }
+
+    .build-panel { display: none; padding: 0 22px 24px; border-top: 1px solid var(--bg-main); }
+    .build-panel.open { display: block; }
+
+    .goal-box { background: var(--bg-main); border-radius: var(--border-radius-md); padding: 16px 18px; margin: 18px 0 4px; }
+    .goal-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); margin-bottom: 8px; }
+    .goal-text { font-size: 14px; color: var(--text-primary); line-height: 1.7; font-weight: 500; }
+
+    .step-block { margin-top: 20px; }
+    .step-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .step-num { width: 26px; height: 26px; border-radius: 50%; background: var(--accent-black); color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .step-title { font-size: 14px; font-weight: 700; }
+    .step-explain { font-size: 13px; color: var(--text-secondary); line-height: 1.7; font-weight: 500; margin-bottom: 8px; }
+
+    .outcome-box { background: var(--pastel-mint); border-radius: var(--border-radius-md); padding: 16px 18px; margin-top: 20px; }
+    .outcome-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #1a5a3a; margin-bottom: 8px; }
+    .outcome-text { font-size: 13.5px; color: #1a5a3a; line-height: 1.7; font-weight: 500; white-space: pre-line; font-family: var(--font-mono); font-size: 12.5px; }
+
+    .errors-box { background: var(--pastel-pink); border-radius: var(--border-radius-md); padding: 16px 18px; margin-top: 16px; }
+    .errors-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #7a1a4a; margin-bottom: 8px; }
+    .errors-list { list-style: none; display: grid; gap: 6px; }
+    .errors-list li { display: flex; gap: 8px; align-items: flex-start; font-size: 12.5px; color: #7a1a4a; font-weight: 500; line-height: 1.5; }
+    .errors-list li::before { content: '→'; flex-shrink: 0; font-weight: 700; }
+
+    .stretch-box { background: var(--pastel-purple); border-radius: var(--border-radius-md); padding: 16px 18px; margin-top: 16px; }
+    .stretch-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #3C3489; margin-bottom: 8px; }
+    .stretch-list { list-style: none; display: grid; gap: 6px; }
+    .stretch-list li { display: flex; gap: 8px; align-items: flex-start; font-size: 12.5px; color: #3C3489; font-weight: 500; line-height: 1.5; }
+    .stretch-list li::before { content: '🚀'; flex-shrink: 0; }
+
+    /* resources */
+    .resources-box { background: var(--bg-card); border-radius: var(--border-radius-md); padding: 18px 20px; margin-top: 24px; box-shadow: 0 2px 8px rgba(0,0,0,.03); }
+    .resources-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); margin-bottom: 12px; }
+    .resource-link { display: flex; align-items: flex-start; gap: 10px; padding: 9px 12px; border-radius: 10px; text-decoration: none; transition: background .15s; }
+    .resource-link:hover { background: var(--bg-main); }
+    .resource-ico { flex-shrink: 0; font-size: 15px; width: 22px; text-align: center; }
+    .resource-info { flex: 1; min-width: 0; }
+    .resource-name { font-size: 13.5px; font-weight: 600; color: var(--text-primary); }
+    .resource-who { font-size: 11.5px; color: var(--text-muted); font-weight: 600; margin-top: 1px; }
+    .resource-desc { font-size: 12px; color: var(--text-secondary); font-weight: 500; margin-top: 3px; line-height: 1.5; }
+    .resource-time { font-size: 11px; font-weight: 600; color: var(--text-secondary); background: var(--bg-main); padding: 2px 8px; border-radius: 9999px; flex-shrink: 0; align-self: flex-start; margin-top: 2px; white-space: nowrap; }
+
+    /* build tracker row */
+    .build-action-row { display: flex; align-items: center; gap: 12px; margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--bg-main); flex-wrap: wrap; }
+    .timer-section { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: var(--bg-main); border-radius: var(--border-radius-md); flex-wrap: wrap; flex: 1 1 100%; }
+    .timer-label { font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .06em; }
+    .timer-display { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text-primary); min-width: 80px; }
+    .timer-display.warning { color: #d97706; }
+    .timer-display.over { color: #dc2626; }
+    .timer-bar-wrap { flex: 1; min-width: 100px; height: 6px; background: rgba(0,0,0,.08); border-radius: 6px; overflow: hidden; }
+    .timer-bar { height: 100%; border-radius: 6px; background: #16a34a; transition: width 1s linear, background .4s; }
+    .timer-btn { font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: var(--border-radius-pill); border: 1px solid rgba(0,0,0,.12); cursor: pointer; background: var(--bg-card); color: var(--text-primary); font-family: inherit; transition: background .15s; }
+    .timer-btn:hover { background: #f0f0f0; }
+    .timer-btn.running { background: var(--pastel-yellow); border-color: #f59e0b; color: #92400e; }
+    .score-btn { font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: var(--border-radius-pill); border: none; cursor: pointer; font-family: inherit; transition: all .2s; }
+    .score-btn.s1 { background: var(--pastel-pink); color: #7a1a4a; }
+    .score-btn.s2 { background: var(--pastel-yellow); color: #7a5200; }
+    .score-btn.s3 { background: var(--pastel-mint); color: #1a5a3a; }
+    .score-btn.s4 { background: var(--accent-black); color: #fff; }
+    .score-btn:hover { transform: translateY(-1px); }
+    .score-btn.selected { box-shadow: 0 0 0 2.5px var(--accent-black); }
+    .status-btns { display: flex; gap: 6px; margin-left: auto; }
+    .status-btn { font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: var(--border-radius-pill); border: none; cursor: pointer; font-family: inherit; transition: all .2s; background: var(--bg-main); color: var(--text-secondary); }
+    .status-btn.wip.active { background: #fef3c7; color: #92400e; border: 1.5px solid #f59e0b; }
+    .status-btn.done.active { background: var(--accent-black); color: #fff; }
+    .build-note-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+    @media(max-width:600px) { .build-note-fields { grid-template-columns: 1fr; } }
+    .field-group { display: flex; flex-direction: column; gap: 6px; }
+    .field-group.full { grid-column: 1/-1; }
+    .field-label-text { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-secondary); }
+    .field-input { width: 100%; background: var(--bg-main); border: 1.5px solid transparent; border-radius: 12px; padding: 11px 13px; font-family: inherit; font-size: 13px; color: var(--text-primary); resize: vertical; min-height: 70px; line-height: 1.6; }
+    .field-input:focus { outline: none; border-color: var(--accent-black); background: #fff; }
+    .field-input.filled { background: #fff; border-color: rgba(0,0,0,.1); }
+
+    .quote { text-align: center; padding: 4rem 2.5rem 3rem; font-size: 18px; font-weight: 500; line-height: 1.6; }
+    .quote cite { display: block; font-size: 14px; font-style: normal; color: var(--text-secondary); margin-top: 1rem; font-weight: 600; }
+
+    @media(max-width:640px) {
+      .cover { padding: 2rem 1.25rem 1rem; }
+      .cover-title { font-size: 28px; }
+      .stats-row { padding: 0 1.25rem; margin-left: 0; }
+      .content { padding: 0 1.25rem 3rem; }
+      .phase-nav { margin: 0 1rem 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+<div id="nav-container"></div>
+
+<div class="cover">
+  <div class="cover-subtitle">AI ENGINEERING — BUILD PROJECT 2 · AFTER CODEBASE RAG</div>
+  <div class="cover-title">Build a Real-Time Voice RAG 🎙️</div>
+  <div class="cover-name">
+    Mayank Thakur
+    <span class="badge badge-ai">Real-Time</span>
+    <span class="badge badge-scratch">&lt;1s First Audio</span>
+    <span class="badge badge-build">TypeScript / Node</span>
+  </div>
+</div>
+
+<div class="stats-row">
+  <div class="stat"><div class="stat-val" id="stat-done">0</div><div class="stat-label">Milestones shipped</div></div>
+  <div class="stat"><div class="stat-val" id="stat-total">7</div><div class="stat-label">Total milestones</div></div>
+  <div class="stat"><div class="stat-val" id="stat-lessons">0</div><div class="stat-label">Concepts learned</div></div>
+  <div class="stat"><div class="stat-val" id="stat-phases">0/7</div><div class="stat-label">Phases complete</div></div>
+</div>
+<div class="streak-box">
+  <span>⏱️</span><span class="streak-text" id="streak-text">A human notices silence at 800ms. That is the whole spec.</span>
+</div>
+
+<div class="phase-nav" id="phase-nav"></div>
+<div class="content" id="content"></div>
+
+<div class="quote">
+  "Optimise time to first audio, not total time. Once the voice starts, nobody is counting."
+  <cite>— the only latency rule that matters</cite>
+</div>
+
+<script src="../../nav.js"></script>
+<script>
+const STATE_KEY = 'build_voice_rag_v1';
+
+const PHASES = [
+  {
+    id: 'p0', label: 'Phase 0', color: '#3B82F6', level: 'Concepts',
+    title: 'Prelude — The Latency Budget',
+    subtitle: 'Real-time is an engineering constraint, not a feature',
+    intro: '<strong>Project 2. Start this only after Codebase RAG has shipped.</strong><br><br>You ask a question out loud. The system finds the right documents and answers you in speech, grounded and cited. The hard part is not any single piece, it is that <strong>a human notices silence after about 800ms</strong>, and a naive pipeline of speech-to-text, then retrieval, then generation, then text-to-speech takes four or five seconds. Every phase here is about overlapping work that looks sequential. You have already done real-time two-way voice in <strong>VocalHyre</strong> and multi-provider LLM routing in <strong>Echo</strong>, so you start this one with the rarest half already built.',
+    lessons: [
+      {
+        id: 'l0_0', name: 'The five stages and where the seconds go',
+        desc: 'Measure the naive pipeline before optimizing anything.',
+        learn: {
+          what: '<p>The pipeline is: <b>capture</b> audio, <b>transcribe</b> it, <b>retrieve</b> relevant context, <b>generate</b> an answer, <b>synthesize</b> speech. Run naively, each stage waits for the one before it to finish completely.</p><p>Typical naive timings: transcription after the user stops, 700ms. Retrieval, 200ms. Generation of a full answer, 2500ms. Speech synthesis of the whole answer, 900ms. Plus endpoint detection waiting to be sure they stopped talking, 800ms. Total, past five seconds.</p>',
+          why: 'Naming the budget turns a vague goal ("make it fast") into a set of specific numbers you can attack one at a time. It also gives you the graph that will anchor your final writeup.',
+          how: '<p>The target that matters is <b>time to first audio</b>, not total time. Once the voice starts, the user waits patiently. Silence is what feels broken.</p>'
+        },
+        try: '# naive, sequential\n[--- endpoint 800ms ---][-- stt 700 --][ret 200][---- llm 2500 ----][- tts 900 -]\n                                                                         first audio at ~5.1s\n\n# target, overlapped\n[- endpoint 300 -]\n   [ streaming stt, partials from 150ms ]\n        [ speculative retrieve 200 ]\n              [ streaming llm, first sentence at 600 ]\n                    [ tts of sentence 1, 250 ]\n                                        first audio at ~750ms\n\n# same components. different scheduling. that is the whole project.',
+        gotchas: [
+          'Optimizing total latency instead of first-audio latency is the classic wrong target. A 6 second answer that starts speaking at 700ms feels fast.',
+          'Do not trust vibes. Instrument every stage with timestamps from day one or you will optimize the wrong thing.'
+        ]
+      },
+      {
+        id: 'l0_1', name: 'Why this is genuinely rare',
+        desc: 'Text RAG is crowded. Voice RAG with a latency budget is not.',
+        learn: {
+          what: '<p>There are thousands of text RAG projects. There are very few where someone measured first-audio latency, handled interruption, and dealt with the case where retrieval arrives after speech has already begun.</p><p>The reason is that voice forces you to confront concurrency, cancellation and partial results, which text lets you ignore.</p>',
+          why: 'These are exactly the skills that read as senior. Streaming, backpressure, cancelling in-flight work, reconciling state that arrives late. They are the same problems as a complex frontend, which is why this project sells your existing experience rather than pretending to be someone else.',
+          how: '<p>Keep every latency measurement. The final artifact is a waterfall chart of the naive pipeline next to the optimized one. That single image is the post.</p>'
+        },
+        try: '// What you will be able to say in an interview:\n//\n// "Retrieval fires on a partial transcript before the user\n//  finishes speaking. About 70% of the time the partial is\n//  close enough that the results are still valid, so I keep\n//  them. When the final transcript diverges past a threshold\n//  I cancel the in-flight generation and re-retrieve."\n//\n// Very few people applying to the same roles can say this.',
+        gotchas: [
+          'Do not let this become a demo of the TTS voice. The engineering story is the scheduling, and that is what you must make visible.'
+        ]
+      },
+      {
+        id: 'l0_2', name: 'Choosing components you can actually swap',
+        desc: 'Put every provider behind one interface, like you did in Echo.',
+        learn: {
+          what: '<p>Four external pieces: speech to text, embeddings, an LLM, and text to speech. Each has fast-and-worse and slow-and-better options, and you will want to trade between them per stage.</p><p>Define one interface per stage on day one so swapping is a config change, not a refactor.</p>',
+          why: 'You already did exactly this in Echo, routing across OpenAI, Anthropic and Groq. Reuse the pattern. It also means your latency table can compare providers, which makes the writeup much more useful to other people.',
+          how: '<p>Groq is very fast for both transcription and generation, which matters more here than raw quality. Prefer speed at every stage and only upgrade where quality visibly breaks.</p>'
+        },
+        try: 'interface STT  { stream(audio: AsyncIterable<Buffer>): AsyncIterable<Partial> }\ninterface LLM  { stream(messages: Msg[], signal: AbortSignal): AsyncIterable<string> }\ninterface TTS  { speak(text: string, signal: AbortSignal): AsyncIterable<Buffer> }\ninterface Store{ search(q: string, k: number): Promise<Chunk[]> }\n\n// Every one of them takes an AbortSignal. That is not decoration.\n// Phase 5 (barge-in) depends on being able to cancel all of them\n// mid-flight, and retrofitting cancellation later is miserable.',
+        gotchas: [
+          'Adding AbortSignal later means touching every call site. Put it in the interface now even though nothing cancels yet.'
+        ]
+      }
+    ],
+    quiz: [
+      { id: "vr0a", q: "Your pipeline answers in 5 seconds. Your friend says \"make it faster\". What number should you actually optimise, and why not total time?",
+        a: "<b>Time to first audio</b>, not total time. Once the voice starts speaking a person waits patiently; it is the silence beforehand that feels broken. A six second answer that begins speaking at 700ms feels fast. Optimising total time is the classic wrong target." },
+      { id: "vr0b", q: "Every component in the naive pipeline is the same as in the fast one. So where do the four seconds go?",
+        a: "Into waiting. Naive means each stage runs only after the one before it fully finishes. The fast version overlaps them: retrieval starts before you stop talking, speech starts before the answer is finished. <b>Same components, different scheduling.</b> That is the whole project." },
+      { id: "vr0c", q: "Why does every interface in this project take an <code>AbortSignal</code> from day one, when nothing cancels anything yet?",
+        a: "Because Phase 4 needs to cancel transcription, retrieval, generation and speech all at once when the user interrupts. Retrofitting cancellation later means touching every call site, which is miserable. Put it in the signature before you need it." },
+      { id: "vr0d", q: "Why is this project rarer and more valuable than another text RAG?",
+        a: "Because voice forces you to handle concurrency, cancellation and partial results, which text lets you ignore. Thousands of people have built text RAG. Very few have measured first-audio latency, handled barge-in, or dealt with retrieval arriving after speech has already started." }
+    ],
+    build: {
+      id: 'b0', flag: '📐', title: 'Milestone 0 — Measure the naive pipeline',
+      brief: 'Build the slow version, instrument it, produce the waterfall.',
+      time: 150, brain: 'Baseline',
+      goal: 'Build the fully sequential version with a small fixed corpus (say your own notes or one repo README set) and instrument every stage. Produce a timing log and a waterfall chart of where the five seconds go. Do not optimize anything yet.',
+      steps: [
+        {
+          title: 'Sequential pipeline, no cleverness',
+          explain: 'Record audio to a file, transcribe it, retrieve, generate the whole answer, synthesize the whole answer, play it. Ugly and slow on purpose.',
+          code: 'const t = timer();\nconst audio = await recordUntilSilence();      t.mark("capture");\nconst text  = await stt.transcribe(audio);     t.mark("stt");\nconst ctx   = await store.search(text, 5);     t.mark("retrieve");\nconst ans   = await llm.complete(prompt(ctx)); t.mark("generate");\nconst wav   = await tts.speak(ans);            t.mark("tts");\nawait play(wav);                               t.mark("first-audio");\nconsole.table(t.report());',
+          note: 'Store every run as JSON. You will want the distribution across 20 questions, not one lucky number.'
+        },
+        {
+          title: 'Run twenty questions and chart it',
+          explain: 'Medians, not averages, and report p90 as well. One slow run out of twenty is what users remember.',
+          code: 'stage        median   p90\ncapture       820ms   1100ms   <- endpoint detection, fixable\nstt           690ms    980ms   <- streaming will nearly erase this\nretrieve      210ms    340ms\ngenerate     2480ms   3900ms   <- streaming moves first token way up\ntts           870ms   1200ms   <- sentence chunking fixes this\n-------------------------------\nfirst audio  5070ms   7520ms',
+          note: 'That table is the before picture. Screenshot it now.'
+        },
+        {
+          title: 'Write the target next to it',
+          explain: 'Commit to a number in the README. A target you wrote down before optimizing is a much stronger claim than one you back-fitted.',
+          code: '## Target\nfirst audio, median < 800ms, p90 < 1200ms\ntotal answer, no constraint\n\n## Ship date\n<today + 14>. Scope frozen: one corpus, English only,\nno speaker diarization, no wake word, local only.',
+          note: 'Say out loud what is out of scope. Wake words and diarization are the two things that will tempt you.'
+        }
+      ],
+      expectedOutput: 'A working, slow, fully instrumented voice question-answer loop plus a stage timing table across 20 runs.',
+      commonErrors: [
+        'Measuring on a warm cache and reporting it as cold latency.',
+        'Forgetting that microphone permission and device warmup add hundreds of ms on the first run. Discard run one.'
+      ],
+      stretchGoals: [
+        'Log to a JSONL file so you can chart improvement across every phase.'
+      ]
+    }
+  },
+
+  {
+    id: 'p1', label: 'Phase 1', color: '#8B5CF6', level: 'Input',
+    title: 'Streaming Transcription and Endpointing',
+    subtitle: 'Knowing when they stopped talking, fast',
+    intro: 'Two of your five seconds are in the input stage, and most of that is <strong>waiting to be sure the person finished</strong>. Streaming transcription gives you partial text within about 150ms of speech starting, and good endpointing cuts the silence wait from 800ms to around 300ms without cutting people off mid-sentence.',
+    lessons: [
+      {
+        id: 'l1_0', name: 'Voice activity detection and endpointing',
+        desc: 'Two different problems that beginners merge into one.',
+        learn: {
+          what: '<p><b>VAD</b> answers "is there speech in this 20ms frame". <b>Endpointing</b> answers the much harder question "has this person finished their turn".</p><p>A pause of 400ms mid-sentence is normal human speech. A pause of 400ms at the end of a question means they are waiting for you. Same silence, different meaning, and the difference is context.</p>',
+          why: 'Endpointing too eagerly interrupts people, which feels rude and breaks trust instantly. Endpointing too late costs you half a second on every single turn. This tradeoff is the most interesting product decision in the project.',
+          how: '<p>Simple energy thresholds are unreliable in real rooms. Use a proper small VAD model such as Silero. Then layer a decision on top: silence duration, plus whether the partial transcript looks syntactically complete.</p>'
+        },
+        try: '// naive: fixed silence timeout\nif (silenceMs > 800) endTurn();          // safe, slow, annoying\n\n// better: adaptive\nconst complete = looksComplete(partialText);   // ends in ?, . or a\n                                               // full clause\nconst threshold = complete ? 300 : 900;\nif (silenceMs > threshold) endTurn();\n\n// "where is the auth middleware"   -> complete, cut at 300ms\n// "where is the"                   -> incomplete, wait 900ms',
+        gotchas: [
+          'Do not endpoint on energy alone. A cough, a keyboard or a fan will end the turn for you.',
+          'Test with someone who speaks slowly and pauses to think. Tuning only on your own speech pattern produces a system that only works for you.'
+        ]
+      },
+      {
+        id: 'l1_1', name: 'Partial transcripts and stability',
+        desc: 'Early words change. Late words are usually stable.',
+        learn: {
+          what: '<p>Streaming transcription emits partials that get revised as more audio arrives. The last few words are volatile, the earlier ones settle quickly. Most APIs mark a prefix as final.</p>',
+          why: 'This stability property is what makes Phase 2 possible. You can start retrieval on a stable prefix well before the person stops talking, because that prefix is very unlikely to change.',
+          how: '<p>Track how much the transcript changes between partials. Once the edit distance over the last second is near zero, treat the prefix as usable.</p>'
+        },
+        try: 't=0.4s  "where"\nt=0.8s  "where is the au"\nt=1.1s  "where is the auth"\nt=1.4s  "where is the auth middle"\nt=1.7s  "where is the auth middleware"   <- stable from here\nt=2.1s  "where is the auth middleware defined"\nFINAL   "where is the auth middleware defined"\n\n// The prefix "where is the auth" was stable at t=1.1s.\n// Retrieval could have started 1 full second before FINAL.',
+        gotchas: [
+          'Never render raw partials to a UI without smoothing. Text that rewrites itself constantly looks broken even though it is working correctly.'
+        ]
+      },
+      {
+        id: 'l1_2', name: 'Getting audio out of the browser correctly',
+        desc: 'AudioWorklet, correct sample rate, small frames.',
+        learn: {
+          what: '<p>Capture with getUserMedia, process in an AudioWorklet rather than the deprecated ScriptProcessor, downsample to whatever the STT service expects (usually 16kHz mono PCM), and send small frames over a WebSocket.</p>',
+          why: 'You already solved this class of problem in VocalHyre. The detail that trips people up is sample rate: browsers commonly capture at 48kHz and sending that to a 16kHz endpoint produces transcription that is subtly wrong in a way that looks like a model problem.',
+          how: '<p>Frames of 20 to 40ms balance latency against overhead. Smaller frames mean more messages and more overhead for no perceptible gain.</p>'
+        },
+        try: '// worklet.js\nclass Capture extends AudioWorkletProcessor {\n  process(inputs) {\n    const ch = inputs[0][0];\n    if (ch) this.port.postMessage(downsample(ch, sampleRate, 16000));\n    return true;\n  }\n}\n\n// main thread\nnode.port.onmessage = e => ws.send(toInt16(e.data));\n\n// Check: if transcription is consistently poor, log the actual\n// sampleRate. It is 48000 far more often than people expect.',
+        gotchas: [
+          'AudioWorklet needs a secure context. localhost counts, plain http on a LAN address does not.',
+          'Sending float32 where the service expects int16 produces silence or noise, not an error message.'
+        ]
+      }
+    ],
+    quiz: [
+      { id: "vr1a", q: "A person pauses for 400ms mid-sentence and another pauses 400ms at the end of their question. Same silence. How do you tell them apart?",
+        a: "You cannot from silence alone, which is why endpointing is harder than voice detection. You add context: does the partial transcript look syntactically complete? If it ends in a full clause, cut at 300ms. If it looks unfinished, wait 900ms. <b>Same silence, different meaning.</b>" },
+      { id: "vr1b", q: "What is the difference between VAD and endpointing?",
+        a: "VAD answers \"is there speech in this 20ms frame\". Endpointing answers \"has this person finished their turn\", which is a much harder question requiring context. Beginners merge them and end up with a system that cuts people off whenever they think." },
+      { id: "vr1c", q: "Your transcription is subtly wrong in a way that looks like a bad model. What should you check first?",
+        a: "The sample rate. Browsers commonly capture at 48kHz and speech services usually expect 16kHz mono PCM. Send the wrong rate and you get transcription that is wrong in a way that never throws an error. Log the actual <code>sampleRate</code> before blaming the model." },
+      { id: "vr1d", q: "Why report a false-cut rate next to your speedup?",
+        a: "Because cutting people off earlier is trivially easy if you do not care about accuracy. \"Input latency down 73%, 3 false cuts in 50 turns\" is an honest result. The speedup alone is not, because it hides what it cost." }
+    ],
+    build: {
+      id: 'b1', flag: '🎙️', title: 'Milestone 1 — Streaming input with adaptive endpointing',
+      brief: 'Partials on screen within 200ms, turn ends in ~300ms when the question is complete.',
+      time: 210, brain: 'Concurrency starts',
+      goal: 'Replace record-then-transcribe with a streaming pipeline. Show live partials, implement VAD plus adaptive endpointing, and cut the combined capture and transcription time from roughly 1500ms to under 400ms after the last word.',
+      steps: [
+        {
+          title: 'Stream audio to the STT provider',
+          explain: 'WebSocket in, partials out. Keep the transport dumb, put all logic in the consumer.',
+          code: 'for await (const partial of stt.stream(micFrames)) {\n  ui.showPartial(partial.text);\n  bus.emit("partial", {\n    text: partial.text,\n    isFinal: partial.isFinal,\n    stableUntil: partial.stablePrefixLength,\n    at: now()\n  });\n}',
+          note: 'Emit on an event bus rather than calling the next stage directly. Phase 2 and Phase 5 both need to listen.'
+        },
+        {
+          title: 'Add VAD plus the completeness heuristic',
+          explain: 'Silero VAD for speech detection, then the adaptive threshold on top.',
+          code: 'const speech = vad.process(frame);\nsilenceMs = speech ? 0 : silenceMs + FRAME_MS;\n\nconst complete = /[?.!]$/.test(partial) || endsInFullClause(partial);\nif (silenceMs > (complete ? 300 : 900)) bus.emit("turn-end", partial);\n\n// log every turn: silenceMs at cut, whether it was correct.\n// You are building the data to defend this threshold later.',
+          note: 'Count false cuts explicitly. "3 false cuts in 50 turns" is a real number for the writeup.'
+        },
+        {
+          title: 'Re-measure the input stage',
+          explain: 'Same twenty questions. Only the input stage should have moved.',
+          code: 'stage        before    after\ncapture       820ms    310ms\nstt           690ms     90ms   (final arrives ~90ms after last word)\n-------------------------------\ninput total  1510ms    400ms   -73%\n\nfalse cuts: 3/50 turns, all on questions with a mid-sentence pause',
+          note: 'Report the false cut rate next to the speedup. Speed without that number is not an honest result.'
+        }
+      ],
+      expectedOutput: 'Live partial text on screen, turn ending within about 400ms of the last word, with a measured false cut rate.',
+      commonErrors: [
+        'Sample rate mismatch producing quietly bad transcription.',
+        'Blocking the audio thread with processing, which causes dropped frames and choppy input.',
+        'Tuning endpointing only on your own voice and pace.'
+      ],
+      stretchGoals: [
+        'Show a live VAD level meter. It makes the demo video far more legible.'
+      ],
+      resources: [
+        { icon: '🔊', name: 'Silero VAD', who: 'snakers4', desc: 'Small, fast, accurate voice activity detection.', time: '30m', url: 'https://github.com/snakers4/silero-vad' },
+        { icon: '🎛️', name: 'AudioWorklet guide', who: 'MDN', desc: 'Correct low-latency audio capture in the browser.', time: '40m', url: 'https://developer.mozilla.org/en-US/docs/Web/API/AudioWorklet' }
+      ]
+    }
+  },
+
+  {
+    id: 'p2', label: 'Phase 2', color: '#10B981', level: 'Core Idea',
+    title: 'Speculative Retrieval',
+    subtitle: 'Search before they finish the sentence',
+    intro: 'This is the idea that makes the project interesting. Once the transcript prefix is stable, <strong>you already know enough to search</strong>. Fire retrieval on the partial, keep the result if the final transcript is close enough, throw it away and redo if it is not. You are trading a small amount of wasted compute for a full second of perceived latency.',
+    lessons: [
+      {
+        id: 'l2_0', name: 'Speculative execution, applied to a voice turn',
+        desc: 'Do the work early, validate later, discard if wrong.',
+        learn: {
+          what: '<p>The same idea as branch prediction in a CPU. Guess what is coming, start the work, and if the guess was wrong throw away the result. It pays off whenever the work is expensive, the guess is usually right, and being wrong is cheap.</p><p>All three hold here. Retrieval is 200ms, the stable prefix usually determines the answer, and a wasted embedding costs a fraction of a cent.</p>',
+          why: 'Being able to describe your system as speculative execution with a validation step and a cancellation path is a genuinely senior framing of what is otherwise a small optimization.',
+          how: '<p>Trigger when the prefix has been stable for about 300ms and is at least four or five words. Fewer words gives a guess too vague to be useful.</p>'
+        },
+        try: 'let speculative = null;\n\nbus.on("partial", p => {\n  if (p.stableFor > 300 && wordCount(p.stableText) >= 4 && !speculative) {\n    speculative = {\n      query: p.stableText,\n      promise: store.search(p.stableText, 10)\n    };\n  }\n});\n\nbus.on("turn-end", async final => {\n  const ctx = (speculative && similar(speculative.query, final))\n    ? await speculative.promise      // already done, 0ms\n    : await store.search(final, 10); // 200ms, guess was wrong\n});',
+        gotchas: [
+          'Fire at most one speculative retrieval per turn unless you cap it. Firing on every partial is a good way to burn your API quota in an afternoon.'
+        ]
+      },
+      {
+        id: 'l2_1', name: 'Deciding whether the guess was good enough',
+        desc: 'Compare intent, not strings.',
+        learn: {
+          what: '<p>The final transcript almost always differs from the partial by a few trailing words. The question is whether those words changed the meaning.</p><p>"where is the auth middleware" then "where is the auth middleware defined" is the same question. "where is the auth middleware" then "where is the auth middleware not applied" is not.</p>',
+          why: 'A cheap string comparison will discard good speculations and keep bad ones. A slightly smarter check keeps your hit rate high, and your hit rate is the headline number of this phase.',
+          how: '<p>Practical approach: keep the speculation if the final starts with the speculative prefix and the added words contain no negation or contrastive term. Log every decision and compute the hit rate over fifty turns.</p>'
+        },
+        try: 'function stillValid(spec: string, final: string) {\n  if (!final.startsWith(spec)) return false;\n  const added = final.slice(spec.length).toLowerCase();\n  const flips = ["not", "without", "except", "instead", "but", "rather"];\n  return !flips.some(w => added.includes(w));\n}\n\n// measured over 50 turns:\n//   speculation fired      47\n//   kept                   34   (72%)\n//   discarded               13\n//   wrongly kept             1   <- the honest failure. write about it.',
+        gotchas: [
+          'Wrongly keeping a stale speculation produces an answer to a question the user did not ask, which is far worse than being slow. Bias the check toward discarding.'
+        ]
+      },
+      {
+        id: 'l2_2', name: 'Prefetching generation too',
+        desc: 'The bolder version, and when it is not worth it.',
+        learn: {
+          what: '<p>You can go further and start generating on the speculative context. But generation is expensive, produces user-visible output, and cancelling it after speech has started is jarring.</p>',
+          why: 'Knowing where to stop speculating is as valuable as knowing how to start. Retrieval is a safe speculation because nothing is shown to the user. Generation is not.',
+          how: '<p>Reasonable middle ground: begin generation speculatively but hold the first sentence in a buffer, and only release it to TTS after the final transcript validates. You keep most of the win with none of the risk of speaking a wrong answer.</p>'
+        },
+        try: '// safe: speculate retrieval, gate the audio\nspeculativeGen = llm.stream(prompt(specCtx), ac.signal);\nbuffer = [];\nfor await (const tok of speculativeGen) buffer.push(tok);   // hold\n\non("turn-end", final => {\n  if (stillValid(spec, final)) flushToTTS(buffer);   // instant\n  else { ac.abort(); restart(final); }               // costs nothing visible\n});',
+        gotchas: [
+          'If you release audio before validating, a wrong speculation means the system says something confidently wrong out loud. Never do this for a demo you show other people.'
+        ]
+      }
+    ],
+    quiz: [
+      { id: "vr2a", q: "Why is speculative retrieval worth doing, in terms of the three conditions that make speculation pay off?",
+        a: "The work is expensive (200ms), the guess is usually right (about 72% of the time), and being wrong is cheap (a fraction of a paisa of wasted embedding). All three hold, which is exactly when speculative execution pays. It is the same idea as branch prediction in a CPU." },
+      { id: "vr2b", q: "\"where is the auth middleware\" then \"...defined\" versus \"...not applied\". Why must your validity check treat these differently?",
+        a: "The first only adds detail, so the speculative results are still right. The second inverts the meaning, so they are wrong. A plain string prefix check keeps both. You need to look at the added words for negation and contrast terms, and bias toward discarding when unsure." },
+      { id: "vr2c", q: "Why is speculating on retrieval safe but speculating on generation risky?",
+        a: "Because retrieval produces nothing the user sees, so a wrong guess costs only a wasted call. Generation produces audible output, and cancelling it after the voice has started sounds broken. The safe middle ground is to generate speculatively but hold the audio until the final transcript validates." },
+      { id: "vr2d", q: "You report \"72% of speculations kept, 204ms saved\". What second number must go next to it?",
+        a: "The wrongly-kept rate, in your case 1 in 47. Answering a question the user did not ask is far worse than being slow, so the speedup means nothing without the error rate beside it." }
+    ],
+    build: {
+      id: 'b2', flag: '⚡', title: 'Milestone 2 — Speculative retrieval with a measured hit rate',
+      brief: 'Retrieval finishes before the user stops speaking, most of the time.',
+      time: 210, brain: 'The differentiator',
+      goal: 'Fire retrieval on a stable partial, validate against the final transcript, and measure the hit rate across at least fifty turns. Report the latency saved and the one case where a stale speculation slipped through.',
+      steps: [
+        {
+          title: 'Wire speculation into the event bus',
+          explain: 'One speculation per turn, cancellable, with the query it was based on recorded.',
+          code: 'let spec = null;\nbus.on("turn-start", () => { spec = null; });\nbus.on("partial", p => { if (shouldSpeculate(p) && !spec) spec = fire(p); });\nbus.on("turn-end", f => { ctx = stillValid(spec?.query, f) ? spec.result : redo(f); });',
+          note: 'Reset on turn-start. A speculation leaking across turns is a confusing bug to track down.'
+        },
+        {
+          title: 'Log every speculation decision',
+          explain: 'You need the hit rate, and you need the misses to be inspectable.',
+          code: '{"turn":17,"spec":"how does fee reminder","final":"how does fee reminder scheduling work",\n "kept":true,"savedMs":204}\n{"turn":18,"spec":"where is rbac","final":"where is rbac not enforced",\n "kept":false,"reason":"negation","savedMs":0}',
+          note: 'That second line is a great slide in your writeup. It shows the check earning its keep.'
+        },
+        {
+          title: 'Re-measure and report both numbers',
+          explain: 'Latency saved and speculation accuracy always go together.',
+          code: 'speculation fired   47/50 turns\nkept                34/47  (72%)\nmedian saved       204ms on kept turns\nwrongly kept         1/47  (2%)\n\n// Retrieval is now effectively free on 68% of turns.',
+          note: 'Never quote the speedup without the wrongly-kept rate. That pairing is what makes it credible.'
+        }
+      ],
+      expectedOutput: 'Retrieval overlapping with speech on most turns, with a logged hit rate and at least one documented failure.',
+      commonErrors: [
+        'Firing on every partial and multiplying your API cost by ten.',
+        'Comparing partial and final with strict equality, which discards almost everything.',
+        'Not resetting speculation state between turns.'
+      ],
+      stretchGoals: [
+        'Speculate on the top two interpretations when the partial is ambiguous, and keep whichever validates.'
+      ]
+    }
+  },
+
+  {
+    id: 'p3', label: 'Phase 3', color: '#F59E0B', level: 'Output',
+    title: 'Streaming Generation Into Sentence-Chunked Speech',
+    subtitle: 'Start speaking before the answer exists',
+    intro: 'The biggest single block in your waterfall is waiting for the full answer, then waiting for the full audio. Both disappear if you <strong>synthesize sentence by sentence as tokens arrive</strong>. First audio stops depending on answer length entirely, which is the single most important property of a voice system.',
+    lessons: [
+      {
+        id: 'l3_0', name: 'Sentence chunking a token stream',
+        desc: 'Split on real boundaries, not on every punctuation mark.',
+        learn: {
+          what: '<p>Buffer tokens until you have a complete sentence, then send that sentence to TTS while generation continues. The trick is detecting boundaries in a stream where abbreviations, decimals, file paths and code identifiers all contain periods.</p>',
+          why: 'Getting this wrong is audible. Splitting on "src/auth.ts" produces two fragments read with a strange pause, and users notice immediately even if they cannot say why.',
+          how: '<p>Require a period followed by whitespace and a capital or end of stream, and add a minimum length so you do not synthesize two-word fragments. Also flush on a length cap so a long unpunctuated run still starts speaking.</p>'
+        },
+        try: 'let buf = "";\nfor await (const tok of llm.stream(prompt, signal)) {\n  buf += tok;\n  const s = extractSentence(buf);     // returns null if incomplete\n  if (s && s.length > 25) {\n    tts.enqueue(s);\n    buf = buf.slice(s.length);\n  } else if (buf.length > 220) {       // safety flush\n    const cut = buf.lastIndexOf(" ", 200);\n    tts.enqueue(buf.slice(0, cut));\n    buf = buf.slice(cut);\n  }\n}\nif (buf.trim()) tts.enqueue(buf);',
+        gotchas: [
+          'File paths and version numbers will split badly. Guard against a period followed by a lowercase letter.',
+          'A minimum sentence length prevents "Yes." being synthesized as its own audio request with full round-trip overhead.'
+        ]
+      },
+      {
+        id: 'l3_1', name: 'The playback queue',
+        desc: 'Sentences arrive out of order in time. They must play in order.',
+        learn: {
+          what: '<p>Sentence two may finish synthesizing before sentence three even starts, and sometimes before sentence one if you parallelize. You need a queue that plays strictly in sequence, keeps the audio device fed, and can be flushed instantly on interruption.</p>',
+          why: 'Gaps between sentences are the tell that a system is stitched together. Keeping one sentence of lookahead synthesized and ready removes them.',
+          how: '<p>Synthesize with a lookahead of one or two sentences, play strictly in order, and expose a flush that clears both the queue and any in-flight synthesis. Phase 4 depends on that flush.</p>'
+        },
+        try: 'class SpeechQueue {\n  private q: {i: number, audio: Promise<Buffer>}[] = [];\n  private next = 0;\n\n  enqueue(text: string) {\n    const i = this.q.length;\n    this.q.push({ i, audio: tts.synth(text, this.ac.signal) });\n    this.pump();\n  }\n  async pump() {\n    while (this.q[this.next]) {\n      await play(await this.q[this.next].audio);   // strict order\n      this.next++;\n    }\n  }\n  flush() { this.ac.abort(); this.q = []; this.next = 0; stopPlayback(); }\n}',
+        gotchas: [
+          'Awaiting each synthesis before starting the next serializes everything and throws away the benefit. Start synthesis immediately, await only playback.',
+          'Not stopping the currently playing buffer on flush means the old sentence keeps talking over the new one.'
+        ]
+      },
+      {
+        id: 'l3_2', name: 'Prompting for speech, not for a document',
+        desc: 'Front-load the answer. No bullets, no markdown, no long preamble.',
+        learn: {
+          what: '<p>The same content that reads well looks terrible in speech. Markdown headers, numbered lists and code blocks are unspeakable. And any preamble delays the actual answer past the point where the user is listening.</p>',
+          why: 'The very first sentence is the entire first-audio experience. If it is "Great question, let me look into that", you spent your latency budget on nothing.',
+          how: '<p>Instruct explicitly: answer in the first sentence, then elaborate, plain prose only, mention file names naturally, keep it under about four sentences unless asked for more.</p>'
+        },
+        try: 'system: You answer out loud. Rules:\n  - First sentence contains the answer. No preamble.\n  - Plain spoken prose. No markdown, lists, or code blocks.\n  - Read identifiers naturally: "the requireRole function\n    in the rbac middleware file".\n  - Three to four sentences unless asked to go deeper.\n  - If the context does not answer it, say so in one sentence.\n\n// Bad first sentence:  "Sure! Let me explain how this works."\n// Good first sentence: "Admin access is enforced by requireRole."',
+        gotchas: [
+          'Models drift back into lists over a long conversation. Repeat the format rule in the system message every turn rather than only at the start.'
+        ]
+      }
+    ],
+    quiz: [
+      { id: "vr3a", q: "Why does sentence-chunked speech make first-audio latency independent of answer length?",
+        a: "Because you only wait for the <i>first sentence</i>, not the whole answer. Generation streams, and as soon as one complete sentence exists you send it to speech synthesis while the rest is still being written. A three sentence answer and a thirty sentence answer now start speaking at the same moment." },
+      { id: "vr3b", q: "Your sentence splitter produces an odd pause in the middle of a file path. What happened, and how do you fix it?",
+        a: "It split on the period in <code>src/auth.ts</code>. Require a period followed by whitespace and a capital, guard against a period followed by a lowercase letter, and set a minimum sentence length. Users hear this immediately even if they cannot name what is wrong." },
+      { id: "vr3c", q: "There are audible gaps between sentences. Is that a limitation of the speech service?",
+        a: "Almost never. It is a scheduling bug on your side, usually awaiting each synthesis before starting the next, or having no lookahead so nothing is ready when the current sentence ends. Keep one or two sentences synthesised ahead and the gaps disappear." },
+      { id: "vr3d", q: "Why does the prompt for a voice system need different rules than a text one?",
+        a: "Because markdown, bullet lists and code blocks are unspeakable, and any preamble spends your entire latency budget on nothing. \"Great question, let me look into that\" is a disaster in voice. The first sentence must contain the answer." }
+    ],
+    build: {
+      id: 'b3', flag: '🔊', title: 'Milestone 3 — First audio under one second',
+      brief: 'Streamed generation, sentence-chunked synthesis, ordered playback.',
+      time: 240, brain: 'The payoff phase',
+      goal: 'Replace full-answer generation and synthesis with a streaming pipeline. Target median first audio under 800ms. Verify there are no audible gaps between sentences, and re-measure the full waterfall.',
+      steps: [
+        {
+          title: 'Stream, chunk, enqueue',
+          explain: 'Wire generation into the sentence splitter into the speech queue. Log the timestamp of the first audio frame precisely.',
+          code: 'const t0 = now();\nlet firstAudio = null;\nqueue.onFirstFrame = () => firstAudio = now() - t0;\n\nfor await (const tok of llm.stream(prompt, ac.signal)) { ... }\n\nconsole.log("first audio", firstAudio, "ms");',
+          note: 'Measure at the first audio frame actually hitting the output device, not when you called play.'
+        },
+        {
+          title: 'Hunt the gaps',
+          explain: 'Record the session and look at the waveform. Any silence longer than about 120ms between sentences is a scheduling bug, not a synthesis limit.',
+          code: '# record the output and inspect\nffmpeg -i session.wav -af silencedetect=n=-35dB:d=0.12 -f null -\n\n# typical culprits:\n#  - awaiting synthesis before enqueueing the next sentence\n#  - lookahead of 0 (nothing ready when the current one ends)\n#  - a very short first sentence finishing before number 2 exists',
+          note: 'A lookahead of two sentences removes almost all of them.'
+        },
+        {
+          title: 'Full waterfall, before and after',
+          explain: 'The chart that anchors your whole writeup.',
+          code: 'stage           naive     now\ncapture         820ms    310ms\nstt             690ms     90ms\nretrieve        210ms      0ms  (speculative, 72% of turns)\ngeneration     2480ms    380ms  (to first sentence)\ntts             870ms    190ms  (first sentence only)\n---------------------------------\nFIRST AUDIO    5070ms    970ms   -81%\np90           7520ms   1340ms',
+          note: 'If you are above 1200ms, the usual cause is generation. Try a faster model before adding complexity.'
+        }
+      ],
+      expectedOutput: 'Median first audio under about 1 second, no audible gaps, and a before-and-after waterfall chart.',
+      commonErrors: [
+        'Serializing synthesis by awaiting it inside the token loop.',
+        'Splitting sentences on file paths, producing odd pauses.',
+        'Measuring first audio at the play call rather than at the device.'
+      ],
+      stretchGoals: [
+        'Adaptive first sentence: instruct the model to make sentence one short so synthesis returns faster.'
+      ]
+    }
+  },
+
+  {
+    id: 'p4', label: 'Phase 4', color: '#EF4444', level: 'Hard Part',
+    title: 'Barge-In and Cancellation',
+    subtitle: 'The user interrupts. Everything must stop, now.',
+    intro: 'A voice system that cannot be interrupted feels broken and slightly rude. When the user starts speaking while you are talking, you need to stop playback, cancel in-flight synthesis, abort generation and start a new turn, in under about 200ms. <strong>This is the phase where AbortSignal in every interface pays off.</strong>',
+    lessons: [
+      {
+        id: 'l4_0', name: 'Detecting barge-in without cutting yourself off',
+        desc: 'Your own speaker is feeding your own microphone.',
+        learn: {
+          what: '<p>The microphone hears the speaker. Naive VAD will detect your own synthesized voice as user speech and interrupt itself immediately, which looks like the system is having a breakdown.</p><p>Two fixes. Browser echo cancellation via getUserMedia constraints, which handles most of it. And a gate: require a longer confirmed speech burst before treating it as a barge-in while you are speaking.</p>',
+          why: 'Self-interruption is the single most common bug in first voice systems and it is instantly disqualifying in a demo.',
+          how: '<p>Turn on echoCancellation, noiseSuppression and autoGainControl. Then require around 200ms of continuous detected speech to trigger a barge-in, versus a much lower bar when you are silent.</p>'
+        },
+        try: 'navigator.mediaDevices.getUserMedia({\n  audio: {\n    echoCancellation: true,\n    noiseSuppression: true,\n    autoGainControl: true\n  }\n});\n\nconst threshold = isSpeaking ? 200 : 60;   // ms of confirmed speech\nif (speechRunMs > threshold) bargeIn();\n\n// Test wearing headphones AND on laptop speakers.\n// The speaker case is the one that breaks.',
+        gotchas: [
+          'Testing only with headphones hides the entire problem. Your demo will be on speakers.',
+          'Aggressive echo cancellation can clip the start of genuine user speech. Check that the first word survives.'
+        ]
+      },
+      {
+        id: 'l4_1', name: 'Cancelling everything, in the right order',
+        desc: 'Stop audio first. The user judges by what they hear.',
+        learn: {
+          what: '<p>Order matters. Stop playback immediately, then flush the queue, then abort in-flight synthesis, then abort generation, then reset speculative state. If you abort generation first the speaker keeps talking for another second and it feels ignored.</p>',
+          why: 'Perceived responsiveness is entirely about the audio stopping. Everything else is bookkeeping that can happen a few milliseconds later.',
+          how: '<p>One AbortController per turn, passed to every stage. Barge-in calls abort once, and every stage unwinds. This is exactly why the interfaces took a signal in Phase 0.</p>'
+        },
+        try: 'function bargeIn() {\n  stopPlayback();          // 1. audio silent immediately\n  queue.flush();           // 2. drop pending sentences\n  turn.ac.abort();         // 3. synthesis + generation unwind\n  spec = null;             // 4. clear speculation\n  startTurn();             // 5. new controller, new turn\n}\n\n// measure it\nconsole.log("barge-in to silence:", silenceAt - detectedAt, "ms");\n// target: under 100ms',
+        gotchas: [
+          'Aborting the fetch does not stop audio already handed to the output device. You must explicitly stop the source node.',
+          'Reusing an aborted AbortController silently makes every later call fail instantly. Create a fresh one per turn.'
+        ]
+      },
+      {
+        id: 'l4_2', name: 'Retrieval that lands after you started speaking',
+        desc: 'The genuinely hard case, and the best thing in your writeup.',
+        learn: {
+          what: '<p>Once you speculate and stream, a race becomes possible: you began answering from speculative context, and then better or contradicting retrieval arrives. Three options. Ignore the late result. Abort and restart, which sounds terrible mid-sentence. Or finish the current sentence, then quietly correct.</p>',
+          why: 'Almost nobody who builds a voice demo has thought about this. Having a considered position, with a rule and a measured frequency, is a strong senior signal in an interview.',
+          how: '<p>Practical rule: if the late context does not change the first sentence, ignore it. If it contradicts, finish the sentence in flight and prepend a short correction to the next one. Log how often this happens.</p>'
+        },
+        try: '// spoken output when a late correction fires:\n//\n//   "Admin access is enforced by requireRole."   <- speculative\n//   "Actually, that was replaced last month by  "  <- correction\n//   "the policy middleware in src/policy.ts."\n//\n// Rule: never cut mid-sentence. Correct at the next boundary.\n// Frequency in testing: 3 of 50 turns.\n// Users found the correction natural. Mid-sentence cuts they did not.',
+        gotchas: [
+          'Do not correct silently by just changing course. Say a short acknowledgement, otherwise it sounds like the system is contradicting itself at random.'
+        ]
+      }
+    ],
+    quiz: [
+      { id: "vr4a", q: "Your system interrupts itself constantly during a demo. What is happening and why did it not happen in testing?",
+        a: "The microphone is hearing the speaker, and VAD is treating your own synthesised voice as user speech. It did not happen in testing because you tested with headphones. Turn on browser echo cancellation and require a longer confirmed speech burst before treating it as a barge-in while speaking." },
+      { id: "vr4b", q: "On barge-in, why stop audio playback first rather than aborting generation first?",
+        a: "Because the user judges responsiveness entirely by what they hear. Abort generation first and the speaker keeps talking for another second, which feels like being ignored. Stop the audio, then flush the queue, then unwind everything else." },
+      { id: "vr4c", q: "You abort the request but the voice keeps talking for a second. Why?",
+        a: "Aborting a fetch does not stop audio already handed to the output device. You have to explicitly stop the playing source node as well as clearing the queue." },
+      { id: "vr4d", q: "Retrieval arrives after you have already started speaking and it contradicts what you said. What do you do?",
+        a: "Finish the sentence in flight, then prepend a short spoken correction to the next one. Never cut mid-sentence, it sounds broken. And never correct silently, or the system appears to contradict itself at random. Log how often this happens; in testing it was about 3 turns in 50." }
+    ],
+    build: {
+      id: 'b4', flag: '✋', title: 'Milestone 4 — Interruptible in under 100ms',
+      brief: 'Barge-in, full cancellation, and a late-retrieval correction path.',
+      time: 210, brain: 'Concurrency, properly',
+      goal: 'Implement barge-in with echo-aware detection, full cancellation across all stages, and a correction strategy for late retrieval. Measure detection-to-silence latency and self-interruption rate on laptop speakers.',
+      steps: [
+        {
+          title: 'Barge-in detection with the speaking gate',
+          explain: 'Different thresholds while speaking versus silent, plus browser echo cancellation.',
+          code: 'let selfInterrupts = 0;\nbus.on("speech-start", () => {\n  if (!isSpeaking) return startTurn();\n  if (speechRunMs > 200) bargeIn();\n});\n\n// test protocol: 30 turns on speakers, interrupt on 10 of them\n//   correct barge-ins:      10/10\n//   self-interruptions:      0/30   <- must be zero',
+          note: 'Any self-interruption at all is a fail. Fix it before moving on.'
+        },
+        {
+          title: 'Cancel everything from one controller',
+          explain: 'Audio stop first, then unwind the rest. Assert nothing keeps running.',
+          code: 'bargeIn to silence:  median 42ms, p90 71ms\n\n// leak check after 30 barge-ins:\nactive fetches: 0\nqueued sentences: 0\nplaying nodes: 0',
+          note: 'Run the leak check in a loop. Leaked generations show up as mysterious API cost.'
+        },
+        {
+          title: 'Late retrieval correction',
+          explain: 'Finish the sentence, then correct. Log every occurrence.',
+          code: '{"turn":31,"speculative":"requireRole","late":"policy middleware",\n "action":"correct-at-boundary","delayMs":180}\n\n// in 50 turns: 3 corrections, 0 mid-sentence cuts',
+          note: 'Record one of these in your demo video. It is the most memorable thirty seconds you will have.'
+        }
+      ],
+      expectedOutput: 'Interruptible mid-answer with silence in under 100ms, zero self-interruptions on speakers, and a working correction path.',
+      commonErrors: [
+        'Testing only with headphones and shipping a system that interrupts itself.',
+        'Reusing an aborted controller so all later calls fail instantly.',
+        'Aborting the request but not stopping the audio source node.'
+      ],
+      stretchGoals: [
+        'Duck the output volume on possible barge-in instead of hard stopping, then either cancel or resume.'
+      ]
+    }
+  },
+
+  {
+    id: 'p5', label: 'Phase 5', color: '#EC4899', level: 'Grounding',
+    title: 'Citations You Can Hear',
+    subtitle: 'Grounded answers in a medium with no hyperlinks',
+    intro: 'Voice loses the thing that made your text RAG trustworthy: clickable sources. So you split the channels. <strong>Speak the answer, display the sources.</strong> And because speech makes hallucination much harder to catch, refusal matters more here than anywhere else.',
+    lessons: [
+      {
+        id: 'l5_0', name: 'Two channels, one answer',
+        desc: 'Audio carries the answer. The screen carries the evidence.',
+        learn: {
+          what: '<p>Reading citation markers out loud is unbearable. Instead, emit structured events alongside the audio: a sources event when context is selected, and token events as they stream. The UI renders the source list and the transcript while the voice speaks naturally.</p>',
+          why: 'This is the design decision that makes voice RAG trustworthy, and it is a product insight rather than a technical one, which makes it a good thing to talk about.',
+          how: '<p>Keep spoken references natural: "the requireRole function in the rbac middleware" rather than "source one". The screen holds the precise file and line.</p>'
+        },
+        try: '// event stream to the client\n{"type":"sources","items":[\n   {"file":"src/middleware/rbac.ts","lines":"12-40","score":8.4},\n   {"file":"src/routes/admin.ts","lines":"22-31","score":7.1}]}\n{"type":"token","text":"Admin access is enforced by "}\n{"type":"token","text":"requireRole."}\n{"type":"audio-start","sentence":0}\n\n// Sources render before the first word is spoken.\n// The user sees the evidence appear, then hears the answer.',
+        gotchas: [
+          'Sending sources after the audio starts makes the UI feel like it is lagging behind the voice. Send them first.'
+        ]
+      },
+      {
+        id: 'l5_1', name: 'Refusing out loud',
+        desc: 'Say it in one short sentence and stop.',
+        learn: {
+          what: '<p>Same two-layer approach as your text project: threshold on the reranker score before generating, and an explicit instruction to decline. What changes is the phrasing. In speech, a refusal must be short and immediate.</p>',
+          why: 'A spoken hallucination is much more convincing and much harder to verify than a written one, because there is nothing to skim. Refusal quality matters more here.',
+          how: '<p>Pre-synthesize the common refusal so it plays instantly with no round trip. It is one cached audio buffer and it makes the system feel decisive.</p>'
+        },
+        try: 'const REFUSAL = "I could not find anything about that in this codebase.";\nconst refusalAudio = await tts.synth(REFUSAL);   // cached at startup\n\nif (!ctx.length || ctx[0].score < THRESHOLD) {\n  ui.emit("sources", []);\n  play(refusalAudio);            // instant, no API call\n  return;\n}',
+        gotchas: [
+          'A long apologetic refusal is worse than a short one. One sentence, then silence.'
+        ]
+      },
+      {
+        id: 'l5_2', name: 'Reusing your retrieval stack',
+        desc: 'Everything from the codebase RAG project drops straight in.',
+        learn: {
+          what: '<p>Hybrid search, RRF fusion, reranking, the abstain threshold: all of it applies unchanged. The only new constraint is the latency budget, which pushes you toward a fast reranker or none at all when speculation already gave you a head start.</p>',
+          why: 'This is why the project order matters. You are not learning retrieval twice, you are reusing a component you already measured and adding a real-time constraint on top.',
+          how: '<p>Measure retrieval quality with the same recall@k harness, and add a latency column. Some quality is worth trading for speed here, and you should be able to show exactly how much.</p>'
+        },
+        try: 'strategy            r@5    latency\nhybrid + rerank     0.94     680ms   <- too slow when not speculated\nhybrid (RRF only)   0.91     190ms   <- default here\nvector only         0.83     140ms\n\n// Decision: rerank only when speculation gave us a head start,\n// otherwise fall back to hybrid alone. Quality cost: 0.03 recall.\n// That sentence is a good interview answer.',
+        gotchas: [
+          'Do not silently drop quality for speed without measuring what it cost you.'
+        ]
+      }
+    ],
+    quiz: [
+      { id: "vr5a", q: "Voice has no clickable links. How do you keep the answer verifiable?",
+        a: "Split the channels. Speak the answer, display the sources. Emit a sources event before the audio starts so the evidence appears on screen first, then the voice follows. Spoken references stay natural; the screen carries the precise file and line." },
+      { id: "vr5b", q: "Why does refusal matter more in voice than in text?",
+        a: "Because a spoken hallucination is more convincing and much harder to check. There is nothing to skim, no citation to glance at. A confident wrong answer in speech is simply believed." },
+      { id: "vr5c", q: "Why pre-synthesise the refusal message at startup?",
+        a: "So \"I could not find anything about that\" plays in about 40ms with no network call. Otherwise the honest answer becomes the slowest response your system gives, which teaches users that refusal means something is broken." },
+      { id: "vr5d", q: "You drop reranking when speculation did not fire, losing 0.03 recall. Why is that an acceptable engineering decision?",
+        a: "Because you measured both sides: 680ms versus 190ms of latency against 0.94 versus 0.91 recall. Trading a small amount of quality for a large amount of latency in a real-time system is defensible when you can state the exact cost. Doing it silently is not." }
+    ],
+    build: {
+      id: 'b5', flag: '📎', title: 'Milestone 5 — Grounded, cited, willing to refuse',
+      brief: 'Sources on screen before the voice starts. Instant refusal path.',
+      time: 150, brain: 'Trust',
+      goal: 'Emit sources ahead of audio, render them live, add the pre-synthesized refusal path, and evaluate answer grounding on twenty spoken questions including four that cannot be answered.',
+      steps: [
+        {
+          title: 'Source events ahead of audio',
+          explain: 'Sources render, then the voice begins. That ordering is the whole effect.',
+          code: 'ui.emit("sources", ctx.map(c => ({ file: c.file, lines: c.range, score: c.score })));\nawait firstSentenceReady;\nqueue.start();',
+          note: 'A short fade-in on the source list as it appears looks deliberate rather than glitchy.'
+        },
+        {
+          title: 'Cached refusal',
+          explain: 'Synthesize once at startup. Refusal should be the fastest response the system has.',
+          code: 'refusal latency: 40ms (cached buffer, no network)\n\nspoken eval, 20 questions:\n  grounded and correct   15\n  correct, ungrounded     2   (right answer, cited wrong file)\n  wrong                   0\n  refused correctly       3/4\n  answered anyway         1/4',
+          note: 'The two ungrounded-but-correct cases are the interesting ones. Dig into why the citation was wrong.'
+        },
+        {
+          title: 'Record the demo',
+          explain: 'Ninety seconds, three turns, including a barge-in and a refusal.',
+          code: '# Demo script\n1. conceptual question, sources appear, answer starts <1s\n2. interrupt mid-answer with a follow-up (barge-in visible)\n3. ask something the corpus cannot answer -> instant refusal\n\n# Overlay the first-audio timer on screen. It is the proof.',
+          note: 'The visible latency counter is what makes people believe the number in your README.'
+        }
+      ],
+      expectedOutput: 'Sources visible before speech, an instant refusal path, and a 90 second demo recording.',
+      commonErrors: [
+        'Emitting sources after audio starts.',
+        'A refusal that requires an API round trip, making "I do not know" the slowest response.'
+      ],
+      stretchGoals: [
+        'Highlight the specific source line as the sentence referencing it is spoken.'
+      ]
+    }
+  },
+
+  {
+    id: 'p6', label: 'Phase 6', color: '#111827', level: 'Ship',
+    title: 'Ship It and Write the Latency Story',
+    subtitle: 'The waterfall chart is the post',
+    intro: 'Package it, write the README around the before-and-after waterfall, publish one honest post, and close the project. <strong>You have a real-time voice engineering story that almost nobody applying to the same roles can tell.</strong> Do not let it sit unpublished on your laptop like the last four things.',
+    lessons: [
+      {
+        id: 'l6_0', name: 'What to lead with',
+        desc: 'The number, the chart, the video. In that order.',
+        learn: {
+          what: '<p>Open with the number: first audio in about 900ms, down from 5.1 seconds. Then the waterfall chart showing which phase bought which milliseconds. Then a 90 second video. Architecture and setup come after all of that.</p>',
+          why: 'Reviewers spend twenty seconds on a README. A measured latency number and a chart survive that; a paragraph about your architecture does not.',
+          how: '<p>Include the honest costs too: speculation waste, false endpoint cuts, wrongly kept speculations. The failures are what make the numbers believable.</p>'
+        },
+        try: '# voice-rag\n\nAsk out loud, get a grounded spoken answer. First audio: 970ms median.\n\n| stage      | naive  | final | technique                        |\n|------------|--------|-------|----------------------------------|\n| capture    | 820ms  | 310ms | VAD + adaptive endpointing       |\n| stt        | 690ms  |  90ms | streaming partials               |\n| retrieve   | 210ms  |   0ms | speculative on stable prefix     |\n| generate   | 2480ms | 380ms | streaming, first sentence only   |\n| tts        | 870ms  | 190ms | sentence-chunked synthesis       |\n| **first audio** | **5070ms** | **970ms** | **-81%**       |\n\n## Costs of going fast\n- speculation kept 72% of the time, wrongly kept 2%\n- 3 false endpoint cuts in 50 turns\n- reranking dropped when not speculated: -0.03 recall@5',
+        gotchas: [
+          'A README with no chart and no video gets skimmed and forgotten regardless of how good the code is.'
+        ]
+      },
+      {
+        id: 'l6_1', name: 'Then stop',
+        desc: 'Close it, use it in conversations, go back to outreach.',
+        learn: {
+          what: '<p>When the ship date arrives, cut whatever is unfinished and note it in the README as future work. Two shipped projects with measured results beat five half-built ones by an enormous margin.</p>',
+          why: 'The pile of unfinished projects is the thing that has been costing you, not a lack of ideas. Finishing on a date you set in advance is the habit this whole exercise is really training.',
+          how: '<p>Publish once, put both projects in your resume and your outreach messages, and go back to talking to people. The projects are ammunition for conversations, not a replacement for them.</p>'
+        },
+        try: '## Future work (deliberately not built)\n- wake word\n- speaker diarization for multi-person rooms\n- on-device STT for offline use\n\nShipped on schedule with these cut. Listing them is better\nthan silently leaving them half-finished in the codebase.',
+        gotchas: [
+          'Rolling straight into project three without using project one and two in any conversation is the failure mode to watch for.'
+        ]
+      }
+    ],
+    quiz: [
+      { id: "vr6a", q: "Why does your README open with the waterfall chart rather than the architecture?",
+        a: "Because \"5,070ms to 970ms\" with a chart showing which technique bought which milliseconds survives a twenty second skim. An architecture paragraph does not. The chart is also the thing nobody else has." },
+      { id: "vr6b", q: "Which failures belong in the writeup?",
+        a: "The speculation hit rate of 72% including the one wrongly kept, the three false endpoint cuts in fifty turns, and the recall you gave up by dropping reranking. Going fast has costs, and stating them is what makes the speedup believable." },
+      { id: "vr6c", q: "Why put a live latency counter on screen in the demo video?",
+        a: "Because a number in a README is a claim, and a number ticking on screen while the voice starts is proof. It is thirty seconds of work and it is the difference between being believed and being skimmed." },
+      { id: "vr6d", q: "The project is done. What is the actual failure mode to watch for now?",
+        a: "Rolling straight into project three without ever mentioning projects one and two in a conversation. The projects were never the goal. They are ammunition for conversations, and unused ammunition counts for nothing." }
+    ],
+    build: {
+      id: 'b6', flag: '🚀', title: 'Milestone 6 — Published',
+      brief: 'README, chart, video, post. Then closed.',
+      time: 180, brain: 'Finish it',
+      goal: 'Public repo with the waterfall table, an embedded 90 second video, honest costs, and one published post written in your own voice. Then declare the project closed.',
+      steps: [
+        {
+          title: 'Generate the waterfall chart',
+          explain: 'From the JSONL you have been logging since Milestone 0. You built a custom SVG heatmap in FocusLoop, this is the same muscle.',
+          code: 'node scripts/chart.js runs.jsonl > docs/waterfall.svg\n\n// Two horizontal bars, naive above, final below, stages coloured.\n// One image that explains the entire project.',
+          note: 'Hand-rolled SVG here is a small flex that fits the project.'
+        },
+        {
+          title: 'README and video',
+          explain: 'Number, chart, video, costs, architecture, setup. In that order.',
+          code: '# 90 second video, three turns:\n#   1. question -> sources appear -> voice starts (timer visible)\n#   2. barge-in mid answer\n#   3. unanswerable -> instant refusal\n#\n# Overlay the live first-audio timer. Proof beats claims.',
+          note: 'Under two minutes or it does not get watched.'
+        },
+        {
+          title: 'Publish and close',
+          explain: 'One post. Then update the resume and go back to outreach.',
+          code: '## Post outline\n1. Naive voice RAG takes 5 seconds. Humans notice silence at 0.8.\n2. Where the seconds actually were (the chart).\n3. Speculative retrieval: searching before you finish talking.\n4. Sentence-chunked TTS: first audio stops depending on answer length.\n5. Barge-in, and the late-retrieval correction problem.\n6. What it cost: 72% speculation hit rate, 3 false cuts in 50.\n\n// Plain sentences. No buzzwords. The numbers carry it.',
+          note: 'Add both projects to the resume the same day you publish. That is the point of building them.'
+        }
+      ],
+      expectedOutput: 'Public repo, waterfall chart, 90 second video, one published post, project closed on the date you set.',
+      commonErrors: [
+        'Waiting until it is impressive. It already is.',
+        'Publishing the repo but never the post, so nobody sees it.'
+      ],
+      stretchGoals: [
+        'Package as a small desktop app, the same shape as Echo, so people can actually run it.'
+      ]
+    }
+  }
+];
+
+const SOLUTION_NOTE_FIELDS = ['what-worked', 'pitfalls', 'next'];
+
+
+// ── STATE ──────────────────────────────────────────────────────
+function loadState() {
+  try { return JSON.parse(localStorage.getItem(STATE_KEY)) || {}; } catch { return {}; }
+}
+function saveState() { localStorage.setItem(STATE_KEY, JSON.stringify(state)); }
+let state = loadState();
+if (!state.builds)  state.builds  = {};
+if (!state.lessons) state.lessons = {};
+if (!state.lessonNotes) state.lessonNotes = {};
+if (!state.quiz) state.quiz = {};
+
+let activePhase = 0;
+const timers = {};
+
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+function codeBlock(code, title) {
+  return '<div class="code-wrap"><div class="code-head"><span class="code-title">' + (title || 'code') +
+    '</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>' +
+    '<pre class="code-block"><code>' + esc(code) + '</code></pre></div>';
+}
+
+async function copyCode(btn) {
+  const pre = btn.closest('.code-wrap').querySelector('.code-block');
+  try {
+    await navigator.clipboard.writeText(pre.innerText);
+    btn.textContent = 'Copied ✓';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1500);
+  } catch {
+    const range = document.createRange();
+    range.selectNodeContents(pre);
+    const sel = window.getSelection();
+    sel.removeAllRanges(); sel.addRange(range);
+  }
+}
+
+
+// ── STATS ──────────────────────────────────────────────────────
+function updateStats() {
+  let done = 0, lessonsDone = 0, phasesDone = 0;
+  PHASES.forEach(ph => {
+    let phaseDone = true;
+    const b = state.builds[ph.build.id] || {};
+    if (b.status === 'done') done++; else phaseDone = false;
+    ph.lessons.forEach(l => {
+      const s = (state.lessons[l.id] || {}).state;
+      if (s === 'mastered') lessonsDone++; else phaseDone = false;
+    });
+    if (phaseDone) phasesDone++;
+  });
+  document.getElementById('stat-done').textContent = done;
+  document.getElementById('stat-lessons').textContent = lessonsDone;
+  document.getElementById('stat-phases').textContent = phasesDone + '/' + PHASES.length;
+}
+
+
+// ── PHASE NAV ──────────────────────────────────────────────────
+function renderPhaseNav() {
+  const nav = document.getElementById('phase-nav');
+  nav.innerHTML = PHASES.map((ph, i) => {
+    const b = state.builds[ph.build.id] || {};
+    return '<div class="phase-tab' + (i === activePhase ? ' active' : '') + '" onclick="switchPhase(' + i + ')">' +
+      '<span class="tab-lang">' + ph.level + '</span>' +
+      ph.title.split(' — ')[0] + ' <span style="opacity:.6;font-size:11px">' +
+      (b.status === 'done' ? '✓' : (ph.lessons.filter(l => (state.lessons[l.id]||{}).state==='mastered').length + '/' + ph.lessons.length)) + '</span></div>';
+  }).join('');
+}
+
+function switchPhase(i) {
+  activePhase = i;
+  renderPhaseNav();
+  renderContent();
+}
+
+
+// ── LESSON CARD ────────────────────────────────────────────────
+const LESSON_VISUALS = {
+  "l0_0": {
+    "cap": "The whole project in one chart. Naive is sequential and blows the budget; the target overlaps almost everything.",
+    "svg": "<svg viewBox=\"0 0 700 285\" xmlns=\"http://www.w3.org/2000/svg\"><text x=\"20\" y=\"20\" font-size=\"11.5\" font-family=\"Inter\" font-weight=\"700\" fill=\"#9b4a4a\">Naive — every stage waits for the one before it</text><rect x=\"40\" y=\"30\" width=\"110\" height=\"22\" rx=\"4\" fill=\"#e4f0f8\" stroke=\"#8fb8d4\"/><text x=\"95\" y=\"45\" text-anchor=\"middle\" font-size=\"8.5\" font-family=\"Inter\">STT 900ms</text><rect x=\"152\" y=\"30\" width=\"70\" height=\"22\" rx=\"4\" fill=\"#fff4e0\" stroke=\"#e0b070\"/><text x=\"187\" y=\"45\" text-anchor=\"middle\" font-size=\"8.5\" font-family=\"Inter\" fill=\"#7a5200\">embed 120</text><rect x=\"224\" y=\"30\" width=\"80\" height=\"22\" rx=\"4\" fill=\"#e8e4f8\" stroke=\"#9b8fd4\"/><text x=\"264\" y=\"45\" text-anchor=\"middle\" font-size=\"8.5\" font-family=\"Inter\" fill=\"#5a4a9a\">retrieve 180</text><rect x=\"306\" y=\"30\" width=\"150\" height=\"22\" rx=\"4\" fill=\"#dff0e4\" stroke=\"#8fc49b\"/><text x=\"381\" y=\"45\" text-anchor=\"middle\" font-size=\"8.5\" font-family=\"Inter\" fill=\"#3f6b4c\">LLM first token 700</text><rect x=\"458\" y=\"30\" width=\"120\" height=\"22\" rx=\"4\" fill=\"#ffe4cc\" stroke=\"#e0b070\"/><text x=\"518\" y=\"45\" text-anchor=\"middle\" font-size=\"8.5\" font-family=\"Inter\" fill=\"#7a5200\">TTS 450</text><line x1=\"578\" y1=\"24\" x2=\"578\" y2=\"60\" stroke=\"#dc2626\" stroke-width=\"2.5\"/><text x=\"584\" y=\"45\" font-size=\"11\" font-family=\"Inter\" font-weight=\"700\" fill=\"#dc2626\">2,350ms</text><text x=\"20\" y=\"74\" font-size=\"9.5\" font-family=\"Inter\" fill=\"#9b4a4a\">A human reads silence as \"it did not hear me\" at about 800ms. This feels broken.</text><line x1=\"40\" y1=\"92\" x2=\"660\" y2=\"92\" stroke=\"#9aa0a6\" stroke-dasharray=\"4 4\"/><text x=\"20\" y=\"118\" font-size=\"11.5\" font-family=\"Inter\" font-weight=\"700\" fill=\"#3f6b4c\">Target — overlap everything that can overlap</text><rect x=\"40\" y=\"128\" width=\"70\" height=\"20\" rx=\"4\" fill=\"#e4f0f8\" stroke=\"#8fb8d4\"/><text x=\"75\" y=\"142\" text-anchor=\"middle\" font-size=\"8\" font-family=\"Inter\">STT streams</text><rect x=\"40\" y=\"150\" width=\"120\" height=\"20\" rx=\"4\" fill=\"#fff4e0\" stroke=\"#e0b070\" stroke-dasharray=\"3 2\"/><text x=\"100\" y=\"164\" text-anchor=\"middle\" font-size=\"8\" font-family=\"Inter\" fill=\"#7a5200\">speculative retrieve</text><rect x=\"112\" y=\"128\" width=\"48\" height=\"20\" rx=\"4\" fill=\"#e4f0f8\" stroke=\"#8fb8d4\"/><text x=\"136\" y=\"142\" text-anchor=\"middle\" font-size=\"8\" font-family=\"Inter\">endpoint</text><rect x=\"162\" y=\"128\" width=\"130\" height=\"20\" rx=\"4\" fill=\"#dff0e4\" stroke=\"#8fc49b\"/><text x=\"227\" y=\"142\" text-anchor=\"middle\" font-size=\"8\" font-family=\"Inter\" fill=\"#3f6b4c\">LLM starts on the guess</text><rect x=\"294\" y=\"128\" width=\"90\" height=\"20\" rx=\"4\" fill=\"#ffe4cc\" stroke=\"#e0b070\"/><text x=\"339\" y=\"142\" text-anchor=\"middle\" font-size=\"8\" font-family=\"Inter\" fill=\"#7a5200\">TTS sentence 1</text><line x1=\"384\" y1=\"122\" x2=\"384\" y2=\"176\" stroke=\"#16a34a\" stroke-width=\"2.5\"/><text x=\"390\" y=\"142\" font-size=\"11\" font-family=\"Inter\" font-weight=\"700\" fill=\"#16a34a\">first audio 940ms</text><rect x=\"386\" y=\"150\" width=\"200\" height=\"20\" rx=\"4\" fill=\"#ffe4cc\" stroke=\"#e0b070\" stroke-dasharray=\"3 2\"/><text x=\"486\" y=\"164\" text-anchor=\"middle\" font-size=\"8\" font-family=\"Inter\" fill=\"#7a5200\">sentences 2..n keep playing</text><rect x=\"20\" y=\"192\" width=\"325\" height=\"38\" rx=\"9\" fill=\"#e8e4f8\" stroke=\"#9b8fd4\"/><text x=\"34\" y=\"210\" font-size=\"10.5\" font-family=\"Inter\" font-weight=\"700\" fill=\"#5a4a9a\">Total time barely improved</text><text x=\"34\" y=\"225\" font-size=\"9.5\" font-family=\"Inter\" fill=\"#5a4a9a\">2,350 → ~2,100ms. Not the point.</text><rect x=\"360\" y=\"192\" width=\"320\" height=\"38\" rx=\"9\" fill=\"#eaf6ee\" stroke=\"#8fc49b\" stroke-width=\"2\"/><text x=\"374\" y=\"210\" font-size=\"10.5\" font-family=\"Inter\" font-weight=\"700\" fill=\"#3f6b4c\">Time to first audio is the spec</text><text x=\"374\" y=\"225\" font-size=\"9.5\" font-family=\"Inter\" fill=\"#3f6b4c\">2,350 → 940ms. Once it speaks, nobody counts.</text><rect x=\"20\" y=\"242\" width=\"660\" height=\"34\" rx=\"9\" fill=\"#fdf0f0\" stroke=\"#e09b9b\"/><text x=\"350\" y=\"263\" text-anchor=\"middle\" font-size=\"11\" font-family=\"Inter\" font-weight=\"700\" fill=\"#9b4a4a\">Measure all five stages separately in Milestone 0. A single total tells you nothing about which one to attack.</text></svg>"
+  },
+  "l1_0": {
+    "cap": "Endpointing is a guess about whether a human has finished. Too eager cuts them off; too patient feels dead.",
+    "svg": "<svg viewBox=\"0 0 700 245\" xmlns=\"http://www.w3.org/2000/svg\"><text x=\"20\" y=\"20\" font-size=\"11\" font-family=\"Inter\" font-weight=\"700\" fill=\"#5f6368\">\"How does ... a parent get linked?\"  — the pause is mid-sentence</text><path d=\"M40 60 L52 44 L64 74 L76 38 L88 78 L100 46 L112 68 L124 52\" fill=\"none\" stroke=\"#3f6b4c\" stroke-width=\"2\"/><path d=\"M124 58 L196 58\" stroke=\"#9aa0a6\" stroke-width=\"2\"/><path d=\"M196 60 L208 44 L220 74 L232 40 L244 76 L256 48 L268 66 L280 54 L292 62\" fill=\"none\" stroke=\"#3f6b4c\" stroke-width=\"2\"/><text x=\"128\" y=\"84\" font-size=\"9\" font-family=\"Inter\" fill=\"#5f6368\">400ms silence</text><rect x=\"128\" y=\"30\" width=\"68\" height=\"12\" rx=\"3\" fill=\"#fdf0f0\" stroke=\"#e09b9b\"/><text x=\"162\" y=\"39\" text-anchor=\"middle\" font-size=\"7.5\" font-family=\"Inter\" fill=\"#9b4a4a\">300ms VAD fires here</text><text x=\"310\" y=\"50\" font-size=\"9.5\" font-family=\"Inter\" fill=\"#9b4a4a\">✗ 300ms threshold → you cut them off mid-question</text><text x=\"310\" y=\"66\" font-size=\"9.5\" font-family=\"Inter\" fill=\"#3f6b4c\">✓ 700ms + completeness check → you wait, correctly</text><rect x=\"20\" y=\"100\" width=\"325\" height=\"62\" rx=\"9\" fill=\"#fdf0f0\" stroke=\"#e09b9b\"/><text x=\"34\" y=\"120\" font-size=\"11\" font-family=\"Inter\" font-weight=\"700\" fill=\"#9b4a4a\">Silence alone is a bad signal</text><text x=\"34\" y=\"138\" font-size=\"10\" font-family=\"Inter\" fill=\"#9b4a4a\">People pause to think, breathe, and search for a</text><text x=\"34\" y=\"152\" font-size=\"10\" font-family=\"Inter\" fill=\"#9b4a4a\">word. A fixed timeout cannot tell those apart.</text><rect x=\"360\" y=\"100\" width=\"320\" height=\"62\" rx=\"9\" fill=\"#eaf6ee\" stroke=\"#8fc49b\" stroke-width=\"2\"/><text x=\"374\" y=\"120\" font-size=\"11\" font-family=\"Inter\" font-weight=\"700\" fill=\"#3f6b4c\">Add a completeness heuristic</text><text x=\"374\" y=\"138\" font-size=\"10\" font-family=\"Inter\" fill=\"#3f6b4c\">Does the partial transcript read as a finished</text><text x=\"374\" y=\"152\" font-size=\"10\" font-family=\"Inter\" fill=\"#3f6b4c\">question? \"how does\" → wait. \"...linked?\" → go.</text><rect x=\"20\" y=\"178\" width=\"660\" height=\"58\" rx=\"9\" fill=\"#e8e4f8\" stroke=\"#9b8fd4\"/><text x=\"34\" y=\"198\" font-size=\"11.5\" font-family=\"Inter\" font-weight=\"700\" fill=\"#5a4a9a\">Adaptive beats fixed: short threshold when the text looks complete, long when it does not</text><text x=\"34\" y=\"217\" font-size=\"10.5\" font-family=\"Inter\" fill=\"#5a4a9a\">This is the one place in the pipeline where being wrong is worse than being slow. Cutting someone off mid-sentence</text><text x=\"34\" y=\"230\" font-size=\"10.5\" font-family=\"Inter\" fill=\"#5a4a9a\">destroys the whole interaction; waiting an extra 300ms just feels like a considerate pause.</text></svg>"
+  },
+  "l2_0": {
+    "cap": "Start retrieving on the partial transcript. If the guess holds, retrieval is already done when they stop talking.",
+    "svg": "<svg viewBox=\"0 0 700 265\" xmlns=\"http://www.w3.org/2000/svg\"><text x=\"20\" y=\"20\" font-size=\"11.5\" font-family=\"Inter\" font-weight=\"700\" fill=\"#9b4a4a\">✗ Wait for the final transcript</text><rect x=\"40\" y=\"30\" width=\"240\" height=\"22\" rx=\"4\" fill=\"#e4f0f8\" stroke=\"#8fb8d4\"/><text x=\"160\" y=\"45\" text-anchor=\"middle\" font-size=\"8.5\" font-family=\"Inter\">user speaking · STT streaming</text><rect x=\"282\" y=\"30\" width=\"90\" height=\"22\" rx=\"4\" fill=\"#e8e4f8\" stroke=\"#9b8fd4\"/><text x=\"327\" y=\"45\" text-anchor=\"middle\" font-size=\"8.5\" font-family=\"Inter\" fill=\"#5a4a9a\">retrieve 300ms</text><rect x=\"374\" y=\"30\" width=\"150\" height=\"22\" rx=\"4\" fill=\"#dff0e4\" stroke=\"#8fc49b\"/><text x=\"449\" y=\"45\" text-anchor=\"middle\" font-size=\"8.5\" font-family=\"Inter\" fill=\"#3f6b4c\">LLM</text><text x=\"530\" y=\"45\" font-size=\"9.5\" font-family=\"Inter\" font-weight=\"600\" fill=\"#9b4a4a\">300ms of dead air</text><text x=\"20\" y=\"84\" font-size=\"11.5\" font-family=\"Inter\" font-weight=\"700\" fill=\"#3f6b4c\">✓ Speculate on the partial</text><rect x=\"40\" y=\"94\" width=\"240\" height=\"22\" rx=\"4\" fill=\"#e4f0f8\" stroke=\"#8fb8d4\"/><text x=\"160\" y=\"109\" text-anchor=\"middle\" font-size=\"8.5\" font-family=\"Inter\">user speaking · STT streaming</text><line x1=\"190\" y1=\"88\" x2=\"190\" y2=\"146\" stroke=\"#e0b070\" stroke-width=\"2\" stroke-dasharray=\"4 3\"/><text x=\"194\" y=\"86\" font-size=\"8\" font-family=\"Inter\" fill=\"#7a5200\">partial looks stable → fire</text><rect x=\"190\" y=\"120\" width=\"90\" height=\"22\" rx=\"4\" fill=\"#fff4e0\" stroke=\"#e0b070\" stroke-width=\"2\"/><text x=\"235\" y=\"135\" text-anchor=\"middle\" font-size=\"8.5\" font-family=\"Inter\" fill=\"#7a5200\">retrieve (guess)</text><rect x=\"282\" y=\"94\" width=\"150\" height=\"22\" rx=\"4\" fill=\"#dff0e4\" stroke=\"#8fc49b\"/><text x=\"357\" y=\"109\" text-anchor=\"middle\" font-size=\"8.5\" font-family=\"Inter\" fill=\"#3f6b4c\">LLM starts immediately</text><text x=\"440\" y=\"109\" font-size=\"9.5\" font-family=\"Inter\" font-weight=\"600\" fill=\"#3f6b4c\">retrieval already paid for</text><rect x=\"20\" y=\"162\" width=\"212\" height=\"64\" rx=\"9\" fill=\"#eaf6ee\" stroke=\"#8fc49b\"/><text x=\"126\" y=\"182\" text-anchor=\"middle\" font-size=\"11\" font-family=\"Inter\" font-weight=\"700\" fill=\"#3f6b4c\">Guess was good</text><text x=\"32\" y=\"200\" font-size=\"9.5\" font-family=\"Inter\" fill=\"#3f6b4c\">Use the results. You saved</text><text x=\"32\" y=\"214\" font-size=\"9.5\" font-family=\"Inter\" fill=\"#3f6b4c\">the whole retrieval stage.</text><rect x=\"244\" y=\"162\" width=\"212\" height=\"64\" rx=\"9\" fill=\"#fff4e0\" stroke=\"#e0b070\"/><text x=\"350\" y=\"182\" text-anchor=\"middle\" font-size=\"11\" font-family=\"Inter\" font-weight=\"700\" fill=\"#7a5200\">Guess was wrong</text><text x=\"256\" y=\"200\" font-size=\"9.5\" font-family=\"Inter\" fill=\"#7a5200\">Throw it away, retrieve</text><text x=\"256\" y=\"214\" font-size=\"9.5\" font-family=\"Inter\" fill=\"#7a5200\">again. You lost only money.</text><rect x=\"468\" y=\"162\" width=\"212\" height=\"64\" rx=\"9\" fill=\"#e8e4f8\" stroke=\"#9b8fd4\" stroke-width=\"2\"/><text x=\"574\" y=\"182\" text-anchor=\"middle\" font-size=\"11\" font-family=\"Inter\" font-weight=\"700\" fill=\"#5a4a9a\">The number to log</text><text x=\"480\" y=\"200\" font-size=\"9.5\" font-family=\"Inter\" fill=\"#5a4a9a\">Speculation hit rate. Below</text><text x=\"480\" y=\"214\" font-size=\"9.5\" font-family=\"Inter\" fill=\"#5a4a9a\">~60% it is not worth the cost.</text><rect x=\"20\" y=\"236\" width=\"660\" height=\"24\" rx=\"8\" fill=\"#fdf0f0\" stroke=\"#e09b9b\"/><text x=\"350\" y=\"252\" text-anchor=\"middle\" font-size=\"10.5\" font-family=\"Inter\" font-weight=\"600\" fill=\"#9b4a4a\">Never let a speculative result cause a side effect. It is a guess about a sentence that is not finished yet.</text></svg>"
+  },
+  "l3_0": {
+    "cap": "TTS needs whole sentences. So you buffer tokens until a boundary, then send — never token by token.",
+    "svg": "<svg viewBox=\"0 0 700 266\" xmlns=\"http://www.w3.org/2000/svg\"><defs><marker id=\"vc\" markerUnits=\"userSpaceOnUse\" markerWidth=\"10\" markerHeight=\"10\" refX=\"9\" refY=\"5\" orient=\"auto\"><path d=\"M0 0 L10 5 L0 10 z\" fill=\"#666\"/></marker></defs><text x=\"20\" y=\"20\" font-size=\"11\" font-family=\"Inter\" font-weight=\"700\" fill=\"#5f6368\">token stream in</text><rect x=\"20\" y=\"28\" width=\"52\" height=\"22\" rx=\"4\" fill=\"#dff0e4\"/><text x=\"46\" y=\"43\" text-anchor=\"middle\" font-size=\"8.5\" font-family=\"JetBrains Mono, monospace\">A par</text><rect x=\"76\" y=\"28\" width=\"52\" height=\"22\" rx=\"4\" fill=\"#dff0e4\"/><text x=\"102\" y=\"43\" text-anchor=\"middle\" font-size=\"8.5\" font-family=\"JetBrains Mono, monospace\">ent is</text><rect x=\"132\" y=\"28\" width=\"58\" height=\"22\" rx=\"4\" fill=\"#dff0e4\"/><text x=\"161\" y=\"43\" text-anchor=\"middle\" font-size=\"8.5\" font-family=\"JetBrains Mono, monospace\">linked</text><rect x=\"194\" y=\"28\" width=\"40\" height=\"22\" rx=\"4\" fill=\"#dff0e4\"/><text x=\"214\" y=\"43\" text-anchor=\"middle\" font-size=\"8.5\" font-family=\"JetBrains Mono, monospace\">in</text><rect x=\"238\" y=\"28\" width=\"76\" height=\"22\" rx=\"4\" fill=\"#fff4e0\" stroke=\"#e0b070\" stroke-width=\"2\"/><text x=\"276\" y=\"43\" text-anchor=\"middle\" font-size=\"8.5\" font-family=\"JetBrains Mono, monospace\" fill=\"#7a5200\">fees.ts.</text><rect x=\"318\" y=\"28\" width=\"46\" height=\"22\" rx=\"4\" fill=\"#dff0e4\"/><text x=\"341\" y=\"43\" text-anchor=\"middle\" font-size=\"8.5\" font-family=\"JetBrains Mono, monospace\">It ch</text><path d=\"M276 56 L276 74\" stroke=\"#666\" stroke-width=\"1.8\" marker-end=\"url(#vc)\"/><text x=\"286\" y=\"70\" font-size=\"9\" font-family=\"Inter\" font-weight=\"600\" fill=\"#7a5200\">boundary detected → flush the buffer</text><rect x=\"20\" y=\"80\" width=\"300\" height=\"26\" rx=\"5\" fill=\"#ffe4cc\" stroke=\"#e0b070\"/><text x=\"170\" y=\"97\" text-anchor=\"middle\" font-size=\"9.5\" font-family=\"Inter\" fill=\"#7a5200\">TTS(\"A parent is linked in fees.ts.\") → audio chunk 1</text><rect x=\"20\" y=\"122\" width=\"325\" height=\"64\" rx=\"9\" fill=\"#fdf0f0\" stroke=\"#e09b9b\"/><text x=\"34\" y=\"142\" font-size=\"11\" font-family=\"Inter\" font-weight=\"700\" fill=\"#9b4a4a\">The \".\" is not enough on its own</text><text x=\"34\" y=\"160\" font-size=\"9.5\" font-family=\"JetBrains Mono, monospace\" fill=\"#9b4a4a\">fees.ts · v1.2 · e.g. · Dr. · 3.14</text><text x=\"34\" y=\"177\" font-size=\"9.5\" font-family=\"Inter\" fill=\"#9b4a4a\">Split on those and the voice stops mid-filename.</text><rect x=\"360\" y=\"122\" width=\"320\" height=\"64\" rx=\"9\" fill=\"#eaf6ee\" stroke=\"#8fc49b\"/><text x=\"374\" y=\"142\" font-size=\"11\" font-family=\"Inter\" font-weight=\"700\" fill=\"#3f6b4c\">Require punctuation + whitespace + a cap</text><text x=\"374\" y=\"160\" font-size=\"9.5\" font-family=\"Inter\" fill=\"#3f6b4c\">Flush on <tspan font-family=\"JetBrains Mono, monospace\">[.!?] followed by space</tspan>, or when</text><text x=\"374\" y=\"177\" font-size=\"9.5\" font-family=\"Inter\" fill=\"#3f6b4c\">the buffer passes ~120 chars with no boundary.</text><rect x=\"20\" y=\"202\" width=\"660\" height=\"56\" rx=\"9\" fill=\"#e8e4f8\" stroke=\"#9b8fd4\"/><text x=\"34\" y=\"221\" font-size=\"11.5\" font-family=\"Inter\" font-weight=\"700\" fill=\"#5a4a9a\">The first sentence should be short — that is what sets time to first audio</text><text x=\"34\" y=\"238\" font-size=\"10.5\" font-family=\"Inter\" fill=\"#5a4a9a\">So prompt for it: \"answer in short spoken sentences, lead with the direct answer\".</text><text x=\"34\" y=\"252\" font-size=\"10.5\" font-family=\"Inter\" font-weight=\"600\" fill=\"#5a4a9a\">A 60-word opening sentence is a latency bug written in English.</text></svg>"
+  },
+  "l3_1": {
+    "cap": "TTS returns chunks out of order and at varying speed. A queue is what keeps the voice continuous.",
+    "svg": "<svg viewBox=\"0 0 700 240\" xmlns=\"http://www.w3.org/2000/svg\"><text x=\"20\" y=\"20\" font-size=\"11\" font-family=\"Inter\" font-weight=\"700\" fill=\"#5f6368\">TTS requests fire in parallel and return whenever they return</text><rect x=\"20\" y=\"30\" width=\"100\" height=\"22\" rx=\"4\" fill=\"#ffe4cc\" stroke=\"#e0b070\"/><text x=\"70\" y=\"45\" text-anchor=\"middle\" font-size=\"8.5\" font-family=\"Inter\" fill=\"#7a5200\">s1 · back 320ms</text><rect x=\"128\" y=\"30\" width=\"140\" height=\"22\" rx=\"4\" fill=\"#ffe4cc\" stroke=\"#e0b070\"/><text x=\"198\" y=\"45\" text-anchor=\"middle\" font-size=\"8.5\" font-family=\"Inter\" fill=\"#7a5200\">s2 · back 610ms (slower)</text><rect x=\"276\" y=\"30\" width=\"92\" height=\"22\" rx=\"4\" fill=\"#ffe4cc\" stroke=\"#e0b070\"/><text x=\"322\" y=\"45\" text-anchor=\"middle\" font-size=\"8.5\" font-family=\"Inter\" fill=\"#7a5200\">s3 · back 280ms</text><text x=\"380\" y=\"45\" font-size=\"9.5\" font-family=\"Inter\" font-weight=\"600\" fill=\"#9b4a4a\">s3 is ready before s2 finishes</text><rect x=\"20\" y=\"68\" width=\"660\" height=\"44\" rx=\"8\" fill=\"#e8e4f8\" stroke=\"#9b8fd4\" stroke-width=\"2\"/><text x=\"34\" y=\"86\" font-size=\"10.5\" font-family=\"Inter\" font-weight=\"700\" fill=\"#5a4a9a\">the playback queue — ordered by sentence index, never by arrival</text><text x=\"34\" y=\"103\" font-size=\"9.5\" font-family=\"Inter\" fill=\"#5a4a9a\">Hold s3 until s2 has played. Play the next chunk the instant the current one ends — that gap is what the listener hears.</text><rect x=\"20\" y=\"126\" width=\"325\" height=\"62\" rx=\"9\" fill=\"#fdf0f0\" stroke=\"#e09b9b\"/><text x=\"34\" y=\"146\" font-size=\"11\" font-family=\"Inter\" font-weight=\"700\" fill=\"#9b4a4a\">Gaps are the whole failure mode</text><text x=\"34\" y=\"164\" font-size=\"10\" font-family=\"Inter\" fill=\"#9b4a4a\">A 200ms silence between sentences sounds like</text><text x=\"34\" y=\"178\" font-size=\"10\" font-family=\"Inter\" fill=\"#9b4a4a\">a broken connection, not a natural pause.</text><rect x=\"360\" y=\"126\" width=\"320\" height=\"62\" rx=\"9\" fill=\"#eaf6ee\" stroke=\"#8fc49b\"/><text x=\"374\" y=\"146\" font-size=\"11\" font-family=\"Inter\" font-weight=\"700\" fill=\"#3f6b4c\">Stay one sentence ahead</text><text x=\"374\" y=\"164\" font-size=\"10\" font-family=\"Inter\" fill=\"#3f6b4c\">Request sentence n+1's audio while n is playing.</text><text x=\"374\" y=\"178\" font-size=\"10\" font-family=\"Inter\" fill=\"#3f6b4c\">One sentence of buffer absorbs a slow response.</text><rect x=\"20\" y=\"200\" width=\"660\" height=\"32\" rx=\"9\" fill=\"#fff4e0\" stroke=\"#e0b070\"/><text x=\"350\" y=\"220\" text-anchor=\"middle\" font-size=\"11\" font-family=\"Inter\" font-weight=\"700\" fill=\"#7a5200\">The queue is also your barge-in switch — cancelling playback means clearing it, in one place.</text></svg>"
+  },
+  "l4_1": {
+    "cap": "Cancel in this order. Get it wrong and the voice keeps talking over the person who interrupted it.",
+    "svg": "<svg viewBox=\"0 0 700 250\" xmlns=\"http://www.w3.org/2000/svg\"><defs><marker id=\"vx\" markerUnits=\"userSpaceOnUse\" markerWidth=\"10\" markerHeight=\"10\" refX=\"9\" refY=\"5\" orient=\"auto\"><path d=\"M0 0 L10 5 L0 10 z\" fill=\"#dc2626\"/></marker></defs><text x=\"20\" y=\"20\" font-size=\"11.5\" font-family=\"Inter\" font-weight=\"700\" fill=\"#9b4a4a\">User starts speaking while the agent is mid-answer</text><rect x=\"20\" y=\"32\" width=\"320\" height=\"30\" rx=\"7\" fill=\"#fdf0f0\" stroke=\"#e09b9b\" stroke-width=\"2\"/><text x=\"34\" y=\"52\" font-size=\"10.5\" font-family=\"Inter\" font-weight=\"700\" fill=\"#9b4a4a\">1 · Stop audio playback</text><text x=\"250\" y=\"52\" font-size=\"9\" font-family=\"Inter\" fill=\"#9b4a4a\">&lt; 50ms</text><path d=\"M180 64 L180 74\" stroke=\"#dc2626\" stroke-width=\"1.8\" marker-end=\"url(#vx)\"/><rect x=\"20\" y=\"76\" width=\"320\" height=\"30\" rx=\"7\" fill=\"#fff4e0\" stroke=\"#e0b070\"/><text x=\"34\" y=\"96\" font-size=\"10.5\" font-family=\"Inter\" font-weight=\"700\" fill=\"#7a5200\">2 · Clear the playback queue</text><text x=\"250\" y=\"96\" font-size=\"9\" font-family=\"Inter\" fill=\"#7a5200\">or queued audio resumes</text><path d=\"M180 108 L180 118\" stroke=\"#dc2626\" stroke-width=\"1.8\" marker-end=\"url(#vx)\"/><rect x=\"20\" y=\"120\" width=\"320\" height=\"30\" rx=\"7\" fill=\"#e8e4f8\" stroke=\"#9b8fd4\"/><text x=\"34\" y=\"140\" font-size=\"10.5\" font-family=\"Inter\" font-weight=\"700\" fill=\"#5a4a9a\">3 · Abort in-flight TTS requests</text><path d=\"M180 152 L180 162\" stroke=\"#dc2626\" stroke-width=\"1.8\" marker-end=\"url(#vx)\"/><rect x=\"20\" y=\"164\" width=\"320\" height=\"30\" rx=\"7\" fill=\"#e4f0f8\" stroke=\"#8fb8d4\"/><text x=\"34\" y=\"184\" font-size=\"10.5\" font-family=\"Inter\" font-weight=\"700\" fill=\"#2a5470\">4 · Abort the LLM stream</text><text x=\"250\" y=\"184\" font-size=\"9\" font-family=\"Inter\" fill=\"#2a5470\">stop paying</text><path d=\"M180 196 L180 206\" stroke=\"#dc2626\" stroke-width=\"1.8\" marker-end=\"url(#vx)\"/><rect x=\"20\" y=\"208\" width=\"320\" height=\"30\" rx=\"7\" fill=\"#eaf6ee\" stroke=\"#8fc49b\"/><text x=\"34\" y=\"228\" font-size=\"10.5\" font-family=\"Inter\" font-weight=\"700\" fill=\"#3f6b4c\">5 · Discard late retrieval results</text><rect x=\"360\" y=\"32\" width=\"320\" height=\"96\" rx=\"9\" fill=\"#fdf0f0\" stroke=\"#e09b9b\"/><text x=\"374\" y=\"52\" font-size=\"11\" font-family=\"Inter\" font-weight=\"700\" fill=\"#9b4a4a\">Why audio first, not the LLM first</text><text x=\"374\" y=\"72\" font-size=\"10\" font-family=\"Inter\" fill=\"#9b4a4a\">Aborting the LLM first still leaves 2 seconds of</text><text x=\"374\" y=\"87\" font-size=\"10\" font-family=\"Inter\" fill=\"#9b4a4a\">already-generated audio queued and playing.</text><text x=\"374\" y=\"107\" font-size=\"10\" font-family=\"Inter\" fill=\"#9b4a4a\">The user hears the agent talk over them and</text><text x=\"374\" y=\"121\" font-size=\"10\" font-family=\"Inter\" font-weight=\"600\" fill=\"#9b4a4a\">concludes it does not listen. Silence is step 1.</text><rect x=\"360\" y=\"140\" width=\"320\" height=\"98\" rx=\"9\" fill=\"#e8e4f8\" stroke=\"#9b8fd4\"/><text x=\"374\" y=\"160\" font-size=\"11\" font-family=\"Inter\" font-weight=\"700\" fill=\"#5a4a9a\">One turn id makes all five trivial</text><text x=\"374\" y=\"180\" font-size=\"9.5\" font-family=\"JetBrains Mono, monospace\" fill=\"#5a4a9a\">if (result.turnId !== currentTurn)</text><text x=\"374\" y=\"194\" font-size=\"9.5\" font-family=\"JetBrains Mono, monospace\" fill=\"#5a4a9a\">  return // late, ignore</text><text x=\"374\" y=\"214\" font-size=\"10\" font-family=\"Inter\" fill=\"#5a4a9a\">Bump the id on barge-in and every stale result</text><text x=\"374\" y=\"228\" font-size=\"10\" font-family=\"Inter\" fill=\"#5a4a9a\">drops itself. No cancellation bookkeeping.</text></svg>"
+  },
+  "l5_0": {
+    "cap": "Say the answer, show the sources. Reading a file path out loud is unusable; a clickable line is not.",
+    "svg": "<svg viewBox=\"0 0 700 235\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"20\" y=\"26\" width=\"325\" height=\"98\" rx=\"9\" fill=\"#ffe4cc\" stroke=\"#e0b070\" stroke-width=\"2\"/><text x=\"34\" y=\"46\" font-size=\"11\" font-family=\"Inter\" font-weight=\"700\" fill=\"#7a5200\">🔊 Audio channel — for the ear</text><text x=\"34\" y=\"68\" font-size=\"10\" font-family=\"Inter\" fill=\"#7a5200\">\"A parent gets linked in the link-parent</text><text x=\"34\" y=\"83\" font-size=\"10\" font-family=\"Inter\" fill=\"#7a5200\">service. It checks for an existing record first.\"</text><text x=\"34\" y=\"105\" font-size=\"9.5\" font-family=\"Inter\" font-weight=\"600\" fill=\"#7a5200\">Short. Spoken. No paths, no line numbers.</text><rect x=\"360\" y=\"26\" width=\"320\" height=\"98\" rx=\"9\" fill=\"#e4f0f8\" stroke=\"#8fb8d4\" stroke-width=\"2\"/><text x=\"374\" y=\"46\" font-size=\"11\" font-family=\"Inter\" font-weight=\"700\" fill=\"#2a5470\">👁 Screen channel — for the eye</text><rect x=\"374\" y=\"58\" width=\"210\" height=\"18\" rx=\"9\" fill=\"#fff\" stroke=\"#8fb8d4\"/><text x=\"479\" y=\"71\" text-anchor=\"middle\" font-size=\"8.5\" font-family=\"JetBrains Mono, monospace\" fill=\"#2a5470\">src/services/linkParent.ts:14–31</text><rect x=\"374\" y=\"80\" width=\"170\" height=\"18\" rx=\"9\" fill=\"#fff\" stroke=\"#8fb8d4\"/><text x=\"459\" y=\"93\" text-anchor=\"middle\" font-size=\"8.5\" font-family=\"JetBrains Mono, monospace\" fill=\"#2a5470\">src/models/parent.ts:1–20</text><text x=\"374\" y=\"116\" font-size=\"9.5\" font-family=\"Inter\" font-weight=\"600\" fill=\"#2a5470\">Clickable. Appears as the sentence is spoken.</text><rect x=\"20\" y=\"138\" width=\"660\" height=\"40\" rx=\"9\" fill=\"#fdf0f0\" stroke=\"#e09b9b\"/><text x=\"34\" y=\"157\" font-size=\"11\" font-family=\"Inter\" font-weight=\"700\" fill=\"#9b4a4a\">Never read a citation aloud</text><text x=\"34\" y=\"172\" font-size=\"10\" font-family=\"Inter\" fill=\"#9b4a4a\">\"source: s-r-c slash services slash link-parent dot t-s, lines fourteen to thirty-one\" — nobody has ever wanted this.</text><rect x=\"20\" y=\"188\" width=\"660\" height=\"40\" rx=\"9\" fill=\"#e8e4f8\" stroke=\"#9b8fd4\"/><text x=\"34\" y=\"207\" font-size=\"11.5\" font-family=\"Inter\" font-weight=\"700\" fill=\"#5a4a9a\">Two prompts, or one prompt with two fields</text><text x=\"34\" y=\"222\" font-size=\"10.5\" font-family=\"Inter\" fill=\"#5a4a9a\">Ask for <tspan font-family=\"JetBrains Mono, monospace\">{ spoken, citations[] }</tspan> in one structured response. One model call, two channels, and the spoken half stays clean.</text></svg>"
+  }
+};
+
+function buildLessonCard(l) {
+  const st = (state.lessons[l.id] || {}).state || 'untouched';
+  const note = state.lessonNotes[l.id] || {};
+  const cardCls = st === 'mastered' ? ' mastered' : st === 'in-progress' ? ' in-progress' : '';
+  const chkSt = st === 'mastered' ? 'mastered' : st === 'in-progress' ? 'in-progress' : 'untouched';
+  const hasNote = !!note.text;
+
+  const learnHtml =
+    (l.learn.what ? '<div class="teach-block"><div class="teach-label">What is it</div><div class="teach-text">' + l.learn.what + '</div></div>' : '') +
+    (l.learn.why  ? '<div class="teach-block"><div class="teach-label">Why it matters</div><div class="teach-text">' + l.learn.why + '</div></div>' : '') +
+    (LESSON_VISUALS[l.id] ? '<div class="teach-block"><div class="teach-label">See it</div><div class="lvis">' + LESSON_VISUALS[l.id].svg + '<div class="lvis-cap">' + LESSON_VISUALS[l.id].cap + '</div></div></div>' : '') +
+    (l.learn.how  ? '<div class="teach-block"><div class="teach-label">How it works</div><div class="teach-text">' + l.learn.how + '</div></div>' : '') +
+    (l.try ? '<div class="teach-block"><div class="teach-label">Try it</div>' + codeBlock(l.try, l.name.toLowerCase().replace(/\s+/g, '-')) + '</div>' : '');
+
+  const gotchasHtml = l.gotchas && l.gotchas.length
+    ? '<div class="teach-block"><div class="teach-label">Common beginner mistakes</div><ul class="gotchas-list">' +
+      l.gotchas.map(g => '<li>' + esc(g) + '</li>').join('') + '</ul></div>'
+    : '';
+
+  return '<div class="lesson-card' + cardCls + '" id="lcard_' + l.id + '">' +
+    '<div class="lesson-header" onclick="toggleLessonPanel(\'' + l.id + '\')">' +
+      '<div class="lesson-check" data-state="' + chkSt + '" id="lchk_' + l.id + '" onclick="event.stopPropagation();cycleLessonState(\'' + l.id + '\')">' +
+        '<span class="chk-icon mastered">✓</span><span class="chk-icon in-progress">~</span></div>' +
+      '<div class="lesson-info"><div class="lesson-name">' + esc(l.name) + '</div>' +
+      '<div class="lesson-desc">' + esc(l.desc) + '</div></div>' +
+      '<div class="lesson-badges">' +
+        (hasNote ? '<span style="width:7px;height:7px;border-radius:50%;background:#1a5a3a;display:inline-block;"></span>' : '') +
+        '<button class="lesson-expand" id="lbtn_' + l.id + '">Learn</button></div>' +
+    '</div>' +
+    '<div class="lesson-panel" id="lpanel_' + l.id + '">' + learnHtml + gotchasHtml +
+      '<div class="lesson-note-row">' +
+        '<textarea class="lesson-note-input' + (note.text ? ' filled' : '') + '" id="lnote_' + l.id + '" placeholder="Your one-line takeaway or question...">' + esc(note.text || '') + '</textarea>' +
+        '<div class="mini-score"><span class="mini-score-label">Got it?</span>' +
+          ['😰','🤔','👍','🚀'].map((e, i) => '<button class="ms-btn s' + (i+1) + ((note.score||0)===i+1?' selected':'') + '" onclick="setLessonScore(\'' + l.id + '\',' + (i+1) + ')">' + e + '</button>').join('') +
+        '</div>' +
+        '<button class="note-save-btn" onclick="saveLessonNote(\'' + l.id + '\')">Save</button>' +
+        '<span class="note-saved" id="lsaved_' + l.id + '">Saved ✓</span>' +
+      '</div>' +
+    '</div></div>';
+}
+
+function quizCard(ph) {
+  if (!ph.quiz || !ph.quiz.length) return '';
+  const done = ph.quiz.filter(q => (state.quiz || {})[q.id]).length;
+  const rows = ph.quiz.map((q, i) => {
+    const m = (state.quiz || {})[q.id] || '';
+    return '<div class="quiz-q ' + m + '" id="qq_' + q.id + '">' +
+      '<div class="quiz-num">' + (i + 1) + '</div>' +
+      '<div class="quiz-main">' +
+        '<div class="quiz-text">' + q.q + '</div>' +
+        '<button class="quiz-btn" id="qb_' + q.id + '" onclick="toggleAnswer(\'' + q.id + '\')">Show answer</button>' +
+        '<div class="quiz-ans" id="qa_' + q.id + '">' + q.a +
+          '<div class="quiz-marks">' +
+            '<button class="qm-btn got' + (m === 'got' ? ' on' : '') + '" onclick="markQuiz(\'' + q.id + '\',\'got\')">I had it</button>' +
+            '<button class="qm-btn review' + (m === 'review' ? ' on' : '') + '" onclick="markQuiz(\'' + q.id + '\',\'review\')">Need to reread</button>' +
+          '</div>' +
+        '</div>' +
+      '</div></div>';
+  }).join('');
+  return '<div class="section-head">\u2753 Check yourself</div>' +
+    '<div class="quiz-box"><div class="quiz-head">' +
+      '<span class="quiz-title">Before you build</span>' +
+      '<span class="quiz-progress" id="quiz-prog">' + done + ' of ' + ph.quiz.length + ' marked</span>' +
+    '</div>' +
+    '<div class="quiz-intro">Answer these out loud, in your own words, before opening the milestone. If one will not come, that lesson did not land, and the answer tells you which card to reread.</div>' +
+    rows + '</div>';
+}
+
+function toggleAnswer(id) {
+  const a = document.getElementById('qa_' + id);
+  const b = document.getElementById('qb_' + id);
+  if (!a) return;
+  const open = a.classList.toggle('open');
+  if (b) b.textContent = open ? 'Hide answer' : 'Show answer';
+}
+
+function markQuiz(id, mark) {
+  if (!state.quiz) state.quiz = {};
+  state.quiz[id] = state.quiz[id] === mark ? null : mark;
+  if (!state.quiz[id]) delete state.quiz[id];
+  saveState();
+  const row = document.getElementById('qq_' + id);
+  if (row) row.className = 'quiz-q ' + (state.quiz[id] || '');
+  document.querySelectorAll('#qa_' + id + ' .qm-btn').forEach(b =>
+    b.classList.toggle('on', b.classList.contains(state.quiz[id] || '\u0000')));
+  const ph = PHASES[activePhase];
+  const prog = document.getElementById('quiz-prog');
+  if (prog && ph.quiz) prog.textContent = ph.quiz.filter(q => state.quiz[q.id]).length + ' of ' + ph.quiz.length + ' marked';
+}
+
+function toggleLessonPanel(id) {
+  const p = document.getElementById('lpanel_' + id);
+  const b = document.getElementById('lbtn_' + id);
+  if (!p) return;
+  const open = p.classList.toggle('open');
+  if (b) { b.classList.toggle('open', open); b.textContent = open ? 'Close' : 'Learn'; }
+}
+
+function cycleLessonState(id) {
+  const cur = (state.lessons[id] || {}).state || 'untouched';
+  const next = cur === 'untouched' ? 'in-progress' : cur === 'in-progress' ? 'mastered' : 'untouched';
+  state.lessons[id] = { ...(state.lessons[id] || {}), state: next };
+  saveState();
+  const card = document.getElementById('lcard_' + id);
+  const chk = document.getElementById('lchk_' + id);
+  if (card) card.className = 'lesson-card' + (next==='mastered'?' mastered':next==='in-progress'?' in-progress':'');
+  if (chk) chk.dataset.state = next;
+  updateStats();
+  refreshPhaseProgress();
+}
+
+function setLessonScore(id, score) {
+  state.lessonNotes[id] = state.lessonNotes[id] || {};
+  state.lessonNotes[id].score = score;
+  saveState();
+  document.querySelectorAll('#lpanel_' + id + ' .ms-btn').forEach((b, i) => b.classList.toggle('selected', i+1===score));
+}
+
+function saveLessonNote(id) {
+  const el = document.getElementById('lnote_' + id);
+  const text = el ? el.value : '';
+  state.lessonNotes[id] = state.lessonNotes[id] || {};
+  state.lessonNotes[id].text = text;
+  saveState();
+  if (el) el.classList.toggle('filled', !!text);
+  const f = document.getElementById('lsaved_' + id);
+  if (f) { f.classList.add('show'); setTimeout(() => f.classList.remove('show'), 1500); }
+}
+
+
+// ── BUILD CARD ─────────────────────────────────────────────────
+function buildResources(ph) {
+  if (!ph.build.resources || !ph.build.resources.length) return '';
+  const links = ph.build.resources.map(r =>
+    '<a class="resource-link" href="' + r.url + '" target="_blank" rel="noopener">' +
+      '<span class="resource-ico">' + r.icon + '</span>' +
+      '<span class="resource-info">' +
+        '<div class="resource-name">' + esc(r.name) + '</div>' +
+        '<div class="resource-who">' + esc(r.who) + '</div>' +
+        '<div class="resource-desc">' + esc(r.desc) + '</div>' +
+      '</span><span class="resource-time">' + esc(r.time) + '</span></a>').join('');
+  return '<div class="resources-box"><div class="resources-label">🎬 Deep-dive & video resources — watch while you build</div>' + links + '</div>';
+}
+
+function buildBuildCard(ph) {
+  const b = ph.build;
+  const bs = state.builds[b.id] || {};
+  const cls = bs.status === 'done' ? ' done' : bs.status === 'inprogress' ? ' inprogress' : '';
+  const limitMin = b.time;
+
+  const stepsHtml = b.steps.map((s, i) =>
+    '<div class="step-block"><div class="step-head"><span class="step-num">' + (i+1) + '</span>' +
+    '<span class="step-title">' + esc(s.title) + '</span></div>' +
+    '<div class="step-explain">' + s.explain + '</div>' +
+    codeBlock(s.code, 'step ' + (i+1)) +
+    (s.note ? '<div class="note-inline">💡 ' + s.note + '</div>' : '') + '</div>').join('');
+
+  const errorsHtml = '<div class="errors-box"><div class="errors-label">Common errors & how to recover</div>' +
+    '<ul class="errors-list">' + b.commonErrors.map(e => '<li>' + esc(e) + '</li>').join('') + '</ul></div>';
+
+  const stretchHtml = '<div class="stretch-box"><div class="stretch-label">Stretch goals — go further</div>' +
+    '<ul class="stretch-list">' + b.stretchGoals.map(s => '<li>' + esc(s) + '</li>').join('') + '</ul></div>';
+
+  const notesHtml = '<div class="build-note-fields">' +
+    '<div class="field-group full"><div class="field-label-text">🧠 What I built & learned</div>' +
+    '<textarea class="field-input' + (bs['what-worked']?' filled':'') + '" id="bn_what_' + b.id + '" placeholder="Key wins, the aha moments...">' + esc(bs['what-worked']||'') + '</textarea></div>' +
+    '<div class="field-group"><div class="field-label-text">⚠️ What broke</div>' +
+    '<textarea class="field-input' + (bs['pitfalls']?' filled':'') + '" id="bn_pit_' + b.id + '" placeholder="Bugs, confusion, recoveries...">' + esc(bs['pitfalls']||'') + '</textarea></div>' +
+    '<div class="field-group"><div class="field-label-text">🔭 What&apos;s next</div>' +
+    '<textarea class="field-input' + (bs['next']?' filled':'') + '" id="bn_next_' + b.id + '" placeholder="How you will extend it...">' + esc(bs['next']||'') + '</textarea></div>' +
+    '</div>';
+
+  return '<div class="build-card' + cls + '" id="bcard_' + b.id + '">' +
+    '<div class="build-header" onclick="toggleBuildPanel(\'' + b.id + '\')">' +
+      '<span class="build-flag">' + b.flag + '</span>' +
+      '<div class="build-info"><div class="build-title">' + esc(b.title) + '</div>' +
+      '<div class="build-brief">' + esc(b.brief) + '</div></div>' +
+      '<div class="build-meta">' +
+        '<span class="build-badge time">⏱ ' + b.time + 'm</span>' +
+        '<span class="build-badge brain">' + esc(b.brain) + '</span>' +
+        '<button class="build-expand" id="bebtn_' + b.id + '">Open Build</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="build-panel" id="bpanel_' + b.id + '">' +
+      '<div class="goal-box"><div class="goal-label">🎯 Goal</div><div class="goal-text">' + b.goal + '</div></div>' +
+      '<div class="section-head" style="margin-top:1.25rem">Step-by-step build</div>' +
+      stepsHtml +
+      '<div class="outcome-box"><div class="outcome-label">✅ Expected output</div><div class="outcome-text">' + esc(b.expectedOutput) + '</div></div>' +
+      errorsHtml + stretchHtml +
+      buildResources(ph) +
+      '<div class="build-action-row">' +
+        '<div class="timer-section">' +
+          '<span class="timer-label">Timer</span>' +
+          '<span class="timer-display" id="tdisp_' + b.id + '">' + fmtTime(limitMin * 60) + '</span>' +
+          '<div class="timer-bar-wrap"><div class="timer-bar" id="tbar_' + b.id + '" style="width:100%"></div></div>' +
+          '<div class="timer-controls" style="display:flex;gap:6px">' +
+            '<button class="timer-btn" id="tbtn_' + b.id + '" onclick="toggleTimer(\'' + b.id + '\',' + limitMin + ')">▶ Start</button>' +
+            '<button class="timer-btn" onclick="resetTimer(\'' + b.id + '\',' + limitMin + ')">↺ Reset</button>' +
+          '</div>' +
+        '</div>' +
+        '<span class="score-label" style="font-size:12px;font-weight:700;color:var(--text-secondary)">Confidence:</span>' +
+        [1,2,3,4].map(n => '<button class="score-btn s' + n + ((bs.score||0)===n?' selected':'') + '" onclick="setBuildScore(\'' + b.id + '\',' + n + ')">' + ['😰','🤔','👍','🚀'][n-1] + '</button>').join('') +
+        '<div class="status-btns">' +
+          '<button class="status-btn wip' + (bs.status==='inprogress'?' active':'') + '" onclick="setBuildStatus(\'' + b.id + '\',\'inprogress\')">In Progress</button>' +
+          '<button class="status-btn done' + (bs.status==='done'?' active':'') + '" onclick="setBuildStatus(\'' + b.id + '\',\'done\')">Done ✓</button>' +
+        '</div>' +
+        '<button class="note-save-btn" onclick="saveBuildNotes(\'' + b.id + '\')">Save Notes</button>' +
+        '<span class="note-saved" id="bflash_' + b.id + '">Saved ✓</span>' +
+      '</div>' + notesHtml +
+    '</div></div>';
+}
+
+function toggleBuildPanel(id) {
+  const p = document.getElementById('bpanel_' + id);
+  const b = document.getElementById('bebtn_' + id);
+  if (!p) return;
+  const open = p.classList.toggle('open');
+  if (b) { b.classList.toggle('open', open); b.textContent = open ? 'Close' : 'Open Build'; }
+}
+
+function setBuildScore(id, score) {
+  state.builds[id] = state.builds[id] || {};
+  state.builds[id].score = score;
+  saveState();
+  document.querySelectorAll('#bcard_' + id + ' .score-btn').forEach((x, i) => x.classList.toggle('selected', i+1===score));
+}
+
+function setBuildStatus(id, status) {
+  state.builds[id] = state.builds[id] || {};
+  state.builds[id].status = state.builds[id].status === status ? null : status;
+  saveState();
+  const card = document.getElementById('bcard_' + id);
+  if (card) card.className = 'build-card' + (state.builds[id].status==='done'?' done':state.builds[id].status==='inprogress'?' inprogress':'');
+  const wip = document.querySelector('#bcard_' + id + ' .status-btn.wip');
+  const done = document.querySelector('#bcard_' + id + ' .status-btn.done');
+  if (wip) wip.classList.toggle('active', state.builds[id].status === 'inprogress');
+  if (done) done.classList.toggle('active', state.builds[id].status === 'done');
+  updateStats();
+  refreshPhaseProgress();
+  renderPhaseNav();
+}
+
+function saveBuildNotes(id) {
+  state.builds[id] = state.builds[id] || {};
+  const FIELD_IDS = { 'what-worked': 'what', 'pitfalls': 'pit', 'next': 'next' };
+  SOLUTION_NOTE_FIELDS.forEach(f => {
+    const el = document.getElementById('bn_' + FIELD_IDS[f] + '_' + id);
+    if (el) { state.builds[id][f] = el.value; el.classList.toggle('filled', !!el.value); }
+  });
+  saveState();
+  const f = document.getElementById('bflash_' + id);
+  if (f) { f.classList.add('show'); setTimeout(() => f.classList.remove('show'), 1500); }
+}
+
+
+// ── TIMER ──────────────────────────────────────────────────────
+function fmtTime(s) { const m=Math.floor(Math.abs(s)/60), sec=Math.abs(s)%60; return (s<0?'-':'')+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0'); }
+
+function toggleTimer(id, limitMin) {
+  const btn = document.getElementById('tbtn_' + id);
+  if (timers[id] && timers[id].running) {
+    clearInterval(timers[id].interval);
+    timers[id].running = false;
+    if (btn) { btn.textContent = '▶ Resume'; btn.classList.remove('running'); }
+  } else {
+    if (!timers[id]) timers[id] = { remaining: limitMin * 60, running: false };
+    timers[id].running = true;
+    if (btn) { btn.textContent = '⏸ Pause'; btn.classList.add('running'); }
+    timers[id].interval = setInterval(() => {
+      timers[id].remaining--;
+      const disp = document.getElementById('tdisp_' + id);
+      const bar = document.getElementById('tbar_' + id);
+      if (disp) { disp.textContent = fmtTime(timers[id].remaining); disp.className = 'timer-display' + (timers[id].remaining < 0 ? ' over' : timers[id].remaining < limitMin*60*0.2 ? ' warning' : ''); }
+      if (bar) { const pct = Math.max(0, timers[id].remaining / (limitMin*60) * 100); bar.style.width = pct + '%'; bar.style.background = timers[id].remaining < 0 ? '#dc2626' : timers[id].remaining < limitMin*60*0.2 ? '#d97706' : '#16a34a'; }
+    }, 1000);
+  }
+}
+
+function resetTimer(id, limitMin) {
+  if (timers[id]) { clearInterval(timers[id].interval); delete timers[id]; }
+  const disp = document.getElementById('tdisp_' + id);
+  const bar = document.getElementById('tbar_' + id);
+  const btn = document.getElementById('tbtn_' + id);
+  if (disp) { disp.textContent = fmtTime(limitMin*60); disp.className = 'timer-display'; }
+  if (bar) { bar.style.width = '100%'; bar.style.background = '#16a34a'; }
+  if (btn) { btn.textContent = '▶ Start'; btn.classList.remove('running'); }
+}
+
+
+// ── MAIN RENDER ────────────────────────────────────────────────
+function refreshPhaseProgress() {
+  const ph = PHASES[activePhase];
+  const doneB = (state.builds[ph.build.id]||{}).status === 'done' ? 1 : 0;
+  const doneL = ph.lessons.filter(l => (state.lessons[l.id]||{}).state==='mastered').length;
+  const total = ph.lessons.length + 1;
+  const pct = Math.round((doneB + doneL) / total * 100);
+  const label = document.getElementById('phase-prog-label');
+  const fill = document.getElementById('phase-prog-fill');
+  if (label) label.textContent = pct + '% complete';
+  if (fill) fill.style.width = pct + '%';
+}
+
+function renderContent() {
+  const ph = PHASES[activePhase];
+  const doneB = (state.builds[ph.build.id]||{}).status === 'done' ? 1 : 0;
+  const doneL = ph.lessons.filter(l => (state.lessons[l.id]||{}).state==='mastered').length;
+  const pct = Math.round((doneB + doneL) / (ph.lessons.length + 1) * 100);
+
+  let html = '<div class="phase-head" style="background:' + ph.color + '15;color:' + ph.color + '">' +
+    '<div><div class="phase-num">' + ph.label + ' — ' + ph.subtitle + '</div>' +
+    '<div class="phase-title" style="color:#111">' + ph.title + '</div></div>' +
+    '<div class="phase-meta"><div class="phase-level" style="color:' + ph.color + '">' + ph.level + '</div>' +
+    '<div class="phase-count">' + doneB + '/' + 1 + ' build · ' + doneL + '/' + ph.lessons.length + ' lessons</div></div></div>' +
+    '<div class="phase-progress-wrap"><div class="phase-progress-label" id="phase-prog-label">' + pct + '% complete</div>' +
+    '<div class="phase-progress-bar"><div class="phase-progress-fill" id="phase-prog-fill" style="width:' + pct + '%;background:' + ph.color + '"></div></div></div>' +
+    '<div class="phase-intro">' + ph.intro + '</div>' +
+    '<div class="section-head">📖 Learn the concepts</div>' +
+    '<div id="lessons-list">' + ph.lessons.map(l => buildLessonCard(l)).join('') + '</div>' +
+    quizCard(ph) +
+    '<div class="section-head">🔨 The milestone build</div>' +
+    '<div id="build-list">' + buildBuildCard(ph) + '</div>';
+
+  document.getElementById('content').innerHTML = html;
+  updateStats();
+}
+
+
+// ── INIT ───────────────────────────────────────────────────────
+renderPhaseNav();
+renderContent();
+</script>
+
+<!-- ── TAB-TITLE TIMER ──────────────────────────────────────────────
+     Mirrors whichever timer card is currently counting into the
+     browser tab title, so you can see it while working in another tab.
+     Watches .timer-display for changes; touches no timer logic. -->
+<script>
+(function () {
+  const BASE = document.title;
+  const isTime = s => /^-?\d{1,3}:\d{2}$/.test(s);
+  let restore = null, blink = null, flip = false;
+
+  function stop() {
+    clearInterval(blink); blink = null;
+    document.title = BASE;
+  }
+
+  function show(txt, over) {
+    clearTimeout(restore);
+
+    if (over) {
+      // time is up: blink so it is noticeable from another tab
+      if (!blink) {
+        blink = setInterval(() => {
+          flip = !flip;
+          document.title = (flip ? "⏰ TIME UP " : "⏱ ") + txt + " · " + BASE;
+        }, 900);
+      }
+    } else {
+      clearInterval(blink); blink = null;
+      document.title = "⏱ " + txt + " · " + BASE;
+    }
+
+    // if nothing ticks for 3s the timer is paused or gone: put the title back
+    restore = setTimeout(stop, 3000);
+  }
+
+  new MutationObserver(muts => {
+    for (const m of muts) {
+      const el = m.target.nodeType === 1 ? m.target : m.target.parentElement;
+      if (!el || !el.classList || !el.classList.contains("timer-display")) continue;
+      const txt = (el.textContent || "").trim();
+      if (!isTime(txt)) continue;
+      show(txt, txt.startsWith("-") || el.classList.contains("over"));
+    }
+  }).observe(document.body, { childList: true, characterData: true, subtree: true });
+
+  window.addEventListener("beforeunload", stop);
+})();
+</script>
+
+</body>
+</html>

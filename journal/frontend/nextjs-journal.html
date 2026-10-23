@@ -1,0 +1,3113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Next.js Journal — Mayank Thakur</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: #f0f2f5;
+      --bg-card: #ffffff;
+      --text-primary: #000000;
+      --text-secondary: #5f6368;
+      --text-muted: #9aa0a6;
+      --accent-black: #000000;
+      --accent-white: #ffffff;
+      --pastel-yellow: #ffeab6;
+      --pastel-mint: #dcf0eb;
+      --pastel-purple: #e6daff;
+      --pastel-pink: #ffd6e8;
+      --pastel-blue: #d6eaff;
+      --pastel-orange: #ffe4cc;
+      --pastel-green: #d4edda;
+      --pastel-yellow-hover: #f5dfa9;
+      --border-radius-lg: 24px;
+      --border-radius-md: 16px;
+      --border-radius-pill: 9999px;
+      --font-sans: 'Outfit', 'Inter', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: var(--bg-main);
+      font-family: var(--font-sans);
+      color: var(--text-primary);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.5;
+    }
+
+    .cover {
+      padding: 4rem 2.5rem 2rem;
+    }
+
+    .cover-subtitle {
+      font-size: 14px;
+      letter-spacing: .05em;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: .5rem;
+    }
+
+    .cover-title {
+      font-size: 40px;
+      font-weight: 700;
+      letter-spacing: -.02em;
+      margin-bottom: .5rem;
+    }
+
+    .cover-name {
+      font-size: 16px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 13px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+
+    .badge-next {
+      background: #000;
+      color: #fff;
+    }
+
+    .badge-2026 {
+      background: var(--pastel-mint);
+      color: #1a5a3a;
+    }
+
+    .badge-app {
+      background: var(--pastel-blue);
+      color: #1a3a5a;
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+      padding: 0 2.5rem;
+    }
+
+    .stat {
+      background: var(--bg-card);
+      padding: 1.5rem;
+      border-radius: var(--border-radius-lg);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, .03);
+    }
+
+    .stat-val {
+      font-size: 36px;
+      font-weight: 600;
+      line-height: 1.1;
+      margin-bottom: 8px;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .streak-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #000;
+      padding: 8px 16px;
+      border-radius: var(--border-radius-pill);
+      margin: 0 2.5rem 2rem;
+    }
+
+    .streak-text {
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .phase-nav {
+      display: flex;
+      gap: .75rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+      margin: 0 2rem 1.5rem;
+      flex-wrap: nowrap;
+    }
+
+    .phase-nav::-webkit-scrollbar {
+      display: none;
+    }
+
+    .phase-tab {
+      font-size: 14px;
+      font-weight: 500;
+      padding: 10px 20px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      background: var(--bg-card);
+      border-radius: var(--border-radius-pill);
+      border: 1px solid transparent;
+      white-space: nowrap;
+      transition: all .2s;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, .02);
+      flex-shrink: 0;
+    }
+
+    .phase-tab.active {
+      color: var(--accent-white);
+      background: var(--accent-black);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, .1);
+    }
+
+    .phase-tab:hover:not(.active) {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, .05);
+    }
+
+    .phase-tab .tab-lang {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      opacity: .7;
+      display: block;
+      margin-bottom: 1px;
+    }
+
+    .content {
+      padding: 0 2.5rem 4rem;
+      max-width: 900px;
+      margin-inline: auto;
+    }
+
+    .phase-section {
+      display: none;
+    }
+
+    .phase-section.active {
+      display: block;
+    }
+
+    .phase-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 1.5rem;
+      padding: 2rem;
+      border-radius: var(--border-radius-lg);
+    }
+
+    .phase-num {
+      font-size: 13px;
+      font-weight: 600;
+      opacity: .7;
+      margin-bottom: .4rem;
+    }
+
+    .phase-title {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -.01em;
+    }
+
+    .phase-meta {
+      text-align: right;
+    }
+
+    .phase-level {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .phase-count {
+      font-size: 13px;
+      opacity: .7;
+      margin-top: 4px;
+      font-weight: 500;
+    }
+
+    .phase-progress-wrap {
+      margin-bottom: 1rem;
+    }
+
+    .phase-progress-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+
+    .phase-progress-bar {
+      height: 6px;
+      background: var(--bg-card);
+      border-radius: var(--border-radius-pill);
+      overflow: hidden;
+    }
+
+    .phase-progress-fill {
+      height: 100%;
+      background: var(--accent-black);
+      transition: width .4s ease;
+      border-radius: var(--border-radius-pill);
+    }
+
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px 28px;
+      align-items: center;
+      margin-bottom: 1.25rem;
+      margin-top: .25rem;
+      padding: 0 2px;
+    }
+
+    .filter-group {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .filter-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      white-space: nowrap;
+      margin-right: 4px;
+    }
+
+    .flt-btn {
+      font-size: 12px;
+      font-weight: 500;
+      padding: 5px 12px;
+      border-radius: var(--border-radius-pill);
+      border: none;
+      cursor: pointer;
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      font-family: var(--font-sans);
+      transition: all .12s;
+      white-space: nowrap;
+    }
+
+    .flt-btn:hover {
+      background: #e8e8e8;
+      color: var(--text-primary);
+    }
+
+    .flt-btn.flt-active {
+      background: var(--accent-black);
+      color: var(--accent-white);
+    }
+
+    .flt-btn.diff-easy.flt-active {
+      background: #155724;
+      color: #fff;
+    }
+
+    .flt-btn.diff-medium.flt-active {
+      background: #856404;
+      color: #fff;
+    }
+
+    .flt-btn.diff-hard.flt-active {
+      background: #7a1a4a;
+      color: #fff;
+    }
+
+    .section-head {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    /* TOPIC CARD */
+    .topic-card {
+      background: var(--bg-card);
+      border-radius: var(--border-radius-md);
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .03);
+      overflow: hidden;
+      transition: box-shadow .2s;
+    }
+
+    .topic-card:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, .07);
+    }
+
+    .topic-card.mastered {
+      background: var(--pastel-mint);
+    }
+
+    .topic-card.in-progress {
+      background: #fffbeb;
+      border-left: 3px solid #f59e0b;
+    }
+
+    .topic-card.in-progress .topic-name {
+      color: #92400e;
+    }
+
+    .topic-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 18px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .topic-check {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+      border-radius: 4px;
+      border: 1.5px solid #d0d0d0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-card);
+      transition: all .15s;
+    }
+
+    .topic-check[data-state="mastered"] {
+      background: var(--accent-black);
+      border-color: var(--accent-black);
+    }
+
+    .topic-check[data-state="in-progress"] {
+      background: #f59e0b;
+      border-color: #f59e0b;
+    }
+
+    .chk-icon {
+      display: none;
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1;
+    }
+
+    .topic-check[data-state="mastered"] .chk-icon.mastered {
+      display: block;
+    }
+
+    .topic-check[data-state="in-progress"] .chk-icon.in-progress {
+      display: block;
+    }
+
+    .topic-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .topic-name {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .topic-desc {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      line-height: 1.4;
+    }
+
+    .topic-card.mastered .topic-name {
+      text-decoration: line-through;
+      color: var(--text-secondary);
+    }
+
+    .topic-badges {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .expand-btn {
+      background: var(--bg-main);
+      border: none;
+      border-radius: var(--border-radius-pill);
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      color: var(--text-secondary);
+      transition: all .2s;
+      flex-shrink: 0;
+    }
+
+    .expand-btn:hover {
+      background: var(--pastel-blue);
+    }
+
+    .expand-btn.open {
+      background: var(--accent-black);
+      color: #fff;
+    }
+
+    .practice-panel {
+      display: none;
+      padding: 0 18px 18px;
+      border-top: 1px solid var(--bg-main);
+    }
+
+    .practice-panel.open {
+      display: block;
+    }
+
+    .tp-fields {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    @media(max-width:600px) {
+      .tp-fields {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .tp-fields .field-group {
+      margin-top: 0;
+    }
+
+    .tp-fields .field-group.full {
+      grid-column: 1/-1;
+    }
+
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field-label-text {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .field-input {
+      width: 100%;
+      background: var(--bg-main);
+      border: 1.5px solid transparent;
+      border-radius: 12px;
+      padding: 11px 13px;
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--text-primary);
+      resize: vertical;
+      min-height: 80px;
+      transition: border-color .2s, background .2s;
+      line-height: 1.6;
+    }
+
+    .field-input:focus {
+      outline: none;
+      border-color: var(--accent-black);
+      background: #fff;
+    }
+
+    .field-input.filled {
+      background: #fff;
+      border-color: rgba(0, 0, 0, .1);
+    }
+
+    .field-input::placeholder {
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .tp-score-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .tp-score-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .tp-score-btn {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 5px 12px;
+      border-radius: var(--border-radius-pill);
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all .2s;
+    }
+
+    .tp-score-btn.s1 {
+      background: var(--pastel-pink);
+      color: #7a1a4a;
+    }
+
+    .tp-score-btn.s2 {
+      background: var(--pastel-yellow);
+      color: #7a5200;
+    }
+
+    .tp-score-btn.s3 {
+      background: var(--pastel-mint);
+      color: #1a5a3a;
+    }
+
+    .tp-score-btn.s4 {
+      background: var(--accent-black);
+      color: #fff;
+    }
+
+    .tp-score-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .tp-score-btn.selected {
+      box-shadow: 0 0 0 2.5px var(--accent-black);
+    }
+
+    .tp-save-btn {
+      margin-left: auto;
+      background: var(--accent-black);
+      color: #fff;
+      border: none;
+      border-radius: var(--border-radius-pill);
+      padding: 6px 18px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity .2s;
+    }
+
+    .tp-save-btn:hover {
+      opacity: .85;
+    }
+
+    .tp-saved {
+      font-size: 12px;
+      color: #1a5a3a;
+      font-weight: 600;
+      display: none;
+    }
+
+    .tp-saved.show {
+      display: inline;
+    }
+
+    /* PROBLEM CARD */
+    .problem-card {
+      background: var(--bg-card);
+      border-radius: var(--border-radius-md);
+      margin-bottom: 14px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .03);
+      overflow: hidden;
+      transition: box-shadow .2s;
+    }
+
+    .problem-card:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, .07);
+    }
+
+    .problem-card.done {
+      background: var(--pastel-mint);
+    }
+
+    .problem-card.inprogress {
+      background: #fffbeb;
+      border-left: 3px solid #f59e0b;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 20px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .card-num {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      min-width: 28px;
+    }
+
+    .card-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 3px;
+    }
+
+    .problem-card.done .card-title {
+      text-decoration: line-through;
+      color: var(--text-secondary);
+    }
+
+    .card-brief {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      line-height: 1.4;
+    }
+
+    .card-badges {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .diff-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: var(--border-radius-pill);
+      white-space: nowrap;
+    }
+
+    .diff-easy {
+      background: var(--pastel-green);
+      color: #155724;
+    }
+
+    .diff-medium {
+      background: var(--pastel-yellow);
+      color: #856404;
+    }
+
+    .diff-hard {
+      background: var(--pastel-pink);
+      color: #7a1a4a;
+    }
+
+    .time-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: var(--border-radius-pill);
+      background: var(--bg-main);
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .prob-expand-btn {
+      background: var(--bg-main);
+      border: none;
+      border-radius: var(--border-radius-pill);
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      color: var(--text-secondary);
+      transition: all .2s;
+      flex-shrink: 0;
+    }
+
+    .prob-expand-btn:hover {
+      background: var(--pastel-blue);
+    }
+
+    .prob-expand-btn.open {
+      background: var(--accent-black);
+      color: #fff;
+    }
+
+    .problem-panel {
+      display: none;
+      padding: 0 20px 20px;
+      border-top: 1px solid var(--bg-main);
+    }
+
+    .problem-panel.open {
+      display: block;
+    }
+
+    .statement-box {
+      background: var(--bg-main);
+      border-radius: var(--border-radius-md);
+      padding: 16px 18px;
+      margin: 16px 0 4px;
+    }
+
+    .statement-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .statement-text {
+      font-size: 14px;
+      color: var(--text-primary);
+      line-height: 1.7;
+      font-weight: 500;
+    }
+
+    .req-section {
+      margin: 14px 0;
+    }
+
+    .req-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .req-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 12px;
+      background: var(--bg-card);
+      border-radius: 10px;
+      margin-bottom: 6px;
+      cursor: pointer;
+      transition: background .15s;
+    }
+
+    .problem-card.done .req-item {
+      background: rgba(255, 255, 255, .6);
+    }
+
+    .req-item:hover {
+      background: #f8f8f8;
+    }
+
+    .req-cb {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent-black);
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .req-text {
+      font-size: 13px;
+      color: var(--text-primary);
+      font-weight: 500;
+      line-height: 1.4;
+    }
+
+    .req-text.checked {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    .concepts-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 10px 0 16px;
+    }
+
+    .concept-tag {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: var(--border-radius-pill);
+      background: var(--pastel-blue);
+      color: #1a3a7a;
+      white-space: nowrap;
+    }
+
+    .hints-wrap {
+      margin: 0 0 16px;
+    }
+
+    .hint-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--pastel-yellow);
+      border: none;
+      border-radius: var(--border-radius-pill);
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      color: #7a5200;
+      transition: all .15s;
+    }
+
+    .hint-toggle:hover {
+      background: var(--pastel-yellow-hover);
+    }
+
+    .hint-content {
+      display: none;
+      margin-top: 10px;
+    }
+
+    .hint-content.show {
+      display: block;
+    }
+
+    .hint-item {
+      display: flex;
+      gap: 10px;
+      padding: 10px 14px;
+      background: var(--pastel-yellow);
+      border-radius: 12px;
+      margin-bottom: 8px;
+      font-size: 13px;
+      color: #7a5200;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    .hint-num {
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .timer-section {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: var(--bg-main);
+      border-radius: var(--border-radius-md);
+      margin: 0 0 16px;
+      flex-wrap: wrap;
+    }
+
+    .timer-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .timer-display {
+      font-size: 22px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-primary);
+      min-width: 80px;
+    }
+
+    .timer-display.warning {
+      color: #d97706;
+    }
+
+    .timer-display.over {
+      color: #dc2626;
+    }
+
+    .timer-bar-wrap {
+      flex: 1;
+      min-width: 100px;
+      height: 6px;
+      background: rgba(0, 0, 0, .08);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .timer-bar {
+      height: 100%;
+      border-radius: 6px;
+      background: #16a34a;
+      transition: width 1s linear, background .4s;
+    }
+
+    .timer-controls {
+      display: flex;
+      gap: 6px;
+    }
+
+    .timer-btn {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: var(--border-radius-pill);
+      border: 1px solid rgba(0, 0, 0, .12);
+      cursor: pointer;
+      background: var(--bg-card);
+      color: var(--text-primary);
+      font-family: inherit;
+      transition: background .15s;
+    }
+
+    .timer-btn:hover {
+      background: #f0f0f0;
+    }
+
+    .timer-btn.running {
+      background: var(--pastel-yellow);
+      border-color: #f59e0b;
+      color: #92400e;
+    }
+
+    .sol-fields {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    @media(max-width:600px) {
+      .sol-fields {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .sol-fields .field-group {
+      margin-top: 0;
+    }
+
+    .sol-fields .field-group.full {
+      grid-column: 1/-1;
+    }
+
+    .action-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .score-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .score-btn {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: var(--border-radius-pill);
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all .2s;
+    }
+
+    .score-btn.s1 {
+      background: var(--pastel-pink);
+      color: #7a1a4a;
+    }
+
+    .score-btn.s2 {
+      background: var(--pastel-yellow);
+      color: #7a5200;
+    }
+
+    .score-btn.s3 {
+      background: var(--pastel-mint);
+      color: #1a5a3a;
+    }
+
+    .score-btn.s4 {
+      background: var(--accent-black);
+      color: #fff;
+    }
+
+    .score-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, .1);
+    }
+
+    .score-btn.selected {
+      box-shadow: 0 0 0 2.5px var(--accent-black);
+    }
+
+    .status-btns {
+      display: flex;
+      gap: 6px;
+      margin-left: auto;
+    }
+
+    .status-btn {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: var(--border-radius-pill);
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all .2s;
+      background: var(--bg-main);
+      color: var(--text-secondary);
+    }
+
+    .status-btn.wip.active {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1.5px solid #f59e0b;
+    }
+
+    .status-btn.done.active {
+      background: var(--accent-black);
+      color: #fff;
+    }
+
+    .save-btn {
+      background: var(--accent-black);
+      color: #fff;
+      border: none;
+      border-radius: var(--border-radius-pill);
+      padding: 8px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity .2s;
+    }
+
+    .save-btn:hover {
+      opacity: .85;
+    }
+
+    .saved-flash {
+      font-size: 12px;
+      color: #1a5a3a;
+      font-weight: 600;
+      display: none;
+    }
+
+    .saved-flash.show {
+      display: inline;
+    }
+
+    .quote {
+      text-align: center;
+      padding: 4rem 2.5rem 3rem;
+      font-size: 18px;
+      font-weight: 500;
+      line-height: 1.6;
+    }
+
+    .quote cite {
+      display: block;
+      font-size: 14px;
+      font-style: normal;
+      color: var(--text-secondary);
+      margin-top: 1rem;
+      font-weight: 600;
+    }
+
+    @media(max-width:640px) {
+      .cover {
+        padding: 2rem 1.25rem 1rem;
+      }
+
+      .cover-title {
+        font-size: 28px;
+      }
+
+      .stats-row,
+      .streak-box {
+        padding: 0 1.25rem;
+        margin-left: 1.25rem;
+      }
+
+      .content {
+        padding: 0 1.25rem 3rem;
+      }
+
+      .phase-nav {
+        margin: 0 1rem 1.5rem;
+      }
+    }
+
+    /* ═══ SAMJHO BLOCK ═══ */
+    .practice-panel.open {
+      padding-top: 14px;
+    }
+
+    .learn-box {
+      background: var(--bg-main);
+      border-radius: var(--border-radius-md);
+      padding: 4px 0 0;
+      margin: 0 0 16px;
+      overflow: hidden;
+    }
+
+    .learn-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 13px 18px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .learn-head:hover {
+      background: rgba(0, 0, 0, .02);
+    }
+
+    .learn-title {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: #3C3489;
+    }
+
+    .learn-sub {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-left: auto;
+    }
+
+    .learn-caret {
+      font-size: 11px;
+      color: var(--text-muted);
+      transition: transform .2s;
+    }
+
+    .learn-box.open .learn-caret {
+      transform: rotate(90deg);
+    }
+
+    .learn-body {
+      display: none;
+      padding: 0 18px 18px;
+    }
+
+    .learn-box.open .learn-body {
+      display: block;
+    }
+
+    .lblock {
+      margin-top: 16px;
+    }
+
+    .llabel {
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 7px;
+    }
+
+    .ltext {
+      font-size: 13.5px;
+      line-height: 1.72;
+      color: var(--text-primary);
+      font-weight: 450;
+    }
+
+    .ltext p {
+      margin: 0 0 9px;
+    }
+
+    .ltext p:last-child {
+      margin-bottom: 0;
+    }
+
+    .ltext code {
+      background: #eceff3;
+      border-radius: 5px;
+      padding: 1px 5px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+    }
+
+    .ltext b {
+      font-weight: 700;
+    }
+
+    .lanalogy {
+      background: var(--pastel-blue);
+      border-radius: 12px;
+      padding: 12px 15px;
+      font-size: 13px;
+      line-height: 1.68;
+      color: #1e4b7a;
+      font-weight: 500;
+      margin-top: 10px;
+    }
+
+    .lanalogy code {
+      background: rgba(255, 255, 255, .55);
+      border-radius: 4px;
+      padding: 1px 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+    }
+
+    .lterms {
+      background: var(--pastel-yellow);
+      border-radius: 12px;
+      padding: 12px 15px;
+    }
+
+    .lterms .llabel {
+      color: #7a5200;
+    }
+
+    .lterm {
+      display: flex;
+      gap: 9px;
+      align-items: baseline;
+      font-size: 12.5px;
+      line-height: 1.55;
+      margin-bottom: 6px;
+    }
+
+    .lterm:last-child {
+      margin-bottom: 0;
+    }
+
+    .lterm-w {
+      flex-shrink: 0;
+      background: #fff;
+      color: #7a5200;
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-weight: 700;
+      font-size: 11.5px;
+      white-space: nowrap;
+    }
+
+    .lterm-m {
+      color: #7a5200;
+      font-weight: 500;
+    }
+
+    .lterm-m code {
+      background: rgba(255, 255, 255, .6);
+      border-radius: 4px;
+      padding: 1px 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+    }
+
+    .lwhere {
+      display: grid;
+      gap: 8px;
+    }
+
+    .lwhere-row {
+      display: flex;
+      gap: 10px;
+      background: var(--bg-card);
+      border-radius: 11px;
+      padding: 10px 13px;
+      align-items: baseline;
+    }
+
+    .lwhere-tag {
+      flex-shrink: 0;
+      font-size: 11px;
+      font-weight: 700;
+      color: #1a5a3a;
+      background: var(--pastel-mint);
+      border-radius: 6px;
+      padding: 2px 8px;
+      white-space: nowrap;
+    }
+
+    .lwhere-txt {
+      font-size: 12.5px;
+      line-height: 1.62;
+      color: var(--text-primary);
+      font-weight: 450;
+    }
+
+    .lwhere-txt code {
+      background: #eceff3;
+      border-radius: 4px;
+      padding: 1px 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+    }
+
+    .lcode {
+      background: #17191f;
+      border-radius: 12px;
+      padding: 14px 16px;
+      overflow-x: auto;
+    }
+
+    .lcode pre {
+      margin: 0;
+      font-family: 'JetBrains Mono', 'SFMono-Regular', monospace;
+      font-size: 12px;
+      line-height: 1.68;
+      color: #e6e9f0;
+      white-space: pre;
+    }
+
+    .lcode .c {
+      color: #7d8799;
+    }
+
+    .lcode .k {
+      color: #c9a0ff;
+    }
+
+    .lcode .s {
+      color: #9ae6b4;
+    }
+
+    .lvis {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 13px 13px 9px;
+    }
+
+    .lvis svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 9px;
+    }
+
+    .lvis-cap {
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      line-height: 1.55;
+      font-weight: 500;
+      margin-top: 9px;
+      padding: 0 2px;
+    }
+
+    .lpc {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    @media (max-width: 640px) {
+      .lpc {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .lpc-col {
+      border-radius: 12px;
+      padding: 12px 14px;
+    }
+
+    .lpc-pro {
+      background: var(--pastel-mint);
+    }
+
+    .lpc-con {
+      background: var(--pastel-pink);
+    }
+
+    .lpc-h {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .lpc-pro .lpc-h {
+      color: #1a5a3a;
+    }
+
+    .lpc-con .lpc-h {
+      color: #7a1a4a;
+    }
+
+    .lpc-col ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .lpc-col li {
+      font-size: 12.5px;
+      line-height: 1.62;
+      margin-bottom: 7px;
+      display: flex;
+      gap: 7px;
+    }
+
+    .lpc-col li:last-child {
+      margin-bottom: 0;
+    }
+
+    .lpc-pro li {
+      color: #1a5a3a;
+    }
+
+    .lpc-con li {
+      color: #7a1a4a;
+    }
+
+    .lpc-pro li::before {
+      content: '+';
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .lpc-con li::before {
+      content: '\2212';
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .lpc-col code {
+      background: rgba(255, 255, 255, .6);
+      border-radius: 4px;
+      padding: 1px 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+    }
+
+    .lgot {
+      background: var(--pastel-orange);
+      border-radius: 12px;
+      padding: 12px 15px;
+    }
+
+    .lgot .llabel {
+      color: #8a4b00;
+    }
+
+    .lgot ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .lgot li {
+      font-size: 12.5px;
+      line-height: 1.65;
+      color: #8a4b00;
+      margin-bottom: 8px;
+      display: flex;
+      gap: 8px;
+      font-weight: 500;
+    }
+
+    .lgot li:last-child {
+      margin-bottom: 0;
+    }
+
+    .lgot li::before {
+      content: '\26A0';
+      flex-shrink: 0;
+    }
+
+    .lgot code {
+      background: rgba(255, 255, 255, .6);
+      border-radius: 4px;
+      padding: 1px 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="nav-container"></div>
+
+  <div class="cover">
+    <div class="cover-subtitle">INTERVIEW PREP — FULL-STACK FRAMEWORK</div>
+    <div class="cover-title">Next.js Journal ▲</div>
+    <div class="cover-name">
+      Mayank Thakur
+      <span class="badge badge-next">Next.js 14+</span>
+      <span class="badge badge-app">App Router</span>
+      <span class="badge badge-2026">2026 Ready</span>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat">
+      <div class="stat-val" id="stat-done">0</div>
+      <div class="stat-label">Problems solved</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="stat-total">25</div>
+      <div class="stat-label">Total problems</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="stat-topics">0</div>
+      <div class="stat-label">Topics mastered</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="stat-phases">0/5</div>
+      <div class="stat-label">Phases complete</div>
+    </div>
+  </div>
+  <div class="streak-box">
+    <span>▲</span><span class="streak-text">Ship it — the future is React Server Components</span>
+  </div>
+
+  <div class="phase-nav" id="phase-nav"></div>
+  <div class="content" id="content"></div>
+
+  <div class="quote">
+    "Next.js is not a framework for beginners — it's a framework that makes experts productive."
+    <cite>— Community wisdom</cite>
+  </div>
+
+  <script src="../../nav.js"></script>
+  <script>
+    const STATE_KEY = 'nextjs_journal_v1';
+
+    const SOLUTION_FIELDS = [
+      { k: 'approach', icon: '🧠', label: 'Approach & Architecture', full: true },
+      { k: 'code', icon: '💻', label: 'Key Code / Pattern' },
+      { k: 'gotchas', icon: '⚠️', label: 'Gotchas & Caveats' },
+      { k: 'docs', icon: '📖', label: 'Docs / References to Bookmark' }
+    ];
+
+    /* ═══ SAMJHO DATA — har topic ki Hinglish explanation ═══ */
+    const LEARN = {
+      't0_0': {
+        terms: [
+          ['Route', 'URL ka pattern jo batata hai kaunsa page khulega — <code>/about</code>, <code>/blog/meri-post</code>.'],
+          ['App Router', '<code>app/</code> folder ke folders hi routes ban jaate hain — alag se routing config nahi likhna padta.'],
+          ['page.tsx', 'Us URL par kya DIKHEGA — bina is file ke folder route nahi banta.']
+        ],
+        what: `<p>Next.js mein routing <b>folders se banti hai</b>. <code>app/users/page.tsx</code> likha to <code>/users</code> URL apne aap ban gaya.</p>
+<p>Koi route config nahi, koi react-router nahi — <b>folder ka naam hi URL hai</b>.</p>`,
+        analogy: `Ghar ke kamre — darwaze par naam ka plate laga hai. Plate = folder ka naam (URL), kamre ka saaman = page.tsx. Naam plate dekh kar mehmaan seedha kamre tak pahunch jaata hai.`,
+        why: `<p>Pehle har project ka apna routing config hota tha — har jagah alag style. File-based routing ne ek convention di: <b>sab projects ka structure same dikhta hai</b>, naya developer bhi turant samajh jaata hai ki kaunsa page kahan hai.</p>`,
+        visual: {
+          cap: 'Folder tree seedha URL map hota hai — nested folder = nested path.',
+          svg: `<svg viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="8" y="8" width="330" height="134" rx="11" fill="#e6daff"/>
+<text x="24" y="28" font-size="10.5" font-weight="700" fill="#3C3489">app/ FOLDER TREE</text>
+<rect x="24" y="38" width="290" height="22" rx="6" fill="#fff"/><text x="36" y="53" font-size="9.5" font-family="JetBrains Mono,monospace" fill="#111">app/page.tsx</text>
+<rect x="24" y="66" width="290" height="22" rx="6" fill="#fff"/><text x="36" y="81" font-size="9.5" font-family="JetBrains Mono,monospace" fill="#111">app/about/page.tsx</text>
+<rect x="24" y="94" width="290" height="22" rx="6" fill="#fff"/><text x="36" y="109" font-size="9.5" font-family="JetBrains Mono,monospace" fill="#111">app/blog/[slug]/page.tsx</text>
+<path d="M344 75 l30 0 M368 69 l8 6 -8 6" stroke="#3C3489" stroke-width="2"/>
+<rect x="382" y="8" width="310" height="134" rx="11" fill="#dcf0eb"/>
+<text x="398" y="28" font-size="10.5" font-weight="700" fill="#1a5a3a">BROWSER URL</text>
+<rect x="398" y="38" width="278" height="22" rx="6" fill="#fff"/><text x="410" y="53" font-size="9.5" font-family="JetBrains Mono,monospace" fill="#111">/</text>
+<rect x="398" y="66" width="278" height="22" rx="6" fill="#fff"/><text x="410" y="81" font-size="9.5" font-family="JetBrains Mono,monospace" fill="#111">/about</text>
+<rect x="398" y="94" width="278" height="22" rx="6" fill="#fff"/><text x="410" y="109" font-size="9.5" font-family="JetBrains Mono,monospace" fill="#111">/blog/meri-pehli-post</text>
+<text x="398" y="132" font-size="9" fill="#1a5a3a">[slug] = dynamic hissa, koi bhi value chalegi</text>
+</svg>`
+        },
+        code: `app/
+├── page.tsx              → /
+├── about/page.tsx        → /about
+├── blog/
+│   ├── page.tsx          → /blog          (list)
+│   └── [slug]/page.tsx   → /blog/kuch-bhi (detail)
+└── components/Header.tsx → KOI ROUTE NAHI ✓
+
+// page.tsx ke bina folder sirf folder hai:
+app/users/layout.tsx    // route NAHI bana
+app/users/page.tsx      // ab /users ban gaya
+
+// Special files ka kaam:
+layout.tsx   // aas-paas ka dancha (persist hota hai)
+loading.tsx  // chalte waqt ka fallback
+error.tsx    // girne par ka fallback`,
+        where: [
+          ['Har Next.js app', 'Pages, blogs, dashboards — sab kuch isi se banta hai.'],
+          ['Colocation', 'Component files ko route folder ke andar rakh sakte ho — wo route nahi bante.'],
+          ['Interview', '"App Router vs Pages Router" ka pehla farak yahi hai — config vs convention.']
+        ],
+        pros: [
+          'Zero config — folder banao, route ready.',
+          'Structure dekh kar hi poora site samajh aata hai.',
+          'Private files (<code>_folder</code>) aur groups jaise tools built-in.'
+        ],
+        cons: [
+          'Folder naam hi URL hai — rename karna matlab URLs badalna.',
+          'Deep nesting se paths lambe ho jaate hain.',
+          'Naye log "components folder kyu route nahi bana?" par atak jaate hain.'
+        ],
+        gotchas: [
+          '<code>page.tsx</code> ke bina folder <b>route nahi banta</b> — sabse common beginner confusion.',
+          '<code>components/</code> ya <code>lib/</code> jaise folders ke andar ki files routes nahi banti — sirf special files (page, layout...) matter karti hain.',
+          'Ek hi folder mein <code>page.tsx</code> aur <code>route.ts</code> saath nahi reh sakte — build error.'
+        ]
+      },
+
+      't0_1': {
+        terms: [
+          ['Layout', 'Aas-paas ka dancha jo navigation par <b>wahi rehta hai</b> — state preserve hoti hai, re-render nahi hota.'],
+          ['Template', 'Layout jaisa hi, par har navigation par <b>naya mount</b> hota hai — purani state mit jaati hai.'],
+          ['Root layout', '<code>app/layout.tsx</code> — zaroori hai, isi mein <code>&lt;html&gt;</code> aur <code>&lt;body&gt;</code> tags likhe jaate hain.']
+        ],
+        what: `<p><code>layout.tsx</code> apne saare child pages ko wrap karta hai aur <b>navigation ke dauran zinda rehta hai</b> — sidebar wapas render nahi hota, uski state bani rehti hai.</p>
+<p><code>template.tsx</code> bilkul same kaam karta hai, bas har navigation par <b>naya instance</b> banta hai.</p>`,
+        analogy: `Office building — deewarein, lift, lobby (layout) kabhi nahi badalte; kamre ke andar ka furniture (template) har tenant ke saath badal jaata hai.`,
+        why: `<p>Pehle har navigation par poora page dobara render hota tha — sidebar flicker karta tha, scroll position chali jaati thi. Layouts ne <b>persistent shell</b> diya: sirf andar ka hissa badalta hai.</p>`,
+        visual: {
+          cap: 'Navigation par layout apni jagah rehta hai, sirf children badalte hain. Template hota to poora remount hota.',
+          svg: `<svg viewBox="0 0 700 140" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="8" y="8" width="336" height="124" rx="11" fill="#dcf0eb"/>
+<text x="24" y="28" font-size="10.5" font-weight="700" fill="#1a5a3a">LAYOUT — persist hota hai</text>
+<rect x="24" y="38" width="304" height="84" rx="9" fill="#fff" stroke="#1a5a3a" stroke-width="1.5"/>
+<text x="40" y="56" font-size="9.5" font-weight="700" fill="#1a5a3a">Sidebar · Nav (zinda rehta hai)</text>
+<rect x="40" y="64" width="130" height="46" rx="7" fill="#ffeab6"/>
+<text x="105" y="84" font-size="9" text-anchor="middle" fill="#7a5200">/blog</text>
+<text x="105" y="99" font-size="8" text-anchor="middle" fill="#7a5200">purana page</text>
+<rect x="182" y="64" width="130" height="46" rx="7" fill="#d6eaff"/>
+<text x="247" y="84" font-size="9" text-anchor="middle" fill="#1e4b7a">/about</text>
+<text x="247" y="99" font-size="8" text-anchor="middle" fill="#1e4b7a">naya page</text>
+<rect x="356" y="8" width="336" height="124" rx="11" fill="#ffd6e8"/>
+<text x="372" y="28" font-size="10.5" font-weight="700" fill="#7a1a4a">TEMPLATE — har baar naya</text>
+<rect x="372" y="38" width="140" height="84" rx="9" fill="#fff" stroke="#7a1a4a" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="442" y="76" font-size="9.5" text-anchor="middle" fill="#7a1a4a">purana template</text>
+<text x="442" y="92" font-size="8.5" text-anchor="middle" fill="#7a1a4a">unmount ✓</text>
+<rect x="528" y="38" width="148" height="84" rx="9" fill="#fff" stroke="#7a1a4a" stroke-width="2"/>
+<text x="602" y="70" font-size="9.5" text-anchor="middle" fill="#7a1a4a">naya template</text>
+<text x="602" y="86" font-size="8.5" text-anchor="middle" fill="#7a1a4a">fresh state</text>
+<text x="602" y="102" font-size="8.5" text-anchor="middle" fill="#7a1a4a">(animation phir chalegi)</text>
+</svg>`
+        },
+        code: `// app/layout.tsx — ROOT layout (zaroori)
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en">
+      <body>
+        <nav>{/* har page par dikhega */}</nav>
+        {children}
+      </body>
+    </html>
+  );
+}
+
+// app/dashboard/layout.tsx — NESTED layout
+// sirf /dashboard/* ke liye, root ke ANDAR render hota hai
+export default function DashLayout({ children }) {
+  return (
+    <div className="flex">
+      <aside>{/* persist — state bani rahegi */}</aside>
+      {children}
+    </div>
+  );
+}
+
+// template.tsx — same shape, har nav par remount
+// (enter animations dobara chalti hain, useState reset)`,
+        where: [
+          ['Nav/Sidebar', 'Auth state, cart count — ye layouts mein rehte hain taaki navigation par na udein.'],
+          ['Nested shells', 'Dashboard ka apna sidebar, blog ka apna header — nested layouts se.'],
+          ['Animations', 'Page enter animation chahiye har navigation par? Layout nahi, <code>template.tsx</code>.']
+        ],
+        pros: [
+          'State preserve — input bhara hua, scroll position, video playback sab bach jaata hai.',
+          'Nested layouts se complex shells bina prop drilling ke.',
+          'Layout mein data fetch karke children ko pass kar sakte ho.'
+        ],
+        cons: [
+          'Layout kabhi unload nahi hota — usme galat state rakhi to poori app affected.',
+          'Template vs layout ka farak shuru mein confusing.',
+          'Root layout mein <code>html/body</code> na ho to build fail.'
+        ],
+        gotchas: [
+          '<b>Root layout mein <code>&lt;html&gt;</code> aur <code>&lt;body&gt;</code> tags likhna ZAROORI hai</b> — warna hydration error.',
+          'Layout ke andar <code>useState</code> navigation par reset NAHI hota — ye feature hai, bug nahi.',
+          'Templates mein <code>useEffect</code> har navigation par dobara chalta hai — kabhi kabhi yahi chahiye hota hai.'
+        ]
+      },
+
+      't0_2': {
+        terms: [
+          ['[slug]', 'Dynamic segment — URL ka wo hissa jo badal sakta hai.'],
+          ['Catch-all [...slug]', 'Ek se zyada segments pakadta hai — <code>/docs/a/b/c</code>.'],
+          ['generateStaticParams', 'Build time par batata hai kaunse slug pages pehle se ban jaayein (SSG).']
+        ],
+        what: `<p><code>[slug]</code> folder ka naam URL mein <b>kisi bhi value</b> se replace ho jaata hai. <code>app/blog/[slug]/page.tsx</code> — <code>/blog/react</code>, <code>/blog/css</code> dono isi se chalte hain.</p>
+<p>Page ko wo value <code>params</code> prop mein milti hai.</p>`,
+        analogy: `Speed post ka address slip — pattern same rehta hai, bas naam-gali ki jagah (slug) har envelope par alag likha hota hai. Ek hi slip ka format, lakhon addresses.`,
+        why: `<p>1000 blog posts ke liye 1000 folders? Nahi. Ek dynamic route + database = <b>sab posts ek hi file se</b>. Isi cheez ko REST ka <code>:id</code> jaisa socho, par folders mein.</p>`,
+        visual: {
+          cap: 'Teen tarah ke dynamic segments — kitne URL parts pakadte hain, usi se farak padta hai.',
+          svg: `<svg viewBox="0 0 700 145" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="8" y="8" width="220" height="128" rx="11" fill="#d6eaff"/>
+<text x="24" y="28" font-size="10.5" font-weight="700" fill="#1e4b7a">[slug] — EK part</text>
+<rect x="24" y="38" width="188" height="22" rx="6" fill="#fff"/><text x="118" y="53" font-size="9" font-family="JetBrains Mono,monospace" text-anchor="middle" fill="#111">/shop/shoes ✓</text>
+<rect x="24" y="66" width="188" height="22" rx="6" fill="#fff"/><text x="118" y="81" font-size="9" font-family="JetBrains Mono,monospace" text-anchor="middle" fill="#111">/shop/a/b ✗</text>
+<text x="24" y="112" font-size="8.5" fill="#1e4b7a">sirf ek segment match</text>
+<rect x="240" y="8" width="220" height="128" rx="11" fill="#ffeab6"/>
+<text x="256" y="28" font-size="10.5" font-weight="700" fill="#7a5200">[...slug] — 1 ya ZYADA</text>
+<rect x="256" y="38" width="188" height="22" rx="6" fill="#fff"/><text x="350" y="53" font-size="9" font-family="JetBrains Mono,monospace" text-anchor="middle" fill="#111">/docs/a/b/c ✓</text>
+<rect x="256" y="66" width="188" height="22" rx="6" fill="#fff"/><text x="350" y="81" font-size="9" font-family="JetBrains Mono,monospace" text-anchor="middle" fill="#111">/docs ✗ (khaali)</text>
+<text x="256" y="112" font-size="8.5" fill="#7a5200">kam se kam ek chahiye</text>
+<rect x="472" y="8" width="220" height="128" rx="11" fill="#dcf0eb"/>
+<text x="488" y="28" font-size="10.5" font-weight="700" fill="#1a5a3a">[[...slug]] — OPTIONAL</text>
+<rect x="488" y="38" width="188" height="22" rx="6" fill="#fff"/><text x="582" y="53" font-size="9" font-family="JetBrains Mono,monospace" text-anchor="middle" fill="#111">/docs ✓</text>
+<rect x="488" y="66" width="188" height="22" rx="6" fill="#fff"/><text x="582" y="81" font-size="9" font-family="JetBrains Mono,monospace" text-anchor="middle" fill="#111">/docs/a/b ✓</text>
+<text x="488" y="112" font-size="8.5" fill="#1a5a3a">bina bhi chal jaata hai</text>
+</svg>`
+        },
+        code: `// app/blog/[slug]/page.tsx
+export default async function Page({ params }) {
+  const { slug } = await params;         // Next 15+: params PROMISE hai
+  const post = await getPost(slug);
+  return <article>{post.title}</article>;
+}
+
+// SSG — build time par kaunse pages ban jaayein:
+export async function generateStaticParams() {
+  const posts = await db.post.findMany();
+  return posts.map(p => ({ slug: p.slug }));
+}
+
+// Catch-all: app/docs/[...segments]/page.tsx
+// /docs/a/b/c → segments = ["a", "b", "c"]`,
+        where: [
+          ['Blog/e-commerce', 'Har post/product ka apna URL — ek hi file se.'],
+          ['Docs sites', '<code>[...slug]</code> se nested docs paths — <code>/docs/api/auth</code>.'],
+          ['SSG blogs', '<code>generateStaticParams</code> se sab posts build time par static.']
+        ],
+        pros: [
+          'Unlimited pages ek file se.',
+          'Static generation ke saath mil kar bahut tez.',
+          'Catch-all se flexible URL structures.'
+        ],
+        cons: [
+          'Galat slug ka handling khud likhna padta hai (<code>notFound()</code>).',
+          'Params ka Promise hona (Next 15) purane tutorials todta hai.',
+          'Bahut saare dynamic params se build slow ho sakti hai.'
+        ],
+        gotchas: [
+          '<b>Next.js 15 mein <code>params</code> ek Promise hai</b> — <code>await params</code> karna zaroori. Purana <code>params.slug</code> silently galat chal sakta hai.',
+          '<code>[...slug]</code> khaali URL (<code>/docs</code>) match <b>nahi</b> karta — uske liye <code>[[...slug]]</code> chahiye.',
+          'Invalid slug par <code>notFound()</code> call karna bhool jaao to user ko khaali page milta hai.'
+        ]
+      },
+
+      't0_3': {
+        terms: [
+          ['loading.tsx', 'Us route ke data aate tak ka <b>turant fallback</b> — Suspense boundary apne aap ban jaata hai.'],
+          ['error.tsx', 'Render fail hone par ka fallback — ErrorBoundary + <code>reset()</code> retry button.'],
+          ['not-found.tsx', '<code>notFound()</code> call hone par ya galat URL par ka 404 UI.']
+        ],
+        what: `<p>Ye teeno special files route ke <b>error/loading states</b> sambhalti hain — bina ek line state management ke.</p>
+<p><code>loading.tsx</code> daala to data aate tak wahan skeleton dikhta hai; <code>error.tsx</code> daala to crash hone par graceful message + retry.</p>`,
+        analogy: `Restaurant — order dete hi starter aa jaata hai (loading.tsx). Dish bigad jaaye to manager aata hai maafi ke saath aur fresh order dilwaata hai (error.tsx). Jo menu mein hi nahi wo "not available" card (not-found.tsx).`,
+        why: `<p>Server components async hain — data aane mein time lagta hai, aur kahin na kahin fail ho sakta hai. In files ke bina har page mein khud loading/error state likhna padta. Next ne <b>convention bana diya</b>.</p>`,
+        visual: {
+          cap: 'Request aate hi fallback turant stream hota hai; data aane par asli content replace kar deta hai.',
+          svg: `<svg viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<line x1="20" y1="120" x2="680" y2="120" stroke="#9aa0a6" stroke-width="2"/>
+<text x="20" y="138" font-size="9" fill="#5f6368">time →</text>
+<rect x="30" y="20" width="90" height="90" rx="9" fill="#ffeab6"/>
+<text x="75" y="60" font-size="9.5" text-anchor="middle" fill="#7a5200">loading.tsx</text>
+<text x="75" y="76" font-size="8.5" text-anchor="middle" fill="#7a5200">skeleton ✓</text>
+<text x="75" y="112" font-size="8" text-anchor="middle" fill="#7a5200">turant</text>
+<path d="M126 65 h30 M150 59 l8 6 -8 6" stroke="#1a5a3a" stroke-width="2"/>
+<rect x="164" y="20" width="110" height="90" rx="9" fill="#dcf0eb"/>
+<text x="219" y="60" font-size="9.5" text-anchor="middle" fill="#1a5a3a">asli content</text>
+<text x="219" y="76" font-size="8.5" text-anchor="middle" fill="#1a5a3a">data aa gaya</text>
+<text x="219" y="112" font-size="8" text-anchor="middle" fill="#1a5a3a">streamed</text>
+<rect x="320" y="14" width="352" height="122" rx="11" fill="#ffd6e8"/>
+<text x="336" y="34" font-size="10.5" font-weight="700" fill="#7a1a4a">AGAR FAIL HO JAAYE → error.tsx</text>
+<rect x="336" y="44" width="320" height="34" rx="8" fill="#fff"/>
+<text x="348" y="58" font-size="9" fill="#7a1a4a">"Kuch galat ho gaya"</text>
+<text x="348" y="71" font-size="8.5" fill="#5f6368">poora page nahi gira — sirf ye section</text>
+<rect x="336" y="86" width="150" height="26" rx="13" fill="#000"/>
+<text x="411" y="103" font-size="9" text-anchor="middle" fill="#fff">↺ Try again (reset())</text>
+<text x="500" y="103" font-size="8.5" fill="#7a1a4a">nearest error.tsx pakadta hai</text>
+</svg>`
+        },
+        code: `// app/dashboard/error.tsx — CLIENT component hona zaroori
+'use client';
+export default function Error({ error, reset }) {
+  return (
+    <div>
+      <h2>Kuch galat ho gaya 😕</h2>
+      <button onClick={() => reset()}>Dobara try karo</button>
+    </div>
+  );
+}
+
+// app/dashboard/loading.tsx — server component chalega
+export default function Loading() {
+  return <SkeletonCards />;   // data aate tak yahi dikhega
+}
+
+// Kisi bhi server component se:
+import { notFound } from 'next/navigation';
+if (!post) notFound();       // nearest not-found.tsx render hoga`,
+        where: [
+          ['Dashboards', 'Slow queries par skeletons — page white nahi dikhta.'],
+          ['Forms/API failures', '<code>error.tsx</code> se retry UX bina extra library ke.'],
+          ['Dynamic pages', 'Invalid id par <code>notFound()</code> — proper 404 SEO ke saath.']
+        ],
+        pros: [
+          'Zero boilerplate — file daalo, state management free.',
+          'Error isolation — ek widget gire, poora page nahi.',
+          '<code>reset()</code> se bina reload ke retry.'
+        ],
+        cons: [
+          '<code>error.tsx</code> client component banana padta hai.',
+          'Production mein <code>error.message</code> redacted hota hai — debug karna alag se.',
+          'Nested routes mein kaunsa boundary pakdega, track karna padta hai.'
+        ],
+        gotchas: [
+          '<code>error.tsx</code> mein <code>\'use client\'</code> likhna <b>zaroori</b> hai — warna build error.',
+          'Error <b>upar</b> bubble hota hai — nearest parent <code>error.tsx</code> use pakadta hai, wahi nahi jisne throw kiya.',
+          '<code>global-error.tsx</code> root layout ko replace karta hai — ismein <code>&lt;html&gt;&lt;body&gt;</code> khud likhne padte hain.'
+        ]
+      },
+
+      't0_4': {
+        terms: [
+          ['Metadata', 'Page ke <code>&lt;head&gt;</code> mein jaane wali info — title, description, OG image.'],
+          ['generateMetadata()', 'Dynamic metadata — URL/data ke hisaab se har page ka apna title.'],
+          ['OG image', 'WhatsApp/Twitter par link share hone par dikhne wali preview card.']
+        ],
+        what: `<p>Next.js mein SEO tags likhne ke liye bas ek <code>metadata</code> object export kar do — framework use <code>&lt;head&gt;</code> mein daal deta hai.</p>
+<p>Dynamic pages ke liye <code>generateMetadata()</code> function — jo bhi data fetch karke uske hisaab se title/description lauta do.</p>`,
+        analogy: `Book ka cover page — andar ka content nahi hai, par shelf se uthane se pehle wahi sabse pehle dikhta hai. Metadata = aapke page ka cover, search results aur chat previews mein.`,
+        why: `<p>Pehle har page mein manually <code>&lt;Head&gt;</code> components likhne padte the — tags duplicate hote, miss hote. Metadata API ne ise <b>ek export statement</b> bana diya, aur duplicate tags apne aap merge ho gaye.</p>`,
+        visual: {
+          cap: 'Export object → rendered head tags. Dynamic function se har product/post ka apna card.',
+          svg: `<svg viewBox="0 0 700 135" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="8" y="8" width="300" height="119" rx="11" fill="#e6daff"/>
+<text x="24" y="28" font-size="10.5" font-weight="700" fill="#3C3489">page.tsx mein export</text>
+<rect x="24" y="38" width="268" height="74" rx="8" fill="#fff"/>
+<text x="38" y="57" font-size="9" font-family="JetBrains Mono,monospace" fill="#111">export const metadata = {</text>
+<text x="50" y="72" font-size="9" font-family="JetBrains Mono,monospace" fill="#111">title: "Mera Blog"</text>
+<text x="38" y="92" font-size="9" font-family="JetBrains Mono,monospace" fill="#111">}</text>
+<path d="M314 67 h28 M336 61 l8 6 -8 6" stroke="#3C3489" stroke-width="2"/>
+<rect x="350" y="8" width="342" height="119" rx="11" fill="#dcf0eb"/>
+<text x="366" y="28" font-size="10.5" font-weight="700" fill="#1a5a3a">&lt;head&gt; mein apne aap</text>
+<rect x="366" y="38" width="310" height="22" rx="6" fill="#fff"/><text x="378" y="53" font-size="9" font-family="JetBrains Mono,monospace" fill="#111">&lt;title&gt;Mera Blog&lt;/title&gt;</text>
+<rect x="366" y="66" width="310" height="22" rx="6" fill="#fff"/><text x="378" y="81" font-size="9" font-family="JetBrains Mono,monospace" fill="#111">&lt;meta name="description"&gt;</text>
+<rect x="366" y="94" width="310" height="22" rx="6" fill="#fff"/><text x="378" y="109" font-size="9" font-family="JetBrains Mono,monospace" fill="#111">&lt;meta property="og:image"&gt;</text>
+</svg>`
+        },
+        code: `// Static — poore section ka default
+export const metadata = {
+  title: 'Mera Blog',
+  description: 'Web dev seekhne ki jagah',
+};
+
+// Dynamic — har post ka apna title
+export async function generateMetadata({ params }) {
+  const { slug } = await params;
+  const post = await getPost(slug);
+  return {
+    title: post.title,
+    openGraph: {
+      images: [post.coverUrl],   // WhatsApp preview
+    },
+  };
+}
+
+// Title template — sections mein "%s | Mera Blog"
+export const metadata = {
+  title: { default: 'Mera Blog', template: '%s | Mera Blog' },
+};`,
+        where: [
+          ['SEO', 'Title/description — Google ranking ka basic building block.'],
+          ['Social sharing', '<code>openGraph</code> se WhatsApp/Twitter par sundar preview card.'],
+          ['Favicon/sitemap', '<code>icon.tsx</code>, <code>sitemap.ts</code>, <code>robots.ts</code> — sab metadata API ke hisse.']
+        ],
+        pros: [
+          'Declarative — tags likhna bhoolne ka sawaal hi nahi.',
+          'Parent-child metadata apne aap merge hota hai.',
+          '<code>ImageResponse</code> se OG images code se generate.'
+        ],
+        cons: [
+          'Sirf Server Components mein kaam karta hai.',
+          'Har request par <code>generateMetadata</code> chalne se DB load.',
+          'OG image generation build time le sakti hai.'
+        ],
+        gotchas: [
+          'Client component (<code>\'use client\'</code>) se metadata <b>export nahi kar sakte</b> — build error.',
+          '<code>generateMetadata</code> aur page dono same data fetch karein to Request Memoization dedupe karti hai — double fetch mat likho.',
+          'Child page ka <code>title</code> parent ke template se guzarta hai — template lagana bhool jaao to titles flat dikhte hain.'
+        ]
+      },
+
+      't0_5': {
+        terms: [
+          ['Route group (name)', 'Parentheses wala folder — organization ke liye, <b>URL mein nahi aata</b>.'],
+          ['Parallel route @slot', 'Ek layout mein <b>do-do pages saath</b> render — named slots.'],
+          ['default.tsx', 'Slot ka fallback — jab refresh ke baad slot match na ho.']
+        ],
+        what: `<p><code>(marketing)/about/page.tsx</code> aur <code>(shop)/cart/page.tsx</code> — dono alag teams/alag layouts, par URL mein parentheses <b>gayab</b>: <code>/about</code>, <code>/cart</code>.</p>
+<p><code>@modal</code>, <code>@stats</code> jaise slots ek hi screen par <b>kai independent pages</b> render karte hain.</p>`,
+        analogy: `Society ke flats — building same, par A-wing/B-wing (groups) ka board gate par nahi dikhta. Parallel routes = ek TV par do windows split-screen — dono alag channel chala rahe.`,
+        why: `<p>Bade apps mein do problems hoti thin: (1) alag-alag layouts wale pages ka organization, (2) modal jaisi cheez URL ke saath sync rakhna. Groups ne organization di, parallel routes ne <b>URL-driven modals</b> ka clean tarika.</p>`,
+        visual: {
+          cap: '(group) URL se gayab ho jaata hai; @slot layout mein alag prop se aata hai.',
+          svg: `<svg viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="8" y="8" width="340" height="134" rx="11" fill="#d6eaff"/>
+<text x="24" y="28" font-size="10.5" font-weight="700" fill="#1e4b7a">ROUTE GROUPS ( )</text>
+<rect x="24" y="38" width="308" height="22" rx="6" fill="#fff"/><text x="36" y="53" font-size="9" font-family="JetBrains Mono,monospace" fill="#111">(marketing)/about/page.tsx</text>
+<rect x="24" y="66" width="308" height="22" rx="6" fill="#fff"/><text x="36" y="81" font-size="9" font-family="JetBrains Mono,monospace" fill="#111">(shop)/about/page.tsx</text>
+<text x="24" y="108" font-size="9" fill="#1e4b7a">Dono ka URL: /about — par ALAG layout!</text>
+<text x="24" y="126" font-size="8.5" fill="#5f6368">( ) URL mein nahi aata — sirf organization</text>
+<rect x="360" y="8" width="332" height="134" rx="11" fill="#ffeab6"/>
+<text x="376" y="28" font-size="10.5" font-weight="700" fill="#7a5200">PARALLEL @slots</text>
+<rect x="376" y="38" width="140" height="60" rx="8" fill="#fff"/>
+<text x="446" y="62" font-size="9" text-anchor="middle" fill="#7a5200">@analytics</text>
+<text x="446" y="78" font-size="8" text-anchor="middle" fill="#5f6368">charts page</text>
+<rect x="528" y="38" width="148" height="60" rx="8" fill="#fff"/>
+<text x="602" y="62" font-size="9" text-anchor="middle" fill="#7a5200">@team</text>
+<text x="602" y="78" font-size="8" text-anchor="middle" fill="#5f6368">members page</text>
+<text x="376" y="116" font-size="9" fill="#7a5200">layout.tsx dono ko props se leta hai:</text>
+<text x="376" y="131" font-size="8.5" font-family="JetBrains Mono,monospace" fill="#5f6368">{analytics} {team} — SAATH render</text>
+</svg>`
+        },
+        code: `app/
+├── (marketing)/           # URL mein nahi aata
+│   ├── layout.tsx         # marketing ka header/footer
+│   └── about/page.tsx     # → /about
+├── (shop)/
+│   ├── layout.tsx         # shop ka sidebar
+│   └── cart/page.tsx      # → /cart
+└── dashboard/
+    ├── layout.tsx
+    ├── @analytics/page.tsx   # slot 1
+    ├── @team/page.tsx        # slot 2
+    └── page.tsx              # main content
+
+// dashboard/layout.tsx — slots props se milte hain
+export default function Layout({ children, analytics, team }) {
+  return (
+    <>
+      {children}
+      {analytics}
+      {team}
+    </>
+  );
+}`,
+        where: [
+          ['Bade teams', 'Marketing aur app sections ka alag layout, same repo.'],
+          ['Modals', '<code>@modal</code> slot + catch-all — modal URL se khulta/band hota hai, refresh par bhi tikta hai.'],
+          ['Dashboards', 'Independent widgets jo alag-alag load/stream hote hain.']
+        ],
+        pros: [
+          'Same URL path par alag layouts — bina URL hack kiye.',
+          'Slots independently load/error ho sakte hain (apna loading.tsx).',
+          'Modal state URL mein — shareable links.'
+        ],
+        cons: [
+          'Concept count badhta hai — naye dev confuse hote hain.',
+          'Do groups mein same path = build error, dhundhna padta hai.',
+          'Slots ke <code>default.tsx</code> likhna bhool jaate hain.'
+        ],
+        gotchas: [
+          '<b>Do route groups mein same page path mat do</b> — <code>(a)/about</code> aur <code>(b)/about</code> conflict = build fail.',
+          '@slot ko layout mein render karna <b>zaroori</b> hai — props mein aayega, khud nahi dikhega.',
+          'Soft navigation ke baad direct refresh par slot match nahi hota to <code>default.tsx</code> chahiye hota hai — warna 404.'
+        ]
+      },
+
+      't1_0': {
+        terms: [
+          ['RSC fetch', 'Server component ke andar seedha <code>await fetch(...)</code> — useEffect ki zarurat nahi.'],
+          ['Extended fetch', 'Next.js ne native fetch ko patch kiya — cache/revalidate options diye.'],
+          ['Waterfall', 'Ek fetch khatam, tab doosra shuru — total time judta jaata hai.']
+        ],
+        what: `<p>Server Components <b>async ho sakte hain</b>. Component ke andar seedha <code>await</code> karo — data HTML banne se pehle aa jaata hai.</p>
+<p>Client-side jaisa <code>useEffect</code> + <code>useState</code> + loading spinner ka chakkar khatam.</p>`,
+        analogy: `Kitchen ka bawarchi khud bazaar jaakar sabzi laata hai, phir khana banata hai — plate (HTML) tabhi serve hoti jab khana ready ho. Waiter (useEffect) beech mein baar-baar nahi bhaagta.`,
+        why: `<p>Client-side fetching ka flow tha: khaali page → JS load → effect chala → spinner → data aaya → render. User ko <b>dobara khaali screen</b> dikhti thi. RSC mein data server par hi aata hai — pehli HTML hi poori aati hai.</p>`,
+        visual: {
+          cap: 'Sequential await = waterfall (jodta gaya). Independent fetches ko Promise.all do — saath chalein.',
+          svg: `<svg viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="8" y="8" width="336" height="134" rx="11" fill="#ffd6e8"/>
+<text x="24" y="28" font-size="10.5" font-weight="700" fill="#7a1a4a">✗ WATERFALL — ek ke baad ek</text>
+<rect x="24" y="38" width="120" height="22" rx="6" fill="#fff"/><text x="84" y="53" font-size="8.5" text-anchor="middle" fill="#111">user (300ms)</text>
+<rect x="148" y="38" width="120" height="22" rx="6" fill="#fff"/><text x="208" y="53" font-size="8.5" text-anchor="middle" fill="#111">posts (300ms)</text>
+<rect x="272" y="38" width="60" height="22" rx="6" fill="#fff"/><text x="302" y="53" font-size="8.5" text-anchor="middle" fill="#111">ads</text>
+<text x="24" y="82" font-size="9.5" fill="#7a1a4a">Total: 300+300+100 = 700ms</text>
+<text x="24" y="100" font-size="8.5" fill="#5f6368">await user → phir await posts → phir ads</text>
+<rect x="356" y="8" width="336" height="134" rx="11" fill="#dcf0eb"/>
+<text x="372" y="28" font-size="10.5" font-weight="700" fill="#1a5a3a">✓ PARALLEL — Promise.all</text>
+<rect x="372" y="38" width="120" height="22" rx="6" fill="#fff"/><text x="432" y="53" font-size="8.5" text-anchor="middle" fill="#111">user (300ms)</text>
+<rect x="372" y="64" width="120" height="22" rx="6" fill="#fff"/><text x="432" y="79" font-size="8.5" text-anchor="middle" fill="#111">posts (300ms)</text>
+<rect x="372" y="90" width="120" height="22" rx="6" fill="#fff"/><text x="432" y="105" font-size="8.5" text-anchor="middle" fill="#111">ads (100ms)</text>
+<text x="504" y="79" font-size="9.5" font-weight="700" fill="#1a5a3a">Total: 300ms ✓</text>
+<text x="504" y="97" font-size="8.5" fill="#5f6368">sab saath shuru, sabse dheere wala jeet-ta hai</text>
+</svg>`
+        },
+        code: `// Server Component — itna hi:
+export default async function Page() {
+  const user = await getUser();
+  return <Profile user={user} />;
+}
+// No useEffect. No useState. No loading spinner.
+// Data HTML ke andar hi aata hai.
+
+// ✗ GALAT — waterfall (700ms)
+const user  = await getUser();
+const posts = await getPosts(user.id);
+
+// ✓ SAHI — parallel (300ms)
+const [user, posts] = await Promise.all([
+  getUser(),
+  getPosts(),        // agar posts ko user ki zarurat nahi
+]);
+
+// Agar posts ko user CHAHIYE: unWrap approach —
+// user fetch karke posts ko Suspense mein daal do`,
+        where: [
+          ['Har data page', 'Product detail, blog post, profile — sab RSC fetch se.'],
+          ['API keys', 'Secret keys server par rehti hain — client bundle mein nahi jaatin.'],
+          ['ORM calls', 'Prisma/Drisko direct await — fetch bhi zaroori nahi.']
+        ],
+        pros: [
+          'Pehli HTML mein hi data — spinner ka daur khatam.',
+          'Secrets server par safe.',
+          'Database ke paas chalne se latency kam.'
+        ],
+        cons: [
+          'Data aane tak poora block ho sakta hai — Suspense lagana zaroori.',
+          'Interactivity ke liye phir bhi Client Component chahiye.',
+          'fetch ke bahar (axios) wali libraries ko caching options nahi milte.'
+        ],
+        gotchas: [
+          '<b>Sequential awaits = waterfall</b> — independent calls hamesha <code>Promise.all</code> mein. Interview ka favourite sawaal.',
+          'Ye sirf <code>fetch</code> par extend hota hai — Prisma/axios ko memoization/cache options nahi milte (React <code>cache()</code> alag se).',
+          'Server component mein browser APIs (<code>window</code>, <code>localStorage</code>) nahi chaltin — wo client-only hain.'
+        ]
+      },
+
+      't1_1': {
+        terms: [
+          ['Request Memoization', 'Ek render ke dauran same URL ka fetch <b>ek hi baar</b> hota hai — baaki cache se.'],
+          ['React cache()', 'Functions ko per-request memoize karne ka React API — fetch ke bahar wali calls ke liye.'],
+          ['Request lifecycle', 'Ek HTTP request ka poora render tree — isi dauran memoization zinda hai.']
+        ],
+        what: `<p>Layout, page, aur 3 components — sab <code>getUser()</code> bula rahe hain? Network par <b>ek hi</b> request jaayegi. Baaki sab ko wahi jawab milega.</p>
+<p>Ye React ka <code>cache()</code> API hai jo Next ne fetch par apne aap laga diya.</p>`,
+        analogy: `Family mein 5 logon ne same pizza mangwaya — restaurant ne EK hi pizza banaya, sabko slice diye. Order (network call) ek baar, khana (data) sabko.`,
+        why: `<p>Nested layouts mein same data upar-neeche chahiye hota hai. Props neeche bhejna har jagah possible nahi. Memoization ne <b>"props drilling ya duplicate fetch"</b> ka dilemma khatam kiya — har jagah seedha fetch karo, dedupe framework karega.</p>`,
+        visual: {
+          cap: 'Ek render tree, chaar jagah same fetch — network par sirf ek request gayi.',
+          svg: `<svg viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="250" y="8" width="200" height="34" rx="9" fill="#e6daff" stroke="#3C3489" stroke-width="1.5"/>
+<text x="350" y="30" font-size="10" font-weight="700" text-anchor="middle" fill="#3C3489">Request shuru hui</text>
+<rect x="60" y="62" width="160" height="30" rx="8" fill="#d6eaff"/>
+<text x="140" y="81" font-size="9.5" text-anchor="middle" fill="#1e4b7a">layout: getUser()</text>
+<rect x="270" y="62" width="160" height="30" rx="8" fill="#d6eaff"/>
+<text x="350" y="81" font-size="9.5" text-anchor="middle" fill="#1e4b7a">page: getUser()</text>
+<rect x="480" y="62" width="160" height="30" rx="8" fill="#d6eaff"/>
+<text x="560" y="81" font-size="9.5" text-anchor="middle" fill="#1e4b7a">card: getUser()</text>
+<path d="M300 42 L140 62 M350 42 L350 62 M400 42 L560 62" stroke="#3C3489" stroke-width="1.5"/>
+<rect x="180" y="112" width="340" height="30" rx="9" fill="#dcf0eb" stroke="#1a5a3a" stroke-width="1.5"/>
+<text x="350" y="131" font-size="9.5" font-weight="700" text-anchor="middle" fill="#1a5a3a">Network: SIRF 1 fetch — baaki memoized ✓</text>
+</svg>`
+        },
+        code: `// app/layout.tsx
+const user = await getUser();     // network call #1
+
+// app/page.tsx
+const user = await getUser();     // CACHE hit — network nahi gaya
+
+// app/components/UserCard.tsx
+const user = await getUser();     // CACHE hit phir se
+
+// Fetch ke BAHAR wali calls ke liye khud cache() lagao:
+import { cache } from 'react';
+
+export const getUser = cache(async (id: string) => {
+  return db.user.findUnique({ where: { id } });  // Prisma
+});
+// Ab ye bhi per-request dedupe ho jaayega`,
+        where: [
+          ['Nested layouts', 'Header + page + sidebar sabko user chahiye — teen fetch, ek network call.'],
+          ['ORM queries', '<code>cache()</code> wrap karke Prisma calls ko bhi dedupe karo.'],
+          ['Interview', '"Same data multiple components mein kaise?" ka modern jawab.']
+        ],
+        pros: [
+          'Code simple — har jagah seedha fetch, optimization framework ki.',
+          'Props drilling khatam.',
+          'Per-request scope — users ke beech data leak nahi hota.'
+        ],
+        cons: [
+          'Sirf GET fetch auto-dedupe hota hai — POST/POST-like calls nahi.',
+          'Request khatam hote hi memoization clear — persistent cache NAHI hai.',
+          'Different URLs/headers = different cache keys, dedupe nahi hoga.'
+        ],
+        gotchas: [
+          'Memoization <b>ek request tak</b> simit hai — agle visitor ke liye phir fetch hoga. Persistent chahiye to Data Cache dekho.',
+          '<code>cache()</code> sirf server par kaam karta hai — client components mein nahi.',
+          'Cookies/headers padhne wale fetch dedupe nahi hote — har call unique hoti hai.'
+        ]
+      },
+
+      't1_2': {
+        terms: [
+          ['Data Cache', 'Server-side persistent cache — requests aur deployments ke beech bhi zinda.'],
+          ['force-cache', 'Data ko cache karo (purani default behaviour).'],
+          ['no-store', 'Har request par fresh data — cache mat karo.']
+        ],
+        what: `<p>Data Cache build/deploy se bhi lambi zindagi wala cache hai. Ek user ke liye fetch hua data <b>agle visitors ko bhi</b> wahi cached milega (jab tak revalidate na ho).</p>
+<p>Control: <code>fetch(url, { next: { revalidate: 60 } })</code> — 60 second tak cached.</p>`,
+        analogy: `Fridge — bazaar (origin server) har baar nahi jaana. Ek baar grocery laayo, fridge se kaam chalao. Har ghante (revalidate) mein taaza doodh check karne ka alarm laga do.`,
+        why: `<p>Har visitor par origin server + DB ko hit karna mehnga aur slow hai. Data Cache se <b>1000 visitors = 1 DB query</b> (jab tak fresh nahi karo). Ye CDN-level speed data par bhi deta hai.</p>`,
+        visual: {
+          cap: 'Pehli request: miss → origin → cache mein save. Agle sab: hit → turant jawab.',
+          svg: `<svg viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<circle cx="90" cy="75" r="34" fill="#d6eaff" stroke="#1e4b7a" stroke-width="1.5"/>
+<text x="90" y="72" font-size="9.5" font-weight="700" text-anchor="middle" fill="#1e4b7a">User 1</text>
+<text x="90" y="86" font-size="8" text-anchor="middle" fill="#1e4b7a">pehla</text>
+<rect x="170" y="45" width="150" height="60" rx="11" fill="#ffeab6" stroke="#7a5200" stroke-width="1.5"/>
+<text x="245" y="70" font-size="10" font-weight="700" text-anchor="middle" fill="#7a5200">DATA CACHE</text>
+<text x="245" y="88" font-size="8.5" text-anchor="middle" fill="#7a5200">MISS → origin se laao</text>
+<circle cx="420" cy="75" r="34" fill="#ffd6e8" stroke="#7a1a4a" stroke-width="1.5"/>
+<text x="420" y="72" font-size="9.5" font-weight="700" text-anchor="middle" fill="#7a1a4a">Origin</text>
+<text x="420" y="86" font-size="8" text-anchor="middle" fill="#7a1a4a">DB + API</text>
+<path d="M124 68 l40 0 M158 62 l8 6 -8 6" stroke="#7a5200" stroke-width="2"/>
+<path d="M326 82 l56 0 M374 76 l8 6 -8 6" stroke="#7a1a4a" stroke-width="2"/>
+<circle cx="600" cy="45" r="30" fill="#dcf0eb" stroke="#1a5a3a" stroke-width="1.5"/>
+<text x="600" y="43" font-size="9" font-weight="700" text-anchor="middle" fill="#1a5a3a">Users 2..∞</text>
+<text x="600" y="56" font-size="7.5" text-anchor="middle" fill="#1a5a3a">agle sab</text>
+<path d="M570 55 L330 68" stroke="#1a5a3a" stroke-width="2" stroke-dasharray="5 4"/>
+<text x="430" y="52" font-size="8.5" font-weight="700" fill="#1a5a3a">HIT → turant ✓</text>
+<text x="170" y="130" font-size="9" fill="#5f6368">Jab tak revalidate na ho, origin ko koi nahi chhoota</text>
+</svg>`
+        },
+        code: `// Default (Next 15): no-store — har baar fresh
+fetch('https://api.example.com/data');
+
+// Cache karo — 60 sec tak
+fetch(url, { next: { revalidate: 60 } });
+
+// Hamesha cache (purani default)
+fetch(url, { cache: 'force-cache' });
+
+// Kabhi cache mat karo (personalized data!)
+fetch(url, { cache: 'no-store' });
+
+// Tag lagao — baad mein on-demand invalidate
+fetch(url, { next: { tags: ['posts'] } });
+// kisi action mein:
+revalidateTag('posts');`,
+        where: [
+          ['Public content', 'Blog posts, products, prices — sab cache-worthy.'],
+          ['Third-party APIs', 'Rate-limited APIs par calls bachao.'],
+          ['Personal data', 'Cart, profile — <code>no-store</code> ya cookies-based dynamic rendering.']
+        ],
+        pros: [
+          'DB/API load dramatically kam.',
+          'Response times near-instant.',
+          'Tags se surgical invalidation.'
+        ],
+        cons: [
+          'Stale data dikh sakta hai — strategy soch samajh kar.',
+          'Galat cheez cache = sab users ko galat data.',
+          'Debugging tough — "data kahan se aaya?" ka jawab layers mein hai.'
+        ],
+        gotchas: [
+          '<b>Next.js 15 mein default <code>no-store</code> ho gaya</b> — 14 wale tutorials ka "fetch by default cached" ab galat hai.',
+          'Cookies/headers padhne wale fetches cache nahi hote — personalized data ke liye yahi sahi hai.',
+          '<code>revalidate: 60</code> ka matlab "har 60s par refresh" nahi — "60s ke baad PEHLI request par background refresh".'
+        ]
+      },
+
+      't1_3': {
+        terms: [
+          ['Full Route Cache', 'Static routes ka <b>rendered HTML + RSC payload</b> build time par ban kar ready.'],
+          ['Static vs Dynamic', 'Koi dynamic API (cookies, searchParams) use hui to route dynamic — cache nahi hota.'],
+          ['Invalidation', '<code>revalidatePath/Tag</code> se cached route delete, agli request par fresh.']
+        ],
+        what: `<p>Agar route mein koi dynamic cheez nahi hai, to Next <b>build time par</b> poora HTML bana kar rakh leta hai. Har visitor ko wahi ready-made HTML CDNs se milta hai — server chalta hi nahi.</p>
+<p>Ek bhi <code>cookies()</code>/<code>headers()</code>/<code>searchParams</code> use hua → route dynamic → har request par render.</p>`,
+        analogy: `Pre-printed pamphlet — printing press (build) mein ek baar chap gaya, ab lakhs copies seedha baant do. Customized letter (dynamic) chahiye to har baar likhna padega.`,
+        why: `<p>Static HTML serve karna sabse tez aur sasta hai — server CPU zero, TTFB near-zero. Full Route Cache ka goal: <b>zyada se zyada routes static rahen</b>, sirf zaroori hisse dynamic.</p>`,
+        visual: {
+          cap: 'Build par static routes ka HTML tayyar. Dynamic APIs use karte hi route dynamic ho jaata hai.',
+          svg: `<svg viewBox="0 0 700 145" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="8" y="8" width="336" height="129" rx="11" fill="#dcf0eb"/>
+<text x="24" y="28" font-size="10.5" font-weight="700" fill="#1a5a3a">STATIC route</text>
+<rect x="24" y="38" width="140" height="30" rx="8" fill="#fff"/><text x="94" y="57" font-size="9" text-anchor="middle" fill="#111">next build</text>
+<rect x="184" y="38" width="144" height="30" rx="8" fill="#fff"/><text x="256" y="57" font-size="9" text-anchor="middle" fill="#111">HTML tayyar ✓</text>
+<path d="M168 53 h12" stroke="#1a5a3a" stroke-width="2"/>
+<rect x="24" y="80" width="304" height="42" rx="8" fill="#fff"/>
+<text x="176" y="98" font-size="9" text-anchor="middle" fill="#1a5a3a">Har visitor ko wahi HTML — CDN se</text>
+<text x="176" y="113" font-size="8.5" text-anchor="middle" fill="#5f6368">server render NAHI hota, TTFB ~0ms</text>
+<rect x="356" y="8" width="336" height="129" rx="11" fill="#ffd6e8"/>
+<text x="372" y="28" font-size="10.5" font-weight="700" fill="#7a1a4a">DYNAMIC route — inme se kuch bhi?</text>
+<rect x="372" y="38" width="96" height="24" rx="6" fill="#fff"/><text x="420" y="54" font-size="8.5" text-anchor="middle" fill="#7a1a4a">cookies()</text>
+<rect x="476" y="38" width="96" height="24" rx="6" fill="#fff"/><text x="524" y="54" font-size="8.5" text-anchor="middle" fill="#7a1a4a">headers()</text>
+<rect x="580" y="38" width="96" height="24" rx="6" fill="#fff"/><text x="628" y="54" font-size="8.5" text-anchor="middle" fill="#7a1a4a">searchParams</text>
+<rect x="372" y="74" width="304" height="48" rx="8" fill="#fff"/>
+<text x="524" y="93" font-size="9" text-anchor="middle" fill="#7a1a4a">→ har REQUEST par render hota hai</text>
+<text x="524" y="110" font-size="8.5" text-anchor="middle" fill="#5f6368">Full Route Cache is route par lagu hi nahi</text>
+</svg>`
+        },
+        code: `// STATIC — build par ban gaya, CDN se serve
+export default async function Page() {
+  const posts = await getPosts();  // cached fetch
+  return <List posts={posts} />;
+}
+
+// DYNAMIC — bas cookies padh liye
+import { cookies } from 'next/headers';
+export default async function Page() {
+  const theme = (await cookies()).get('theme');
+  // ↑ is route ka Full Route Cache AB NAHI banega
+}
+
+// Force dynamic (rare):
+export const dynamic = 'force-dynamic';
+// Ya force static:
+export const dynamic = 'force-static';`,
+        where: [
+          ['Marketing pages', 'Landing, pricing, about — sab static, lightning fast.'],
+          ['Blogs', 'Posts build par static, <code>revalidate</code> se fresh.'],
+          ['Dashboards', 'Personalized data = dynamic — yahan cache expect mat karo.']
+        ],
+        pros: [
+          'Sabse tez possible delivery — pre-built HTML.',
+          'Server cost almost zero for static routes.',
+          'SEO perfect — poora HTML pehli response mein.'
+        ],
+        cons: [
+          'Build time badh jaata hai — hazaron routes = lambi builds.',
+          'Anjaane mein dynamic API use kar lena route ko dynamic kar deta hai.',
+          'Content update ke liye revalidation chahiye.'
+        ],
+        gotchas: [
+          '<code>searchParams</code> use karte hi route <b>dynamic</b> ho jaata hai — build output mein tick/cross symbols check karo.',
+          'Router Cache (client) alag cheez hai — Full Route Cache server-side hai, dono ko mix mat karo.',
+          '<code>revalidatePath(\'/blog\')</code> sirf us route ka cache todta hai — Data Cache bhi saath mein invalidate hota hai agar linked hai.'
+        ]
+      },
+
+      't1_4': {
+        terms: [
+          ['Router Cache', 'Browser (client) mein visited routes ke RSC payloads ki memory.'],
+          ['Prefetch', '<code>&lt;Link&gt;</code> viewport/hover par route ka payload pehle se laa leta hai.'],
+          ['router.refresh()', 'Server se current route ka fresh data mangwata hai — cache refresh.']
+        ],
+        what: `<p>Jab aap kisi route par jaate ho, uska RSC payload browser memory mein save ho jaata hai. Wapas wahi route par jaoge to <b>network call hi nahi hogi</b> — instant navigation.</p>
+<p><code>&lt;Link&gt;</code> prefetch karta hai: static routes full payload, dynamic routes sirf loading skeleton.</p>`,
+        analogy: `Roz ka rasta — pehli baar GPS chahiye, uske baad yaad ho jaata hai. Ghar se office (back navigation) ab bina soche pahunch jaate ho. Prefetch = kal ke meeting ka venue aaj hi dekh lena.`,
+        why: `<p>Har click par server round-trip hota to SPA feel nahi aati. Router Cache ne <b>client-side instant navigation</b> diya — bina poora app client bundle mein laaye.</p>`,
+        visual: {
+          cap: 'Hover/viewport par prefetch → click par instant. Back/forward cache se bilkul free.',
+          svg: `<svg viewBox="0 0 700 145" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="8" y="8" width="336" height="129" rx="11" fill="#d6eaff"/>
+<text x="24" y="28" font-size="10.5" font-weight="700" fill="#1e4b7a">PREFETCH — Link ka kamaal</text>
+<rect x="24" y="40" width="130" height="30" rx="8" fill="#fff"/><text x="89" y="59" font-size="9" text-anchor="middle" fill="#111">hover / viewport</text>
+<path d="M158 55 h30 M182 49 l8 6 -8 6" stroke="#1e4b7a" stroke-width="2"/>
+<rect x="196" y="40" width="132" height="30" rx="8" fill="#ffeab6"/><text x="262" y="59" font-size="9" text-anchor="middle" fill="#7a5200">payload aa gaya</text>
+<rect x="24" y="84" width="304" height="40" rx="8" fill="#fff"/>
+<text x="176" y="101" font-size="9" text-anchor="middle" fill="#1e4b7a">CLICK → 0ms wait, seedha render ✓</text>
+<text x="176" y="116" font-size="8" text-anchor="middle" fill="#5f6368">static: poora payload · dynamic: sirf skeleton</text>
+<rect x="356" y="8" width="336" height="129" rx="11" fill="#dcf0eb"/>
+<text x="372" y="28" font-size="10.5" font-weight="700" fill="#1a5a3a">CACHE TIME (staleDuration)</text>
+<rect x="372" y="40" width="304" height="26" rx="8" fill="#fff"/>
+<text x="384" y="57" font-size="9" fill="#1a5a3a">Dynamic segments: 30 second</text>
+<rect x="372" y="72" width="304" height="26" rx="8" fill="#fff"/>
+<text x="384" y="89" font-size="9" fill="#1a5a3a">Static segments: 5 minute</text>
+<text x="372" y="122" font-size="8.5" fill="#5f6368">router.refresh() se manual fresh kar sakte ho</text>
+</svg>`
+        },
+        code: `// Normal link — prefetch ON by default
+<Link href="/products">Products</Link>
+
+// Prefetch band (admin panel, rare cases)
+<Link href="/heavy" prefetch={false}>Heavy</Link>
+
+// Server par data badla? Client se refresh:
+'use client';
+import { useRouter } from 'next/navigation';
+const router = useRouter();
+<button onClick={() => router.refresh()}>
+  Fresh data laao
+</button>
+
+// Cache clear on logout:
+router.refresh();  // current route refetch`,
+        where: [
+          ['Navigation feel', 'SPA-jaisa smooth — bina SPA bundle ke.'],
+          ['Back button', 'Instant — payload cache mein hai.'],
+          ['Logout/login flows', '<code>router.refresh()</code> se UI server state se sync.']
+        ],
+        cons: [
+          'Stale data 30s/5min tak dikh sakta hai.',
+          'Cache DevTools mein nahi dikhta — debugging andhera.',
+          'Bahut saare Links = bahut prefetch requests.'
+        ],
+        gotchas: [
+          'Router Cache <b>memory-only</b> hai — page refresh karte hi saaf.',
+          'Dynamic routes ka prefetch sirf partial hota hai (shared layout tak) — poora payload nahi.',
+          'Mutation ke baad list update na ho to <code>router.refresh()</code> bhool gaye ho — classic bug.'
+        ]
+      },
+
+      't1_5': {
+        terms: [
+          ['Time-based revalidate', '<code>revalidate: N</code> — N seconds baad cache "stale", agli request par refresh.'],
+          ['On-demand revalidate', '<code>revalidatePath()</code> / <code>revalidateTag()</code> — jab tum kaho tab fresh.'],
+          ['Cache tag', 'Fetch par tag laga do, baad mein us naam se poora group invalidate.']
+        ],
+        what: `<p>Cached data ko fresh karne ke do tarike: <b>time-based</b> ("60 sec baad stale maano") aur <b>on-demand</b> ("post publish hui? abhi revalidate karo").</p>
+<p>On-demand precise hota hai — poora site nahi, sirf related cache tootta hai.</p>`,
+        analogy: `Doodh packet par expiry date (time-based) — date nikli to naya lao. Aur jab dukaandar bole "aaj ka fresh aaya hai" (on-demand) — tab bhi purana phenk kar naya lo. Dono ka apna jagah hai.`,
+        why: `<p>Sirf time-based revalidation ka problem: content turant update karna ho to max 60s wait. Sirf on-demand: har chhoti cheez ke liye webhook likhna padega. Real apps dono use karti hain.</p>`,
+        visual: {
+          cap: 'Time-based: expiry ke baad pehli request stale deti hai, background refresh. On-demand: publish hote hi turant.',
+          svg: `<svg viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="8" y="8" width="336" height="134" rx="11" fill="#ffeab6"/>
+<text x="24" y="28" font-size="10.5" font-weight="700" fill="#7a5200">TIME-BASED (revalidate: 60)</text>
+<line x1="24" y1="95" x2="328" y2="95" stroke="#7a5200" stroke-width="2"/>
+<circle cx="60" cy="95" r="6" fill="#1a5a3a"/><text x="60" y="115" font-size="8" text-anchor="middle" fill="#7a5200">0s fresh</text>
+<circle cx="180" cy="95" r="6" fill="#f59e0b"/><text x="180" y="115" font-size="8" text-anchor="middle" fill="#7a5200">60s STALE</text>
+<circle cx="290" cy="95" r="6" fill="#1a5a3a"/><text x="290" y="115" font-size="8" text-anchor="middle" fill="#7a5200">refresh ✓</text>
+<text x="24" y="52" font-size="9" fill="#7a5200">60s tak purana chalega —</text>
+<text x="24" y="68" font-size="9" fill="#7a5200">uske baad pehli request par bg refresh</text>
+<rect x="356" y="8" width="336" height="134" rx="11" fill="#dcf0eb"/>
+<text x="372" y="28" font-size="10.5" font-weight="700" fill="#1a5a3a">ON-DEMAND (tags)</text>
+<rect x="372" y="40" width="140" height="30" rx="8" fill="#fff"/>
+<text x="442" y="59" font-size="8.5" text-anchor="middle" fill="#111">Admin: post publish</text>
+<path d="M516 55 h24 M534 49 l8 6 -8 6" stroke="#1a5a3a" stroke-width="2"/>
+<rect x="548" y="40" width="128" height="30" rx="8" fill="#fff"/>
+<text x="612" y="59" font-size="8.5" text-anchor="middle" fill="#111">revalidateTag()</text>
+<rect x="372" y="84" width="304" height="42" rx="8" fill="#fff"/>
+<text x="524" y="102" font-size="9" text-anchor="middle" fill="#1a5a3a">Us tag wala cache TURANT toot gaya</text>
+<text x="524" y="117" font-size="8.5" text-anchor="middle" fill="#5f6368">agli request par fresh data — koi wait nahi</text>
+</svg>`
+        },
+        code: `// 1. Time-based — fetch par
+fetch(url, { next: { revalidate: 3600 } });  // 1 ghanta
+// Ya poore route par:
+export const revalidate = 3600;
+
+// 2. On-demand TAG — sabse precise
+// fetch par tag:
+fetch(url, { next: { tags: ['posts'] } });
+// Server Action / Route Handler mein:
+'use server';
+import { revalidateTag } from 'next/cache';
+export async function publishPost(id) {
+  await db.post.update(...);
+  revalidateTag('posts');   // bas yahi toota
+}
+
+// Path-based:
+revalidatePath('/blog');            // ek route
+revalidatePath('/blog/[id]', 'page'); // pattern`,
+        where: [
+          ['CMS webhooks', 'Content publish → webhook → <code>revalidateTag</code>.'],
+          ['E-commerce', 'Stock/price change par sirf product pages fresh.'],
+          ['Comments/likes', 'Action ke saath <code>revalidatePath</code> — UI turant sync.']
+        ],
+        pros: [
+          'Fresh jab zaroori, cached jab possible — best of both.',
+          'Tags se grouped invalidation — ek shot mein related sab.',
+          'User-facing updates instant.'
+        ],
+        cons: [
+          'Kaunsa tag/path revalidate karna hai, yaad rakhna padta hai.',
+          'Galat tag = cache kabhi nahi tootta ya galat tootta hai.',
+          'Sirf server context mein call ho sakta hai (actions/handlers).'
+        ],
+        gotchas: [
+          '<code>revalidateTag</code> Data Cache tootta hai, lekin <b>client ka Router Cache nahi</b> — uske liye <code>router.refresh()</code> bhi chahiye.',
+          '<code>revalidatePath(\'/\')</code> sirf exact <code>/</code> tootta hai — sab kuch nahi. Sab ke liye <code>revalidatePath(\'/\', \'layout\')</code>.',
+          'Time-based revalidation stale-while-revalidate hai — expiry ke turant baad bhi PEHLI request purana deti hai.'
+        ]
+      }
+    };
+
+    const PHASES = [
+        {
+          id: 'p0', label: 'Phase 0', color: '#3B82F6', level: 'Beginner',
+          title: 'App Router Foundations', subtitle: 'Routing, Layouts, Metadata, Error UI',
+          topics: [
+            { id: 't0_0', name: 'File-based Routing', desc: 'page.tsx, layout.tsx, loading.tsx, error.tsx, not-found.tsx — what each file does and when it renders' },
+            { id: 't0_1', name: 'Layouts & Templates', desc: 'Persistent layouts vs. re-mounting templates. Root layout, nested layouts, layout composition' },
+            { id: 't0_2', name: 'Dynamic Routes', desc: '[slug], [...slug], [[...slug]] — catch-all, optional catch-all, generateStaticParams for SSG' },
+            { id: 't0_3', name: 'Loading & Error UI', desc: 'Streaming with loading.tsx, error.tsx boundaries, global-error.tsx, reset() function' },
+            { id: 't0_4', name: 'Metadata API', desc: 'Static metadata export, generateMetadata(), Open Graph, Twitter cards, robots, sitemap, viewport' },
+            { id: 't0_5', name: 'Route Groups & Parallel Routes', desc: '(group) syntax for organisation, @slot for parallel routes, conditional slot rendering' }
+          ],
+          problems: [
+            {
+              id: 'n0_0', title: 'Blog with Nested Layouts', diff: 'Easy', time: 45,
+              brief: 'Build a blog using nested layouts — root, blog section, and per-post layout',
+              statement: 'Create a Next.js blog with three levels of layout: a root layout (nav + footer), a /blog layout (sidebar with recent posts), and each post page. Clicking a post must not re-mount the sidebar. Add a loading.tsx that shows a skeleton while the post loads.',
+              requirements: ['Root layout: persistent nav + footer', 'Blog layout: sidebar listing latest 5 post titles', 'Post page: fetch post data by slug', 'loading.tsx skeleton appears during navigation to a new post', 'error.tsx with "Post not found" + Back button', 'Nested layouts must not re-mount on route change (verify with console.log in layout)'],
+              concepts: ['layout.tsx', 'nested layout', 'loading.tsx', 'error.tsx', 'layout persistence'],
+              hints: ['Layouts persist across child navigations — they are NOT re-rendered when a child page changes', 'loading.tsx wraps the page.tsx in a Suspense boundary automatically', 'error.tsx must be a Client Component ("use client") to use the reset() function', 'Put console.log in the blog layout — it should log only ONCE on first load, not on each post navigation']
+            },
+            {
+              id: 'n0_1', title: 'Dynamic Routes + generateStaticParams', diff: 'Easy', time: 45,
+              brief: 'Build static product pages from a dynamic [slug] route',
+              statement: 'Create a product catalog. Use a [slug] dynamic route for individual products. At build time, pre-generate the 20 most popular product pages using generateStaticParams(). All other slugs should fall back to on-demand rendering. Add a not-found.tsx for invalid slugs.',
+              requirements: ['[slug]/page.tsx fetches product by slug', 'generateStaticParams() returns top-20 slugs', 'dynamicParams = true for on-demand rendering of other slugs', 'notFound() called when product does not exist', 'not-found.tsx shows friendly "Product not found" UI', 'Catch-all route [...slug] for nested category paths like /products/electronics/phones'],
+              concepts: ['generateStaticParams', 'dynamicParams', 'notFound()', 'catch-all routes', 'SSG'],
+              hints: ['generateStaticParams: `export async function generateStaticParams() { return slugs.map(s => ({slug: s})) }`', '`export const dynamicParams = true` (default) allows new slugs not in generateStaticParams', 'Call `notFound()` from page.tsx to render the nearest not-found.tsx', 'For [...slug], the param is an array: `params.slug = ["electronics", "phones"]`']
+            },
+            {
+              id: 'n0_2', title: 'Metadata & SEO', diff: 'Easy', time: 30,
+              brief: 'Add complete SEO metadata including Open Graph and dynamic per-page meta',
+              statement: 'Add production-grade SEO to your blog. The home page has static metadata. Each post page uses generateMetadata() to set the title, description, and Open Graph image dynamically from the post data. Add a robots.ts and sitemap.ts that auto-generates from the post list.',
+              requirements: ['Root layout: static metadata with site name and description', 'Post pages: generateMetadata() that fetches post and returns title, description, ogImage', 'Open Graph: og:title, og:description, og:image, og:type=article', 'Twitter card metadata with summary_large_image', 'robots.ts: allow all, disallow /admin', 'sitemap.ts: dynamically generates entries for all posts'],
+              concepts: ['generateMetadata', 'Open Graph', 'robots.ts', 'sitemap.ts', 'metadata object'],
+              hints: ['generateMetadata receives the same params as the page — no extra fetch needed if you cache the response', '`export const metadata: Metadata = {...}` for static, `export async function generateMetadata({params})` for dynamic', 'Sitemap: return array of {url, lastModified, changeFrequency, priority}', 'Next.js automatically adds the metadata to <head> — no react-helmet needed']
+            },
+            {
+              id: 'n0_3', title: 'Parallel Routes Dashboard', diff: 'Medium', time: 60,
+              brief: 'Build a dashboard with independent, simultaneously rendered route slots',
+              statement: 'Build a dashboard page with two parallel route slots: @analytics (charts) and @notifications (feed). Each slot has its own loading.tsx and error.tsx. Navigating to sub-pages within each slot must not affect the other slot.',
+              requirements: ['app/dashboard/layout.tsx accepts {children, analytics, notifications} props', '@analytics slot: renders a chart component', '@notifications slot: renders a notification list', 'Each slot has its own loading.tsx skeleton', 'Navigating within @analytics should NOT re-render @notifications', 'Add default.tsx fallbacks for each slot'],
+              concepts: ['parallel routes', '@slot', 'default.tsx', 'slot isolation', 'layout props'],
+              hints: ['Folder structure: app/dashboard/@analytics/page.tsx and app/dashboard/@notifications/page.tsx', 'The layout receives each slot as a named prop: `function Layout({analytics, notifications})`', 'default.tsx is rendered when the slot has no active match — prevents 404 on initial load', 'Soft navigation within a slot uses Link — the other slots are unaffected']
+            },
+            {
+              id: 'n0_4', title: 'Intercepting Routes Modal', diff: 'Medium', time: 60,
+              brief: 'Open photos in a modal while keeping the gallery page in the background',
+              statement: 'Build a photo gallery where clicking a photo opens a modal (intercepting route) showing the full photo — but if you directly visit /photos/[id], you see the full-page photo view. This is the classic Next.js intercepting routes + parallel routes pattern.',
+              requirements: ['Gallery at /photos shows a grid of photos', 'Clicking a photo intercepts navigation — opens a modal overlay', 'The URL changes to /photos/[id] but the gallery stays visible behind the modal', 'Refreshing or sharing /photos/[id] URL shows the full-page photo view (not modal)', 'Closing the modal navigates back to /gallery', 'ESC key closes the modal'],
+              concepts: ['intercepting routes', '(.)', '(..)', 'parallel routes', 'modal pattern', 'useRouter'],
+              hints: ['Intercepting route folder syntax: (.) for same level, (..) for one level up, (...) for root', 'Structure: app/gallery/@modal/(.)photos/[id]/page.tsx (intercepted) + app/photos/[id]/page.tsx (full)', 'Use router.back() to close the modal', 'The default.tsx for @modal slot returns null — so no modal is visible by default on the gallery page']
+            }
+          ]
+        },
+        {
+          id: 'p1', label: 'Phase 1', color: '#8B5CF6', level: 'Beginner-Intermediate',
+          title: 'Data Fetching & Caching', subtitle: 'fetch(), Data Cache, ISR, Revalidation',
+          topics: [
+            { id: 't1_0', name: 'fetch() in Server Components', desc: 'Extending native fetch with {cache} and {next: {revalidate}} options in RSC. No useEffect needed.' },
+            { id: 't1_1', name: 'Request Memoization', desc: 'Same fetch URL called multiple times in one render tree is deduped — automatic within a request lifecycle' },
+            { id: 't1_2', name: 'Data Cache', desc: 'Persistent across requests and deployments. force-cache (default), no-store, revalidate: N' },
+            { id: 't1_3', name: 'Full Route Cache', desc: 'Cached HTML + RSC payload at build time for static routes. Invalidated by revalidatePath/revalidateTag' },
+            { id: 't1_4', name: 'Router Cache (Client)', desc: 'Client-side cache of visited route segments. Prefetched on hover. Duration: 30s (dynamic), 5min (static)' },
+            { id: 't1_5', name: 'Revalidation Strategies', desc: 'Time-based (revalidate: N), on-demand (revalidatePath, revalidateTag), tags with fetch cache tags' }
+          ],
+          problems: [
+            {
+              id: 'n1_0', title: 'Cached API Data Page', diff: 'Easy', time: 30,
+              brief: 'Fetch data in a Server Component with different cache strategies and observe the difference',
+              statement: 'Build three versions of the same data page: (1) no cache (always fresh), (2) cached for 60 seconds, (3) cached indefinitely (static). Deploy to Vercel and observe the behavior. Add a timestamp to each page so you can tell when data was last fetched.',
+              requirements: ['Three route variants: /data/live, /data/timed, /data/static', 'Live: fetch with {cache: "no-store"} — new data every request', 'Timed: fetch with {next: {revalidate: 60}} — revalidates every 60s', 'Static: fetch with {cache: "force-cache"} — only re-fetches on rebuild', 'Each page shows: data content + timestamp when page was generated', 'Add an "Age" indicator that shows how stale the data is'],
+              concepts: ['no-store', 'force-cache', 'revalidate', 'Data Cache', 'ISR'],
+              hints: ['Default fetch in Next.js uses force-cache — this changed from Pages Router where default was no-store', '{next: {revalidate: 60}} is ISR — the page is served stale until 60s passes, then regenerated on next request', 'Add `export const dynamic = "force-dynamic"` to a route to opt the whole page out of caching', 'The timestamp is generated at render time — so if it\'s the same across refreshes, the page is being served from cache']
+            },
+            {
+              id: 'n1_1', title: 'On-Demand ISR with revalidateTag', diff: 'Medium', time: 60,
+              brief: 'Invalidate specific cached data without rebuilding the whole site',
+              statement: 'Build a CMS-style page where blog posts are cached indefinitely. When a post is "published" (via a form), the cache for just that post is invalidated and the page updates immediately on next request. Use cache tags and revalidateTag.',
+              requirements: ['Fetch posts with {next: {tags: ["posts"]}} — posts are cached', 'Build a /admin/publish form that triggers a Server Action', 'Server Action calls revalidateTag("posts") — only post data is invalidated', 'Visiting the blog page after publish shows the new post immediately', 'Add per-post tags: {next: {tags: ["post-{id}"]}} for granular invalidation', 'Implement revalidatePath("/blog") as a fallback to also bust the Full Route Cache'],
+              concepts: ['revalidateTag', 'cache tags', 'Server Action', 'on-demand ISR', 'revalidatePath'],
+              hints: ['Tag your fetch: `fetch(url, {next: {tags: ["posts"]}})`', 'In your Server Action: `import {revalidateTag} from "next/cache"; revalidateTag("posts")`', 'revalidateTag invalidates the Data Cache entry; revalidatePath also busts the Full Route Cache', 'For a webhook (e.g., from Contentful/Sanity): create a Route Handler that calls revalidateTag']
+            },
+            {
+              id: 'n1_2', title: 'Request Deduplication Demo', diff: 'Easy', time: 30,
+              brief: 'Prove that fetch() is automatically deduplicated across a component tree',
+              statement: 'Build a page with a layout component, a header component, and a main content component — all three independently fetch the same user endpoint (/api/user). Verify that only ONE actual HTTP request is made per page render by logging on the server. This is request memoization.',
+              requirements: ['Three components each call fetch("/api/user")', 'API route logs a counter each time it\'s actually hit', 'Render the page and verify the counter increments by 1, not 3', 'Test that adding a new tab (new request) increments by 1 again', 'Show that no-store disables memoization — counter increments by 3', 'Write a note explaining why this matters for DX'],
+              concepts: ['request memoization', 'fetch deduplication', 'render tree', 'per-request cache'],
+              hints: ['Request memoization is per-render-tree, not persistent like the Data Cache', 'It only works for GET requests with the same URL + options', 'If you use the same fetch in layout AND page AND component, only 1 HTTP call is made', 'This is why you can safely call the same data-fetching function in multiple Server Components without creating a "props drilling" problem']
+            },
+            {
+              id: 'n1_3', title: 'E-commerce Product Page with Hybrid Caching', diff: 'Hard', time: 90,
+              brief: 'Mix static product data (forever cached) with dynamic stock/price (no-store)',
+              statement: 'Build a product page that mixes two fetching strategies: the product description, images, and specs are cached forever (content rarely changes). The price and stock level are fetched fresh on every request. Use Suspense to stream the dynamic price section while the static content loads instantly.',
+              requirements: ['Product metadata: force-cache (static, cached at build time)', 'Price + stock: no-store (fetched fresh every request)', 'Wrap the dynamic section in <Suspense> with a price skeleton fallback', 'The static content renders first; price streams in', 'Add an "Update Price" admin action that calls revalidatePath for the product page', 'Handle the case where the price API is slow or unavailable'],
+              concepts: ['hybrid caching', 'Suspense streaming', 'no-store', 'force-cache', 'partial rendering'],
+              hints: ['Two separate fetch calls with different cache strategies in the same page is perfectly fine', 'Wrap the slow component in <Suspense fallback={<PriceSkeleton/>}> to stream it', 'The page shell (static content) is sent immediately; the Suspense boundary resolves asynchronously', 'This is the recommended pattern for e-commerce — product content is CDN-cached, pricing is always fresh']
+            },
+            {
+              id: 'n1_4', title: 'Router Cache Prefetching Deep Dive', diff: 'Medium', time: 45,
+              brief: 'Understand and control client-side route prefetching behaviour',
+              statement: 'Build a navigation-heavy app (5+ pages) and observe the Router Cache in action. Verify that hovering over a Link prefetches the route. Test the cache duration for static vs dynamic routes. Implement a "disable prefetch" option on expensive routes. Measure LCP improvement from prefetching.',
+              requirements: ['5 pages: 3 static, 2 dynamic (using force-dynamic)', 'Log render time on each page server-side', 'Observe that hovering a Link to a static page triggers a prefetch request', 'Verify dynamic pages are NOT prefetched by default (prefetch={false} is default for dynamic)', 'Explicitly set prefetch={true} on a dynamic page Link — verify it prefetches', 'Measure navigation speed: prefetched vs not prefetched'],
+              concepts: ['Router Cache', 'prefetch', 'Link component', 'static vs dynamic duration', 'client cache'],
+              hints: ['Static routes: prefetched on hover (5 min cache). Dynamic routes: prefetch={false} by default', 'Set prefetch={true} on a dynamic Link to force prefetch (full page payload is fetched)', 'Router.refresh() busts the router cache for the current URL', 'Chrome DevTools > Network tab: filter for "fetch" to see prefetch requests triggered by Link hover']
+            }
+          ]
+        },
+        {
+          id: 'p2', label: 'Phase 2', color: '#10B981', level: 'Intermediate',
+          title: 'React Server Components & Server Actions', subtitle: 'RSC, "use client", Streaming, Forms',
+          topics: [
+            { id: 't2_0', name: 'RSC vs Client Components', desc: '"use client" creates a boundary. RSC: no hooks, no events, can async/await, runs on server only' },
+            { id: 't2_1', name: 'Composition Patterns', desc: 'Passing RSC as children to Client Components. Server-only imports. The "leaves are clients" principle.' },
+            { id: 't2_2', name: 'Streaming with Suspense', desc: '<Suspense> boundaries enable streaming HTML. loading.tsx as implicit Suspense. Manual Suspense for granular control.' },
+            { id: 't2_3', name: 'Server Actions', desc: '"use server" directive. Form action={action}. useFormState, useFormStatus. Progressive enhancement.' },
+            { id: 't2_4', name: 'Optimistic UI', desc: 'useOptimistic hook — show immediate UI update while Server Action runs in background' },
+            { id: 't2_5', name: 'Server-only & Client-only', desc: 'server-only and client-only packages. Preventing server code from reaching the client bundle.' }
+          ],
+          problems: [
+            {
+              id: 'n2_0', title: 'RSC Data Dashboard', diff: 'Easy', time: 45,
+              brief: 'Build a pure Server Component dashboard that fetches 3 data sources without useEffect',
+              statement: 'Build a dashboard page that is entirely Server Components (no "use client" anywhere). It fetches user stats, recent activity, and notifications in parallel using Promise.all. No useEffect, no useState, no loading spinner — just async/await in the component body. Verify zero client JavaScript is shipped for this page.',
+              requirements: ['page.tsx is async — fetches data with Promise.all at the top', 'Three data sections: stats, activity, notifications', 'All components are Server Components — no "use client" anywhere on this page', 'Verify in Chrome DevTools > Sources that no component JS is shipped for this page', 'Wrap each section in Suspense with skeleton fallbacks', 'Add error.tsx for graceful error handling'],
+              concepts: ['async Server Component', 'Promise.all', 'zero JS', 'Suspense', 'no hydration'],
+              hints: ['`export default async function Page() { const [stats, activity] = await Promise.all([...]) }` — this just works in RSC', 'Server Components ship ZERO JavaScript to the client — the HTML is sent fully rendered', 'Use Promise.all for parallel fetches — don\'t await sequentially or you waste time', 'To verify zero JS: open DevTools > Sources > No component files in the bundle for this route']
+            },
+            {
+              id: 'n2_1', title: 'Interleaved RSC & Client Components', diff: 'Medium', time: 60,
+              brief: 'Build a page that correctly composes Server and Client components together',
+              statement: 'Build a product listing page where the data fetching and rendering are RSC (Server), but the "Add to Cart" button and quantity selector are Client Components. Pass data from RSC down to Client Components as props. Avoid the "Server Component in Client Component" error.',
+              requirements: ['ProductList is a Server Component — fetches and renders product cards', 'Each ProductCard is a Server Component except for the interactive part', 'AddToCartButton is a Client Component ("use client") with local useState for count', 'Pass product data as props from RSC to AddToCartButton — no prop drilling through CC', 'Demonstrate the "children pattern" to nest RSC inside a CC provider', 'Verify: product data is NOT in the client JS bundle'],
+              concepts: ['"use client" boundary', 'RSC composition', 'children pattern', 'prop passing', 'bundle analysis'],
+              hints: ['The "children pattern": `function CartProvider({children}) { "use client"; return <Context>{children}</Context> }` — children can be RSC', 'You CANNOT import a Server Component inside a Client Component — but you CAN pass it as a prop/children', 'Props passed from RSC to CC ARE serialized to the client — keep them minimal', 'A CC can only accept serializable props: strings, numbers, arrays, plain objects — no functions, no class instances']
+            },
+            {
+              id: 'n2_2', title: 'Streaming Dashboard with Manual Suspense', diff: 'Medium', time: 60,
+              brief: 'Make a slow dashboard fast by streaming slow data sections independently',
+              statement: 'Build a dashboard with 4 sections: UserGreeting (fast, 50ms), RecentOrders (medium, 500ms), Analytics (slow, 2s), Recommendations (very slow, 3s). Without Suspense, the page blocks until the slowest section. With Suspense, the fast sections appear instantly and slow ones stream in.',
+              requirements: ['Measure TTFB and LCP without Suspense — page takes 3s to load', 'Wrap each section in independent <Suspense fallback={<Skeleton/>}>', 'Verify: UserGreeting renders in ~50ms, Recommendations appear last', 'Add a "waterfall vs streaming" comparison comment in code', 'Each skeleton accurately represents the loaded content size', 'Handle the case where Recommendations fetch fails (ErrorBoundary)'],
+              concepts: ['Suspense streaming', 'TTFB', 'partial hydration', 'independent boundaries', 'ErrorBoundary'],
+              hints: ['Suspense boundaries = streaming checkpoints. Each boundary is flushed to the browser when the async component inside it resolves', 'Without Suspense: the server waits for all data before sending any HTML', 'With Suspense: the initial HTML is sent immediately; each boundary\'s HTML is streamed when ready', 'Nest ErrorBoundary inside Suspense — or use error.tsx which combines both']
+            },
+            {
+              id: 'n2_3', title: 'Server Action Form with Validation', diff: 'Medium', time: 60,
+              brief: 'Build a form that works without JavaScript using Server Actions',
+              statement: 'Build a contact form using a Server Action. The form must work with JS disabled (progressive enhancement). Add server-side validation with Zod, display field-level errors using useFormState, and show a loading state with useFormStatus. After successful submission, redirect to a thank-you page.',
+              requirements: ['Form action={submitContact} — submitContact is a Server Action', 'Server Action validates with Zod — returns {errors} or {success}', 'useFormState displays field-level error messages next to each field', 'useFormStatus disables the submit button and shows "Sending..." while pending', 'Progressive enhancement: form submits correctly with JS disabled', 'On success: redirect("/thank-you") from inside the Server Action', 'Rate limiting: max 3 submissions per hour per IP'],
+              concepts: ['Server Action', 'useFormState', 'useFormStatus', 'Zod validation', 'progressive enhancement', 'redirect()'],
+              hints: ['Server Action: `"use server"; export async function submitContact(prevState, formData) {...}`', 'useFormState: `const [state, formAction] = useFormState(submitContact, initialState)` — use formAction as the form\'s action prop', 'useFormStatus must be in a CHILD component of the form — not in the same component as the form', 'redirect() from "next/navigation" works inside Server Actions — it throws internally so no return needed']
+            },
+            {
+              id: 'n2_4', title: 'Optimistic Todo List', diff: 'Medium', time: 60,
+              brief: 'Add todos with instant UI feedback before the server confirms',
+              statement: 'Build a todo list where adding a new item appears instantly in the UI (optimistic) while the Server Action persists it to the database. If the server fails, the item is rolled back. The UI must never feel slow — even on a 2G connection.',
+              requirements: ['Server Action: addTodo(formData) — saves to DB, revalidates data', 'useOptimistic wraps the todo list with an optimistic update function', 'Clicking "Add" immediately shows the new todo with a "Saving..." indicator', 'If the Server Action succeeds: the optimistic item is replaced with the real item (from revalidation)', 'If the Server Action fails: the optimistic item is removed and an error toast is shown', 'Optimistic items are visually distinct (opacity 0.6, italic)'],
+              concepts: ['useOptimistic', 'Server Action', 'optimistic update', 'rollback', 'useFormStatus'],
+              hints: ['`const [optimisticTodos, addOptimisticTodo] = useOptimistic(todos, (state, newTodo) => [...state, newTodo])`', 'Call addOptimisticTodo BEFORE the Server Action runs — the UI updates instantly', 'After the Server Action resolves (success or fail), React reverts to the real server state', 'The Client Component needs "use client" — but can receive the initial todos from a Server Component as props']
+            }
+          ]
+        },
+        {
+          id: 'p3', label: 'Phase 3', color: '#F59E0B', level: 'Intermediate',
+          title: 'Advanced Patterns', subtitle: 'Middleware, Edge, Route Handlers, Auth',
+          topics: [
+            { id: 't3_0', name: 'Middleware', desc: 'middleware.ts runs before every request. Auth redirects, A/B testing, geolocation, request rewriting.' },
+            { id: 't3_1', name: 'Edge Runtime', desc: 'V8-based runtime — no Node.js APIs. Runs in CDN edge nodes globally. Use for low-latency middleware.' },
+            { id: 't3_2', name: 'Route Handlers', desc: 'app/api/route.ts — replaces Pages Router API routes. GET, POST, PUT, DELETE handlers. Edge-compatible.' },
+            { id: 't3_3', name: 'Cookies & Headers', desc: 'cookies() and headers() from next/headers. Reading and setting cookies in Server Components and Route Handlers.' },
+            { id: 't3_4', name: 'Middleware Auth Patterns', desc: 'Session validation in middleware, protecting route groups, public vs private routes, token refresh' },
+            { id: 't3_5', name: 'Internationalization (i18n)', desc: 'next-intl or built-in i18n. Locale routing, locale detection, getMessages(), useTranslations()' }
+          ],
+          problems: [
+            {
+              id: 'n3_0', title: 'Auth Middleware with JWT', diff: 'Medium', time: 90,
+              brief: 'Protect all /dashboard routes using middleware that validates JWT',
+              statement: 'Build an authentication system using middleware. All /dashboard/* routes require a valid JWT in a cookie. Middleware validates the token and redirects unauthenticated users to /login. Authenticated users visiting /login are redirected to /dashboard. Implement token refresh in middleware.',
+              requirements: ['middleware.ts intercepts all /dashboard/* requests', 'Read JWT from cookies() — verify using jose (Edge-compatible JWT library)', 'Invalid/missing token: redirect to /login with ?redirectTo=/dashboard/original-path', 'Valid token: set a header with the user ID for the downstream page to read', 'Login page: if already authenticated, redirect to /dashboard', 'Implement token refresh: if token expires in < 5 min, issue a new one in middleware (set-cookie)', 'Use matcher config to only run middleware on /dashboard/* and /login'],
+              concepts: ['middleware', 'JWT', 'jose', 'cookies()', 'matcher', 'redirect', 'NextResponse.next()'],
+              hints: ['`import {jwtVerify} from "jose"` — jose is Edge-compatible, jsonwebtoken is NOT (uses Node crypto)', 'Middleware must return a Response — either NextResponse.redirect() or NextResponse.next()', 'To pass data to the page: `const response = NextResponse.next(); response.headers.set("x-user-id", userId); return response`', 'Read the header in Server Component: `import {headers} from "next/headers"; headers().get("x-user-id")`']
+            },
+            {
+              id: 'n3_1', title: 'Route Handler API', diff: 'Easy', time: 45,
+              brief: 'Build a REST API using Route Handlers with proper HTTP methods and error handling',
+              statement: 'Build a CRUD API for a "bookmarks" resource using Route Handlers. Implement GET (list), POST (create), and DELETE (remove). Add request validation, proper HTTP status codes, and Edge-compatible caching headers. The API should also be callable from Server Components directly (no fetch needed).',
+              requirements: ['GET /api/bookmarks — returns list with Cache-Control headers', 'POST /api/bookmarks — validates body, creates bookmark, returns 201', 'DELETE /api/bookmarks/[id] — deletes by id, returns 204', 'Request validation with Zod — return 400 with validation errors', 'Auth: read user from cookie, return 401 if not authenticated', 'Export a typed function alongside the route handler for direct Server Component use (no HTTP)', 'Edge runtime: export const runtime = "edge"'],
+              concepts: ['Route Handler', 'GET/POST/DELETE', 'NextRequest', 'NextResponse.json()', 'Edge runtime', 'Zod validation'],
+              hints: ['`export async function GET(request: NextRequest) { return NextResponse.json(data) }`', 'Route params in Route Handler: `function DELETE(req, {params}: {params: {id: string}}) {}`', 'For Server Component direct import: export the business logic as a separate function, import it directly instead of fetching the API route', 'Edge runtime: `export const runtime = "edge"` — removes Node.js APIs but runs globally at the CDN edge']
+            },
+            {
+              id: 'n3_2', title: 'A/B Testing with Middleware', diff: 'Hard', time: 90,
+              brief: 'Implement server-side A/B testing by rewriting routes in middleware',
+              statement: 'Build an A/B test system using middleware. 50% of users see variant A (homepage), 50% see variant B (/home-b). The assignment is stored in a cookie so users see the same variant on every visit. The URL stays as "/" for both variants. Track which variant converts better.',
+              requirements: ['Middleware assigns A or B randomly on first visit, stores in "ab-variant" cookie', 'Cookie persists for 30 days — same user always sees the same variant', 'NextResponse.rewrite() serves /home-a or /home-b without changing the URL', 'A variant page: existing homepage', 'B variant page: redesigned homepage with new CTA', 'Read the variant in the page to highlight which variant is active (for QA)', 'Add a /force-variant?v=b URL for QA to force a specific variant'],
+              concepts: ['A/B testing', 'middleware rewrite', 'NextResponse.rewrite()', 'cookies', 'feature flags'],
+              hints: ['`NextResponse.rewrite(new URL("/home-b", request.url))` — serves /home-b content at the / URL', 'Assign variant: `const variant = Math.random() < 0.5 ? "a" : "b"`', 'Set cookie in middleware: `response.cookies.set("ab-variant", variant, {maxAge: 60*60*24*30})`', 'For analytics: pass the variant as a custom header or include it in the page HTML']
+            },
+            {
+              id: 'n3_3', title: 'Full-stack CRUD with Server Actions', diff: 'Hard', time: 120,
+              brief: 'Build a notes app with create, edit, delete using Server Actions + Prisma',
+              statement: 'Build a full-stack notes app where all mutations go through Server Actions (no API routes). Notes are stored in a SQLite database via Prisma. Server Actions handle create, update, delete. After each mutation, revalidatePath refreshes the list. No client-side API calls — everything is server-side.',
+              requirements: ['Prisma schema: Note {id, title, content, createdAt, updatedAt}', 'Server Actions: createNote, updateNote, deleteNote — all in actions.ts with "use server"', 'List page: Server Component that fetches notes directly from Prisma (no API call)', 'Create form: Server Action with validation, redirect to /notes/[id] on success', 'Edit page: pre-filled form, Server Action for update', 'Delete button: Server Action, confirms with useOptimistic before deletion', 'All mutations call revalidatePath("/notes") to refresh the list'],
+              concepts: ['Server Actions', 'Prisma', 'revalidatePath', 'full-stack', 'no API route'],
+              hints: ['Server Actions can import Prisma directly — they run on the server, so no exposure issue', '`"use server"` at the top of a file makes all exports in that file Server Actions', 'For delete with confirmation: useOptimistic to remove the item immediately, Server Action deletes from DB', 'This pattern eliminates the need for an API layer entirely — Server Actions ARE the API']
+            },
+            {
+              id: 'n3_4', title: 'Geolocation-based Content', diff: 'Medium', time: 60,
+              brief: 'Show different content based on user\'s country using Edge middleware',
+              statement: 'Build a pricing page that shows different prices and currencies based on the visitor\'s country. Middleware reads the geo data from request headers (Vercel provides this), sets a "user-region" header, and the Server Component renders the appropriate pricing. No client-side geolocation API needed.',
+              requirements: ['Middleware reads request.geo.country (Vercel) or CF-IPCountry header', 'Sets x-user-region header: "US", "EU", "IN", "ROW" based on country code', 'Pricing page reads the header via headers() and renders region-specific pricing', 'US: USD prices, EU: EUR prices, IN: INR prices, ROW: USD prices', 'Add /debug/geo page that shows all geo headers for testing', 'Test with VPN or Vercel\'s preview with different regions'],
+              concepts: ['Edge middleware', 'geolocation', 'request.geo', 'headers()', 'regional content'],
+              hints: ['On Vercel: `request.geo?.country` — available in Edge middleware', 'Local dev: geo is undefined — add a fallback: `request.geo?.country ?? "US"`', 'Vercel also provides: city, region, latitude, longitude in request.geo', 'Pass the region to Server Components via headers: `response.headers.set("x-user-region", region)`']
+            }
+          ]
+        },
+        {
+          id: 'p4', label: 'Phase 4', color: '#EC4899', level: 'Advanced',
+          title: 'Performance & Production', subtitle: 'Images, Fonts, Bundle, PPR, Turbopack',
+          topics: [
+            { id: 't4_0', name: 'next/image Optimization', desc: 'Automatic WebP/AVIF conversion, lazy loading, blur placeholder, responsive sizes, priority prop, remote patterns' },
+            { id: 't4_1', name: 'next/font Optimization', desc: 'Google Fonts via next/font/google — zero layout shift, self-hosted, subset, display swap, CSS variable' },
+            { id: 't4_2', name: 'Script Loading Strategies', desc: 'next/script with strategy: beforeInteractive, afterInteractive, lazyOnload, worker (Partytown)' },
+            { id: 't4_3', name: 'Bundle Analysis & Optimization', desc: '@next/bundle-analyzer, dynamic imports, code splitting, tree shaking, barrel file pitfalls' },
+            { id: 't4_4', name: 'Partial Prerendering (PPR)', desc: 'Experimental: static shell + dynamic holes. Best of static + dynamic in one page. Uses Suspense boundaries.' },
+            { id: 't4_5', name: 'Turbopack', desc: 'Rust-based bundler replacing Webpack. `next dev --turbo`. Faster HMR, incremental compilation, module graph.' }
+          ],
+          problems: [
+            {
+              id: 'n4_0', title: 'Image Gallery with Perfect Core Web Vitals', diff: 'Medium', time: 60,
+              brief: 'Build a photo gallery that scores 100 on Lighthouse for image performance',
+              statement: 'Build a responsive photo gallery optimized for perfect Core Web Vitals. Above-the-fold images use priority={true}. All images use correct sizes prop. Blur placeholders prevent layout shift. AVIF is served to supported browsers. The gallery LCP should be under 1.2s.',
+              requirements: ['Hero image: priority={true}, sizes="100vw", fill with object-cover', 'Gallery grid: lazy loaded, sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"', 'All images have blur placeholder from base64 or blurDataURL', 'Remote images: configure remotePatterns in next.config.js', 'Achieve Lighthouse score: Performance > 90, LCP < 1.5s', 'Add placeholder="blur" with a generated blurDataURL (use plaiceholder library)', 'Measure: AVIF served vs WebP vs JPEG — show the size difference'],
+              concepts: ['next/image', 'priority', 'sizes', 'blurDataURL', 'remotePatterns', 'AVIF', 'LCP'],
+              hints: ['priority={true} preloads the image — use only for above-the-fold hero images (1-2 max)', '`sizes` prop tells the browser which image to download at each breakpoint — matching CSS layout sizes is critical', 'blurDataURL: `import {getPlaiceholder} from "plaiceholder"` — generates a tiny base64 placeholder', 'AVIF: Next.js serves it automatically — check response Content-Type header to verify']
+            },
+            {
+              id: 'n4_1', title: 'Font Loading with Zero Layout Shift', diff: 'Easy', time: 30,
+              brief: 'Load Google Fonts with next/font and eliminate CLS completely',
+              statement: 'Configure typography using next/font/google for the primary font and next/font/local for a custom display font. The fonts must load with zero Cumulative Layout Shift. Use CSS variables to share the font across Tailwind and global styles. Subset fonts to only include needed characters.',
+              requirements: ['Primary font: Inter from next/font/google with subsets: ["latin"]', 'Display font: custom .woff2 via next/font/local', 'Both fonts exposed as CSS variables: --font-inter, --font-display', 'Tailwind config uses the CSS variables for font-family', 'Verify CLS = 0 in Lighthouse', 'Add display: "swap" and preload: true', 'Show size difference: next/font vs traditional @import'],
+              concepts: ['next/font', 'CSS variable', 'font subset', 'display swap', 'CLS', 'Tailwind integration'],
+              hints: ['`const inter = Inter({subsets: ["latin"], variable: "--font-inter"})` — apply to body className', '`<body className={`${inter.variable} ${display.variable}`}>` — attach CSS variables to the DOM', 'Tailwind: `fontFamily: { sans: ["var(--font-inter)"] }` in tailwind.config.js', 'next/font automatically self-hosts Google Fonts — zero external requests at runtime']
+            },
+            {
+              id: 'n4_2', title: 'Bundle Analysis & Dynamic Imports', diff: 'Hard', time: 90,
+              brief: 'Reduce bundle size by 50% using bundle analyzer and dynamic imports',
+              statement: 'Add @next/bundle-analyzer to your app and identify the top 3 heaviest dependencies. Implement dynamic imports with next/dynamic for heavy components (chart library, rich text editor, map). Identify and fix a "barrel file" import problem. Target: reduce First Load JS by 40%.',
+              requirements: ['Install and configure @next/bundle-analyzer', 'Run ANALYZE=true npm build and screenshot the treemap', 'Identify top 3 heaviest packages by size', 'Dynamic import chart library: `const Chart = dynamic(() => import("./Chart"), {ssr: false, loading: () => <Skeleton/>})`', 'Dynamic import rich text editor — it must not SSR', 'Identify a barrel file (index.ts that re-exports everything) — fix with direct imports', 'Before/after: First Load JS comparison from build output'],
+              concepts: ['bundle analyzer', 'dynamic import', 'code splitting', 'barrel file', 'ssr:false', 'tree shaking'],
+              hints: ['Barrel files: `import {Button} from "@/components"` pulls in ALL components even if you only need Button — import directly instead', 'dynamic() with ssr:false is critical for browser-only libraries (charts, editors, maps)', 'The bundle analyzer shows two views: client and server — focus on client bundles for FE performance', 'Use `import("./heavy").then(m => m.default)` in onClick handlers to lazy-load on interaction instead of on page load']
+            },
+            {
+              id: 'n4_3', title: 'Partial Prerendering (PPR)', diff: 'Hard', time: 90,
+              brief: 'Implement PPR to combine static shells with dynamic holes in one request',
+              statement: 'Implement Partial Prerendering (experimental) on a product page. The page shell (header, product info, static content) is prerendered at build time and served instantly from CDN. The dynamic holes (personalized recommendations, stock level, user-specific pricing) are streamed in. One request, zero separate API calls.',
+              requirements: ['Enable PPR in next.config.js: experimental.ppr = true', 'Product page: static shell with placeholder Suspense boundaries', 'Dynamic components: Recommendations, StockBadge, PersonalizedPrice — all wrapped in Suspense', 'Verify in Network tab: initial HTML arrives instantly (static shell), dynamic content streams in', 'Measure: compare TTFB of PPR page vs fully dynamic page', 'Demonstrate: static shell is cacheable at the CDN, dynamic holes are not'],
+              concepts: ['PPR', 'Partial Prerendering', 'static shell', 'dynamic holes', 'Suspense', 'CDN caching'],
+              hints: ['PPR requires Next.js 14+ with the experimental flag and React 18 concurrent features', 'Each Suspense boundary = a "hole" that can be dynamic while the rest is static', 'The initial response is the static HTML with Suspense fallbacks; dynamic content is streamed via the same HTTP connection', 'PPR is the evolution of ISR — instead of the whole page being static, just the shell is']
+            },
+            {
+              id: 'n4_4', title: 'Production Deployment Checklist', diff: 'Medium', time: 60,
+              brief: 'Audit and fix all production issues before shipping a Next.js app',
+              statement: 'Take your blog project and perform a full production readiness audit. Fix all performance, security, and SEO issues found. Deploy to Vercel, run a Lighthouse audit, achieve 90+ on all metrics. Configure environment variables, error monitoring, and analytics.',
+              requirements: ['Lighthouse audit: Performance > 90, Accessibility > 90, SEO > 95, Best Practices > 90', 'Security headers: X-Frame-Options, X-Content-Type-Options, CSP via next.config.js headers()', 'Environment variables: .env.local for dev, Vercel env vars for production', 'Error monitoring: Sentry integration with next-sentry', 'Analytics: Vercel Analytics or Plausible — no cookie banner needed', 'Image domains: all external images configured in remotePatterns', 'ISR: all blog posts revalidate every 3600s', 'Rate limiting on API routes via upstash/ratelimit'],
+              concepts: ['production checklist', 'security headers', 'Sentry', 'environment variables', 'Lighthouse', 'rate limiting'],
+              hints: ['Security headers in next.config.js: `headers: async () => [{source: "/(.*)", headers: securityHeaders}]`', 'Sentry: `npx @sentry/wizard@latest -i nextjs` — auto-configures instrumentation.ts', 'Vercel Analytics: `import {Analytics} from "@vercel/analytics/react"; <Analytics/>` in root layout — zero config', 'Rate limiting: Upstash Redis + @upstash/ratelimit — works in Edge runtime']
+            }
+          ]
+        }
+      ];
+
+      // ── STATE ──────────────────────────────────────────────────────
+      function loadState() {
+        try { return JSON.parse(localStorage.getItem(STATE_KEY)) || {}; } catch { return {}; }
+  }
+    function saveState() { localStorage.setItem(STATE_KEY, JSON.stringify(state)); }
+    let state = loadState();
+    if (!state.problems) state.problems = {};
+    if (!state.topics) state.topics = {};
+    if (!state.reqs) state.reqs = {};
+    if (!state.topicNotes) state.topicNotes = {};
+
+    let activePhase = 0;
+    let diffFilter = 'all';
+    const timers = {};
+
+    // ── STATS ──────────────────────────────────────────────────────
+    function updateStats() {
+      let done = 0, topicsDone = 0, phasesDone = 0;
+      PHASES.forEach(ph => {
+        let phaseDone = true;
+        ph.problems.forEach(pr => { if ((state.problems[pr.id] || {}).status === 'done') done++; else phaseDone = false; });
+        ph.topics.forEach(t => { if ((state.topics[t.id] || {}).state === 'mastered') topicsDone++; else phaseDone = false; });
+        if (phaseDone) phasesDone++;
+      });
+      document.getElementById('stat-done').textContent = done;
+      document.getElementById('stat-topics').textContent = topicsDone;
+      document.getElementById('stat-phases').textContent = phasesDone + '/5';
+    }
+
+    // ── PHASE NAV ──────────────────────────────────────────────────
+    function renderPhaseNav() {
+      const nav = document.getElementById('phase-nav');
+      nav.innerHTML = PHASES.map((ph, i) => {
+        const done = ph.problems.filter(pr => (state.problems[pr.id] || {}).status === 'done').length;
+        return `<div class="phase-tab${i === activePhase ? ' active' : ''}" onclick="switchPhase(${i})">
+        <span class="tab-lang">${ph.level}</span>
+        ${ph.title} <span style="opacity:.6;font-size:11px">(${done}/${ph.problems.length})</span>
+      </div>`;
+      }).join('');
+    }
+
+    function switchPhase(i) { activePhase = i; renderPhaseNav(); renderContent(); }
+
+    // ── FILTER ─────────────────────────────────────────────────────
+    function buildFilterBar() {
+      return `<div class="filter-bar"><div class="filter-group">
+      <span class="filter-label">Difficulty:</span>
+      <button class="flt-btn${diffFilter === 'all' ? ' flt-active' : ''}" onclick="setFilter('all')">All</button>
+      <button class="flt-btn diff-easy${diffFilter === 'Easy' ? ' flt-active' : ''}" onclick="setFilter('Easy')">Easy</button>
+      <button class="flt-btn diff-medium${diffFilter === 'Medium' ? ' flt-active' : ''}" onclick="setFilter('Medium')">Medium</button>
+      <button class="flt-btn diff-hard${diffFilter === 'Hard' ? ' flt-active' : ''}" onclick="setFilter('Hard')">Hard</button>
+    </div></div>`;
+    }
+    function setFilter(f) { diffFilter = f; renderContent(); }
+
+    // ── TOPIC CARD ─────────────────────────────────────────────────
+    function buildTopicCard(t) {
+      const ts = state.topics[t.id] || {};
+      const st = ts.state || 'untouched';
+      const tn = state.topicNotes[t.id] || {};
+      const cardCls = st === 'mastered' ? ' mastered' : st === 'in-progress' ? ' in-progress' : '';
+      const chkSt = st === 'mastered' ? 'mastered' : st === 'in-progress' ? 'in-progress' : 'untouched';
+      const hasNote = !!(tn.approach || tn.code || tn.gotchas);
+      const confBtns = ['😰 Shaky', '🤔 Getting There', '👍 Solid', '🚀 Expert']
+        .map((l, ci) => `<button class="tp-score-btn s${ci + 1}${(tn.score || 0) === ci + 1 ? ' selected' : ''}" onclick="setTopicScore('${t.id}',${ci + 1})">${l}</button>`).join('');
+      return `<div class="topic-card${cardCls}" id="tcard_${t.id}">
+      <div class="topic-header" onclick="toggleTopicPanel('${t.id}')">
+        <div class="topic-check" data-state="${chkSt}" id="tchk_${t.id}" onclick="event.stopPropagation();cycleTopicState('${t.id}')">
+          <span class="chk-icon mastered">✓</span><span class="chk-icon in-progress">~</span>
+        </div>
+        <div class="topic-info">
+          <div class="topic-name">${t.name}</div>
+          <div class="topic-desc">${t.desc}</div>
+        </div>
+        <div class="topic-badges">
+          ${hasNote ? '<span style="width:7px;height:7px;border-radius:50%;background:#1a5a3a;display:inline-block;"></span>' : ''}
+          <span class="expand-btn" id="tpbtn_${t.id}">Practice</span>
+        </div>
+      </div>
+      <div class="practice-panel" id="tpanel_${t.id}">
+        <div class="tp-fields">
+          <div class="field-group full">
+            <div class="field-label-text">🧠 My Understanding</div>
+            <textarea class="field-input${tn.approach ? ' filled' : ''}" id="tn_approach_${t.id}" placeholder="Explain this in your own words...">${tn.approach || ''}</textarea>
+          </div>
+          <div class="field-group">
+            <div class="field-label-text">💻 Code / Pattern</div>
+            <textarea class="field-input${tn.code ? ' filled' : ''}" id="tn_code_${t.id}" placeholder="Key code snippet...">${tn.code || ''}</textarea>
+          </div>
+          <div class="field-group">
+            <div class="field-label-text">⚠️ Gotchas</div>
+            <textarea class="field-input${tn.gotchas ? ' filled' : ''}" id="tn_gotchas_${t.id}" placeholder="What trips people up...">${tn.gotchas || ''}</textarea>
+          </div>
+        </div>
+        <div class="tp-score-row">
+          <span class="tp-score-label">Confidence:</span>${confBtns}
+          <button class="tp-save-btn" onclick="saveTopicNote('${t.id}')">Save</button>
+          <span class="tp-saved" id="tpsaved_${t.id}">Saved ✓</span>
+        </div>
+      </div>
+    </div>`;
+    }
+
+    // ── PROBLEM CARD ───────────────────────────────────────────────
+    function buildProblemCard(pr, idx) {
+      const ps = state.problems[pr.id] || {};
+      const cls = ps.status === 'done' ? ' done' : ps.status === 'inprogress' ? ' inprogress' : '';
+      const diffCls = pr.diff === 'Easy' ? 'diff-easy' : pr.diff === 'Medium' ? 'diff-medium' : 'diff-hard';
+      const reqsHtml = pr.requirements.map((r, ri) => {
+        const rKey = pr.id + '_r' + ri;
+        const checked = state.reqs[rKey] || false;
+        return `<div class="req-item" onclick="toggleReq('${rKey}',this)">
+        <input class="req-cb" type="checkbox" ${checked ? 'checked' : ''} onclick="event.stopPropagation()">
+        <span class="req-text${checked ? ' checked' : ''}">${r}</span>
+      </div>`;
+      }).join('');
+      const conceptsHtml = pr.concepts.map(c => `<span class="concept-tag">${c}</span>`).join('');
+      const hintsHtml = pr.hints.map((h, hi) => `<div class="hint-item"><span class="hint-num">${hi + 1}.</span>${h}</div>`).join('');
+      const solHtml = SOLUTION_FIELDS.map(f => {
+        const val = ps[f.k] || '';
+        return `<div class="field-group${f.full ? ' full' : ''}">
+        <div class="field-label-text">${f.icon} ${f.label}</div>
+        <textarea class="field-input${val ? ' filled' : ''}" id="sol_${pr.id}_${f.k}" placeholder="${getSolPlaceholder(f.k)}">${val}</textarea>
+      </div>`;
+      }).join('');
+      return `<div class="problem-card${cls}" id="pcard_${pr.id}">
+      <div class="card-header" onclick="toggleProblem('${pr.id}')">
+        <span class="card-num">${String(idx + 1).padStart(2, '0')}</span>
+        <div class="card-info">
+          <div class="card-title">${pr.title}</div>
+          <div class="card-brief">${pr.brief}</div>
+        </div>
+        <div class="card-badges">
+          <span class="diff-badge ${diffCls}">${pr.diff}</span>
+          <span class="time-badge">⏱ ${pr.time}m</span>
+          <button class="prob-expand-btn" id="pexpbtn_${pr.id}">Open</button>
+        </div>
+      </div>
+      <div class="problem-panel" id="ppanel_${pr.id}">
+        <div class="statement-box">
+          <div class="statement-label">Problem Statement</div>
+          <div class="statement-text">${pr.statement}</div>
+        </div>
+        <div class="req-section">
+          <div class="req-label">✅ Requirements</div>${reqsHtml}
+        </div>
+        <div class="req-label" style="margin-top:14px">🏷 Concepts</div>
+        <div class="concepts-row">${conceptsHtml}</div>
+        <div class="hints-wrap">
+          <button class="hint-toggle" onclick="toggleHints('${pr.id}')">💡 Show Hints</button>
+          <div class="hint-content" id="hints_${pr.id}">${hintsHtml}</div>
+        </div>
+        <div class="timer-section">
+          <span class="timer-label">Timer</span>
+          <span class="timer-display" id="tdisp_${pr.id}">${fmtTime(pr.time * 60)}</span>
+          <div class="timer-bar-wrap"><div class="timer-bar" id="tbar_${pr.id}" style="width:100%"></div></div>
+          <div class="timer-controls">
+            <button class="timer-btn" id="tbtn_${pr.id}" onclick="toggleTimer('${pr.id}',${pr.time})">▶ Start</button>
+            <button class="timer-btn" onclick="resetTimer('${pr.id}',${pr.time})">↺ Reset</button>
+          </div>
+        </div>
+        <div class="sol-fields">${solHtml}</div>
+        <div class="action-row">
+          <span class="score-label">Confidence:</span>
+          ${[1, 2, 3, 4].map(n => `<button class="score-btn s${n}${(ps.score || 0) === n ? ' selected' : ''}" onclick="setScore('${pr.id}',${n})">${['😰', '🤔', '👍', '🚀'][n - 1]}</button>`).join('')}
+          <div class="status-btns">
+            <button class="status-btn wip${ps.status === 'inprogress' ? ' active' : ''}" onclick="setStatus('${pr.id}','inprogress')">In Progress</button>
+            <button class="status-btn done${ps.status === 'done' ? ' active' : ''}" onclick="setStatus('${pr.id}','done')">Done ✓</button>
+          </div>
+          <button class="save-btn" onclick="saveSolution('${pr.id}')">Save</button>
+          <span class="saved-flash" id="flash_${pr.id}">Saved ✓</span>
+        </div>
+      </div>
+    </div>`;
+    }
+
+    function getSolPlaceholder(k) {
+      return { approach: 'How did you structure this? What decisions did you make?', code: 'Key snippet, config, or pseudocode...', gotchas: 'What tripped you up? What would you warn others about?', docs: 'Links or docs pages to bookmark for reference...' }[k] || '';
+    }
+
+    // ── RENDER ─────────────────────────────────────────────────────
+    function renderContent() {
+      const ph = PHASES[activePhase];
+      const filtered = diffFilter === 'all' ? ph.problems : ph.problems.filter(pr => pr.diff === diffFilter);
+      const done = ph.problems.filter(pr => (state.problems[pr.id] || {}).status === 'done').length;
+      const doneTp = ph.topics.filter(t => (state.topics[t.id] || {}).state === 'mastered').length;
+      const pct = Math.round((done + doneTp) / (ph.problems.length + ph.topics.length) * 100);
+      document.getElementById('content').innerHTML = `
+      <div class="phase-head" style="background:${ph.color}15">
+        <div>
+          <div class="phase-num">${ph.label} — ${ph.subtitle}</div>
+          <div class="phase-title">${ph.title}</div>
+        </div>
+        <div class="phase-meta">
+          <div class="phase-level" style="color:${ph.color}">${ph.level}</div>
+          <div class="phase-count">${done}/${ph.problems.length} solved</div>
+        </div>
+      </div>
+      <div class="phase-progress-wrap">
+        <div class="phase-progress-label" id="phase-prog-label">${pct}% complete</div>
+        <div class="phase-progress-bar"><div class="phase-progress-fill" id="phase-prog-fill" style="width:${pct}%;background:${ph.color}"></div></div>
+      </div>
+      <div class="section-head" style="margin-top:1.5rem">Topics to study</div>
+      <div>${ph.topics.map(buildTopicCard).join('')}</div>
+      <div class="section-head" style="margin-top:2rem">Build Problems (${ph.problems.length})</div>
+      ${buildFilterBar()}
+      <div>${filtered.map((pr, i) => buildProblemCard(pr, i)).join('')}</div>`;
+      updateStats();
+    }
+
+    function refreshProgress() {
+      const ph = PHASES[activePhase];
+      const donePr = ph.problems.filter(pr => (state.problems[pr.id] || {}).status === 'done').length;
+      const doneTp = ph.topics.filter(t => (state.topics[t.id] || {}).state === 'mastered').length;
+      const pct = Math.round((donePr + doneTp) / (ph.problems.length + ph.topics.length) * 100);
+      const label = document.getElementById('phase-prog-label');
+      const fill = document.getElementById('phase-prog-fill');
+      if (label) label.textContent = pct + '% complete';
+      if (fill) fill.style.width = pct + '%';
+    }
+
+    // ── TOPIC INTERACTIONS ─────────────────────────────────────────
+    function toggleTopicPanel(id) {
+      const panel = document.getElementById('tpanel_' + id), btn = document.getElementById('tpbtn_' + id);
+      if (!panel) return;
+      const open = panel.classList.toggle('open');
+      if (btn) { btn.classList.toggle('open', open); btn.textContent = open ? 'Close' : 'Practice'; }
+      if (open) setTimeout(() => document.getElementById('tn_approach_' + id)?.focus(), 50);
+    }
+    function cycleTopicState(id) {
+      const ts = state.topics[id] || {}, cur = ts.state || 'untouched';
+      const next = cur === 'untouched' ? 'in-progress' : cur === 'in-progress' ? 'mastered' : 'untouched';
+      state.topics[id] = { ...ts, state: next }; saveState();
+      const card = document.getElementById('tcard_' + id), chk = document.getElementById('tchk_' + id);
+      if (card) card.className = 'topic-card' + (next === 'mastered' ? ' mastered' : next === 'in-progress' ? ' in-progress' : '');
+      if (chk) chk.dataset.state = next === 'mastered' ? 'mastered' : next === 'in-progress' ? 'in-progress' : 'untouched';
+      updateStats(); refreshProgress();
+    }
+    function setTopicScore(id, score) {
+      const panel = document.getElementById('tpanel_' + id); if (panel) panel.dataset.pendingScore = score;
+      document.querySelectorAll(`#tpanel_${id} .tp-score-btn`).forEach((b, i) => b.classList.toggle('selected', i + 1 === score));
+    }
+    function saveTopicNote(id) {
+      const approach = document.getElementById('tn_approach_' + id)?.value || '';
+      const code = document.getElementById('tn_code_' + id)?.value || '';
+      const gotchas = document.getElementById('tn_gotchas_' + id)?.value || '';
+      const panel = document.getElementById('tpanel_' + id);
+      const score = parseInt(panel?.dataset.pendingScore || (state.topicNotes[id] || {}).score || 0) || 0;
+      state.topicNotes[id] = { approach, code, gotchas, score }; saveState();
+      [['tn_approach_', 'approach'], ['tn_code_', 'code'], ['tn_gotchas_', 'gotchas']].forEach(([p, f]) => {
+        const el = document.getElementById(p + id); if (el) el.classList.toggle('filled', !!(state.topicNotes[id][f]));
+      });
+      const flash = document.getElementById('tpsaved_' + id);
+      if (flash) { flash.classList.add('show'); setTimeout(() => flash.classList.remove('show'), 1500); }
+    }
+
+    // ── PROBLEM INTERACTIONS ───────────────────────────────────────
+    function toggleProblem(id) {
+      const panel = document.getElementById('ppanel_' + id), btn = document.getElementById('pexpbtn_' + id);
+      if (!panel) return;
+      const open = panel.classList.toggle('open');
+      if (btn) { btn.classList.toggle('open', open); btn.textContent = open ? 'Close' : 'Open'; }
+    }
+    function toggleHints(id) { document.getElementById('hints_' + id)?.classList.toggle('show'); }
+    function toggleReq(rKey, rowEl) {
+      state.reqs[rKey] = !state.reqs[rKey]; saveState();
+      const cb = rowEl.querySelector('.req-cb'), text = rowEl.querySelector('.req-text');
+      if (cb) cb.checked = state.reqs[rKey];
+      if (text) text.classList.toggle('checked', state.reqs[rKey]);
+    }
+    function setScore(id, score) {
+      state.problems[id] = state.problems[id] || {}; state.problems[id].score = score; saveState();
+      document.querySelectorAll(`#pcard_${id} .action-row .score-btn`).forEach((b, i) => b.classList.toggle('selected', i + 1 === score));
+    }
+    function setStatus(id, status) {
+      state.problems[id] = state.problems[id] || {};
+      state.problems[id].status = state.problems[id].status === status ? null : status; saveState();
+      const card = document.getElementById('pcard_' + id);
+      if (card) card.className = 'problem-card' + (state.problems[id].status === 'done' ? ' done' : state.problems[id].status === 'inprogress' ? ' inprogress' : '');
+      document.querySelector(`#pcard_${id} .status-btn.wip`)?.classList.toggle('active', state.problems[id].status === 'inprogress');
+      document.querySelector(`#pcard_${id} .status-btn.done`)?.classList.toggle('active', state.problems[id].status === 'done');
+      updateStats(); refreshProgress();
+    }
+    function saveSolution(id) {
+      state.problems[id] = state.problems[id] || {};
+      SOLUTION_FIELDS.forEach(f => {
+        const el = document.getElementById('sol_' + id + '_' + f.k);
+        if (el) { state.problems[id][f.k] = el.value; el.classList.toggle('filled', !!el.value); }
+      }); saveState();
+      const flash = document.getElementById('flash_' + id);
+      if (flash) { flash.classList.add('show'); setTimeout(() => flash.classList.remove('show'), 1500); }
+    }
+
+    // ── TIMER ──────────────────────────────────────────────────────
+    function fmtTime(s) { const m = Math.floor(Math.abs(s) / 60), sec = Math.abs(s) % 60; return (s < 0 ? '-' : '') + String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0'); }
+    function toggleTimer(id, limitMin) {
+      const btn = document.getElementById('tbtn_' + id);
+      if (timers[id]?.running) { clearInterval(timers[id].interval); timers[id].running = false; if (btn) { btn.textContent = '▶ Resume'; btn.classList.remove('running'); } }
+      else {
+        if (!timers[id]) timers[id] = { remaining: limitMin * 60, running: false };
+        timers[id].running = true; if (btn) { btn.textContent = '⏸ Pause'; btn.classList.add('running'); }
+        timers[id].interval = setInterval(() => {
+          timers[id].remaining--;
+          const disp = document.getElementById('tdisp_' + id), bar = document.getElementById('tbar_' + id);
+          if (disp) { disp.textContent = fmtTime(timers[id].remaining); disp.className = 'timer-display' + (timers[id].remaining < 0 ? ' over' : timers[id].remaining < limitMin * 60 * .2 ? ' warning' : ''); }
+          if (bar) { const pct = Math.max(0, timers[id].remaining / (limitMin * 60) * 100); bar.style.width = pct + '%'; bar.style.background = timers[id].remaining < 0 ? '#dc2626' : timers[id].remaining < limitMin * 60 * .2 ? '#d97706' : '#16a34a'; }
+        }, 1000);
+      }
+    }
+    function resetTimer(id, limitMin) {
+      if (timers[id]) { clearInterval(timers[id].interval); delete timers[id]; }
+      const disp = document.getElementById('tdisp_' + id), bar = document.getElementById('tbar_' + id), btn = document.getElementById('tbtn_' + id);
+      if (disp) { disp.textContent = fmtTime(limitMin * 60); disp.className = 'timer-display'; }
+      if (bar) { bar.style.width = '100%'; bar.style.background = '#16a34a'; }
+      if (btn) { btn.textContent = '▶ Start'; btn.classList.remove('running'); }
+    }
+
+    // ── INIT ───────────────────────────────────────────────────────
+    renderPhaseNav();
+    renderContent();
+  </script>
+
+  <!-- ── TAB-TITLE TIMER ──────────────────────────────────────────────
+     Mirrors whichever timer card is currently counting into the
+     browser tab title, so you can see it while working in another tab.
+     Watches .timer-display for changes; touches no timer logic. -->
+  <script>
+    (function () {
+      const BASE = document.title;
+      const isTime = s => /^-?\d{1,3}:\d{2}$/.test(s);
+      let restore = null, blink = null, flip = false;
+
+      function stop() {
+        clearInterval(blink); blink = null;
+        document.title = BASE;
+      }
+
+      function show(txt, over) {
+        clearTimeout(restore);
+
+        if (over) {
+          // time is up: blink so it is noticeable from another tab
+          if (!blink) {
+            blink = setInterval(() => {
+              flip = !flip;
+              document.title = (flip ? "⏰ TIME UP " : "⏱ ") + txt + " · " + BASE;
+            }, 900);
+          }
+        } else {
+          clearInterval(blink); blink = null;
+          document.title = "⏱ " + txt + " · " + BASE;
+        }
+
+        // if nothing ticks for 3s the timer is paused or gone: put the title back
+        restore = setTimeout(stop, 3000);
+      }
+
+      new MutationObserver(muts => {
+        for (const m of muts) {
+          const el = m.target.nodeType === 1 ? m.target : m.target.parentElement;
+          if (!el || !el.classList || !el.classList.contains("timer-display")) continue;
+          const txt = (el.textContent || "").trim();
+          if (!isTime(txt)) continue;
+          show(txt, txt.startsWith("-") || el.classList.contains("over"));
+        }
+      }).observe(document.body, { childList: true, characterData: true, subtree: true });
+
+      window.addEventListener("beforeunload", stop);
+    })();
+  </script>
+
+</body>
+
+</html>

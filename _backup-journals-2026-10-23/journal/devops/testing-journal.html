@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Testing Journal — Mayank Thakur</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: #f0f2f5;
+      --bg-card: #ffffff;
+      --text-primary: #000000;
+      --text-secondary: #5f6368;
+      --text-muted: #9aa0a6;
+      --accent-black: #000000;
+      --accent-white: #ffffff;
+      --pastel-yellow: #ffeab6;
+      --pastel-mint: #dcf0eb;
+      --pastel-purple: #e6daff;
+      --pastel-pink: #ffd6e8;
+      --pastel-blue: #d6eaff;
+      --pastel-orange: #ffe4cc;
+      --pastel-green: #d4edda;
+      --pastel-teal: #ccf5f0;
+      --pastel-yellow-hover: #f5dfa9;
+      --border-radius-lg: 24px;
+      --border-radius-md: 16px;
+      --border-radius-pill: 9999px;
+      --font-sans: 'Outfit', 'Inter', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { max-width: 1200px; margin: 0 auto; background: var(--bg-main); font-family: var(--font-sans); color: var(--text-primary); min-height: 100vh; -webkit-font-smoothing: antialiased; line-height: 1.5; }
+
+    .cover { padding: 4rem 2.5rem 2rem; }
+    .cover-subtitle { font-size: 14px; letter-spacing: .05em; color: var(--text-secondary); font-weight: 500; margin-bottom: .5rem; }
+    .cover-title { font-size: 40px; font-weight: 700; letter-spacing: -.02em; margin-bottom: .5rem; }
+    .cover-name { font-size: 16px; color: var(--text-secondary); font-weight: 500; margin-bottom: 2rem; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .badge { font-size: 13px; font-weight: 500; padding: 2px 8px; border-radius: 6px; white-space: nowrap; }
+    .badge-vitest { background: var(--pastel-yellow); color: #7a5200; }
+    .badge-rtl   { background: var(--pastel-blue);   color: #1a3a7a; }
+    .badge-pw    { background: var(--pastel-purple);  color: #3C3489; }
+
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1.25rem; margin-bottom: 2rem; padding: 0 2.5rem; }
+    .stat { background: var(--bg-card); padding: 1.5rem; border-radius: var(--border-radius-lg); box-shadow: 0 4px 20px rgba(0,0,0,.03); }
+    .stat-val { font-size: 36px; font-weight: 600; line-height: 1.1; margin-bottom: 8px; }
+    .stat-label { font-size: 14px; color: var(--text-secondary); font-weight: 500; }
+    .streak-box { display: inline-flex; align-items: center; gap: 8px; background: #7c3aed; padding: 8px 16px; border-radius: var(--border-radius-pill); margin: 0 2.5rem 2rem; }
+    .streak-text { font-size: 14px; font-weight: 600; color: #fff; }
+
+    .phase-nav { display: flex; gap: .75rem; overflow-x: auto; scrollbar-width: none; margin: 0 2rem 1.5rem; flex-wrap: nowrap; }
+    .phase-nav::-webkit-scrollbar { display: none; }
+    .phase-tab { font-size: 14px; font-weight: 500; padding: 10px 20px; cursor: pointer; color: var(--text-secondary); background: var(--bg-card); border-radius: var(--border-radius-pill); border: 1px solid transparent; white-space: nowrap; transition: all .2s; box-shadow: 0 2px 10px rgba(0,0,0,.02); flex-shrink: 0; }
+    .phase-tab.active { color: var(--accent-white); background: var(--accent-black); }
+    .phase-tab:hover:not(.active) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.05); }
+    .phase-tab .tab-lang { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; opacity: .7; display: block; margin-bottom: 1px; }
+
+    .content { padding: 0 2.5rem 4rem; max-width: 900px; margin-inline: auto; }
+
+    .phase-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1.5rem; padding: 2rem; border-radius: var(--border-radius-lg); }
+    .phase-num { font-size: 13px; font-weight: 600; opacity: .7; margin-bottom: .4rem; }
+    .phase-title { font-size: 28px; font-weight: 700; letter-spacing: -.01em; }
+    .phase-meta { text-align: right; }
+    .phase-level { font-size: 16px; font-weight: 700; }
+    .phase-count { font-size: 13px; opacity: .7; margin-top: 4px; font-weight: 500; }
+
+    .phase-progress-wrap { margin-bottom: 1rem; }
+    .phase-progress-label { font-size: 13px; color: var(--text-secondary); font-weight: 500; margin-bottom: 6px; }
+    .phase-progress-bar { height: 6px; background: var(--bg-card); border-radius: var(--border-radius-pill); overflow: hidden; }
+    .phase-progress-fill { height: 100%; background: var(--accent-black); transition: width .4s ease; border-radius: var(--border-radius-pill); }
+
+    .filter-bar { display: flex; flex-wrap: wrap; gap: 16px 28px; align-items: center; margin-bottom: 1.25rem; margin-top: .25rem; }
+    .filter-group { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+    .filter-label { font-size: 13px; font-weight: 600; color: var(--text-muted); white-space: nowrap; margin-right: 4px; }
+    .flt-btn { font-size: 12px; font-weight: 500; padding: 5px 12px; border-radius: var(--border-radius-pill); border: none; cursor: pointer; background: var(--bg-card); color: var(--text-secondary); font-family: var(--font-sans); transition: all .12s; white-space: nowrap; }
+    .flt-btn:hover { background: #e8e8e8; color: var(--text-primary); }
+    .flt-btn.flt-active { background: var(--accent-black); color: var(--accent-white); }
+    .flt-btn.diff-easy.flt-active   { background: #155724; color: #fff; }
+    .flt-btn.diff-medium.flt-active { background: #856404; color: #fff; }
+    .flt-btn.diff-hard.flt-active   { background: #7a1a4a; color: #fff; }
+
+    .section-head { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--text-muted); margin-bottom: 12px; }
+
+    /* TOPIC CARD */
+    .topic-card { background: var(--bg-card); border-radius: var(--border-radius-md); margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.03); overflow: hidden; transition: box-shadow .2s; }
+    .topic-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.07); }
+    .topic-card.mastered { background: var(--pastel-mint); }
+    .topic-card.in-progress { background: #fffbeb; border-left: 3px solid #f59e0b; }
+    .topic-card.in-progress .topic-name { color: #92400e; }
+    .topic-header { display: flex; align-items: center; gap: 14px; padding: 16px 18px; cursor: pointer; user-select: none; }
+    .topic-check { width: 22px; height: 22px; flex-shrink: 0; border-radius: 4px; border: 1.5px solid #d0d0d0; display: flex; align-items: center; justify-content: center; background: var(--bg-card); transition: all .15s; }
+    .topic-check[data-state="mastered"]   { background: var(--accent-black); border-color: var(--accent-black); }
+    .topic-check[data-state="in-progress"] { background: #f59e0b; border-color: #f59e0b; }
+    .chk-icon { display: none; font-size: 13px; font-weight: 700; color: #fff; line-height: 1; }
+    .topic-check[data-state="mastered"] .chk-icon.mastered { display: block; }
+    .topic-check[data-state="in-progress"] .chk-icon.in-progress { display: block; }
+    .topic-info { flex: 1; min-width: 0; }
+    .topic-name { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+    .topic-desc { font-size: 12px; color: var(--text-secondary); font-weight: 500; line-height: 1.4; }
+    .topic-card.mastered .topic-name { text-decoration: line-through; color: var(--text-secondary); }
+    .topic-badges { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+    .expand-btn { background: var(--bg-main); border: none; border-radius: var(--border-radius-pill); padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; color: var(--text-secondary); transition: all .2s; flex-shrink: 0; }
+    .expand-btn:hover { background: var(--pastel-purple); }
+    .expand-btn.open { background: var(--accent-black); color: #fff; }
+
+    .practice-panel { display: none; padding: 0 18px 18px; border-top: 1px solid var(--bg-main); }
+    .practice-panel.open { display: block; }
+    .tp-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+    @media(max-width:600px) { .tp-fields { grid-template-columns: 1fr; } }
+    .tp-fields .field-group.full { grid-column: 1/-1; }
+    .field-group { display: flex; flex-direction: column; gap: 6px; }
+    .field-label-text { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-secondary); }
+    .field-input { width: 100%; background: var(--bg-main); border: 1.5px solid transparent; border-radius: 12px; padding: 11px 13px; font-family: inherit; font-size: 13px; color: var(--text-primary); resize: vertical; min-height: 80px; transition: border-color .2s, background .2s; line-height: 1.6; }
+    .field-input:focus { outline: none; border-color: var(--accent-black); background: #fff; }
+    .field-input.filled { background: #fff; border-color: rgba(0,0,0,.1); }
+    .field-input::placeholder { color: var(--text-muted); font-style: italic; }
+    .tp-score-row { display: flex; align-items: center; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    .tp-score-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+    .tp-score-btn { font-size: 11px; font-weight: 700; padding: 5px 12px; border-radius: var(--border-radius-pill); border: none; cursor: pointer; font-family: inherit; transition: all .2s; }
+    .tp-score-btn.s1 { background: var(--pastel-pink);   color: #7a1a4a; }
+    .tp-score-btn.s2 { background: var(--pastel-yellow); color: #7a5200; }
+    .tp-score-btn.s3 { background: var(--pastel-mint);   color: #1a5a3a; }
+    .tp-score-btn.s4 { background: var(--accent-black);  color: #fff; }
+    .tp-score-btn.selected { box-shadow: 0 0 0 2.5px var(--accent-black); }
+    .tp-save-btn { margin-left: auto; background: var(--accent-black); color: #fff; border: none; border-radius: var(--border-radius-pill); padding: 6px 18px; font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; }
+    .tp-saved { font-size: 12px; color: #1a5a3a; font-weight: 600; display: none; }
+    .tp-saved.show { display: inline; }
+
+    /* PROBLEM CARD */
+    .problem-card { background: var(--bg-card); border-radius: var(--border-radius-md); margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,.03); overflow: hidden; transition: box-shadow .2s; }
+    .problem-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.07); }
+    .problem-card.done      { background: var(--pastel-mint); }
+    .problem-card.inprogress { background: #fffbeb; border-left: 3px solid #f59e0b; }
+    .card-header { display: flex; align-items: center; gap: 14px; padding: 16px 20px; cursor: pointer; user-select: none; }
+    .card-num  { font-size: 13px; font-weight: 700; color: var(--text-muted); flex-shrink: 0; min-width: 28px; }
+    .card-info { flex: 1; min-width: 0; }
+    .card-title { font-size: 15px; font-weight: 600; margin-bottom: 3px; }
+    .problem-card.done .card-title { text-decoration: line-through; color: var(--text-secondary); }
+    .card-brief { font-size: 12px; color: var(--text-secondary); font-weight: 500; line-height: 1.4; }
+    .card-badges { display: flex; gap: 6px; align-items: center; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+    .diff-badge  { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: var(--border-radius-pill); white-space: nowrap; }
+    .diff-easy   { background: var(--pastel-green);  color: #155724; }
+    .diff-medium { background: var(--pastel-yellow); color: #856404; }
+    .diff-hard   { background: var(--pastel-pink);   color: #7a1a4a; }
+    .time-badge  { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: var(--border-radius-pill); background: var(--bg-main); color: var(--text-secondary); white-space: nowrap; }
+    .prob-expand-btn { background: var(--bg-main); border: none; border-radius: var(--border-radius-pill); padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; color: var(--text-secondary); transition: all .2s; flex-shrink: 0; }
+    .prob-expand-btn:hover { background: var(--pastel-purple); }
+    .prob-expand-btn.open { background: var(--accent-black); color: #fff; }
+
+    .problem-panel { display: none; padding: 0 20px 20px; border-top: 1px solid var(--bg-main); }
+    .problem-panel.open { display: block; }
+
+    .statement-box { background: var(--bg-main); border-radius: var(--border-radius-md); padding: 16px 18px; margin: 16px 0 4px; }
+    .statement-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); margin-bottom: 10px; }
+    .statement-text { font-size: 14px; color: var(--text-primary); line-height: 1.7; font-weight: 500; }
+
+    .req-section { margin: 14px 0; }
+    .req-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); margin-bottom: 8px; }
+    .req-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 12px; background: var(--bg-card); border-radius: 10px; margin-bottom: 6px; cursor: pointer; transition: background .15s; }
+    .problem-card.done .req-item { background: rgba(255,255,255,.6); }
+    .req-item:hover { background: #f8f8f8; }
+    .req-cb   { width: 16px; height: 16px; accent-color: var(--accent-black); cursor: pointer; flex-shrink: 0; margin-top: 2px; }
+    .req-text { font-size: 13px; color: var(--text-primary); font-weight: 500; line-height: 1.4; }
+    .req-text.checked { text-decoration: line-through; color: var(--text-muted); }
+
+    .concepts-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 16px; }
+    .concept-tag { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: var(--border-radius-pill); background: var(--pastel-purple); color: #3C3489; white-space: nowrap; }
+
+    .hints-wrap { margin: 0 0 16px; }
+    .hint-toggle { display: inline-flex; align-items: center; gap: 6px; background: var(--pastel-yellow); border: none; border-radius: var(--border-radius-pill); padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; color: #7a5200; transition: all .15s; }
+    .hint-toggle:hover { background: var(--pastel-yellow-hover); }
+    .hint-content { display: none; margin-top: 10px; }
+    .hint-content.show { display: block; }
+    .hint-item { display: flex; gap: 10px; padding: 10px 14px; background: var(--pastel-yellow); border-radius: 12px; margin-bottom: 8px; font-size: 13px; color: #7a5200; font-weight: 500; line-height: 1.5; }
+    .hint-num { font-weight: 700; flex-shrink: 0; }
+
+    .timer-section { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: var(--bg-main); border-radius: var(--border-radius-md); margin: 0 0 16px; flex-wrap: wrap; }
+    .timer-label { font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .06em; }
+    .timer-display { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; min-width: 80px; }
+    .timer-display.warning { color: #d97706; }
+    .timer-display.over    { color: #dc2626; }
+    .timer-bar-wrap { flex: 1; min-width: 100px; height: 6px; background: rgba(0,0,0,.08); border-radius: 6px; overflow: hidden; }
+    .timer-bar { height: 100%; border-radius: 6px; background: #16a34a; transition: width 1s linear, background .4s; }
+    .timer-controls { display: flex; gap: 6px; }
+    .timer-btn { font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: var(--border-radius-pill); border: 1px solid rgba(0,0,0,.12); cursor: pointer; background: var(--bg-card); color: var(--text-primary); font-family: inherit; transition: background .15s; }
+    .timer-btn:hover { background: #f0f0f0; }
+    .timer-btn.running { background: var(--pastel-yellow); border-color: #f59e0b; color: #92400e; }
+
+    .sol-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    @media(max-width:600px) { .sol-fields { grid-template-columns: 1fr; } }
+    .sol-fields .field-group.full { grid-column: 1/-1; }
+
+    .action-row { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+    .score-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+    .score-btn { font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: var(--border-radius-pill); border: none; cursor: pointer; font-family: inherit; transition: all .2s; }
+    .score-btn.s1 { background: var(--pastel-pink);   color: #7a1a4a; }
+    .score-btn.s2 { background: var(--pastel-yellow); color: #7a5200; }
+    .score-btn.s3 { background: var(--pastel-mint);   color: #1a5a3a; }
+    .score-btn.s4 { background: var(--accent-black);  color: #fff; }
+    .score-btn:hover { transform: translateY(-1px); box-shadow: 0 3px 8px rgba(0,0,0,.1); }
+    .score-btn.selected { box-shadow: 0 0 0 2.5px var(--accent-black); }
+    .status-btns { display: flex; gap: 6px; margin-left: auto; }
+    .status-btn { font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: var(--border-radius-pill); border: none; cursor: pointer; font-family: inherit; background: var(--bg-main); color: var(--text-secondary); transition: all .2s; }
+    .status-btn.wip.active  { background: #fef3c7; color: #92400e; border: 1.5px solid #f59e0b; }
+    .status-btn.done.active { background: var(--accent-black); color: #fff; }
+    .save-btn { background: var(--accent-black); color: #fff; border: none; border-radius: var(--border-radius-pill); padding: 8px 20px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; transition: opacity .2s; }
+    .save-btn:hover { opacity: .85; }
+    .saved-flash { font-size: 12px; color: #1a5a3a; font-weight: 600; display: none; }
+    .saved-flash.show { display: inline; }
+
+    .quote { text-align: center; padding: 4rem 2.5rem 3rem; font-size: 18px; font-weight: 500; line-height: 1.6; }
+    .quote cite { display: block; font-size: 14px; font-style: normal; color: var(--text-secondary); margin-top: 1rem; font-weight: 600; }
+
+    @media(max-width:640px) {
+      .cover { padding: 2rem 1.25rem 1rem; }
+      .cover-title { font-size: 28px; }
+      .stats-row { padding: 0 1.25rem; }
+      .streak-box { margin-left: 1.25rem; }
+      .content { padding: 0 1.25rem 3rem; }
+      .phase-nav { margin: 0 1rem 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+<div id="nav-container"></div>
+
+<div class="cover">
+  <div class="cover-subtitle">INTERVIEW PREP — QUALITY ENGINEERING</div>
+  <div class="cover-title">Testing Journal 🧪</div>
+  <div class="cover-name">
+    Mayank Thakur
+    <span class="badge badge-vitest">Vitest</span>
+    <span class="badge badge-rtl">React Testing Library</span>
+    <span class="badge badge-pw">Playwright</span>
+  </div>
+</div>
+
+<div class="stats-row">
+  <div class="stat"><div class="stat-val" id="stat-done">0</div><div class="stat-label">Problems solved</div></div>
+  <div class="stat"><div class="stat-val" id="stat-total">25</div><div class="stat-label">Total problems</div></div>
+  <div class="stat"><div class="stat-val" id="stat-topics">0</div><div class="stat-label">Topics mastered</div></div>
+  <div class="stat"><div class="stat-val" id="stat-phases">0/5</div><div class="stat-label">Phases complete</div></div>
+</div>
+<div class="streak-box">
+  <span>🧪</span><span class="streak-text">Tests are documentation that always stays up to date.</span>
+</div>
+
+<div class="phase-nav" id="phase-nav"></div>
+<div class="content" id="content"></div>
+
+<div class="quote">
+  "Write tests. Not too many. Mostly integration."
+  <cite>— Guillermo Rauch (popularized by Kent C. Dodds)</cite>
+</div>
+
+<script src="../../nav.js"></script>
+<script>
+  const STATE_KEY = 'testing_journal_v1';
+
+  const SOLUTION_FIELDS = [
+    { k:'approach', icon:'🧠', label:'Testing Approach & Strategy', full:true },
+    { k:'code',     icon:'💻', label:'Key Test Code' },
+    { k:'gotchas',  icon:'⚠️', label:'Gotchas & Anti-patterns Avoided' },
+    { k:'coverage', icon:'📊', label:'What I Tested & What I Skipped' }
+  ];
+
+  const PHASES = [
+    {
+      id:'p0', label:'Phase 0', color:'#F59E0B', level:'Beginner',
+      title:'Vitest Fundamentals', subtitle:'Unit Testing, Mocking, Assertions, Coverage',
+      topics:[
+        { id:'t0_0', name:'Vitest Setup & Configuration', desc:'vite.config.ts test config, test environment (node vs jsdom), globals, setupFiles, coverage providers (v8 vs istanbul)' },
+        { id:'t0_1', name:'Describe, It, Expect', desc:'Test structure, assertion matchers (toBe, toEqual, toContain, toThrow, toMatchSnapshot), test.each for table-driven tests' },
+        { id:'t0_2', name:'Mocking with vi', desc:'vi.fn(), vi.spyOn(), vi.mock(), vi.importMock(), mockReturnValue, mockResolvedValue, mockImplementation, clearing mocks' },
+        { id:'t0_3', name:'Async Testing', desc:'async/await in tests, resolves/rejects matchers, fake timers (vi.useFakeTimers), vi.advanceTimersByTime, waitFor' },
+        { id:'t0_4', name:'Code Coverage', desc:'v8 coverage, coverage thresholds, lcov reports, which lines/branches to cover, what NOT to test (config, types, trivial getters)' },
+        { id:'t0_5', name:'Test Organisation & Lifecycle', desc:'beforeEach, afterEach, beforeAll, afterAll, test.skip, test.only, test.todo, describe nesting, test isolation' }
+      ],
+      problems:[
+        {
+          id:'test0_0', title:'Pure Function Test Suite', diff:'Easy', time:30,
+          brief:'Write a comprehensive test suite for a utility library of pure functions',
+          statement:'Write tests for a utility library containing: formatCurrency(amount, currency), slugify(text), truncate(text, maxLen), deepMerge(a, b), groupBy(array, key), and debounce(fn, delay). Cover happy paths, edge cases, and error cases. Achieve 100% branch coverage.',
+          requirements:['At least 3 test cases per function (happy path, edge case, error)','Use describe blocks to group tests per function','formatCurrency: test different currencies, zero, negative, large numbers','slugify: test spaces, special chars, unicode, empty string','deepMerge: test nested objects, arrays, null values, conflicting keys','debounce: use vi.useFakeTimers to test timing without real delays','Run coverage — all branches must be green'],
+          concepts:['describe/it/expect','vi.useFakeTimers','branch coverage','edge cases','test.each'],
+          hints:['For debounce, use `vi.useFakeTimers()` in beforeEach and `vi.useRealTimers()` in afterEach','`test.each` is great for formatCurrency: `test.each([[100, "USD", "$100.00"], [0, "EUR", "€0.00"]])`','Branch coverage: every if/else branch must be hit — write a test for each branch explicitly','`expect(fn).toThrow("message")` for error cases — also test the thrown message']
+        },
+        {
+          id:'test0_1', title:'Mock HTTP Calls with vi.mock', diff:'Easy', time:30,
+          brief:'Test a service module that makes HTTP requests without hitting the real API',
+          statement:'Test a UserService module that has: getUser(id), createUser(data), deleteUser(id). The module uses fetch internally. Mock fetch with vi.fn() so tests never make real HTTP calls. Test both success and error paths. Verify the right URLs and methods were called.',
+          requirements:['Mock global fetch with vi.fn() in beforeEach — reset in afterEach','getUser(id): verify GET /api/users/{id} is called, return mocked response','createUser(data): verify POST /api/users with correct body','deleteUser(id): verify DELETE, handle 404 response (throw not-found error)','Test network error: fetch rejects — verify service throws a NetworkError','Verify call count and arguments with expect(fetch).toHaveBeenCalledWith(...)','Reset all mocks in afterEach with vi.resetAllMocks()'],
+          concepts:['vi.fn()','vi.resetAllMocks()','toHaveBeenCalledWith','mockResolvedValue','mockRejectedValue','fetch mocking'],
+          hints:['`global.fetch = vi.fn()` — override the global fetch before tests','`fetch.mockResolvedValueOnce(new Response(JSON.stringify(data), {status: 200}))`','`toHaveBeenCalledWith` checks exact arguments — use `expect.objectContaining({})` for partial matching','`vi.resetAllMocks()` clears mock history but keeps the mock implementation — use in afterEach']
+        },
+        {
+          id:'test0_2', title:'Snapshot Testing', diff:'Easy', time:20,
+          brief:'Use snapshot tests wisely — for stable, complex output only',
+          statement:'Add snapshot tests to: a complex date formatter function (formats dates into 8 different human-readable formats), a CSS-in-JS theme generator (produces a large nested theme object), and a config parser (produces a deeply nested config object). Then demonstrate why snapshot tests are wrong for UI components.',
+          requirements:['Snapshot test the date formatter output for 5 key date formats','Snapshot test the theme object (it changes rarely, complex to assert manually)','Snapshot test the parsed config object','Demonstrate: update a snapshot with `vitest --update-snapshots` after intentional change','Show why UI snapshot tests are brittle: change a className → snapshot fails even though behaviour is fine','Rule of thumb: snapshot for complex data structures, NOT for component HTML'],
+          concepts:['toMatchSnapshot','toMatchInlineSnapshot','--update-snapshots','snapshot brittleness'],
+          hints:['`expect(result).toMatchSnapshot()` — first run creates the snapshot, subsequent runs compare','Inline snapshots: `expect(result).toMatchInlineSnapshot()`  — snapshot is stored inline in the test file','Snapshots should be committed to git — reviewers can see what changed','UI snapshot anti-pattern: a snapshot of rendered HTML breaks on ANY change, even irrelevant ones']
+        },
+        {
+          id:'test0_3', title:'Async Tests & Timers', diff:'Medium', time:45,
+          brief:'Test async functions, Promises, and timer-based code with vi fake timers',
+          statement:'Write tests for: a retry function (retries async operation up to 3 times with exponential backoff), a polling function (calls an API every 5 seconds until a condition is met), and a rate limiter (allows max N calls per second). All must use fake timers — no real waits.',
+          requirements:['retry(fn, maxAttempts, backoff): test 1st-attempt success, 2nd-attempt success, all-fail case','Use vi.useFakeTimers() — advance time with vi.advanceTimersByTimeAsync(ms)','polling(fn, interval, until): test that fn is called every `interval` ms until condition is true','Verify polling stops when condition is met (no more calls after that)','rateLimiter(fn, limit): test that fn is called at most `limit` times per second','Test that rate limiter queues excess calls for the next second','All tests run in < 1ms real time (fake timers = no actual waiting)'],
+          concepts:['vi.useFakeTimers','vi.advanceTimersByTimeAsync','vi.runAllTimers','async test','exponential backoff'],
+          hints:['`vi.useFakeTimers()` replaces setTimeout, setInterval, Date with controlled fakes','`await vi.advanceTimersByTimeAsync(5000)` advances fake time 5 seconds AND flushes any Promises that resolve during that time','`vi.runAllTimers()` runs all pending timers to completion — use for exhaustive test of polling loops','After each test: `vi.useRealTimers()` or `vi.clearAllTimers()` to avoid timer leaks between tests']
+        },
+        {
+          id:'test0_4', title:'Coverage to 80% — Fill the Gaps', diff:'Medium', time:60,
+          brief:'Take a codebase at 45% coverage and bring it to 80% systematically',
+          statement:'Given a mid-size utility codebase at 45% coverage, run the coverage report, identify uncovered branches and functions, and write targeted tests to reach 80%. Focus on business logic — do not pad coverage with trivial tests. Document which code you intentionally left uncovered and why.',
+          requirements:['Run `vitest --coverage` and identify the 5 lowest-coverage files','For each file: read the code, list every uncovered branch','Write tests for each uncovered branch — no redundant tests','Priority: functions > branches > lines > statements','Skip testing: type-only files, re-exports, config objects, console.log wrappers','Coverage config: set thresholds in vitest.config.ts (lines: 80, functions: 80, branches: 70)','Final report: 80%+ on all configured thresholds'],
+          concepts:['coverage thresholds','v8 coverage','branch coverage','istanbul','lcov','coverage gaps'],
+          hints:['In the lcov HTML report: red = uncovered lines, yellow = partially covered branches, green = fully covered','`/* c8 ignore next */` or `/* istanbul ignore next */` to exclude intentionally untested lines','Focus on business logic branches — not error logging, not type guards on already-typed values','Coverage thresholds in vitest.config.ts: `coverage: {thresholds: {lines: 80, functions: 80}}`']
+        }
+      ]
+    },
+    {
+      id:'p1', label:'Phase 1', color:'#3B82F6', level:'Beginner-Intermediate',
+      title:'React Testing Library', subtitle:'Component Tests, Queries, User Events, Accessibility',
+      topics:[
+        { id:'t1_0', name:'RTL Philosophy — Test Behaviour, Not Implementation', desc:'"The more your tests resemble the way your software is used, the more confidence they give you." Avoid testing state, class names, internal functions.' },
+        { id:'t1_1', name:'Queries & Priority', desc:'getByRole (highest priority), getByLabelText, getByPlaceholderText, getByText, getByTestId (last resort). ByRole + accessible name.' },
+        { id:'t1_2', name:'user-event vs fireEvent', desc:'@testing-library/user-event simulates real browser behaviour (focus, pointer, keyboard). fireEvent is lower-level. Always prefer user-event.' },
+        { id:'t1_3', name:'Async Queries & waitFor', desc:'findBy* queries (async, wait for element), waitFor(callback), waitForElementToBeRemoved, act() wrapping.' },
+        { id:'t1_4', name:'Mocking Modules in RTL', desc:'Mocking child components, mocking React Router, mocking context providers, wrapping with custom render function.' },
+        { id:'t1_5', name:'Accessibility Testing', desc:'@axe-core/react, toHaveNoViolations, aria-label, role queries as accessibility validation, jest-axe integration.' }
+      ],
+      problems:[
+        {
+          id:'test1_0', title:'Form Component Tests', diff:'Easy', time:45,
+          brief:'Test a signup form with validation, async submission, and error states',
+          statement:'Write tests for a SignupForm component: email + password + confirm password fields, client-side validation (email format, password length, passwords match), and an async submit handler. Test the complete user journey: fill in fields, see validation errors, fix them, submit successfully.',
+          requirements:['Test: submitting empty form shows validation errors for all fields','Test: invalid email shows "Invalid email address" error','Test: password < 8 chars shows "Password too short" error','Test: passwords mismatch shows "Passwords do not match" error','Test: valid form submit calls onSubmit with correct data','Test: submit button disabled while submitting (loading state)','Test: success message appears after successful submit','Use userEvent.type() for all input interactions — NOT fireEvent.change'],
+          concepts:['getByRole','getByLabelText','userEvent.type','waitFor','form validation','accessible queries'],
+          hints:['`getByRole("textbox", {name: /email/i})` — query the input by its label text (accessibility first)','`await userEvent.type(emailInput, "test@example.com")` — types character by character like a real user','`expect(getByText(/invalid email/i)).toBeInTheDocument()` — check error message appears','`getByRole("button", {name: /sign up/i})` — query submit button by its text']
+        },
+        {
+          id:'test1_1', title:'Data-fetching Component', diff:'Medium', time:60,
+          brief:'Test loading, success, and error states of a component that fetches data',
+          statement:'Write tests for a UserProfile component that fetches user data on mount, shows a loading skeleton, renders the user data on success, and shows an error state on failure. Mock the fetch/API call. Test all three states without any real network calls.',
+          requirements:['Mock the API module with vi.mock("../api/users")','Test loading state: skeleton visible immediately on render','Test success state: user name, avatar, bio visible after data loads','Test error state: "Failed to load user" message with retry button','Test retry: clicking retry re-fetches and shows loading then success','Use findByRole/findByText for async assertions (waits for element to appear)','Use screen.queryByRole to assert elements are NOT in the document'],
+          concepts:['vi.mock','findBy*','waitForElementToBeRemoved','loading state','error state','retry'],
+          hints:['`vi.mock("../api/users", () => ({getUser: vi.fn()}))` — mock the entire module','`getUser.mockResolvedValue(mockUserData)` in each test to control what the API returns','`findByText(/john doe/i)` — async query, waits up to 1000ms for element to appear','`waitForElementToBeRemoved(() => screen.queryByRole("progressbar"))` — waits for skeleton to disappear']
+        },
+        {
+          id:'test1_2', title:'Context & Custom Hooks', diff:'Medium', time:60,
+          brief:'Test components that consume context and custom hooks',
+          statement:'Write tests for: (1) a ThemeToggle component that reads from and writes to ThemeContext, (2) a useCart custom hook that manages cart state. For the hook, use renderHook(). For the component, provide a real context wrapper. Avoid mocking the context.',
+          requirements:['ThemeToggle: wrap in real ThemeProvider, test that clicking toggles theme class on body','ThemeToggle: test that the correct icon (sun/moon) is shown for each theme','useCart: use renderHook(() => useCart()) to test the hook in isolation','useCart: test addItem, removeItem, updateQuantity, clearCart, total calculation','useCart: test that adding the same item increments quantity, not duplicates','Build a custom render() wrapper that includes all Providers (Theme, Auth, Router)','Use the custom render in all component tests — never forget a Provider again'],
+          concepts:['renderHook','act','context wrapper','custom render','ThemeContext','hook testing'],
+          hints:['`const {result} = renderHook(() => useCart())` — renders the hook in an isolated component','`act(() => { result.current.addItem(product) })` — state updates must be wrapped in act','Custom render: `const customRender = (ui, options) => render(ui, {wrapper: AllProviders, ...options})`','Export customRender as "render" from a test-utils.ts file — import it instead of the RTL render everywhere']
+        },
+        {
+          id:'test1_3', title:'Accessibility Tests with jest-axe', diff:'Easy', time:30,
+          brief:'Add automated accessibility checks to every component test',
+          statement:'Add axe accessibility testing to your component test suite. Test a NavBar, a Modal, a DataTable, and a DropdownMenu. Use jest-axe to automatically catch: missing alt text, form inputs without labels, insufficient colour contrast, missing ARIA roles, and keyboard trap issues.',
+          requirements:['Install jest-axe and configure toHaveNoViolations matcher','NavBar: no violations (test with keyboard focus visible)','Modal: correct focus trap (focus must stay inside open modal)','Modal: aria-modal, aria-labelledby, ESC key closes modal','DataTable: th elements have scope, sortable columns have aria-sort','DropdownMenu: correct role="menu", role="menuitem", aria-expanded','Fix any violations found — do not suppress them'],
+          concepts:['jest-axe','toHaveNoViolations','aria-modal','focus trap','aria-expanded','accessibility'],
+          hints:['`const {container} = render(<NavBar/>); const results = await axe(container); expect(results).toHaveNoViolations()`','axe catches ~30% of WCAG issues automatically — you still need manual testing for the rest','Focus trap: test by checking document.activeElement after Tab key press','`expect(getByRole("dialog")).toHaveAttribute("aria-modal", "true")`']
+        },
+        {
+          id:'test1_4', title:'Complex Integration: Shopping Cart', diff:'Hard', time:90,
+          brief:'Write full integration tests for a multi-component shopping cart feature',
+          statement:'Write integration tests for a shopping cart feature spanning: ProductList → ProductCard → AddToCartButton → CartDrawer → CartItem → CheckoutButton. No unit tests — test the full user journey. A user browses products, adds items, adjusts quantities, removes items, and proceeds to checkout.',
+          requirements:['Test journey 1: Add a product → cart count badge updates → open cart → item is listed','Test journey 2: Add same product twice → quantity shows 2, not 2 separate items','Test journey 3: Remove item → cart empties → empty cart message shown','Test journey 4: Add 3 items → total price is correct','Test journey 5: Checkout button disabled if cart is empty, enabled otherwise','Mock only the external API — all React components render for real','No testing of internal state — only test what the USER sees and can do'],
+          concepts:['integration test','user journey','findBy*','userEvent','no implementation details','MSW'],
+          hints:['Integration tests render the entire feature tree — no mocking of child components','The only mocking needed: the API calls (product fetch, order submit)','Use `within(cartDrawer)` to scope queries to a specific section of the DOM','If a test requires many setup steps, use helper functions: `async function addProductToCart(name) {...}`']
+        }
+      ]
+    },
+    {
+      id:'p2', label:'Phase 2', color:'#10B981', level:'Intermediate',
+      title:'MSW — Mock Service Worker', subtitle:'API Mocking, Network-level Interception, Test Realism',
+      topics:[
+        { id:'t2_0', name:'MSW Setup (Node + Browser)', desc:'setupServer() for Node/Vitest, setupWorker() for browser. Handler registration. server.listen() / worker.start().' },
+        { id:'t2_1', name:'Request Handlers', desc:'http.get, http.post, http.put, http.delete. HttpResponse. Matching by URL, path params, query params.' },
+        { id:'t2_2', name:'Response Scenarios', desc:'Success responses, error responses (4xx, 5xx), network errors (HttpResponse.error()), delays (delay utility)' },
+        { id:'t2_3', name:'Handler Overrides', desc:'server.use() for one-off overrides in a single test. server.resetHandlers() to restore defaults. One-time handlers.' },
+        { id:'t2_4', name:'GraphQL Mocking', desc:'graphql.query, graphql.mutation, graphql.link — mocking GraphQL operations by name. Variables inspection.' },
+        { id:'t2_5', name:'Sharing Handlers Across Test & Dev', desc:'handlers.ts shared between Vitest, Playwright, and browser dev mode. Single source of truth for API mocks.' }
+      ],
+      problems:[
+        {
+          id:'test2_0', title:'MSW Setup & Basic Handlers', diff:'Easy', time:45,
+          brief:'Set up MSW for a React app and write handlers for a CRUD API',
+          statement:'Set up MSW v2 in a Vitest + React Testing Library project. Create handlers for a /api/posts REST API (GET list, GET by ID, POST, PUT, DELETE). Write component tests that use MSW — no vi.mock() for HTTP anywhere. Verify that the real fetch/axios code in components is exercised.',
+          requirements:['Install msw@2 — configure in vitest.setup.ts with setupServer()','Create src/mocks/handlers.ts with GET /api/posts, GET /api/posts/:id, POST, PUT, DELETE','Handlers return realistic mock data — not just {ok: true}','beforeAll(server.listen), afterEach(server.resetHandlers), afterAll(server.close)','PostList test: renders list of posts from MSW, loading state visible first','PostDetail test: renders single post fetched by id from URL param','CreatePost test: submit form — POST request intercepted, success message shown'],
+          concepts:['setupServer','http.get','http.post','HttpResponse.json','handlers','beforeAll/afterAll'],
+          hints:['`const server = setupServer(...handlers)` in a shared setup file','`http.get("/api/posts", () => HttpResponse.json(mockPosts))` — matches relative URL','MSW intercepts at the network level — your actual fetch/axios code runs, only the network is mocked','This is much better than vi.mock() because you test the real request/response serialization code']
+        },
+        {
+          id:'test2_1', title:'Error & Edge Case Scenarios', diff:'Medium', time:60,
+          brief:'Test error states by overriding MSW handlers per-test',
+          statement:'Using server.use() overrides, test every error state of a UserDashboard component: 401 unauthorized, 403 forbidden, 404 not found, 500 server error, and network failure. Each test uses a handler override to simulate the specific error. Verify the component shows the correct UI for each.',
+          requirements:['Default handler returns 200 with user data','Test 401: server.use(http.get("/api/user", () => new HttpResponse(null, {status: 401})))','Test 403: forbidden message shown, not the login redirect','Test 404: "User not found" with link to create profile','Test 500: "Something went wrong" with retry button','Test network failure: HttpResponse.error() — "No internet connection" message','Each error test uses server.use() locally — server.resetHandlers() in afterEach restores defaults'],
+          concepts:['server.use','handler override','HttpResponse.error()','error boundaries','status codes'],
+          hints:['`server.use(http.get("/api/user", () => HttpResponse.error()))` — simulates network failure (fetch rejects)','`server.use` only overrides for subsequent requests in the same test — afterEach reset restores defaults','Test error boundaries by wrapping the component in one — axe also checks for accessible error messages','One-time override: `http.get("/api/user", () => ..., {once: true})` — reverts to default after first match']
+        },
+        {
+          id:'test2_2', title:'Delayed Responses & Loading States', diff:'Easy', time:30,
+          brief:'Test loading skeletons and pending states with MSW response delays',
+          statement:'Test a dashboard that shows skeletons while data loads. Use the MSW `delay` utility to simulate realistic network latency. Verify: skeleton appears immediately, data replaces skeleton after delay, multiple independent sections load independently.',
+          requirements:['Handler with `await delay(1000)` before responding','Test: on render, skeleton elements are visible (getByRole("progressbar") or similar)','Test: after fake timer advance, skeletons are gone and data is shown','Use `vi.useFakeTimers` together with MSW — configure MSW to use fake timers','Test that 3 independent dashboard sections each show their own skeleton','Verify: sections with faster delays show content before slower ones','Test timeout: if response takes > 10s, show "Request timed out" error'],
+          concepts:['delay','loading skeleton','vi.useFakeTimers + MSW','progressive loading','timeout'],
+          hints:['MSW `delay` with fake timers requires passing the fake timer to MSW: this can be tricky — alternatively test with real timers but short delays','`delay("infinite")` blocks the response forever — useful for testing persistent loading states','`waitFor(() => expect(screen.queryByRole("progressbar")).not.toBeInTheDocument())` — wait for skeleton to disappear','If using fake timers: `await vi.runAllTimersAsync()` to flush both timers and pending Promises']
+        },
+        {
+          id:'test2_3', title:'Shared Handlers for Dev & Test', diff:'Medium', time:60,
+          brief:'Build a single mock API definition used in browser dev mode and Vitest tests',
+          statement:'Create a unified mock API layer: handlers.ts is imported by both the Vitest setupServer (for tests) and the browser setupWorker (for local development without a backend). Product, user, and order endpoints are mocked. The same realistic data is used everywhere. Add a seed utility to generate consistent fake data.',
+          requirements:['handlers.ts exports HTTP handlers — framework agnostic, no test-specific imports','Vitest setup: imports handlers into setupServer()','Browser dev: public/mockServiceWorker.js + worker.start() in main.tsx (guarded by import.meta.env.DEV)','Seed data: factory functions using @faker-js/faker for realistic user/product/order data','Seed is deterministic: faker.seed(1234) — same data every run','Add a /api/__reset endpoint that resets all in-memory mock state (useful in Playwright tests)','Demonstrate: run `npm run dev` and the app works with no real backend'],
+          concepts:['setupWorker','handler sharing','faker-js','seed data','mockServiceWorker.js','dev mocking'],
+          hints:['`npx msw init public/` generates the service worker file — commit it to git','`worker.start({onUnhandledRequest: "warn"})` — warns in console when a real URL is not mocked','Faker seed: `import {faker} from "@faker-js/faker"; faker.seed(1234)` — deterministic fake data across runs','This architecture means: no backend needed for frontend development, no mocking needed in component tests']
+        },
+        {
+          id:'test2_4', title:'GraphQL Mocking with MSW', diff:'Hard', time:90,
+          brief:'Mock a GraphQL API with MSW and test Apollo Client components end to end',
+          statement:'Set up MSW graphql handlers for a GitHub-like app using Apollo Client. Mock queries: GetUser, GetRepositories, GetIssues. Mock mutations: CreateIssue, CloseIssue. Write component tests that use the real Apollo Client — no MockedProvider. Test optimistic updates and cache updates.',
+          requirements:['MSW graphql handlers: `graphql.query("GetUser", ({variables}) => HttpResponse.json({data: ...}))`','Test GetUser component: renders user avatar, name, bio from GraphQL data','Test GetRepositories: renders list of repos with star counts','Test CreateIssue mutation: form submit → mutation fires → new issue appears in list','Test optimistic update: new issue appears BEFORE mutation resolves','Test error: mutation fails → error toast shown, optimistic item removed','Inspect variables in handler: verify correct userId/repoId passed to query'],
+          concepts:['graphql.query','graphql.mutation','Apollo Client','variables','optimistic update','cache'],
+          hints:['`graphql.query("GetUser", ({variables, request}) => HttpResponse.json({data: {user: mockUser}}))` ','Check variables: `const {variables} = await request.json()` inside the handler','MSW intercepts Apollo\'s HTTP requests — the real Apollo Client, cache, and error handling are all exercised','For optimistic updates: the component updates immediately, MSW responds async — test the in-between state']
+        }
+      ]
+    },
+    {
+      id:'p3', label:'Phase 3', color:'#8B5CF6', level:'Intermediate',
+      title:'Playwright E2E', subtitle:'Browser Automation, Page Objects, Visual Testing, CI',
+      topics:[
+        { id:'t3_0', name:'Playwright Setup & Configuration', desc:'playwright.config.ts, projects (chromium/firefox/webkit), baseURL, retries, workers, reporter (HTML, GitHub)' },
+        { id:'t3_1', name:'Locators & Best Practices', desc:'getByRole, getByLabel, getByText, getByTestId. Auto-waiting. Chaining. Filtering. Avoiding brittle CSS selectors.' },
+        { id:'t3_2', name:'Page Object Model', desc:'Encapsulate page interactions in classes. Reusable, maintainable E2E tests. BasePage, LoginPage, DashboardPage.' },
+        { id:'t3_3', name:'Test Hooks & Fixtures', desc:'test.beforeEach, test.afterEach, test.use, global setup/teardown, Playwright fixtures for auth state reuse.' },
+        { id:'t3_4', name:'Visual Regression Testing', desc:'expect(page).toHaveScreenshot(), updateSnapshots, pixelDiff threshold, masking dynamic content, per-test snapshots.' },
+        { id:'t3_5', name:'API Mocking in Playwright', desc:'page.route() to intercept and mock network requests. Combining MSW with Playwright. Seeding test data via API.' }
+      ],
+      problems:[
+        {
+          id:'test3_0', title:'E2E Authentication Flow', diff:'Medium', time:90,
+          brief:'Write Playwright tests for login, logout, and protected route access',
+          statement:'Write E2E tests for a complete authentication flow: login with valid credentials, login with invalid credentials, logout, accessing a protected route while unauthenticated (redirect to login), and session persistence (page refresh stays logged in). Use Playwright\'s storageState to reuse auth state.',
+          requirements:['Login success: fill email+password → click login → redirected to /dashboard','Login failure: wrong password → error message "Invalid credentials" visible','Protected route: visit /dashboard while logged out → redirected to /login?redirectTo=/dashboard','After login via redirect: ends up at /dashboard (original destination)','Logout: click logout → redirected to /home, /dashboard now redirects to /login','Auth fixture: save storageState after login, reuse in all tests that need authentication','All 3 browsers: chromium, firefox, webkit'],
+          concepts:['storageState','globalSetup','page.route','locator','auth fixture','redirect'],
+          hints:['Global setup: `test.beforeAll(async ({browser}) => { ...login... await page.context().storageState({path: "auth.json"}) })`','`test.use({storageState: "auth.json"})` — reuses saved cookies/localStorage in each test','`page.route("**/api/auth/**", route => route.fulfill({...}))` — mock auth API if backend not available','`expect(page).toHaveURL("/dashboard")` — assert URL after navigation']
+        },
+        {
+          id:'test3_1', title:'Page Object Model', diff:'Medium', time:60,
+          brief:'Refactor brittle E2E tests into maintainable Page Objects',
+          statement:'Take 5 Playwright tests that directly use page.getByRole() everywhere (brittle, hard to maintain). Refactor into Page Objects: LoginPage, DashboardPage, ProductPage, CartPage. Each Page Object encapsulates all interactions and assertions for its page. Tests become readable user stories.',
+          requirements:['LoginPage class: goto(), fillEmail(), fillPassword(), submit(), getErrorMessage()','DashboardPage class: isLoaded(), getWelcomeMessage(), navigateTo(section)','CartPage class: getItemCount(), addItem(name), removeItem(name), getTotal(), checkout()','Each POM method is a single meaningful action — no raw Playwright in tests','Tests read like user stories: "await loginPage.login(user); await dashboardPage.isLoaded()"','Base test fixture that instantiates POMs and injects them into tests','If a locator changes, fix it in one place (the POM) — all tests still pass'],
+          concepts:['Page Object Model','fixture','encapsulation','maintainability','DRY tests'],
+          hints:['`class LoginPage { constructor(private page: Page) {} goto() { return this.page.goto("/login") } }`','Fixture: `const test = base.extend({loginPage: async ({page}, use) => { await use(new LoginPage(page)) }})`','POMs should return `this` from navigation methods — enables chaining: `await login.goto().login(creds)`','Avoid asserting in POMs — POMs are actions, assertions stay in the test file (separation of concerns)']
+        },
+        {
+          id:'test3_2', title:'Visual Regression Tests', diff:'Medium', time:60,
+          brief:'Catch unintended UI regressions with Playwright screenshot comparison',
+          statement:'Add visual regression tests to your component library: Button (all variants), Modal (open state), DataTable (with data), and Dashboard (full page). Set up screenshot comparison with a 0.1% pixel threshold. Mask dynamic content (timestamps, avatars). Update snapshots intentionally on design changes.',
+          requirements:['Component screenshots: Button (primary, secondary, disabled, loading), Modal (open), DataTable','Full page screenshot: Dashboard with real-looking data','Mask dynamic content: `mask: [page.getByTestId("timestamp")]` so they do not cause false failures','Threshold: `maxDiffPixelRatio: 0.001` — fail on > 0.1% pixel difference','Snapshot update workflow: `npx playwright test --update-snapshots` when design changes intentionally','CI config: run visual tests only on main branch (not every PR) — avoids noise','Separate visual test file from functional tests'],
+          concepts:['toHaveScreenshot','mask','maxDiffPixelRatio','--update-snapshots','visual regression'],
+          hints:['`await expect(page).toHaveScreenshot("dashboard.png", {maxDiffPixelRatio: 0.001})`','Masks: `mask: [page.getByText(/\\d{2}:\d{2}/)]` — hides timestamps from comparison','Store snapshots in git — reviewers see visual diffs in PRs (link to HTML report)','Run visual tests in a Docker container for pixel-perfect consistency across developer machines']
+        },
+        {
+          id:'test3_3', title:'API Mocking in Playwright', diff:'Hard', time:90,
+          brief:'Use page.route() to test UI scenarios that are hard to reproduce with a real backend',
+          statement:'Write Playwright tests for hard-to-reproduce scenarios using API mocking: slow network (add artificial delay), partial failure (one of 3 parallel requests fails), backend error (500 on checkout), and empty states (API returns empty array). No test data setup needed — the API is fully controlled.',
+          requirements:['Slow network: `page.route("**/api/products", route => setTimeout(() => route.fulfill({...}), 3000))` — verify skeleton shows','Partial failure: 2 of 3 dashboard sections load, 1 shows error — mock each route independently','Checkout error: mock POST /api/orders with 500 — verify error toast and cart is still intact','Empty state: mock GET /api/products returns [] — verify "No products found" empty state UI','Rate limit: mock 429 response — verify "Too many requests, try again" with countdown timer','Combine: real API for reads, mocked API for writes (avoids test data cleanup)'],
+          concepts:['page.route','route.fulfill','route.abort','route.continue','API mocking','E2E error states'],
+          hints:['`page.route("**/api/**", route => route.continue())` — pass-through for all routes, then override specific ones','`route.fulfill({status: 500, body: JSON.stringify({error: "Internal Server Error"})})` — simulate server error','`page.route` can be called multiple times — last matching handler wins','Combine with `page.unroute()` to remove a specific mock mid-test']
+        },
+        {
+          id:'test3_4', title:'Cross-browser & Mobile E2E', diff:'Medium', time:60,
+          brief:'Run E2E tests across Chromium, Firefox, WebKit and mobile viewports',
+          statement:'Configure Playwright to run the checkout flow across 3 browsers and 2 mobile viewports (iPhone 13, Pixel 5). Fix any browser-specific failures found. Add viewport-specific assertions (mobile: hamburger menu, desktop: full nav). Run in CI with parallelism across browsers.',
+          requirements:['playwright.config.ts: projects for chromium, firefox, webkit, mobile-chrome, mobile-safari','Checkout flow runs on all 5 configurations','Mobile viewport: hamburger menu visible, nav links hidden','Desktop viewport: full nav visible, hamburger hidden','Fix any cross-browser issues found (focus styles, date pickers, form submissions)','CI: matrix strategy running all 5 projects in parallel','HTML report: shows which browser each test ran on, with screenshots on failure'],
+          concepts:['projects','devices','mobile viewport','cross-browser','parallelism','CI matrix'],
+          hints:['`import {devices} from "@playwright/test"` — `use: {...devices["iPhone 13"]}` for mobile config','`expect(page.getByRole("navigation")).toBeVisible()` vs `not.toBeVisible()` for responsive assertions','WebKit (Safari) is strictest about: date input formats, CSS gap in flex, Web Crypto API','CI: `npx playwright test --shard=1/4` — splits tests across 4 machines for speed']
+        }
+      ]
+    },
+    {
+      id:'p4', label:'Phase 4', color:'#EC4899', level:'Advanced',
+      title:'Advanced Testing & CI', subtitle:'TDD, Test Architecture, CI Pipelines, Contract Testing',
+      topics:[
+        { id:'t4_0', name:'Test-Driven Development (TDD)', desc:'Red → Green → Refactor. Writing tests before code. When TDD adds value and when it slows you down. London vs Detroit school.' },
+        { id:'t4_1', name:'Testing Architecture', desc:'Testing pyramid, testing trophy, when to use unit vs integration vs E2E. The cost of each type. Avoiding the ice cream cone.' },
+        { id:'t4_2', name:'CI/CD Testing Pipeline', desc:'GitHub Actions test workflow, parallelism, caching node_modules, failing fast, test reporting, PR status checks.' },
+        { id:'t4_3', name:'Contract Testing with Pact', desc:'Consumer-driven contract tests. Defining API contracts between frontend and backend. Preventing breaking changes.' },
+        { id:'t4_4', name:'Performance Testing', desc:'Lighthouse CI in tests, bundle size assertions (size-limit), Playwright performance metrics, web-vitals in E2E.' },
+        { id:'t4_5', name:'Test Maintenance & Flakiness', desc:'Flaky test detection, quarantining, retry strategies, test determinism, eliminating timing-dependent tests.' }
+      ],
+      problems:[
+        {
+          id:'test4_0', title:'TDD a Feature End to End', diff:'Hard', time:120,
+          brief:'Build a feature test-first: write failing tests, implement to make them pass, refactor',
+          statement:'Use TDD to build a password strength meter component. Start with failing tests for each requirement. Write the minimum code to make each test pass. Then refactor without breaking tests. Complete the Red→Green→Refactor cycle for: strength calculation, UI feedback, and async breach check.',
+          requirements:['Red: write test for weak password (< 8 chars) → fails (component doesn\'t exist yet)','Green: implement minimum code to pass the test','Refactor: clean up without breaking the test','Add tests incrementally: strength levels (weak/fair/strong/very strong), special chars, numbers','Test the breach check (async, calls HaveIBeenPwned API via MSW mock)','Final: all tests pass, component is clean, no dead code','Measure: test coverage is naturally 100% because every line was TDD\'d into existence'],
+          concepts:['TDD','Red-Green-Refactor','test-first','incremental development','emergent design'],
+          hints:['Start with the simplest possible test: `expect(getPasswordStrength("")).toBe("weak")`','Green means: write the MINIMUM code to pass — even hardcoding the return value','Refactor: now make the code general without breaking the test','TDD forces you to think about the API (how the function is called) before the implementation']
+        },
+        {
+          id:'test4_1', title:'Optimized CI Test Pipeline', diff:'Hard', time:120,
+          brief:'Build a GitHub Actions pipeline that runs all tests in under 3 minutes',
+          statement:'Design and implement a GitHub Actions CI pipeline that runs: unit tests (Vitest), component tests (RTL), and E2E tests (Playwright) in under 3 minutes total. Use parallelism, caching, and smart test splitting. Fail fast: if unit tests fail, skip E2E. Post a test summary comment on every PR.',
+          requirements:['Job 1: lint + type-check (fastest, fails fast if broken)','Job 2: unit + component tests (Vitest, parallel, depends on job 1)','Job 3: E2E tests (Playwright, 4 shards, depends on job 2)','Cache: node_modules, Playwright browsers, Vitest cache','Fail fast: `needs: [lint]` — E2E does not start if unit tests fail','PR comment: test results summary with pass/fail counts and coverage badge','Target: total pipeline < 3 minutes on a standard PR'],
+          concepts:['GitHub Actions','matrix','needs','cache','sharding','fail fast','PR comment'],
+          hints:['Cache key: `hashFiles("**/package-lock.json")` — invalidates cache on dependency changes','Playwright sharding: `--shard=${{ matrix.shard }}/${{ strategy.job-total }}`','Upload Playwright HTML report as artifact: `uses: actions/upload-artifact` — link in PR comment','`continue-on-error: false` + `if: always()` — always upload test report even on failure']
+        },
+        {
+          id:'test4_2', title:'Contract Testing with Pact', diff:'Hard', time:120,
+          brief:'Define API contracts between frontend and backend to prevent breaking changes',
+          statement:'Implement consumer-driven contract testing between the React frontend (consumer) and a REST API (provider). The frontend defines what it expects from the API. The contract is published to a Pact Broker. The backend runs provider verification against the contract. Any breaking API change fails the pipeline.',
+          requirements:['Consumer test: define expectations for GET /api/users response shape','Consumer test: POST /api/users — define request body and expected response','Generate Pact contract file and publish to Pact Broker (PactFlow or local)','Provider test: verify the contract against the real Express server','Simulate breaking change: remove a field from the API response — provider test fails','CI integration: consumer publishes contract, provider verifies on every deploy','Use can-i-deploy: block deploy if consumer and provider versions are incompatible'],
+          concepts:['Pact','consumer-driven contract','PactFlow','provider verification','can-i-deploy','breaking change'],
+          hints:['Consumer: `new PactV3({consumer: "FE App", provider: "API"}).addInteraction({...}).executeTest(async (mockServer) => {...})`','The Pact file is a JSON contract — commit it or publish to Pact Broker','Provider: `new Verifier({providerBaseUrl: "http://localhost:3000", pactUrls: [...]}).verifyProvider()`','can-i-deploy: checks if this consumer version is compatible with the deployed provider version — prevents breaking changes in production']
+        },
+        {
+          id:'test4_3', title:'Flaky Test Detective', diff:'Medium', time:60,
+          brief:'Find and fix 5 flaky tests using systematic debugging techniques',
+          statement:'Given a test suite with 5 known flaky tests (intermittently failing), diagnose the root cause of each and fix it. Common causes: race conditions (no await), timer dependencies, shared state between tests, network non-determinism, and animation timing. Document each fix.',
+          requirements:['Flaky test 1: missing await — test asserts before async operation completes','Flaky test 2: shared mock state — one test\'s mock bleeds into another','Flaky test 3: real setTimeout dependency — replace with vi.useFakeTimers','Flaky test 4: test order dependency — each test must be fully isolated','Flaky test 5: animation timing — use waitForAnimations or mock CSS transitions','Run each test 20 times before/after fix to confirm stability (vitest --repeat=20)','Add flaky test detection to CI: `vitest --reporter=verbose` + retry config'],
+          concepts:['flaky tests','race condition','test isolation','timer mocking','test retry','determinism'],
+          hints:['Run `vitest --reporter=verbose --run` 20 times — flaky tests will fail non-deterministically','Missing await: `userEvent.click(btn)` vs `await userEvent.click(btn)` — the await is critical','Shared state: `afterEach(() => vi.resetAllMocks())` — clean up after every single test','Animation flakiness: in tests, add `* { animation-duration: 0s !important }` via global CSS to disable animations']
+        },
+        {
+          id:'test4_4', title:'Full Testing Strategy Document', diff:'Medium', time:60,
+          brief:'Design the complete testing strategy for a new project from scratch',
+          statement:'Write a comprehensive testing strategy for a new e-commerce React + Next.js application. Define: what to test at each level, what tools to use, coverage targets, CI pipeline design, and how to handle third-party dependencies. Present it as a document the whole team can follow.',
+          requirements:['Define the testing trophy for this specific project (unit/integration/E2E ratio)','Unit tests: which functions, what coverage target, what to explicitly NOT test','Component tests: which components, what user interactions, how to handle context','Integration tests: which user journeys, which API calls to mock vs real','E2E tests: which critical paths (checkout, auth, payment), which browsers','Coverage targets: overall 80%, business logic 90%, UI 60%','Tools list: Vitest + RTL + MSW + Playwright — justify each choice'],
+          concepts:['testing strategy','testing trophy','coverage targets','test pyramid','tool selection','documentation'],
+          hints:['Testing trophy: Integration tests should be the largest slice (they give the most confidence per test written)','Unit tests: pure functions, utilities, complex algorithms — NOT simple React components','E2E for the money paths: if checkout breaks, everything breaks — test it E2E','Write the strategy as if you\'re onboarding a new team member — be prescriptive, not vague']
+        }
+      ]
+    }
+  ];
+
+  // ── STATE ──────────────────────────────────────────────────────
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STATE_KEY)) || {}; } catch { return {}; }
+  }
+  function saveState() { localStorage.setItem(STATE_KEY, JSON.stringify(state)); }
+  let state = loadState();
+  if (!state.problems)   state.problems   = {};
+  if (!state.topics)     state.topics     = {};
+  if (!state.reqs)       state.reqs       = {};
+  if (!state.topicNotes) state.topicNotes = {};
+
+  let activePhase = 0;
+  let diffFilter  = 'all';
+  const timers    = {};
+
+  function updateStats() {
+    let done = 0, topicsDone = 0, phasesDone = 0;
+    PHASES.forEach(ph => {
+      let phaseDone = true;
+      ph.problems.forEach(pr => { if ((state.problems[pr.id]||{}).status==='done') done++; else phaseDone=false; });
+      ph.topics.forEach(t => { if ((state.topics[t.id]||{}).state==='mastered') topicsDone++; else phaseDone=false; });
+      if (phaseDone) phasesDone++;
+    });
+    document.getElementById('stat-done').textContent   = done;
+    document.getElementById('stat-topics').textContent = topicsDone;
+    document.getElementById('stat-phases').textContent = phasesDone + '/5';
+  }
+
+  function renderPhaseNav() {
+    document.getElementById('phase-nav').innerHTML = PHASES.map((ph,i) => {
+      const done = ph.problems.filter(pr => (state.problems[pr.id]||{}).status==='done').length;
+      return `<div class="phase-tab${i===activePhase?' active':''}" onclick="switchPhase(${i})">
+        <span class="tab-lang">${ph.level}</span>
+        ${ph.title} <span style="opacity:.6;font-size:11px">(${done}/${ph.problems.length})</span>
+      </div>`;
+    }).join('');
+  }
+  function switchPhase(i) { activePhase=i; renderPhaseNav(); renderContent(); }
+
+  function buildFilterBar() {
+    return `<div class="filter-bar"><div class="filter-group">
+      <span class="filter-label">Difficulty:</span>
+      <button class="flt-btn${diffFilter==='all'?' flt-active':''}" onclick="setFilter('all')">All</button>
+      <button class="flt-btn diff-easy${diffFilter==='Easy'?' flt-active':''}" onclick="setFilter('Easy')">Easy</button>
+      <button class="flt-btn diff-medium${diffFilter==='Medium'?' flt-active':''}" onclick="setFilter('Medium')">Medium</button>
+      <button class="flt-btn diff-hard${diffFilter==='Hard'?' flt-active':''}" onclick="setFilter('Hard')">Hard</button>
+    </div></div>`;
+  }
+  function setFilter(f) { diffFilter=f; renderContent(); }
+
+  function buildTopicCard(t) {
+    const ts=state.topics[t.id]||{}, st=ts.state||'untouched';
+    const tn=state.topicNotes[t.id]||{};
+    const cardCls=st==='mastered'?' mastered':st==='in-progress'?' in-progress':'';
+    const chkSt=st==='mastered'?'mastered':st==='in-progress'?'in-progress':'untouched';
+    const hasNote=!!(tn.approach||tn.code||tn.gotchas);
+    const confBtns=['😰 Shaky','🤔 Getting There','👍 Solid','🚀 Expert']
+      .map((l,ci)=>`<button class="tp-score-btn s${ci+1}${(tn.score||0)===ci+1?' selected':''}" onclick="setTopicScore('${t.id}',${ci+1})">${l}</button>`).join('');
+    return `<div class="topic-card${cardCls}" id="tcard_${t.id}">
+      <div class="topic-header" onclick="toggleTopicPanel('${t.id}')">
+        <div class="topic-check" data-state="${chkSt}" id="tchk_${t.id}" onclick="event.stopPropagation();cycleTopicState('${t.id}')">
+          <span class="chk-icon mastered">✓</span><span class="chk-icon in-progress">~</span>
+        </div>
+        <div class="topic-info">
+          <div class="topic-name">${t.name}</div>
+          <div class="topic-desc">${t.desc}</div>
+        </div>
+        <div class="topic-badges">
+          ${hasNote?'<span style="width:7px;height:7px;border-radius:50%;background:#1a5a3a;display:inline-block;"></span>':''}
+          <span class="expand-btn" id="tpbtn_${t.id}">Practice</span>
+        </div>
+      </div>
+      <div class="practice-panel" id="tpanel_${t.id}">
+        <div class="tp-fields">
+          <div class="field-group full">
+            <div class="field-label-text">🧠 My Understanding</div>
+            <textarea class="field-input${tn.approach?' filled':''}" id="tn_approach_${t.id}" placeholder="Explain in your own words...">${tn.approach||''}</textarea>
+          </div>
+          <div class="field-group">
+            <div class="field-label-text">💻 Key Code / Pattern</div>
+            <textarea class="field-input${tn.code?' filled':''}" id="tn_code_${t.id}" placeholder="Key snippet or API...">${tn.code||''}</textarea>
+          </div>
+          <div class="field-group">
+            <div class="field-label-text">⚠️ Gotchas</div>
+            <textarea class="field-input${tn.gotchas?' filled':''}" id="tn_gotchas_${t.id}" placeholder="Common mistakes...">${tn.gotchas||''}</textarea>
+          </div>
+        </div>
+        <div class="tp-score-row">
+          <span class="tp-score-label">Confidence:</span>${confBtns}
+          <button class="tp-save-btn" onclick="saveTopicNote('${t.id}')">Save</button>
+          <span class="tp-saved" id="tpsaved_${t.id}">Saved ✓</span>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function buildProblemCard(pr,idx) {
+    const ps=state.problems[pr.id]||{};
+    const cls=ps.status==='done'?' done':ps.status==='inprogress'?' inprogress':'';
+    const diffCls=pr.diff==='Easy'?'diff-easy':pr.diff==='Medium'?'diff-medium':'diff-hard';
+    const reqsHtml=pr.requirements.map((r,ri)=>{
+      const rKey=pr.id+'_r'+ri, checked=state.reqs[rKey]||false;
+      return `<div class="req-item" onclick="toggleReq('${rKey}',this)">
+        <input class="req-cb" type="checkbox" ${checked?'checked':''} onclick="event.stopPropagation()">
+        <span class="req-text${checked?' checked':''}">${r}</span>
+      </div>`;
+    }).join('');
+    const conceptsHtml=pr.concepts.map(c=>`<span class="concept-tag">${c}</span>`).join('');
+    const hintsHtml=pr.hints.map((h,hi)=>`<div class="hint-item"><span class="hint-num">${hi+1}.</span>${h}</div>`).join('');
+    const solHtml=SOLUTION_FIELDS.map(f=>{
+      const val=ps[f.k]||'';
+      return `<div class="field-group${f.full?' full':''}">
+        <div class="field-label-text">${f.icon} ${f.label}</div>
+        <textarea class="field-input${val?' filled':''}" id="sol_${pr.id}_${f.k}" placeholder="${getSolPlaceholder(f.k)}">${val}</textarea>
+      </div>`;
+    }).join('');
+    return `<div class="problem-card${cls}" id="pcard_${pr.id}">
+      <div class="card-header" onclick="toggleProblem('${pr.id}')">
+        <span class="card-num">${String(idx+1).padStart(2,'0')}</span>
+        <div class="card-info">
+          <div class="card-title">${pr.title}</div>
+          <div class="card-brief">${pr.brief}</div>
+        </div>
+        <div class="card-badges">
+          <span class="diff-badge ${diffCls}">${pr.diff}</span>
+          <span class="time-badge">⏱ ${pr.time}m</span>
+          <button class="prob-expand-btn" id="pexpbtn_${pr.id}">Open</button>
+        </div>
+      </div>
+      <div class="problem-panel" id="ppanel_${pr.id}">
+        <div class="statement-box">
+          <div class="statement-label">Problem Statement</div>
+          <div class="statement-text">${pr.statement}</div>
+        </div>
+        <div class="req-section">
+          <div class="req-label">✅ Requirements</div>${reqsHtml}
+        </div>
+        <div class="req-label" style="margin-top:14px">🏷 Concepts</div>
+        <div class="concepts-row">${conceptsHtml}</div>
+        <div class="hints-wrap">
+          <button class="hint-toggle" onclick="toggleHints('${pr.id}')">💡 Show Hints</button>
+          <div class="hint-content" id="hints_${pr.id}">${hintsHtml}</div>
+        </div>
+        <div class="timer-section">
+          <span class="timer-label">Timer</span>
+          <span class="timer-display" id="tdisp_${pr.id}">${fmtTime(pr.time*60)}</span>
+          <div class="timer-bar-wrap"><div class="timer-bar" id="tbar_${pr.id}" style="width:100%"></div></div>
+          <div class="timer-controls">
+            <button class="timer-btn" id="tbtn_${pr.id}" onclick="toggleTimer('${pr.id}',${pr.time})">▶ Start</button>
+            <button class="timer-btn" onclick="resetTimer('${pr.id}',${pr.time})">↺ Reset</button>
+          </div>
+        </div>
+        <div class="sol-fields">${solHtml}</div>
+        <div class="action-row">
+          <span class="score-label">Confidence:</span>
+          ${[1,2,3,4].map(n=>`<button class="score-btn s${n}${(ps.score||0)===n?' selected':''}" onclick="setScore('${pr.id}',${n})">${['😰','🤔','👍','🚀'][n-1]}</button>`).join('')}
+          <div class="status-btns">
+            <button class="status-btn wip${ps.status==='inprogress'?' active':''}" onclick="setStatus('${pr.id}','inprogress')">In Progress</button>
+            <button class="status-btn done${ps.status==='done'?' active':''}" onclick="setStatus('${pr.id}','done')">Done ✓</button>
+          </div>
+          <button class="save-btn" onclick="saveSolution('${pr.id}')">Save</button>
+          <span class="saved-flash" id="flash_${pr.id}">Saved ✓</span>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function getSolPlaceholder(k) {
+    return {approach:'What testing strategy did you use? What did you decide to test and why?',code:'Key test code, setup, or helper functions...',gotchas:'What anti-patterns did you avoid? What tripped you up?',coverage:'What did you cover? What did you consciously skip and why?'}[k]||'';
+  }
+
+  function renderContent() {
+    const ph=PHASES[activePhase];
+    const filtered=diffFilter==='all'?ph.problems:ph.problems.filter(pr=>pr.diff===diffFilter);
+    const done   = ph.problems.filter(pr => (state.problems[pr.id]||{}).status==='done').length;
+    const doneTp = ph.topics.filter(t => (state.topics[t.id]||{}).state==='mastered').length;
+    const pct    = Math.round((done + doneTp) / (ph.problems.length + ph.topics.length) * 100);
+    document.getElementById('content').innerHTML=`
+      <div class="phase-head" style="background:${ph.color}15">
+        <div>
+          <div class="phase-num">${ph.label} — ${ph.subtitle}</div>
+          <div class="phase-title">${ph.title}</div>
+        </div>
+        <div class="phase-meta">
+          <div class="phase-level" style="color:${ph.color}">${ph.level}</div>
+          <div class="phase-count">${done}/${ph.problems.length} solved</div>
+        </div>
+      </div>
+      <div class="phase-progress-wrap">
+        <div class="phase-progress-label" id="phase-prog-label">${pct}% complete</div>
+        <div class="phase-progress-bar"><div class="phase-progress-fill" id="phase-prog-fill" style="width:${pct}%;background:${ph.color}"></div></div>
+      </div>
+      <div class="section-head" style="margin-top:1.5rem">Topics to study</div>
+      <div>${ph.topics.map(buildTopicCard).join('')}</div>
+      <div class="section-head" style="margin-top:2rem">Problems (${ph.problems.length})</div>
+      ${buildFilterBar()}
+      <div>${filtered.map((pr,i)=>buildProblemCard(pr,i)).join('')}</div>`;
+    updateStats();
+  }
+
+  function refreshProgress() {
+    const ph     = PHASES[activePhase];
+    const donePr = ph.problems.filter(pr => (state.problems[pr.id]||{}).status === 'done').length;
+    const doneTp = ph.topics.filter(t => (state.topics[t.id]||{}).state === 'mastered').length;
+    const pct    = Math.round((donePr + doneTp) / (ph.problems.length + ph.topics.length) * 100);
+    const label  = document.getElementById('phase-prog-label');
+    const fill   = document.getElementById('phase-prog-fill');
+    if (label) label.textContent = pct + '% complete';
+    if (fill)  fill.style.width  = pct + '%';
+  }
+
+  function toggleTopicPanel(id) {
+    const panel=document.getElementById('tpanel_'+id),btn=document.getElementById('tpbtn_'+id);
+    if(!panel) return;
+    const open=panel.classList.toggle('open');
+    if(btn){btn.classList.toggle('open',open);btn.textContent=open?'Close':'Practice';}
+    if(open) setTimeout(()=>document.getElementById('tn_approach_'+id)?.focus(),50);
+  }
+  function cycleTopicState(id) {
+    const ts=state.topics[id]||{},cur=ts.state||'untouched';
+    const next=cur==='untouched'?'in-progress':cur==='in-progress'?'mastered':'untouched';
+    state.topics[id]={...ts,state:next}; saveState();
+    const card=document.getElementById('tcard_'+id),chk=document.getElementById('tchk_'+id);
+    if(card) card.className='topic-card'+(next==='mastered'?' mastered':next==='in-progress'?' in-progress':'');
+    if(chk) chk.dataset.state=next==='mastered'?'mastered':next==='in-progress'?'in-progress':'untouched';
+    updateStats(); refreshProgress();
+  }
+  function setTopicScore(id,score) {
+    const panel=document.getElementById('tpanel_'+id); if(panel) panel.dataset.pendingScore=score;
+    document.querySelectorAll(`#tpanel_${id} .tp-score-btn`).forEach((b,i)=>b.classList.toggle('selected',i+1===score));
+  }
+  function saveTopicNote(id) {
+    const approach=document.getElementById('tn_approach_'+id)?.value||'';
+    const code=document.getElementById('tn_code_'+id)?.value||'';
+    const gotchas=document.getElementById('tn_gotchas_'+id)?.value||'';
+    const panel=document.getElementById('tpanel_'+id);
+    const score=parseInt(panel?.dataset.pendingScore||(state.topicNotes[id]||{}).score||0)||0;
+    state.topicNotes[id]={approach,code,gotchas,score}; saveState();
+    [['tn_approach_','approach'],['tn_code_','code'],['tn_gotchas_','gotchas']].forEach(([p,f])=>{
+      const el=document.getElementById(p+id); if(el) el.classList.toggle('filled',!!(state.topicNotes[id][f]));
+    });
+    const flash=document.getElementById('tpsaved_'+id);
+    if(flash){flash.classList.add('show');setTimeout(()=>flash.classList.remove('show'),1500);}
+  }
+
+  function toggleProblem(id) {
+    const panel=document.getElementById('ppanel_'+id),btn=document.getElementById('pexpbtn_'+id);
+    if(!panel) return;
+    const open=panel.classList.toggle('open');
+    if(btn){btn.classList.toggle('open',open);btn.textContent=open?'Close':'Open';}
+  }
+  function toggleHints(id) { document.getElementById('hints_'+id)?.classList.toggle('show'); }
+  function toggleReq(rKey,rowEl) {
+    state.reqs[rKey]=!state.reqs[rKey]; saveState();
+    const cb=rowEl.querySelector('.req-cb'),text=rowEl.querySelector('.req-text');
+    if(cb) cb.checked=state.reqs[rKey];
+    if(text) text.classList.toggle('checked',state.reqs[rKey]);
+  }
+  function setScore(id,score) {
+    state.problems[id]=state.problems[id]||{}; state.problems[id].score=score; saveState();
+    document.querySelectorAll(`#pcard_${id} .action-row .score-btn`).forEach((b,i)=>b.classList.toggle('selected',i+1===score));
+  }
+  function setStatus(id,status) {
+    state.problems[id]=state.problems[id]||{};
+    state.problems[id].status=state.problems[id].status===status?null:status; saveState();
+    const card=document.getElementById('pcard_'+id);
+    if(card) card.className='problem-card'+(state.problems[id].status==='done'?' done':state.problems[id].status==='inprogress'?' inprogress':'');
+    document.querySelector(`#pcard_${id} .status-btn.wip`)?.classList.toggle('active',state.problems[id].status==='inprogress');
+    document.querySelector(`#pcard_${id} .status-btn.done`)?.classList.toggle('active',state.problems[id].status==='done');
+    updateStats(); refreshProgress();
+  }
+  function saveSolution(id) {
+    state.problems[id]=state.problems[id]||{};
+    SOLUTION_FIELDS.forEach(f=>{
+      const el=document.getElementById('sol_'+id+'_'+f.k);
+      if(el){state.problems[id][f.k]=el.value;el.classList.toggle('filled',!!el.value);}
+    }); saveState();
+    const flash=document.getElementById('flash_'+id);
+    if(flash){flash.classList.add('show');setTimeout(()=>flash.classList.remove('show'),1500);}
+  }
+
+  function fmtTime(s){const m=Math.floor(Math.abs(s)/60),sec=Math.abs(s)%60;return(s<0?'-':'')+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');}
+  function toggleTimer(id,limitMin){
+    const btn=document.getElementById('tbtn_'+id);
+    if(timers[id]?.running){clearInterval(timers[id].interval);timers[id].running=false;if(btn){btn.textContent='▶ Resume';btn.classList.remove('running');}}
+    else{
+      if(!timers[id]) timers[id]={remaining:limitMin*60,running:false};
+      timers[id].running=true; if(btn){btn.textContent='⏸ Pause';btn.classList.add('running');}
+      timers[id].interval=setInterval(()=>{
+        timers[id].remaining--;
+        const disp=document.getElementById('tdisp_'+id),bar=document.getElementById('tbar_'+id);
+        if(disp){disp.textContent=fmtTime(timers[id].remaining);disp.className='timer-display'+(timers[id].remaining<0?' over':timers[id].remaining<limitMin*60*.2?' warning':'');}
+        if(bar){const pct=Math.max(0,timers[id].remaining/(limitMin*60)*100);bar.style.width=pct+'%';bar.style.background=timers[id].remaining<0?'#dc2626':timers[id].remaining<limitMin*60*.2?'#d97706':'#16a34a';}
+      },1000);
+    }
+  }
+  function resetTimer(id,limitMin){
+    if(timers[id]){clearInterval(timers[id].interval);delete timers[id];}
+    const disp=document.getElementById('tdisp_'+id),bar=document.getElementById('tbar_'+id),btn=document.getElementById('tbtn_'+id);
+    if(disp){disp.textContent=fmtTime(limitMin*60);disp.className='timer-display';}
+    if(bar){bar.style.width='100%';bar.style.background='#16a34a';}
+    if(btn){btn.textContent='▶ Start';btn.classList.remove('running');}
+  }
+
+  renderPhaseNav();
+  renderContent();
+</script>
+
+<!-- ── TAB-TITLE TIMER ──────────────────────────────────────────────
+     Mirrors whichever timer card is currently counting into the
+     browser tab title, so you can see it while working in another tab.
+     Watches .timer-display for changes; touches no timer logic. -->
+<script>
+(function () {
+  const BASE = document.title;
+  const isTime = s => /^-?\d{1,3}:\d{2}$/.test(s);
+  let restore = null, blink = null, flip = false;
+
+  function stop() {
+    clearInterval(blink); blink = null;
+    document.title = BASE;
+  }
+
+  function show(txt, over) {
+    clearTimeout(restore);
+
+    if (over) {
+      // time is up: blink so it is noticeable from another tab
+      if (!blink) {
+        blink = setInterval(() => {
+          flip = !flip;
+          document.title = (flip ? "⏰ TIME UP " : "⏱ ") + txt + " · " + BASE;
+        }, 900);
+      }
+    } else {
+      clearInterval(blink); blink = null;
+      document.title = "⏱ " + txt + " · " + BASE;
+    }
+
+    // if nothing ticks for 3s the timer is paused or gone: put the title back
+    restore = setTimeout(stop, 3000);
+  }
+
+  new MutationObserver(muts => {
+    for (const m of muts) {
+      const el = m.target.nodeType === 1 ? m.target : m.target.parentElement;
+      if (!el || !el.classList || !el.classList.contains("timer-display")) continue;
+      const txt = (el.textContent || "").trim();
+      if (!isTime(txt)) continue;
+      show(txt, txt.startsWith("-") || el.classList.contains("over"));
+    }
+  }).observe(document.body, { childList: true, characterData: true, subtree: true });
+
+  window.addEventListener("beforeunload", stop);
+})();
+</script>
+
+</body>
+</html>

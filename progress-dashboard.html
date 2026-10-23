@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FAANG Readiness — Progress Dashboard — Mayank Thakur</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg-main:#f0f2f5; --bg-card:#fff; --text-primary:#000; --text-secondary:#5f6368; --text-muted:#9aa0a6;
+      --accent-black:#000;
+      --pastel-yellow:#ffeab6; --pastel-mint:#dcf0eb; --pastel-purple:#e6daff; --pastel-pink:#ffd6e8;
+      --pastel-blue:#d6eaff; --pastel-orange:#ffe4cc; --pastel-coral:#ffd9d9; --pastel-green:#d6f5d6;
+      --rlg:24px; --rmd:16px; --rpill:9999px; --font-sans:'Outfit','Inter',sans-serif;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{max-width:1100px;margin:0 auto;background:var(--bg-main);font-family:var(--font-sans);
+      color:var(--text-primary);min-height:100vh;-webkit-font-smoothing:antialiased;line-height:1.55;}
+
+    .cover{padding:3.2rem 2.5rem 1rem;display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;}
+    .cover-kicker{font-size:13px;letter-spacing:.08em;color:var(--text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:.4rem;}
+    .cover-title{font-size:38px;font-weight:700;letter-spacing:-.02em;}
+    .refresh{background:var(--accent-black);color:#fff;border:none;border-radius:var(--rpill);padding:9px 20px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;}
+    .refresh:hover{opacity:.85;}
+
+    /* hero readiness */
+    .hero{margin:1.2rem 2.5rem 0;background:var(--bg-card);border-radius:var(--rlg);padding:1.8rem 2rem;box-shadow:0 4px 20px rgba(0,0,0,.04);display:flex;align-items:center;gap:2rem;flex-wrap:wrap;}
+    .ring{position:relative;width:150px;height:150px;flex-shrink:0;}
+    .ring svg{transform:rotate(-90deg);}
+    .ring-num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+    .ring-pct{font-size:34px;font-weight:700;line-height:1;}
+    .ring-lbl{font-size:11px;font-weight:600;color:var(--text-muted);margin-top:3px;}
+    .hero-txt{flex:1;min-width:220px;}
+    .hero-h{font-size:20px;font-weight:700;margin-bottom:.4rem;}
+    .hero-p{font-size:14px;color:var(--text-secondary);font-weight:500;}
+    .hero-sub{font-size:12.5px;color:var(--text-muted);margin-top:.7rem;}
+
+    .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:1.2rem 2.5rem 0;}
+    .metric{background:var(--bg-card);border-radius:var(--rmd);padding:1.2rem 1.4rem;box-shadow:0 2px 8px rgba(0,0,0,.03);}
+    .metric-v{font-size:30px;font-weight:700;line-height:1;}
+    .metric-k{font-size:13px;color:var(--text-secondary);font-weight:600;margin-top:6px;}
+    .metric.gaps .metric-v{color:#92400e;}
+    .metric.mastered .metric-v{color:#1a5a3a;}
+
+    .section-h{font-size:16px;font-weight:700;margin:2rem 2.5rem .9rem;}
+
+    .jgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin:0 2.5rem;}
+    .jcard{background:var(--bg-card);border-radius:var(--rmd);padding:1.1rem 1.3rem;box-shadow:0 2px 8px rgba(0,0,0,.03);text-decoration:none;color:inherit;display:block;transition:transform .15s,box-shadow .15s;}
+    .jcard:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.08);}
+    .jcard-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.5rem;}
+    .jcard-name{font-size:15px;font-weight:700;}
+    .jcard-area{font-size:11px;font-weight:600;color:var(--text-muted);}
+    .jcard-pct{font-size:20px;font-weight:700;}
+    .jbar{height:8px;background:var(--bg-main);border-radius:var(--rpill);overflow:hidden;margin:.5rem 0 .5rem;}
+    .jfill{height:100%;background:var(--accent-black);border-radius:var(--rpill);transition:width .5s;}
+    .jmeta{font-size:12px;color:var(--text-secondary);font-weight:500;display:flex;justify-content:space-between;}
+    .jmeta .wip{color:#92400e;font-weight:600;}
+    .jgo{font-size:11px;font-weight:700;color:#3C3489;margin-top:.5rem;display:inline-block;}
+
+    /* plan months */
+    .plan{margin:0 2.5rem;background:var(--bg-card);border-radius:var(--rlg);padding:1.4rem 1.6rem;box-shadow:0 2px 12px rgba(0,0,0,.04);}
+    .plan a{color:#3C3489;font-weight:700;font-size:12px;text-decoration:none;}
+    .prow{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--bg-main);}
+    .prow:last-child{border-bottom:none;}
+    .pnum{font-size:12px;font-weight:700;color:var(--text-muted);width:70px;flex-shrink:0;}
+    .pbar{flex:1;height:8px;background:var(--bg-main);border-radius:var(--rpill);overflow:hidden;}
+    .pfill{height:100%;background:var(--accent-black);border-radius:var(--rpill);transition:width .5s;}
+    .ppct{font-size:13px;font-weight:700;width:44px;text-align:right;flex-shrink:0;}
+    .pstat{font-size:10px;font-weight:700;padding:2px 8px;border-radius:var(--rpill);width:62px;text-align:center;flex-shrink:0;}
+    .pstat.pass{background:var(--accent-black);color:#fff;} .pstat.fail{background:var(--pastel-coral);color:#8a1a1a;} .pstat.pending{background:#eceff1;color:var(--text-secondary);}
+
+    .empty{margin:1.5rem 2.5rem;background:var(--pastel-yellow);border-radius:var(--rmd);padding:1.2rem 1.5rem;font-size:14px;font-weight:500;color:#7a5200;line-height:1.6;display:none;}
+    .empty.show{display:block;}
+    .note{margin:1.4rem 2.5rem 3rem;font-size:12px;color:var(--text-muted);line-height:1.6;}
+    .quote{text-align:center;padding:2rem 2.5rem 3rem;font-size:16px;font-weight:500;}
+  </style>
+</head>
+<body>
+<div id="nav-container"></div>
+
+<div class="cover">
+  <div>
+    <div class="cover-kicker">Single source of truth · updates as you work</div>
+    <div class="cover-title">FAANG Readiness</div>
+  </div>
+  <button class="refresh" onclick="render()">↻ Refresh</button>
+</div>
+
+<div class="hero">
+  <div class="ring">
+    <svg width="150" height="150" viewBox="0 0 150 150">
+      <circle cx="75" cy="75" r="66" fill="none" stroke="#eceff1" stroke-width="14"/>
+      <circle id="ring-arc" cx="75" cy="75" r="66" fill="none" stroke="#000" stroke-width="14"
+        stroke-linecap="round" stroke-dasharray="414.7" stroke-dashoffset="414.7"/>
+    </svg>
+    <div class="ring-num"><div class="ring-pct" id="ring-pct">0%</div><div class="ring-lbl">FAANG-ready</div></div>
+  </div>
+  <div class="hero-txt">
+    <div class="hero-h" id="hero-h">Let's see where you stand</div>
+    <div class="hero-p" id="hero-p">A blend of how much of the journals you've mastered and how many of the plan's monthly exams you've passed.</div>
+    <div class="hero-sub">Readiness = 60% journal mastery + 40% plan exams. Work in your journals and the plan, then hit Refresh.</div>
+  </div>
+</div>
+
+<div class="metrics">
+  <div class="metric mastered"><div class="metric-v" id="m-mastered">0</div><div class="metric-k">Topics mastered</div></div>
+  <div class="metric"><div class="metric-v" id="m-total">0</div><div class="metric-k">Topics total (all journals)</div></div>
+  <div class="metric gaps"><div class="metric-v" id="m-gaps">0</div><div class="metric-k">Open gaps (in progress)</div></div>
+  <div class="metric"><div class="metric-v" id="m-plan">0/44</div><div class="metric-k">Plan exam items passed</div></div>
+</div>
+
+<div class="empty" id="empty">
+  No progress recorded yet — start ticking topics in your journals and exam items in the plan, then hit <b>Refresh</b>.
+  <br><br>If you <i>have</i> done work and still see zeros, open this page from the same place as your journals (e.g. the same local server), so it can read their shared progress.
+</div>
+
+<div class="section-h">📚 Per-journal mastery</div>
+<div class="jgrid" id="jgrid"></div>
+
+<div class="section-h">🗺️ Plan — monthly exam progress</div>
+<div class="plan" id="plan"></div>
+
+<div class="note" id="note"></div>
+
+<div class="quote">Measured every day. That's how the climb stays honest.</div>
+
+<script>
+const JOURNALS = [
+  {key:'js_mastery_v1',        label:'JavaScript',       area:'Language',      total:59,  url:'journal/frontend/js-mastery-journal.html',            type:'flat'},
+  {key:'css_mastery_v1',       label:'CSS & HTML',       area:'Language',      total:52,  url:'journal/frontend/css-mastery-journal.html',           type:'flat'},
+  {key:'ts_mastery_v1',        label:'TypeScript',       area:'Language',      total:75,  url:'journal/frontend/typescript-mastery-journal.html',    type:'flat'},
+  {key:'react_mastery_v1',     label:'React',            area:'Framework',     total:76,  url:'journal/frontend/react-mastery-journal.html',         type:'flat'},
+  {key:'dsa_journal_v2',       label:'DSA',              area:'DSA',           total:358, url:'journal/cs-fundamentals/dsa-journal.html',            type:'dsa'},
+  {key:'mc_journal_v1',        label:'Machine Coding',   area:'Coding',        total:89,  url:'journal/machine-coding/machine-coding-journal.html',  type:'mc'},
+  {key:'frontend-sd-journal-v1',label:'FE System Design',area:'System Design', total:55,  url:'journal/frontend/frontend-system-design-journal.html',type:'fesd'},
+  {key:'nextjs_journal_v1',    label:'Next.js',          area:'Framework',     total:55,  url:'journal/frontend/nextjs-journal.html',                type:'fesd'},
+];
+const PLAN_KEY = 'faang_road_v1';
+const PLAN_MONTHS = [
+  {id:'m1', total:8, name:'Foundations'},
+  {id:'m2', total:8, name:'Core Structures'},
+  {id:'m3', total:8, name:'React + Heaps'},
+  {id:'m4', total:7, name:'Graphs + Adv.'},
+  {id:'m5', total:6, name:'DP + Sys Design'},
+  {id:'m6', total:7, name:'Full Loops'},
+];
+const PLAN_URL = 'prep-school-plan.html';
+
+function readJSON(key){ try { return JSON.parse(localStorage.getItem(key)) || null; } catch(e){ return null; } }
+
+function countJournal(j){
+  const o = readJSON(j.key);
+  if(!o) return {done:0, wip:0};
+  let d=0, w=0;
+  if(j.type==='flat'){
+    for(const k in o){ const v=o[k]; if(v && v.mastered) d++; else if(v && v.inProgress) w++; }
+  } else if(j.type==='mc'){
+    for(const k in o){ const v=o[k]; if(v && v.status==='done') d++; else if(v && v.status==='wip') w++; }
+  } else if(j.type==='dsa'){
+    const c=o.checks||{}; for(const k in c){ const v=c[k]; if(v===true||v==='clean'||v==='hints') d++; else if(v==='inprogress') w++; }
+  } else if(j.type==='fesd'){
+    const p=o.problems||{}, t=o.topics||{};
+    for(const k in p){ if((p[k]||{}).status==='done') d++; else if((p[k]||{}).status==='inprogress') w++; }
+    for(const k in t){ const st=(t[k]||{}).state; if(st==='mastered') d++; else if(st==='in-progress') w++; }
+  }
+  return {done:Math.min(d,j.total), wip:w};
+}
+
+function countPlan(){
+  const o = readJSON(PLAN_KEY) || {};
+  const per={}; let total=0;
+  PLAN_MONTHS.forEach(m=>{ per[m.id]=0; });
+  for(const k in o){ if(o[k]===true){ const mid=k.split('.')[0]; if(per[mid]!==undefined){ per[mid]++; total++; } } }
+  return {per, total};
+}
+
+function render(){
+  let masteredSum=0, totalSum=0, wipSum=0, anyJournal=0;
+  const cards = JOURNALS.map(j=>{
+    const c = countJournal(j);
+    masteredSum += c.done; totalSum += j.total; wipSum += c.wip; anyJournal += c.done + c.wip;
+    const pct = Math.round(c.done / j.total * 100);
+    return '<a class="jcard" href="'+j.url+'">'
+      +'<div class="jcard-top"><div><div class="jcard-name">'+j.label+'</div><div class="jcard-area">'+j.area+'</div></div><div class="jcard-pct">'+pct+'%</div></div>'
+      +'<div class="jbar"><div class="jfill" style="width:'+pct+'%"></div></div>'
+      +'<div class="jmeta"><span>'+c.done+' / '+j.total+' mastered</span>'+(c.wip?'<span class="wip">'+c.wip+' in progress</span>':'<span></span>')+'</div>'
+      +'<span class="jgo">↗ open journal</span></a>';
+  }).join('');
+  document.getElementById('jgrid').innerHTML = cards;
+
+  const plan = countPlan();
+  const planRows = PLAN_MONTHS.map(m=>{
+    const done=plan.per[m.id]||0, pct=Math.round(done/m.total*100);
+    const cls = done===0 ? 'pending' : (pct>=80 ? 'pass' : 'fail');
+    const txt = done===0 ? '—' : (pct>=80 ? 'PASS' : 'below');
+    return '<div class="prow"><span class="pnum">'+m.id.toUpperCase()+'</span>'
+      +'<div class="pbar"><div class="pfill" style="width:'+pct+'%"></div></div>'
+      +'<span class="ppct">'+pct+'%</span><span class="pstat '+cls+'">'+txt+'</span></div>';
+  }).join('');
+  document.getElementById('plan').innerHTML = planRows
+    + '<div style="margin-top:12px;font-size:13px;"><a href="'+PLAN_URL+'">↗ open the plan</a></div>';
+
+  // metrics
+  document.getElementById('m-mastered').textContent = masteredSum;
+  document.getElementById('m-total').textContent = totalSum;
+  document.getElementById('m-gaps').textContent = wipSum;
+  document.getElementById('m-plan').textContent = plan.total + '/44';
+
+  // readiness = 60% journal mastery + 40% plan exams
+  const jPct = totalSum ? masteredSum/totalSum : 0;
+  const pPct = plan.total/44;
+  const readiness = Math.round((jPct*0.6 + pPct*0.4) * 100);
+  document.getElementById('ring-pct').textContent = readiness + '%';
+  const circ = 2*Math.PI*66;
+  document.getElementById('ring-arc').setAttribute('stroke-dashoffset', circ*(1-readiness/100));
+
+  const hh=document.getElementById('hero-h');
+  hh.textContent = readiness===0 ? "Let's get on the board"
+    : readiness<25 ? "Foundations forming — keep stacking days"
+    : readiness<50 ? "Real momentum now"
+    : readiness<75 ? "Getting genuinely competitive"
+    : readiness<100 ? "Nearly there — sharpen and mock"
+    : "Offer-ready. Go get it.";
+
+  document.getElementById('empty').classList.toggle('show', anyJournal===0 && plan.total===0);
+
+  document.getElementById('note').innerHTML =
+    'Reads live from your browser: '+JOURNALS.length+' journals + the plan. Nothing is sent anywhere. '
+    +'Progress updates when you mark topics mastered / exams passed, then Refresh. '
+    +'DSA counts solved problems + mastered concept topics; other journals count mastered topics.';
+}
+
+render();
+</script>
+<script src="nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DevOps — Mayank Thakur</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: #f0f2f5; --bg-card: #ffffff;
+      --text-primary: #000000; --text-secondary: #5f6368; --text-muted: #9aa0a6;
+      --accent-black: #000000; --accent-white: #ffffff;
+      --pastel-yellow: #ffeab6; --pastel-mint: #dcf0eb; --pastel-purple: #e6daff;
+      --pastel-pink: #ffd6e8; --pastel-blue: #d6eaff; --pastel-orange: #ffe4cc;
+      --pastel-green: #d4f5d4; --pastel-teal: #d0f0f0; --pastel-coral: #ffd6cc;
+      --border-radius-lg: 24px; --border-radius-md: 16px; --border-radius-pill: 9999px;
+      --font-sans: 'Outfit', 'Inter', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { max-width: 1200px; margin: 0 auto; background: var(--bg-main); font-family: var(--font-sans); color: var(--text-primary); min-height: 100vh; -webkit-font-smoothing: antialiased; line-height: 1.5; }
+    .cover { padding: 4rem 2.5rem 2rem; text-align: left; }
+    .cover-subtitle { font-size: 14px; letter-spacing: 0.05em; color: var(--text-secondary); font-weight: 500; margin-bottom: 0.5rem; }
+    .cover-title { font-size: 40px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
+    .cover-name { font-size: 16px; color: var(--text-secondary); font-weight: 500; margin-bottom: 2rem; display: flex; align-items: center; gap: 6px; }
+    .badge { font-size: 13px; font-weight: 500; padding: 2px 8px; border-radius: 6px; white-space: nowrap; }
+    .badge-devops { background: var(--pastel-orange); color: #7a3a00; }
+    .badge-faang { background: #EEEDFE; color: #3C3489; }
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.25rem; margin-bottom: 2rem; padding: 0 2.5rem; }
+    .stat { background: var(--bg-card); padding: 1.5rem; border-radius: var(--border-radius-lg); box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
+    .stat-val { font-size: 36px; font-weight: 600; line-height: 1.1; margin-bottom: 8px; }
+    .stat-label { font-size: 14px; color: var(--text-secondary); font-weight: 500; }
+    .streak-box { display: inline-flex; align-items: center; gap: 8px; background: var(--pastel-orange); padding: 8px 16px; border-radius: var(--border-radius-pill); margin: 0 2.5rem 2rem; }
+    .streak-text { font-size: 14px; font-weight: 600; }
+    .phase-nav { display: flex; gap: 0.75rem; overflow-x: auto; scrollbar-width: none; margin: 0 2rem 1.5rem; flex-wrap: nowrap; white-space: nowrap; }
+    .phase-nav::-webkit-scrollbar { display: none; }
+    .phase-tab { font-size: 14px; font-weight: 500; padding: 10px 20px; cursor: pointer; color: var(--text-secondary); background: var(--bg-card); border-radius: var(--border-radius-pill); border: 1px solid transparent; white-space: nowrap; transition: all 0.2s ease; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+    .phase-tab.active { color: var(--accent-white); background: var(--accent-black); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    .phase-tab:hover:not(.active) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .content { padding: 0 2.5rem 4rem; max-width: 900px; margin-inline: auto; }
+    .chapter-section { display: none; }
+    .chapter-section.active { display: block; }
+    .chapter-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1.5rem; padding: 2rem; border-radius: var(--border-radius-lg); }
+    .chapter-num { font-size: 13px; font-weight: 600; opacity: 0.7; margin-bottom: 0.4rem; }
+    .chapter-title { font-size: 28px; font-weight: 700; letter-spacing: -0.01em; }
+    .chapter-meta { text-align: right; }
+    .chapter-week { font-size: 16px; font-weight: 600; }
+    .chapter-time { font-size: 13px; opacity: 0.7; margin-top: 4px; font-weight: 500; }
+    .topic-card { background: var(--bg-card); border-radius: var(--border-radius-md); margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); overflow: hidden; transition: box-shadow 0.2s; }
+    .topic-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); }
+    .topic-card.mastered { background: var(--pastel-mint); }
+    .topic-card.in-progress { background: #fffbeb; border-left: 3px solid #f59e0b; }
+    .topic-card.in-progress .topic-name { color: #92400e; }
+    .topic-card.in-progress .topic-desc { color: #a0620e; }
+    .topic-header { display: flex; align-items: center; gap: 14px; padding: 18px 20px; cursor: pointer; user-select: none; }
+    .topic-check { width: 22px; height: 22px; flex-shrink: 0; cursor: pointer; border-radius: 4px; border: 1.5px solid #d0d0d0; display: flex; align-items: center; justify-content: center; background: var(--bg-card); transition: all 0.15s; }
+    .topic-check[data-state="mastered"] { background: var(--accent-black); border-color: var(--accent-black); }
+    .topic-check[data-state="in-progress"] { background: #f59e0b; border-color: #f59e0b; }
+    .chk-icon { display: none; font-size: 14px; line-height: 1; color: #fff; font-weight: 700; }
+    .topic-check[data-state="mastered"] .chk-icon.mastered { display: block; }
+    .topic-check[data-state="in-progress"] .chk-icon.in-progress { display: block; }
+    .topic-info { flex: 1; min-width: 0; }
+    .topic-name { font-size: 16px; font-weight: 600; margin-bottom: 3px; }
+    .topic-card.mastered .topic-name { text-decoration: line-through; color: var(--text-secondary); }
+    .topic-desc { font-size: 13px; color: var(--text-secondary); font-weight: 500; line-height: 1.4; }
+    .topic-badges { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+    .cat-badge { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: var(--border-radius-pill); background: var(--pastel-teal); color: #1a5a5a; white-space: nowrap; }
+    .cat-badge.basics { background: var(--pastel-yellow); color: #7a5200; }
+    .cat-badge.cicd { background: var(--pastel-mint); color: #1a5a3a; }
+    .cat-badge.containers { background: var(--pastel-blue); color: #1a4a7a; }
+    .cat-badge.kubernetes { background: var(--pastel-purple); color: #3C3489; }
+    .cat-badge.iac { background: var(--pastel-orange); color: #7a3a00; }
+    .cat-badge.production { background: var(--pastel-pink); color: #7a1a4a; }
+    .cat-badge.cloud-native { background: var(--pastel-coral); color: #7a3a3a; }
+    .expand-btn { background: var(--bg-main); border: none; border-radius: var(--border-radius-pill); padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; color: var(--text-secondary); transition: all 0.2s; flex-shrink: 0; }
+    .expand-btn:hover { background: var(--pastel-orange); }
+    .expand-btn.open { background: var(--accent-black); color: #fff; }
+    .filter-bar { display: flex; flex-wrap: wrap; gap: 16px 28px; align-items: center; margin-bottom: 1.25rem; margin-top: 0.25rem; padding: 0 2px; }
+    .filter-group { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+    .filter-label { font-size: 13px; font-weight: 600; color: var(--text-muted); white-space: nowrap; margin-right: 4px; }
+    .flt-btn { font-size: 12px; font-weight: 500; padding: 5px 12px; border-radius: var(--border-radius-pill); border: none; cursor: pointer; background: var(--bg-card); color: var(--text-secondary); font-family: var(--font-sans); transition: all 0.12s; white-space: nowrap; }
+    .flt-btn:hover { background: #e8e8e8; color: var(--text-primary); }
+    .flt-btn.flt-active { background: var(--accent-black); color: var(--accent-white); }
+    .flt-btn.flt-basics.flt-active { background: #7a5200; color: #fff; }
+    .flt-btn.flt-cicd.flt-active { background: #1a5a3a; color: #fff; }
+    .flt-btn.flt-containers.flt-active { background: #1a4a7a; color: #fff; }
+    .flt-btn.flt-kubernetes.flt-active { background: #3C3489; color: #fff; }
+    .flt-btn.flt-iac.flt-active { background: #7a3a00; color: #fff; }
+    .flt-btn.flt-production.flt-active { background: #7a1a4a; color: #fff; }
+    .flt-btn.flt-cloud-native.flt-active { background: #7a3a3a; color: #fff; }
+    .filter-count { font-size: 12px; color: var(--text-muted); font-weight: 500; margin-left: auto; white-space: nowrap; }
+    .practice-panel { display: none; padding: 0 20px 20px; border-top: 1px solid var(--bg-main); }
+    .practice-panel.open { display: block; }
+    .interviewer-q { background: var(--pastel-orange); border-radius: var(--border-radius-md); padding: 14px 18px; margin: 16px 0 18px; font-size: 14px; font-weight: 600; display: flex; gap: 10px; align-items: flex-start; }
+    .interviewer-q .q-icon { font-size: 18px; flex-shrink: 0; }
+    .q-text { line-height: 1.5; }
+    .q-sub { font-weight: 500; color: var(--text-secondary); font-size: 13px; margin-top: 4px; }
+    .fields-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    @media (max-width: 600px) { .fields-grid { grid-template-columns: 1fr; } }
+    .field-group { display: flex; flex-direction: column; gap: 6px; }
+    .field-group.full { grid-column: 1 / -1; }
+    .field-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
+    .field-label span { font-size: 14px; }
+    .field-input { width: 100%; background: var(--bg-main); border: 1.5px solid transparent; border-radius: 12px; padding: 12px 14px; font-family: inherit; font-size: 14px; color: var(--text-primary); resize: vertical; min-height: 90px; transition: border-color 0.2s, background 0.2s; line-height: 1.5; }
+    .field-input:focus { outline: none; border-color: var(--accent-black); background: #fff; }
+    .field-input.filled { background: #fff; border-color: rgba(0,0,0,0.1); }
+    .field-input::placeholder { color: var(--text-muted); font-style: italic; }
+    .score-row { display: flex; align-items: center; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+    .score-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+    .score-btn { font-size: 12px; font-weight: 700; padding: 6px 16px; border-radius: var(--border-radius-pill); border: none; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+    .score-btn.s1 { background: var(--pastel-pink); color: #7a1a4a; }
+    .score-btn.s2 { background: var(--pastel-yellow); color: #7a5200; }
+    .score-btn.s3 { background: var(--pastel-mint); color: #1a5a3a; }
+    .score-btn.s4 { background: var(--accent-black); color: #fff; }
+    .score-btn:hover { transform: translateY(-1px); box-shadow: 0 3px 8px rgba(0,0,0,0.1); }
+    .score-btn.selected { box-shadow: 0 0 0 2.5px var(--accent-black); }
+    .save-note-btn { margin-left: auto; background: var(--accent-black); color: #fff; border: none; border-radius: var(--border-radius-pill); padding: 8px 20px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; transition: opacity 0.2s; }
+    .save-note-btn:hover { opacity: 0.85; }
+    .save-note-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .saved-flash { font-size: 12px; color: #1a5a3a; font-weight: 600; display: none; }
+    .saved-flash.show { display: inline; }
+    .quote { text-align: center; padding: 4rem 2.5rem 3rem; font-size: 18px; font-weight: 500; line-height: 1.6; color: var(--text-primary); }
+    .quote cite { display: block; font-size: 14px; font-style: normal; color: var(--text-secondary); margin-top: 1rem; font-weight: 600; }
+    .phase-progress-wrap { margin-bottom: 1.5rem; }
+    .phase-progress-label { font-size: 13px; color: var(--text-secondary); font-weight: 500; margin-bottom: 6px; }
+    .phase-progress-bar { height: 6px; background: var(--bg-card); border-radius: var(--border-radius-pill); overflow: hidden; }
+    .phase-progress-fill { height: 100%; background: var(--accent-black); transition: width 0.4s ease; border-radius: var(--border-radius-pill); }
+  </style>
+</head>
+<body>
+
+<div id="nav-container"></div>
+
+<div class="cover">
+  <div class="cover-subtitle">INTERVIEW MASTERY</div>
+  <div class="cover-title">DevOps</div>
+  <div class="cover-name">
+    Mayank Thakur
+    <span class="badge badge-devops">DevOps</span>
+    <span class="badge badge-faang">FAANG Ready</span>
+  </div>
+</div>
+
+<div class="stats-row" id="stats-row">
+  <div class="stat"><div class="stat-val" id="stat-total">0</div><div class="stat-label">Topics Total</div></div>
+  <div class="stat"><div class="stat-val" id="stat-mastered">0</div><div class="stat-label">Mastered</div></div>
+  <div class="stat"><div class="stat-val" id="stat-inprogress" style="color:#92400e">0</div><div class="stat-label">In Progress</div></div>
+  <div class="stat"><div class="stat-val" id="stat-pct">0%</div><div class="stat-label">Completion</div></div>
+  <div class="stat"><div class="stat-val" id="stat-day">Day 1</div><div class="stat-label">Current Streak</div></div>
+</div>
+
+<div class="streak-box">
+  <span>⚙️</span>
+  <span class="streak-text" id="streak-text">Automate everything. Ship with confidence.</span>
+</div>
+
+<div class="phase-nav" id="phase-nav"></div>
+<div class="content" id="content"></div>
+
+<div class="quote">
+  "If it hurts, do it more often. Deploy frequently to make deployment boring."
+  <cite>— Jez Humble, The DevOps Handbook</cite>
+</div>
+
+<script src="../../nav.js"></script>
+<script>
+const STORE_KEY = 'devops-v1';
+
+const chapters = [
+  {
+    id: 'devops-foundations',
+    title: 'DevOps Foundations',
+    week: 'Week 1 — Start Here',
+    color: 'var(--pastel-yellow)',
+    topics: [
+      {
+        id: 'def1',
+        name: 'What is DevOps — Culture, Principles, CALMS Framework',
+        cat: 'basics',
+        desc: 'DevOps is a cultural and technical movement that breaks down silos between development and operations. CALMS: Culture, Automation, Lean, Measurement, Sharing.',
+        q: 'Explain the CALMS framework and how it applies to DevOps adoption.',
+        qsub: 'How does DevOps eliminate the "throw over the wall" mentality? What does "you build it, you run it" mean in practice?'
+      },
+      {
+        id: 'def2',
+        name: 'DevOps vs SRE vs Platform Engineering',
+        cat: 'basics',
+        desc: 'DevOps is the philosophy. SRE applies software engineering to operations. Platform Engineering builds internal developer platforms (IDPs) for self-service.',
+        q: 'What is the difference between DevOps, SRE, and Platform Engineering?',
+        qsub: 'How do you decide which operating model to adopt based on organizational maturity?'
+      },
+      {
+        id: 'def3',
+        name: 'SDLC Automation & Delivery Pipeline',
+        cat: 'basics',
+        desc: 'The software delivery lifecycle: plan → code → build → test → release → deploy → operate → monitor. Automation at every stage reduces lead time and errors.',
+        q: 'Walk through the SDLC pipeline from commit to production. What metrics define elite performance?',
+        qsub: 'What is shift-left and how does it affect pipeline design?'
+      },
+      {
+        id: 'def4',
+        name: 'Trunk-based Development & Feature Flags',
+        cat: 'basics',
+        desc: 'Trunk-based development: short-lived branches merged to main frequently. Feature flags decouple deployment from release — merge dark code, turn on later.',
+        q: 'What is trunk-based development and how do feature flags enable it?',
+        qsub: 'How do you manage flag debt and prevent stale feature flags from accumulating?'
+      },
+      {
+        id: 'def5',
+        name: 'DORA Metrics — Measuring DevOps Performance',
+        cat: 'basics',
+        desc: 'DORA identifies four key metrics: Deployment Frequency, Lead Time for Changes, Change Failure Rate, Time to Restore Service.',
+        q: 'What are the four DORA metrics and what benchmarks define elite performance?',
+        qsub: 'How do DORA metrics relate to the SPACE framework for developer productivity?'
+      }
+    ]
+  },
+  {
+    id: 'cicd',
+    title: 'CI/CD',
+    week: 'Week 2',
+    color: 'var(--pastel-mint)',
+    topics: [
+      {
+        id: 'cic1',
+        name: 'CI/CD Pipeline Design — Stages, Gates, Artifact Promotion',
+        cat: 'cicd',
+        desc: 'CI (Continuous Integration): merge frequently, build and test every change. CD (Continuous Delivery): every change is deployable but release is manual.',
+        q: 'Design a CI/CD pipeline from scratch. What are the key stages and gates?',
+        qsub: 'What is the difference between Continuous Delivery and Continuous Deployment?'
+      },
+      {
+        id: 'cic2',
+        name: 'GitHub Actions — Workflows, Runners, Matrix Builds',
+        cat: 'cicd',
+        desc: 'GitHub Actions is CI/CD natively integrated with GitHub. Workflows are YAML with triggers, jobs, steps. Runners can be GitHub-hosted or self-hosted.',
+        q: 'How do you design an efficient GitHub Actions workflow? Explain matrix builds and caching.',
+        qsub: 'When would you use self-hosted runners over GitHub-hosted runners?'
+      },
+      {
+        id: 'cic3',
+        name: 'Deployment Strategies — Blue/Green, Canary, Rolling, A/B',
+        cat: 'cicd',
+        desc: 'Blue/green: two identical environments, switch traffic. Canary: percentage of traffic to new version. Rolling: gradually replace instances.',
+        q: 'Compare blue/green, canary, and rolling deployment strategies. When would you choose each?',
+        qsub: 'How does Kubernetes implement rolling updates with maxSurge and maxUnavailable?'
+      },
+      {
+        id: 'cic4',
+        name: 'Artifact Management — Versioning, Registries, Immutability',
+        cat: 'cicd',
+        desc: 'Artifacts are versioned, signed, and stored in registries. Immutability: once tagged/pushed, artifact never changes.',
+        q: 'Why is artifact immutability critical for reproducible deployments? How do you enforce it?',
+        qsub: 'What is SBOM and how does it relate to software supply chain security?'
+      },
+      {
+        id: 'cic5',
+        name: 'Pipeline Security — SAST, DAST, SBOM, Supply Chain',
+        cat: 'cicd',
+        desc: 'SAST scans source code. DAST scans running app. SBOM catalogs dependencies. Supply chain security ensures trusted artifacts.',
+        q: 'How do you build security into a CI/CD pipeline? Explain SAST, DAST, and SCA.',
+        qsub: 'What is the SLSA framework and how does it improve supply chain security?'
+      }
+    ]
+  },
+  {
+    id: 'containers',
+    title: 'Containers & Docker',
+    week: 'Week 3',
+    color: 'var(--pastel-blue)',
+    topics: [
+      {
+        id: 'doc1',
+        name: 'Docker Architecture — Images, Layers, Union FS, Overlay2',
+        cat: 'containers',
+        desc: 'Docker images are read-only layers built from a Dockerfile. Each instruction creates a layer. Union filesystem (overlay2) merges layers.',
+        q: 'Explain Docker image layers and how the overlay2 filesystem works.',
+        qsub: 'What is copy-on-write and how does it affect container performance?'
+      },
+      {
+        id: 'doc2',
+        name: 'Dockerfile Best Practices — Multi-stage, Cache, Minimal Images',
+        cat: 'containers',
+        desc: 'Multi-stage builds: use one image to build and a separate minimal image to run. Result: tiny production images without build tools.',
+        q: 'How do you write an optimized Dockerfile? Explain multi-stage builds and layer caching.',
+        qsub: 'What is a distroless image and when would you use it vs a scratch image?'
+      },
+      {
+        id: 'doc3',
+        name: 'Container Networking — Bridge, Host, Overlay, CNI',
+        cat: 'containers',
+        desc: 'Bridge: default network. Host: shares host network stack. Overlay: multi-host networking via VXLAN. CNI: standard interface for container networking.',
+        q: 'Compare bridge, host, and overlay networking in Docker. When would you use each?',
+        qsub: 'How does Docker DNS resolve container names and how does CNI differ from Docker networking?'
+      },
+      {
+        id: 'doc4',
+        name: 'Container Security — Non-root, Read-only FS, Seccomp, AppArmor',
+        cat: 'containers',
+        desc: 'Run containers as non-root user. Mount filesystem read-only where possible. Seccomp restricts syscalls. AppArmor/SELinux Mandatory Access Control.',
+        q: 'List the key container security hardening techniques and why each matters.',
+        qsub: 'What is a container breakout attack and how do capabilities like --cap-drop ALL prevent it?'
+      },
+      {
+        id: 'doc5',
+        name: 'Docker Compose & Local Development',
+        cat: 'containers',
+        desc: 'Docker Compose defines multi-container applications in YAML. Services, networks, volumes, environment variables configured in docker-compose.yml.',
+        q: 'How do you set up a reproducible local development environment with Docker Compose?',
+        qsub: 'What is Docker Compose watch and how does it improve the dev loop?'
+      }
+    ]
+  },
+  {
+    id: 'kubernetes',
+    title: 'Kubernetes',
+    week: 'Week 4',
+    color: 'var(--pastel-purple)',
+    topics: [
+      {
+        id: 'k8s1',
+        name: 'K8s Architecture — Control Plane, Nodes, etcd, Scheduler',
+        cat: 'kubernetes',
+        desc: 'Control plane: API server, etcd, scheduler, controller manager. Workers: kubelet, kube-proxy, container runtime (containerd).',
+        q: 'Explain the Kubernetes control plane components and their responsibilities.',
+        qsub: 'How does etcd maintain consistency in a distributed K8s cluster?'
+      },
+      {
+        id: 'k8s2',
+        name: 'Pods, Deployments, Services, ConfigMaps, Secrets',
+        cat: 'kubernetes',
+        desc: 'Pod: smallest deployable unit. Deployment: declarative updates for Pods. Service: stable network endpoint for a set of Pods.',
+        q: 'Explain the relationship between Pods, Deployments, and Services in Kubernetes.',
+        qsub: 'How do liveness, readiness, and startup probes differ and when do you use each?'
+      },
+      {
+        id: 'k8s3',
+        name: 'K8s Networking — Ingress, CNI, Service Mesh',
+        cat: 'kubernetes',
+        desc: 'Ingress: L7 load balancing with path/host-based routing. CNI: pod networking and network policies. Service mesh: mTLS, traffic management.',
+        q: 'How does Kubernetes handle networking? Compare Ingress, CNI, and service mesh.',
+        qsub: 'What is mTLS in a service mesh and how does Istio implement it transparently?'
+      },
+      {
+        id: 'k8s4',
+        name: 'Helm, Operators, and CRDs',
+        cat: 'kubernetes',
+        desc: 'Helm: Kubernetes package manager — Charts bundle templates + values. CRD: extends K8s API. Operator: controller that watches CRDs and reconciles state.',
+        q: 'What are Helm Charts, CRDs, and Operators? How do they work together?',
+        qsub: 'Name popular Kubernetes operators and explain the operator pattern in detail.'
+      },
+      {
+        id: 'k8s5',
+        name: 'K8s Security — RBAC, Pod Security, Network Policies',
+        cat: 'kubernetes',
+        desc: 'RBAC: Role-based access control for API operations. Pod Security Standards: privileged, baseline, restricted. NetworkPolicies: pod-level firewall.',
+        q: 'How do you secure a Kubernetes cluster? Explain RBAC, Pod Security, and NetworkPolicies.',
+        qsub: 'What replaced PodSecurityPolicy and how does Pod Security Admission work at namespace level?'
+      }
+    ]
+  },
+  {
+    id: 'iac',
+    title: 'Infrastructure as Code',
+    week: 'Week 5',
+    color: 'var(--pastel-orange)',
+    topics: [
+      {
+        id: 'iac1',
+        name: 'Terraform — State, Modules, Workspaces, Providers',
+        cat: 'iac',
+        desc: 'Terraform declares infrastructure in HCL. State file maps config to real resources. Modules encapsulate reusable infrastructure. Workspaces isolate environments.',
+        q: 'Explain Terraform state management, modules, and workspaces.',
+        qsub: 'How do you store Terraform state remotely and why is state locking important?'
+      },
+      {
+        id: 'iac2',
+        name: 'Terraform Advanced — Remote State, Locking, Drift Detection',
+        cat: 'iac',
+        desc: 'Remote state stores terraform.tfstate in S3/GCS with DynamoDB locking. Plan detects drift between declared state and real infrastructure.',
+        q: 'What is infrastructure drift and how does Terraform detect and handle it?',
+        qsub: 'Compare workspace-based vs directory-based state isolation strategies.'
+      },
+      {
+        id: 'iac3',
+        name: 'Configuration Management — Ansible vs Chef vs Puppet',
+        cat: 'iac',
+        desc: 'Ansible: agentless, push-based, YAML playbooks. Chef: agent-based, Ruby DSL, pull-based. Puppet: agent-based, declarative DSL, pull-based.',
+        q: 'Compare Ansible, Chef, and Puppet. When would you choose each?',
+        qsub: 'How does Packer with cloud-init replace traditional configuration management?'
+      },
+      {
+        id: 'iac4',
+        name: 'Immutable Infrastructure — Packer, AMIs, Golden Images',
+        cat: 'iac',
+        desc: 'Immutable infrastructure: never modify running servers — replace them. Packer builds machine images with everything baked in. Golden images are versioned templates.',
+        q: 'What is immutable infrastructure and how does it eliminate configuration drift?',
+        qsub: 'How do immutable images compare to container images in terms of deployment and rollback?'
+      },
+      {
+        id: 'iac5',
+        name: 'GitOps — ArgoCD, Flux, Declarative Continuous Delivery',
+        cat: 'iac',
+        desc: 'GitOps: Git repo is the single source of truth. ArgoCD/Flux reconciles cluster state with what\'s in the Git repo. Syncs automatically on commit.',
+        q: 'What is GitOps and how does ArgoCD implement it for Kubernetes deployments?',
+        qsub: 'How does GitOps enable disaster recovery and what is drift detection in this context?'
+      }
+    ]
+  },
+  {
+    id: 'production',
+    title: 'Production Excellence',
+    week: 'Week 6',
+    color: 'var(--pastel-pink)',
+    topics: [
+      {
+        id: 'pro1',
+        name: 'Capacity Planning & Auto-scaling — HPA, VPA, Cluster Autoscaler',
+        cat: 'production',
+        desc: 'HPA: scales pods based on CPU/memory or custom metrics. VPA: adjusts pod resource requests. Cluster autoscaler: adds/removes nodes.',
+        q: 'Explain HPA, VPA, and cluster autoscaler. How do they work together?',
+        qsub: 'How does Karpenter differ from the standard cluster autoscaler on AWS?'
+      },
+      {
+        id: 'pro2',
+        name: 'Disaster Recovery & Backup — RPO, RTO, Multi-region',
+        cat: 'production',
+        desc: 'RPO: max acceptable data loss. RTO: max acceptable downtime. Multi-region: active-active vs active-passive.',
+        q: 'Define RPO and RTO. How do you design a disaster recovery strategy for a cloud application?',
+        qsub: 'What is the 3-2-1 backup rule and how does it apply to cloud infrastructure?'
+      },
+      {
+        id: 'pro3',
+        name: 'Chaos Engineering — Principles, GameDays, Tools',
+        cat: 'production',
+        desc: 'Chaos engineering: proactively inject failures to build confidence in system resilience. Principles: steady state hypothesis, run experiment in production.',
+        q: 'What is chaos engineering? How do you run a safe GameDay in production?',
+        qsub: 'Compare Chaos Mesh and Litmus for Kubernetes chaos engineering.'
+      },
+      {
+        id: 'pro4',
+        name: 'Compliance & Audit — SOC2, HIPAA, Policy-as-Code (OPA, Kyverno)',
+        cat: 'production',
+        desc: 'SOC2: security controls for service providers. HIPAA: healthcare data protection. Policy-as-code: OPA and Kyverno enforce rules as code.',
+        q: 'How do you implement policy-as-code in a Kubernetes environment using OPA or Kyverno?',
+        qsub: 'What is the difference between OPA Gatekeeper and Kyverno for K8s admission control?'
+      }
+    ]
+  },
+  {
+    id: 'aws',
+    title: 'AWS Cloud Fundamentals',
+    week: 'Week 7',
+    color: 'var(--pastel-orange)',
+    topics: [
+      {
+        id: 'aws1',
+        name: 'EC2 — instances, AMIs, security groups, key pairs',
+        cat: 'aws',
+        desc: 'EC2 (Elastic Compute Cloud) provides virtual servers in the cloud. An AMI is a template for an instance (OS + software). Security groups act as virtual firewalls controlling inbound/outbound traffic. Key pairs provide SSH access.',
+        q: 'What is an EC2 instance? How do security groups differ from network ACLs?',
+        qsub: 'What is the difference between an instance store and an EBS volume? When would you use each?'
+      },
+      {
+        id: 'aws2',
+        name: 'S3 — buckets, lifecycle policies, presigned URLs, versioning',
+        cat: 'aws',
+        desc: 'S3 (Simple Storage Service) stores objects (files) in buckets. Lifecycle policies auto-move objects between storage classes (Standard, IA, Glacier). Presigned URLs grant temporary access to private objects. Versioning keeps object history.',
+        q: 'What is S3? How do lifecycle policies reduce storage costs?',
+        qsub: 'How do presigned URLs work? What is the difference between S3 Standard and S3 IA?'
+      },
+      {
+        id: 'aws3',
+        name: 'RDS — managed databases, Multi-AZ, read replicas, backups',
+        cat: 'aws',
+        desc: 'RDS (Relational Database Service) manages PostgreSQL, MySQL, etc. Multi-AZ provides automatic failover for high availability. Read replicas scale read traffic. Automated backups enable point-in-time recovery.',
+        q: 'What is RDS? How does Multi-AZ differ from Read Replicas?',
+        qsub: 'When would you use Aurora Serverless vs a provisioned RDS instance?'
+      },
+      {
+        id: 'aws4',
+        name: 'Lambda — serverless functions, cold starts, event sources',
+        cat: 'aws',
+        desc: 'Lambda runs code without managing servers. Triggered by events (API Gateway, S3, SQS, DynamoDB streams). Cold start = first invocation delay. Provisioned concurrency eliminates cold starts at extra cost.',
+        q: 'What is AWS Lambda? What causes cold starts and how do you mitigate them?',
+        qsub: 'What is the difference between synchronous and asynchronous Lambda invocations? How does Lambda handle retries?'
+      },
+      {
+        id: 'aws5',
+        name: 'VPC — subnets, route tables, NAT gateway, internet gateway',
+        cat: 'aws',
+        desc: 'VPC (Virtual Private Cloud) is your isolated network in AWS. Public subnets have internet access via Internet Gateway. Private subnets use NAT Gateway for outbound-only internet. Route tables control traffic flow between subnets.',
+        q: 'What is a VPC? How do public and private subnets differ?',
+        qsub: 'When do you need a NAT Gateway vs an Internet Gateway? How do VPC peering and Transit Gateway differ?'
+      },
+      {
+        id: 'aws6',
+        name: 'IAM — users, roles, policies, least privilege',
+        cat: 'aws',
+        desc: 'IAM (Identity and Access Management) controls who can do what. Users have long-term credentials. Roles provide temporary credentials (for EC2, Lambda, etc.). Policies are JSON documents granting/denying permissions. Least privilege = only grant what is needed.',
+        q: 'What is IAM? What is the difference between an IAM user and an IAM role?',
+        qsub: 'How do you implement least privilege in practice? What is an IAM policy evaluation logic?'
+      },
+      {
+        id: 'aws7',
+        name: 'CloudWatch — metrics, logs, alarms, dashboards',
+        cat: 'aws',
+        desc: 'CloudWatch collects metrics (CPU, memory, request count), logs (Lambda, EC2, RDS), and alarms (notify when threshold breached). Dashboards visualize metrics. CloudWatch Events/EventBridge route events between services.',
+        q: 'How do you set up an alarm for high CPU on an EC2 instance using CloudWatch?',
+        qsub: 'What is the difference between CloudWatch Logs Insights and CloudWatch Metrics?'
+      },
+      {
+        id: 'aws8',
+        name: 'ALB & ELB — load balancing, health checks, target groups',
+        cat: 'aws',
+        desc: 'ALB (Application Load Balancer) routes HTTP/HTTPS traffic to targets (EC2, Lambda, IP). ELB is the umbrella name. Health checks ensure traffic only goes to healthy targets. Target groups define which instances receive traffic.',
+        q: 'What is the difference between ALB and NLB? When would you use each?',
+        qsub: 'How do sticky sessions work with ALB? What is the difference between path-based and host-based routing?'
+      }
+    ]
+  },
+  {
+    id: 'cloud-native',
+    title: 'Cloud-Native Operations',
+    week: 'Week 8',
+    color: 'var(--pastel-coral)',
+    topics: [
+      {
+        id: 'serverless',
+        name: 'Serverless — Lambda, API Gateway, event-driven architecture',
+        cat: 'cloud-native',
+        desc: 'Serverless = no server management. AWS Lambda, Azure Functions, GCP Cloud Run. API Gateway routes HTTP to Lambda. Event-driven: S3, SQS, DynamoDB streams trigger functions. Cold starts, execution limits (15min Lambda), vendor lock-in.',
+        q: 'What are the limitations of serverless? When should you NOT use serverless?',
+        qsub: 'What is cold start and how do you minimize it? How does API Gateway + Lambda compare to a traditional REST server?'
+      },
+      {
+        id: 'cloud-networking',
+        name: 'Cloud Networking — VPC, subnets, security groups, load balancers',
+        cat: 'cloud-native',
+        desc: 'VPC isolates your cloud network. Public subnets have internet access. Private subnets are internal only. Security groups are stateful firewalls. NACLs are stateless. ALB for HTTP routing. NLB for TCP/UDP. NAT Gateway for private subnet internet access.',
+        q: 'What is the difference between a security group and a NACL?',
+        qsub: 'How do you design a VPC for a multi-tier application? What is the difference between ALB and NLB?'
+      },
+      {
+        id: 'cost-optimization',
+        name: 'Cloud Cost Optimization — Reserved Instances, Spot, right-sizing',
+        cat: 'cloud-native',
+        desc: 'Reserved Instances: 1-3 year commitments for 30-60% discount. Spot Instances: up to 90% discount but can be terminated. Right-sizing: match instance type to workload. Savings Plans: flexible commitment. Cost allocation tags for per-team billing.',
+        q: 'How do you reduce AWS costs by 50%? What is the difference between Reserved Instances and Savings Plans?',
+        qsub: 'When should you use Spot Instances vs Reserved Instances? How do you implement cost allocation tags?'
+      },
+      {
+        id: 'feature-flags',
+        name: 'Feature Flags — progressive delivery, A/B testing, kill switches',
+        cat: 'cloud-native',
+        desc: 'Feature flags control feature visibility without deployment. Progressive delivery: gradual rollout (1% → 10% → 100%). A/B testing: split traffic between variants. Kill switches: instantly disable broken features. Tools: LaunchDarkly, Unleash, Flagsmith.',
+        q: 'How do feature flags enable progressive delivery? What is the difference between release flags and experiment flags?',
+        qsub: 'How do you implement feature flags without adding technical debt? What is the risk of too many flags?'
+      }
+    ]
+  }
+];
+
+/* ── STATE ── */
+let store = {};
+try { store = JSON.parse(localStorage.getItem(STORE_KEY) || '{}'); } catch(e) {}
+function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch(e) {} }
+
+let activeChapter = chapters[0].id;
+let activeCatFilter = 'all';
+let activeStatusFilter = 'all';
+
+function updateStats() {
+  const allTopics = chapters.flatMap(c => c.topics);
+  const mastered = allTopics.filter(t => store[t.id]?.state === 'mastered').length;
+  const inprog = allTopics.filter(t => store[t.id]?.state === 'in-progress').length;
+  document.getElementById('stat-total').textContent = allTopics.length;
+  document.getElementById('stat-mastered').textContent = mastered;
+  document.getElementById('stat-inprogress').textContent = inprog;
+  document.getElementById('stat-pct').textContent = Math.round(mastered / allTopics.length * 100) + '%';
+  const streak = store.__streak || 1;
+  document.getElementById('stat-day').textContent = 'Day ' + streak;
+}
+
+function renderPhaseNav() {
+  const nav = document.getElementById('phase-nav');
+  nav.innerHTML = chapters.map(c => `<div class="phase-tab${c.id === activeChapter ? ' active' : ''}" data-ch="${c.id}">${c.title}</div>`).join('');
+  nav.querySelectorAll('.phase-tab').forEach(t => t.addEventListener('click', () => { activeChapter = t.dataset.ch; activeCatFilter = 'all'; activeStatusFilter = 'all'; renderContent(); renderPhaseNav(); }));
+}
+
+function getTopics(ch) {
+  let topics = ch.topics;
+  if (activeCatFilter !== 'all') topics = topics.filter(t => t.cat === activeCatFilter);
+  if (activeStatusFilter !== 'all') topics = topics.filter(t => (store[t.id]?.state || 'untouched') === activeStatusFilter);
+  return topics;
+}
+
+function renderContent() {
+  const ch = chapters.find(c => c.id === activeChapter);
+  const topics = getTopics(ch);
+  const allTopics = ch.topics;
+  const cats = [...new Set(allTopics.map(t => t.cat))];
+  const masteredCount = allTopics.filter(t => store[t.id]?.state === 'mastered').length;
+  const pct = Math.round(masteredCount / allTopics.length * 100);
+
+  const filterHTML = `<div class="filter-bar">
+    <div class="filter-group">
+      <span class="filter-label">Category:</span>
+      <button class="flt-btn${activeCatFilter === 'all' ? ' flt-active' : ''}" data-cat="all">All</button>
+      ${cats.map(c => `<button class="flt-btn flt-${c}${activeCatFilter === c ? ' flt-active' : ''}" data-cat="${c}">${c.charAt(0).toUpperCase() + c.slice(1)}</button>`).join('')}
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Status:</span>
+      <button class="flt-btn${activeStatusFilter === 'all' ? ' flt-active' : ''}" data-st="all">All</button>
+      <button class="flt-btn${activeStatusFilter === 'mastered' ? ' flt-active' : ''}" data-st="mastered">✓ Mastered</button>
+      <button class="flt-btn${activeStatusFilter === 'in-progress' ? ' flt-active' : ''}" data-st="in-progress">⟳ In Progress</button>
+    </div>
+    <span class="filter-count">${topics.length} topic${topics.length !== 1 ? 's' : ''}</span>
+  </div>`;
+
+  const progressHTML = `<div class="phase-progress-wrap">
+    <div class="phase-progress-label">${masteredCount} / ${allTopics.length} mastered — ${pct}%</div>
+    <div class="phase-progress-bar"><div class="phase-progress-fill" style="width:${pct}%"></div></div>
+  </div>`;
+
+  const topicsHTML = topics.map(t => {
+    const s = store[t.id] || {};
+    const state = s.state || 'untouched';
+    const cardClass = state === 'mastered' ? ' mastered' : state === 'in-progress' ? ' in-progress' : '';
+    const panelOpen = s.panelOpen ? ' open' : '';
+    return `<div class="topic-card${cardClass}" id="card-${t.id}">
+      <div class="topic-header" data-id="${t.id}">
+        <div class="topic-check" data-state="${state}" data-id="${t.id}">
+          <span class="chk-icon mastered">✓</span><span class="chk-icon in-progress">~</span>
+        </div>
+        <div class="topic-info">
+          <div class="topic-name">${t.name}</div>
+          <div class="topic-desc">${t.desc}</div>
+        </div>
+        <div class="topic-badges">
+          <span class="cat-badge ${t.cat}">${t.cat}</span>
+          <button class="expand-btn${panelOpen ? ' open' : ''}" data-id="${t.id}">${panelOpen ? 'Close' : 'Practice'}</button>
+        </div>
+      </div>
+      <div class="practice-panel${panelOpen}" id="panel-${t.id}">
+        <div class="interviewer-q">
+          <span class="q-icon">🎤</span>
+          <div><div class="q-text">${t.q}</div>${t.qsub ? `<div class="q-sub">Follow-up: ${t.qsub}</div>` : ''}</div>
+        </div>
+        <div class="fields-grid">
+          <div class="field-group full">
+            <label class="field-label"><span>🧠</span> Your Explanation</label>
+            <textarea class="field-input${s.explanation ? ' filled' : ''}" data-field="explanation" data-id="${t.id}" placeholder="Explain it like you're in the interview...">${s.explanation || ''}</textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label"><span>📐</span> Diagram / Pseudocode</label>
+            <textarea class="field-input${s.code ? ' filled' : ''}" data-field="code" data-id="${t.id}" placeholder="Draw it out in ASCII or write pseudocode...">${s.code || ''}</textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label"><span>⚠️</span> Pitfalls / Edge Cases</label>
+            <textarea class="field-input${s.pitfalls ? ' filled' : ''}" data-field="pitfalls" data-id="${t.id}" placeholder="What subtle things do interviewers probe?">${s.pitfalls || ''}</textarea>
+          </div>
+        </div>
+        <div class="score-row">
+          <span class="score-label">Confidence:</span>
+          ${[1,2,3,4].map(n => `<button class="score-btn s${n}${s.score === n ? ' selected' : ''}" data-score="${n}" data-id="${t.id}">${['😰 Shaky','🤔 Getting There','👍 Solid','🚀 Expert'][n-1]}</button>`).join('')}
+          <button class="save-note-btn" data-id="${t.id}">Save</button>
+          <span class="saved-flash" id="flash-${t.id}">Saved ✓</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('content').innerHTML = `
+    <div class="chapter-head" style="background:${ch.color}">
+      <div><div class="chapter-num">CHAPTER ${chapters.indexOf(ch) + 1}</div><div class="chapter-title">${ch.title}</div></div>
+      <div class="chapter-meta"><div class="chapter-week">${ch.week}</div><div class="chapter-time">${ch.topics.length} topics</div></div>
+    </div>
+    ${filterHTML}${progressHTML}${topicsHTML}`;
+
+  bindEvents();
+  updateStats();
+}
+
+function bindEvents() {
+  document.querySelectorAll('.topic-check').forEach(el => {
+    el.addEventListener('click', e => {
+      e.stopPropagation();
+      const id = el.dataset.id;
+      const cur = store[id]?.state || 'untouched';
+      const next = cur === 'untouched' ? 'in-progress' : cur === 'in-progress' ? 'mastered' : 'untouched';
+      store[id] = { ...(store[id] || {}), state: next };
+      save(); renderContent(); renderPhaseNav();
+    });
+  });
+  document.querySelectorAll('.expand-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const id = btn.dataset.id;
+      store[id] = { ...(store[id] || {}), panelOpen: !store[id]?.panelOpen };
+      save(); renderContent();
+    });
+  });
+  document.querySelectorAll('.topic-header').forEach(h => {
+    h.addEventListener('click', () => {
+      const id = h.dataset.id;
+      store[id] = { ...(store[id] || {}), panelOpen: !store[id]?.panelOpen };
+      save(); renderContent();
+    });
+  });
+  document.querySelectorAll('.score-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const id = btn.dataset.id;
+      store[id] = { ...(store[id] || {}), score: parseInt(btn.dataset.score) };
+      save(); renderContent();
+    });
+  });
+  document.querySelectorAll('.field-input').forEach(inp => {
+    inp.addEventListener('input', () => inp.classList.toggle('filled', inp.value.length > 0));
+  });
+  document.querySelectorAll('.save-note-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const id = btn.dataset.id;
+      const panel = document.getElementById('panel-' + id);
+      panel.querySelectorAll('.field-input').forEach(inp => {
+        store[id] = { ...(store[id] || {}), [inp.dataset.field]: inp.value };
+      });
+      save();
+      const flash = document.getElementById('flash-' + id);
+      flash.classList.add('show');
+      setTimeout(() => flash.classList.remove('show'), 2000);
+    });
+  });
+  document.querySelectorAll('.flt-btn[data-cat]').forEach(btn => {
+    btn.addEventListener('click', () => { activeCatFilter = btn.dataset.cat; renderContent(); });
+  });
+  document.querySelectorAll('.flt-btn[data-st]').forEach(btn => {
+    btn.addEventListener('click', () => { activeStatusFilter = btn.dataset.st; renderContent(); });
+  });
+}
+
+renderPhaseNav();
+renderContent();
+</script>
+</body>
+</html>

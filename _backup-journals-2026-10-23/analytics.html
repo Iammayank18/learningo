@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics — DSA Journal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: #f0f2f5;
+      --bg-card: #ffffff;
+      --text-primary: #000000;
+      --text-secondary: #5f6368;
+      --text-muted: #9aa0a6;
+      --accent-black: #000000;
+      --accent-white: #ffffff;
+      --pastel-yellow: #ffeab6;
+      --pastel-yellow-hover: #f5dfa9;
+      --pastel-mint: #dcf0eb;
+      --pastel-mint-hover: #cbe3dd;
+      --pastel-purple: #e6daff;
+      --pastel-purple-hover: #d8c9fa;
+      --pastel-pink: #ffd6e8;
+      --border-radius-lg: 24px;
+      --border-radius-md: 16px;
+      --border-radius-pill: 9999px;
+      --font-sans: 'Outfit', 'Inter', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: var(--bg-main);
+      font-family: var(--font-sans);
+      color: var(--text-primary);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      line-height: 1.5;
+    }
+
+    .cover {
+      background: var(--bg-main);
+      color: var(--text-primary);
+      padding: 3rem 2.5rem 1.5rem;
+      position: relative;
+      text-align: left;
+    }
+
+    .cover-subtitle {
+      font-size: 14px;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+
+    .cover-title {
+      font-size: 40px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+
+    .cover-name {
+      font-size: 16px;
+      color: var(--text2);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-decoration: none;
+      margin-bottom: 1rem;
+      transition: color 0.2s;
+      font-family: var(--font-sans);
+    }
+
+    .back-link:hover {
+      color: var(--text-primary);
+    }
+
+    /* ── Heatmap ── */
+    .heatmap-wrap {
+      margin: 1.5rem 2.5rem 0;
+      background: var(--bg-card);
+      border-radius: var(--border-radius-lg);
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    }
+
+    .heatmap-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .heatmap-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .heatmap-total {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .heatmap-layout {
+      display: flex;
+      gap: 6px;
+    }
+
+    .heatmap-day-labels {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      padding-top: 20px;
+    }
+
+    .heatmap-day-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      height: 15px;
+      display: flex;
+      align-items: center;
+      line-height: 1;
+    }
+
+    .heatmap-scroll {
+      overflow-x: auto;
+      flex: 1;
+      padding-bottom: 4px;
+      scrollbar-width: thin;
+    }
+
+    .heatmap-months {
+      display: flex;
+      height: 20px;
+      margin-bottom: 2px;
+    }
+
+    .heatmap-month-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-weight: 500;
+      text-align: left;
+      flex-shrink: 0;
+    }
+
+    .heatmap-grid {
+      display: flex;
+      gap: 3px;
+    }
+
+    .heatmap-week {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .heatmap-day {
+      width: 15px;
+      height: 15px;
+      border-radius: 4px;
+      background: #ebedf0;
+      flex-shrink: 0;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .heatmap-day:hover {
+      transform: scale(1.35);
+      /* box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15); */
+      z-index: 3;
+      border: 1px solid black;
+    }
+
+    #heatmap-tooltip {
+      display: none;
+      position: fixed;
+      background: #1a1a2e;
+      color: #fff;
+      font-size: 11px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      white-space: nowrap;
+      z-index: 9999;
+      pointer-events: none;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+      line-height: 1.4;
+      font-weight: 500;
+    }
+
+
+
+    .heatmap-day.l1 {
+      background: #9be9a8;
+    }
+
+    .heatmap-day.l2 {
+      background: #40c463;
+    }
+
+    .heatmap-day.l3 {
+      background: #30a14e;
+    }
+
+    .heatmap-day.l4 {
+      background: #216e39;
+    }
+
+    .heatmap-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .heatmap-legend {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .heatmap-legend-cell {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      background: #ebedf0;
+    }
+
+    .heatmap-legend-cell.l1 {
+      background: #9be9a8;
+    }
+
+    .heatmap-legend-cell.l2 {
+      background: #40c463;
+    }
+
+    .heatmap-legend-cell.l3 {
+      background: #30a14e;
+    }
+
+    .heatmap-legend-cell.l4 {
+      background: #216e39;
+    }
+
+    .heatmap-streak {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+      background: var(--pastel-yellow);
+      padding: 4px 12px;
+      border-radius: var(--border-radius-pill);
+    }
+
+    /* ── Badges ── */
+    .badges-wrap {
+      margin: 1.25rem 2.5rem 0;
+    }
+
+    .badges-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .badges-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .badge-pill {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 14px;
+      border-radius: var(--border-radius-pill);
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--bg-card);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+      white-space: nowrap;
+    }
+
+    .badge-pill.earned {
+      background: var(--pastel-yellow);
+    }
+
+    .badge-pill.locked {
+      opacity: 0.3;
+      filter: grayscale(1);
+    }
+
+    /* ── Weekly Recap ── */
+    .recap-wrap {
+      margin: 1.25rem 2.5rem 0;
+      background: var(--bg-card);
+      border-radius: var(--border-radius-lg);
+      padding: 1.25rem 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    }
+
+    .recap-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+
+    .recap-stats {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .recap-stat {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.1;
+    }
+
+    .recap-stat-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-top: 2px;
+    }
+
+    /* ── Review Banner ── */
+    .review-banner {
+      margin: 1rem 2.5rem 0;
+      background: white;
+      border-radius: var(--border-radius-lg);
+      padding: 1.25rem 1.5rem;
+      border: 1px solid var(--border-light, #e5e7eb);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    }
+
+    .review-banner-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent-black);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .review-banner-title::before {
+      content: "🔄";
+      font-size: 14px;
+    }
+
+    .review-chips {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      flex-wrap: nowrap;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      scroll-snap-type: x mandatory;
+    }
+
+    .review-chips::-webkit-scrollbar {
+      display: none;
+    }
+
+    .review-chip {
+      font-size: 12px;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: var(--border-radius-pill);
+      background: #f3f0ff;
+      color: #5b3e9e;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: 1px solid #ddd6fe;
+      font-family: inherit;
+      white-space: nowrap;
+      flex-shrink: 0;
+      scroll-snap-align: start;
+    }
+
+    .review-chip:hover {
+      background: #e8e0ff;
+      border-color: #c4b5fd;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(91, 62, 158, 0.12);
+    }
+
+    .review-chip:active {
+      transform: translateY(0);
+    }
+
+    /* ── Pattern Mastery ── */
+    .pattern-wrap {
+      margin: 2rem 2.5rem;
+      background: var(--bg-card);
+      border-radius: var(--border-radius-lg);
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    }
+
+    .pattern-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .pattern-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .pattern-mastery-pct {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .pattern-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .p-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .p-icon {
+      font-size: 15px;
+      flex-shrink: 0;
+      width: 24px;
+      text-align: center;
+    }
+
+    .p-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      min-width: 130px;
+      flex-shrink: 0;
+    }
+
+    .p-track {
+      flex: 1;
+      height: 8px;
+      background: var(--bg-main);
+      border-radius: 9999px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .p-fill {
+      height: 100%;
+      border-radius: 9999px;
+      transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .p-fill.beginner { background: #d4d4d8; }
+    .p-fill.learning { background: #facc15; }
+    .p-fill.fluent   { background: #4ade80; }
+    .p-fill.expert   { background: #000000; }
+
+    .p-count {
+      font-size: 12px;
+      color: var(--text-secondary);
+      min-width: 36px;
+      text-align: right;
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+
+    .p-label {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 9999px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      min-width: 58px;
+      text-align: center;
+    }
+
+    .p-label.beginner {
+      background: #f4f4f5;
+      color: #a1a1aa;
+    }
+
+    .p-label.learning {
+      background: #fef9c3;
+      color: #a16207;
+    }
+
+    .p-label.fluent {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .p-label.expert {
+      background: #000000;
+      color: white;
+    }
+
+    .pattern-legend {
+      display: flex;
+      gap: 12px;
+      margin-top: 1rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--bg-main);
+      flex-wrap: wrap;
+    }
+
+    .pattern-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .pattern-legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .pattern-legend-dot.beginner { background: #d4d4d8; }
+    .pattern-legend-dot.learning { background: #facc15; }
+    .pattern-legend-dot.fluent   { background: #4ade80; }
+    .pattern-legend-dot.expert   { background: #000000; }
+
+    /* ── Celebration ── */
+    @keyframes pop {
+      0% {
+        transform: scale(0.5);
+        opacity: 0
+      }
+
+      60% {
+        transform: scale(1.2)
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: 1
+      }
+    }
+
+    .celebrate {
+      animation: pop 0.4s ease forwards;
+    }
+
+    @media (max-width: 640px) {
+      .cover {
+        padding: 2rem 1.5rem 1.5rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="cover">
+    <a href="Mayank_DSA_Journal.html" class="back-link">← Back to Journal</a>
+    <div class="cover-subtitle">Personal study journal</div>
+    <div class="cover-title">Analytics & Insights</div>
+    <div class="cover-name">Mayank Thakur</div>
+  </div>
+
+  <div id="recap-wrap" class="recap-wrap" style="display:none"></div>
+  <div id="heatmap-wrap" class="heatmap-wrap"></div>
+  <div id="badges-wrap" class="badges-wrap"></div>
+  <div id="review-banner" class="review-banner" style="display:none"></div>
+  <div id="pattern-wrap" class="pattern-wrap" style="display:none"></div>
+  <div id="heatmap-tooltip"></div>
+
+  <script>
+    const PHASES = [
+      {
+        id: 0, title: "Foundation", week: "Week 1", duration: "5 days",
+        intro: "Before you touch a single problem, you need these tools. One day each. Don't rush.",
+        topics: [
+          "Big O notation — O(n), O(n²), O(log n), O(n log n)",
+          "Arrays in JavaScript — indexing, push, pop, splice, slice",
+          "Objects, Map, and Set — when to use each",
+          "Recursion basics — write one simple recursive function",
+          "The 5-step framework — understand → edge cases → brute force → optimise → code"
+        ],
+        problems: [
+          { name: "Reverse String", diff: "Easy", link: "https://leetcode.com/problems/reverse-string/", pattern: "Arrays" },
+          { name: "Running Sum of 1d Array", diff: "Easy", link: "https://leetcode.com/problems/running-sum-of-1d-array/", pattern: "Arrays / Prefix" },
+          { name: "FizzBuzz", diff: "Easy", link: "https://leetcode.com/problems/fizz-buzz/", pattern: "Loops / Logic" },
+          { name: "Palindrome Number", diff: "Easy", link: "https://leetcode.com/problems/palindrome-number/", pattern: "Math / Logic" },
+          { name: "Search Insert Position", diff: "Easy", link: "https://leetcode.com/problems/search-insert-position/", pattern: "Arrays / Search" },
+          { name: "Fibonacci Number", diff: "Easy", link: "https://leetcode.com/problems/fibonacci-number/", pattern: "Recursion" },
+          { name: "Power of Two", diff: "Easy", link: "https://leetcode.com/problems/power-of-two/", pattern: "Recursion / Math" },
+          { name: "Jewels and Stones", diff: "Easy", link: "https://leetcode.com/problems/jewels-and-stones/", pattern: "Hash Set" },
+          { name: "Squares of a Sorted Array", diff: "Easy", link: "https://leetcode.com/problems/squares-of-a-sorted-array/", pattern: "Arrays" },
+          { name: "Longest Common Prefix", diff: "Easy", link: "https://leetcode.com/problems/longest-common-prefix/", pattern: "Strings" }
+        ],
+        stuck: "If Big O feels abstract, watch 'Big O Notation — CS Dojo' on YouTube. It's 20 minutes and makes everything click.",
+        moveOn: "You can explain what O(n log n) means out loud. You've written one recursive function yourself without looking it up."
+      },
+      {
+        id: 1, title: "Core Data Structures", week: "Weeks 2–3", duration: "10 days",
+        intro: "These four structures appear in half of all interview problems. Learn them well — not just what they are, but when to reach for each one.",
+        topics: [
+          "Arrays & strings — manipulation, reversal, slicing",
+          "Hash Map / Hash Set — frequency counting, lookups in O(1)",
+          "Stack — LIFO, undo operations, matching brackets",
+          "Queue — FIFO, BFS (you'll use this a lot in Phase 3)"
+        ],
+        problems: [
+          { name: "Two Sum", diff: "Easy", link: "https://leetcode.com/problems/two-sum/", pattern: "Hash Map" },
+          { name: "Contains Duplicate", diff: "Easy", link: "https://leetcode.com/problems/contains-duplicate/", pattern: "Hash Set" },
+          { name: "Valid Anagram", diff: "Easy", link: "https://leetcode.com/problems/valid-anagram/", pattern: "Hash Map" },
+          { name: "Group Anagrams", diff: "Medium", link: "https://leetcode.com/problems/group-anagrams/", pattern: "Hash Map" },
+          { name: "Valid Parentheses", diff: "Easy", link: "https://leetcode.com/problems/valid-parentheses/", pattern: "Stack" },
+          { name: "Min Stack", diff: "Medium", link: "https://leetcode.com/problems/min-stack/", pattern: "Stack" },
+          { name: "Daily Temperatures", diff: "Medium", link: "https://leetcode.com/problems/daily-temperatures/", pattern: "Monotonic Stack" },
+          { name: "Maximum Subarray", diff: "Medium", link: "https://leetcode.com/problems/maximum-subarray/", pattern: "Kadane's" },
+          { name: "Product of Array Except Self", diff: "Medium", link: "https://leetcode.com/problems/product-of-array-except-self/", pattern: "Prefix / Suffix" },
+          { name: "Longest Consecutive Sequence", diff: "Medium", link: "https://leetcode.com/problems/longest-consecutive-sequence/", pattern: "Hash Set" },
+          { name: "Evaluate Reverse Polish Notation", diff: "Medium", link: "https://leetcode.com/problems/evaluate-reverse-polish-notation/", pattern: "Stack" }
+        ],
+        stuck: "If you're stuck on any problem for more than 25 minutes, read just the approach on NeetCode (not the code). Try for 10 more minutes. Then watch the solution. Write one line: what was the pattern?",
+        moveOn: "You immediately reach for a Map or Set when you see 'find duplicates' or 'count frequency' — without thinking."
+      },
+      {
+        id: 2, title: "Core Patterns", week: "Weeks 4–6", duration: "15 days",
+        intro: "This is the real unlock. Once you see these patterns in 3–4 problems each, you start recognising them everywhere. Don't memorise solutions — memorise the shape of the problem.",
+        topics: [
+          "Two Pointers — sorted array, find pair, palindrome checks",
+          "Sliding Window — subarray/substring problems with a fixed or variable window",
+          "Binary Search — not just for sorted arrays, also for 'minimise/maximise' problems",
+          "Prefix Sum — precompute cumulative sums for range queries"
+        ],
+        problems: [
+          { name: "Valid Palindrome", diff: "Easy", link: "https://leetcode.com/problems/valid-palindrome/", pattern: "Two Pointers" },
+          { name: "Two Sum II (sorted)", diff: "Medium", link: "https://leetcode.com/problems/two-sum-ii-input-array-is-sorted/", pattern: "Two Pointers" },
+          { name: "3Sum", diff: "Medium", link: "https://leetcode.com/problems/3sum/", pattern: "Two Pointers" },
+          { name: "Best Time to Buy & Sell Stock", diff: "Easy", link: "https://leetcode.com/problems/best-time-to-buy-and-sell-stock/", pattern: "Sliding Window" },
+          { name: "Longest Substring Without Repeating", diff: "Medium", link: "https://leetcode.com/problems/longest-substring-without-repeating-characters/", pattern: "Sliding Window" },
+          { name: "Minimum Window Substring", diff: "Hard", link: "https://leetcode.com/problems/minimum-window-substring/", pattern: "Sliding Window" },
+          { name: "Binary Search", diff: "Easy", link: "https://leetcode.com/problems/binary-search/", pattern: "Binary Search" },
+          { name: "Search in Rotated Array", diff: "Medium", link: "https://leetcode.com/problems/search-in-rotated-sorted-array/", pattern: "Binary Search" },
+          { name: "Container With Most Water", diff: "Medium", link: "https://leetcode.com/problems/container-with-most-water/", pattern: "Two Pointers" },
+          { name: "Move Zeroes", diff: "Easy", link: "https://leetcode.com/problems/move-zeroes/", pattern: "Two Pointers" },
+          { name: "Permutation in String", diff: "Medium", link: "https://leetcode.com/problems/permutation-in-string/", pattern: "Sliding Window" },
+          { name: "Find Minimum in Rotated Array", diff: "Medium", link: "https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/", pattern: "Binary Search" },
+          { name: "Koko Eating Bananas", diff: "Medium", link: "https://leetcode.com/problems/koko-eating-bananas/", pattern: "Binary Search" }
+        ],
+        stuck: "For sliding window — always define 'what does my window represent?' before coding. For binary search — always ask 'what am I eliminating with each step?' That mental model solves 90% of stuck moments.",
+        moveOn: "You recognise 'sorted array + find pair' means two pointers, and 'longest/shortest subarray with condition' means sliding window — without being told."
+      },
+      {
+        id: 3, title: "Trees", week: "Weeks 7–9", duration: "15 days",
+        intro: "Trees feel scary at first. They're not. Almost every tree problem is DFS or BFS with a small twist. Learn those two cold, and the rest is pattern recognition.",
+        topics: [
+          "Binary tree structure — nodes, left, right, parent, leaf",
+          "DFS — preorder, inorder, postorder (recursive + iterative)",
+          "BFS — level order traversal using a queue",
+          "BST — insert, search, validate",
+          "Height, depth, diameter — the common measurement problems"
+        ],
+        problems: [
+          { name: "Invert Binary Tree", diff: "Easy", link: "https://leetcode.com/problems/invert-binary-tree/", pattern: "DFS" },
+          { name: "Max Depth of Binary Tree", diff: "Easy", link: "https://leetcode.com/problems/maximum-depth-of-binary-tree/", pattern: "DFS" },
+          { name: "Same Tree", diff: "Easy", link: "https://leetcode.com/problems/same-tree/", pattern: "DFS" },
+          { name: "Subtree of Another Tree", diff: "Easy", link: "https://leetcode.com/problems/subtree-of-another-tree/", pattern: "DFS" },
+          { name: "Binary Tree Level Order Traversal", diff: "Medium", link: "https://leetcode.com/problems/binary-tree-level-order-traversal/", pattern: "BFS" },
+          { name: "Validate BST", diff: "Medium", link: "https://leetcode.com/problems/validate-binary-search-tree/", pattern: "DFS" },
+          { name: "Lowest Common Ancestor of BST", diff: "Medium", link: "https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-search-tree/", pattern: "DFS / BST" },
+          { name: "Binary Tree Right Side View", diff: "Medium", link: "https://leetcode.com/problems/binary-tree-right-side-view/", pattern: "BFS" },
+          { name: "Diameter of Binary Tree", diff: "Easy", link: "https://leetcode.com/problems/diameter-of-binary-tree/", pattern: "DFS" },
+          { name: "Balanced Binary Tree", diff: "Easy", link: "https://leetcode.com/problems/balanced-binary-tree/", pattern: "DFS" },
+          { name: "Path Sum", diff: "Easy", link: "https://leetcode.com/problems/path-sum/", pattern: "DFS" },
+          { name: "Count Good Nodes in Binary Tree", diff: "Medium", link: "https://leetcode.com/problems/count-good-nodes-in-binary-tree/", pattern: "DFS" },
+          { name: "Kth Smallest in BST", diff: "Medium", link: "https://leetcode.com/problems/kth-smallest-element-in-a-bst/", pattern: "DFS / BST" }
+        ],
+        stuck: "If recursion confuses you: draw the tree on paper. Trace one function call at a time with a pen. Trees become easy once you can see the call stack. Do this for at least 3 problems.",
+        moveOn: "You can write DFS and BFS on a binary tree from memory, without looking anything up."
+      },
+      {
+        id: 4, title: "Graphs", week: "Weeks 10–12", duration: "15 days",
+        intro: "Good news: if you did Phase 3 well, graphs are mostly the same ideas on a different structure. BFS + DFS + visited set — that's 80% of graph problems.",
+        topics: [
+          "Graph representation — adjacency list vs matrix",
+          "BFS on graphs — shortest path, level-by-level exploration",
+          "DFS on graphs — cycle detection, connected components",
+          "Visited set — critical, prevents infinite loops",
+          "Grid problems — treat each cell as a node"
+        ],
+        problems: [
+          { name: "Number of Islands", diff: "Medium", link: "https://leetcode.com/problems/number-of-islands/", pattern: "BFS / DFS" },
+          { name: "Clone Graph", diff: "Medium", link: "https://leetcode.com/problems/clone-graph/", pattern: "DFS" },
+          { name: "Max Area of Island", diff: "Medium", link: "https://leetcode.com/problems/max-area-of-island/", pattern: "DFS" },
+          { name: "Course Schedule", diff: "Medium", link: "https://leetcode.com/problems/course-schedule/", pattern: "Topological Sort" },
+          { name: "Rotting Oranges", diff: "Medium", link: "https://leetcode.com/problems/rotting-oranges/", pattern: "BFS" },
+          { name: "Pacific Atlantic Water Flow", diff: "Medium", link: "https://leetcode.com/problems/pacific-atlantic-water-flow/", pattern: "DFS / BFS" },
+          { name: "Walls and Gates", diff: "Medium", link: "https://leetcode.com/problems/walls-and-gates/", pattern: "BFS" },
+          { name: "Number of Connected Components", diff: "Medium", link: "https://leetcode.com/problems/number-of-connected-components-in-an-undirected-graph/", pattern: "Union Find" },
+          { name: "Graph Valid Tree", diff: "Medium", link: "https://leetcode.com/problems/graph-valid-tree/", pattern: "Union Find / BFS" },
+          { name: "Surrounded Regions", diff: "Medium", link: "https://leetcode.com/problems/surrounded-regions/", pattern: "DFS" }
+        ],
+        stuck: "Stuck on graphs? Almost always means you forgot the visited set, or you're not sure when to use BFS vs DFS. Rule: BFS for shortest path, DFS for connectivity and cycle detection.",
+        moveOn: "You can solve Number of Islands without hints. That problem uses everything — grid, BFS/DFS, visited set."
+      },
+      {
+        id: 5, title: "Advanced Patterns", week: "Weeks 13–16", duration: "20 days",
+        intro: "Heap is straightforward. Backtracking is tricky but learnable. DP is the hardest — don't rush it. Climbing Stairs five times is better than 20 random DP problems once.",
+        topics: [
+          "Heap / Priority Queue — top K problems, always 'most/least' language",
+          "Backtracking — generate all possibilities, prune invalid paths",
+          "DP 1D — Fibonacci pattern, overlapping subproblems",
+          "DP 2D — grid paths, sequence matching (do this after 1D is solid)"
+        ],
+        problems: [
+          { name: "Kth Largest Element in Array", diff: "Medium", link: "https://leetcode.com/problems/kth-largest-element-in-an-array/", pattern: "Heap" },
+          { name: "Top K Frequent Elements", diff: "Medium", link: "https://leetcode.com/problems/top-k-frequent-elements/", pattern: "Heap" },
+          { name: "Subsets", diff: "Medium", link: "https://leetcode.com/problems/subsets/", pattern: "Backtracking" },
+          { name: "Combination Sum", diff: "Medium", link: "https://leetcode.com/problems/combination-sum/", pattern: "Backtracking" },
+          { name: "Climbing Stairs", diff: "Easy", link: "https://leetcode.com/problems/climbing-stairs/", pattern: "DP 1D" },
+          { name: "House Robber", diff: "Medium", link: "https://leetcode.com/problems/house-robber/", pattern: "DP 1D" },
+          { name: "Coin Change", diff: "Medium", link: "https://leetcode.com/problems/coin-change/", pattern: "DP 1D" },
+          { name: "Longest Common Subsequence", diff: "Medium", link: "https://leetcode.com/problems/longest-common-subsequence/", pattern: "DP 2D" },
+          { name: "Permutations", diff: "Medium", link: "https://leetcode.com/problems/permutations/", pattern: "Backtracking" },
+          { name: "Letter Combinations of Phone Number", diff: "Medium", link: "https://leetcode.com/problems/letter-combinations-of-a-phone-number/", pattern: "Backtracking" },
+          { name: "Jump Game", diff: "Medium", link: "https://leetcode.com/problems/jump-game/", pattern: "DP / Greedy" },
+          { name: "Unique Paths", diff: "Medium", link: "https://leetcode.com/problems/unique-paths/", pattern: "DP 2D" },
+          { name: "Word Break", diff: "Medium", link: "https://leetcode.com/problems/word-break/", pattern: "DP 1D" },
+          { name: "Find Median from Data Stream", diff: "Hard", link: "https://leetcode.com/problems/find-median-from-data-stream/", pattern: "Two Heaps" }
+        ],
+        stuck: "DP is just recursion + caching. If you're stuck, solve it recursively first (even if slow), then add memoization. That transformation is the pattern.",
+        moveOn: "You can solve Climbing Stairs and House Robber and explain why the recurrence relation works — not just that it does."
+      },
+      {
+        id: 6, title: "Interview Ready", week: "Weeks 17–20", duration: "20 days",
+        intro: "Stop learning new patterns. Start performing under pressure. The gap between solving at home and solving in an interview is entirely about practice under timed, observed conditions.",
+        topics: [
+          "Timed mock sessions — 45 minutes, no hints, talk out loud",
+          "System design basics — URL shortener, rate limiter, chat app",
+          "Revisit every problem you got wrong in phases 1–5",
+          "Behavioural prep — STAR format for your Wayverb and Reax stories",
+          "Platforms: neetcode.io, interviewing.io, Pramp, LeetCode weekly contest"
+        ],
+        problems: [
+          { name: "Word Search", diff: "Medium", link: "https://leetcode.com/problems/word-search/", pattern: "Backtracking" },
+          { name: "Merge Intervals", diff: "Medium", link: "https://leetcode.com/problems/merge-intervals/", pattern: "Intervals" },
+          { name: "Meeting Rooms II", diff: "Medium", link: "https://leetcode.com/problems/meeting-rooms-ii/", pattern: "Heap / Intervals" },
+          { name: "LRU Cache", diff: "Medium", link: "https://leetcode.com/problems/lru-cache/", pattern: "Hash Map + LinkedList" },
+          { name: "Trapping Rain Water", diff: "Hard", link: "https://leetcode.com/problems/trapping-rain-water/", pattern: "Two Pointers" },
+          { name: "Maximum Product Subarray", diff: "Medium", link: "https://leetcode.com/problems/maximum-product-subarray/", pattern: "DP" },
+          { name: "Decode Ways", diff: "Medium", link: "https://leetcode.com/problems/decode-ways/", pattern: "DP 1D" },
+          { name: "Task Scheduler", diff: "Medium", link: "https://leetcode.com/problems/task-scheduler/", pattern: "Heap / Greedy" },
+          { name: "Palindrome Partitioning", diff: "Medium", link: "https://leetcode.com/problems/palindrome-partitioning/", pattern: "Backtracking" },
+          { name: "Serialize and Deserialize Binary Tree", diff: "Hard", link: "https://leetcode.com/problems/serialize-and-deserialize-binary-tree/", pattern: "BFS / DFS" }
+        ],
+        stuck: "If mock interviews feel terrible, that's normal and correct — you're supposed to feel pressure. Do one every day for a week. By day 5 it feels different.",
+        moveOn: "You can solve most mediums in under 30 minutes while explaining your thought process out loud. Apply now."
+      }
+    ];
+
+    let state = JSON.parse(localStorage.getItem('dsa_journal_v2') || '{"checks":{},"streak":0,"lastDate":"","currentPhase":0,"notes":{},"myProblems":[]}');
+    if (!state.notes) state.notes = {};
+    if (!state.myProblems) state.myProblems = [];
+    if (!state.activity) state.activity = {};
+    if (!state.solvedDates) state.solvedDates = {};
+    if (!state.dailyGoal) state.dailyGoal = { date: '', items: [] };
+    const TODAY = new Date().toDateString();
+
+    function saveState() { localStorage.setItem('dsa_journal_v2', JSON.stringify(state)); }
+
+    function getKey(phaseId, type, idx) { return `p${phaseId}_${type}_${idx}`; }
+
+    function countProblems() {
+      let clean = 0, hints = 0, wip = 0;
+      PHASES.forEach(p => p.problems.forEach((_, i) => {
+        const v = state.checks[getKey(p.id, 'p', i)];
+        if (v === 'clean') clean++;
+        else if (v === 'hints') hints++;
+        else if (v === 'inprogress') wip++;
+      }));
+      return { clean, hints, wip, total: clean + hints };
+    }
+
+    function phaseProgress(phaseId) {
+      const p = PHASES[phaseId];
+      const total = p.topics.length + p.problems.length;
+      let done = 0;
+      p.topics.forEach((_, i) => { if (state.checks[getKey(p.id, 't', i)] === true) done++; });
+      p.problems.forEach((_, i) => { const v = state.checks[getKey(p.id, 'p', i)]; if (v === 'clean' || v === 'hints') done++; });
+      return { total, done, pct: total ? Math.round(done / total * 100) : 0 };
+    }
+
+    function getCurrentPhase() {
+      for (let i = 0; i < PHASES.length; i++) {
+        const { pct } = phaseProgress(i);
+        if (pct < 100) return i;
+      }
+      return PHASES.length - 1;
+    }
+
+    function updateStreak() {
+      const today = new Date().toDateString();
+      if (state.lastDate === today) return;
+      const yesterday = new Date(Date.now() - 86400000).toDateString();
+      if (state.lastDate === yesterday) { state.streak++; }
+      else if (state.lastDate !== today) { state.streak = 1; }
+      state.lastDate = today;
+      saveState();
+    }
+
+    // ── HEATMAP ──────────────────────────────────────────────
+    function renderHeatmap() {
+      const wrap = document.getElementById('heatmap-wrap');
+      if (!wrap) return;
+
+      const days = 364;
+      const now = new Date(); now.setHours(0, 0, 0, 0);
+      const start = new Date(now); start.setDate(start.getDate() - days);
+      start.setDate(start.getDate() - start.getDay());
+
+      const dayLabels = ['', 'Mon', '', 'Wed', '', 'Fri', ''];
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+      // Build weeks + collect week months
+      const weeks = [];
+      let d = new Date(start);
+      while (d <= now) {
+        const week = [];
+        for (let i = 0; i < 7; i++) {
+          const key = d.toDateString();
+          const count = state.activity[key] || 0;
+          const lvl = count === 0 ? '' : count === 1 ? 'l1' : count === 2 ? 'l2' : count <= 4 ? 'l3' : 'l4';
+          const dateStr = d.toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' });
+          week.push({ key, count, lvl, dateStr, day: d.getDay(), month: d.getMonth() });
+          d.setDate(d.getDate() + 1);
+        }
+        weeks.push({ days: week, month: week[0].month });
+      }
+
+      // Month label spans
+      const monthSpans = [];
+      let ms = 0;
+      for (let i = 1; i <= weeks.length; i++) {
+        if (i === weeks.length || weeks[i].month !== weeks[ms].month) {
+          monthSpans.push({ month: weeks[ms].month, count: i - ms });
+          ms = i;
+        }
+      }
+
+      // Current streak from activity
+      let streak = 0;
+      d = new Date(now);
+      while (d >= start) {
+        if ((state.activity[d.toDateString()] || 0) > 0) { streak++; d.setDate(d.getDate() - 1); }
+        else break;
+      }
+
+      // Day labels (only non-empty ones)
+      const labelRows = dayLabels.map((l, i) => ({ label: l, row: i })).filter(x => x.label);
+
+      // Build HTML
+      let monthsHtml = '';
+      monthSpans.forEach(m => {
+        monthsHtml += `<div class="heatmap-month-label" style="width:${m.count * 18 - 3}px">${monthNames[m.month]}</div>`;
+      });
+
+      let gridHtml = '';
+      weeks.forEach(w => {
+        gridHtml += '<div class="heatmap-week">';
+        w.days.forEach(day => {
+          const tip = day.count > 0
+            ? `${day.dateStr} — ${day.count} problem${day.count > 1 ? 's' : ''} solved`
+            : `${day.dateStr} — no activity`;
+          gridHtml += `<div class="heatmap-day ${day.lvl}" data-tip="${tip}"></div>`;
+        });
+        gridHtml += '</div>';
+      });
+
+      const yearlyTotal = Object.values(state.activity).reduce((a, b) => a + b, 0);
+
+      wrap.innerHTML = `
+        <div class="heatmap-header">
+          <div class="heatmap-title">Activity — past year</div>
+          <span class="heatmap-total">${yearlyTotal} problems solved</span>
+        </div>
+        <div class="heatmap-layout">
+          <div class="heatmap-day-labels">
+            ${labelRows.map(r => `<div class="heatmap-day-label">${r.label}</div>`).join('')}
+          </div>
+          <div class="heatmap-scroll">
+            <div class="heatmap-months">${monthsHtml}</div>
+            <div class="heatmap-grid">${gridHtml}</div>
+          </div>
+        </div>
+        <div class="heatmap-footer">
+          <div class="heatmap-legend">
+            <span>Less</span>
+            <div class="heatmap-legend-cell"></div>
+            <div class="heatmap-legend-cell l1"></div>
+            <div class="heatmap-legend-cell l2"></div>
+            <div class="heatmap-legend-cell l3"></div>
+            <div class="heatmap-legend-cell l4"></div>
+            <span>More</span>
+          </div>
+          <div class="heatmap-streak">${streak > 0 ? `🔥 ${streak} day streak` : 'No active streak'}</div>
+        </div>`;
+    }
+
+    document.addEventListener('mouseover', function (e) {
+      const day = e.target.closest('.heatmap-day');
+      const tip = document.getElementById('heatmap-tooltip');
+      if (!day || !tip) { if (tip) tip.style.display = 'none'; return; }
+      const text = day.getAttribute('data-tip');
+      if (!text) { tip.style.display = 'none'; return; }
+      tip.textContent = text;
+      tip.style.display = 'block';
+    });
+
+    document.addEventListener('mousemove', function (e) {
+      const tip = document.getElementById('heatmap-tooltip');
+      if (!tip || tip.style.display === 'none') return;
+      const x = e.clientX;
+      const y = e.clientY;
+      tip.style.left = (x - tip.offsetWidth / 2) + 'px';
+      tip.style.top = (y - 45) + 'px';
+    });
+
+    document.addEventListener('mouseout', function (e) {
+      if (e.target.closest('.heatmap-day')) {
+        document.getElementById('heatmap-tooltip').style.display = 'none';
+      }
+    });
+
+    // ── BADGES ───────────────────────────────────────────────
+    const MILESTONES = [
+      { id: 'first', icon: '🎯', label: 'First solve', check: s => s.total >= 1 },
+      { id: 'ten', icon: '💪', label: '10 problems', check: s => s.total >= 10 },
+      { id: 'med', icon: '🧠', label: 'First medium', check: s => s.mediums >= 1 },
+      { id: 'hard', icon: '💎', label: 'First hard', check: s => s.hards >= 1 },
+      { id: '25', icon: '⭐', label: '25 problems', check: s => s.total >= 25 },
+      { id: '50', icon: '🚀', label: '50 problems', check: s => s.total >= 50 },
+      { id: '100', icon: '🏆', label: '100 problems', check: s => s.total >= 100 },
+      { id: 'streak7', icon: '🔥', label: '7-day streak', check: s => s.streak >= 7 },
+      { id: 'streak30', icon: '⚡', label: '30-day streak', check: s => s.streak >= 30 },
+      { id: 'phase1', icon: '📗', label: 'Phase 1 done', check: s => s.phases[0] >= 100 },
+      { id: 'phase3', icon: '📘', label: 'Phase 3 done', check: s => s.phases[3] >= 100 },
+      { id: 'clean10', icon: '✨', label: '10 clean solves', check: s => s.clean >= 10 },
+    ];
+
+    function getBadgeStats() {
+      const pc = countProblems();
+      let mediums = 0, hards = 0;
+      PHASES.forEach(p => p.problems.forEach((prob, i) => {
+        const v = state.checks[getKey(p.id, 'p', i)];
+        if (v === 'clean' || v === 'hints') {
+          if (prob.diff === 'Medium') mediums++;
+          if (prob.diff === 'Hard') hards++;
+        }
+      }));
+      const phases = PHASES.map((_, i) => phaseProgress(i).pct);
+      return { total: pc.total, clean: pc.clean, mediums, hards, streak: state.streak, phases };
+    }
+
+    function renderBadges() {
+      const wrap = document.getElementById('badges-wrap');
+      if (!wrap) return;
+      const s = getBadgeStats();
+      let html = '<div class="badges-label">Milestones</div><div class="badges-row">';
+      MILESTONES.forEach(m => {
+        const earned = m.check(s);
+        html += `<div class="badge-pill ${earned ? 'earned' : 'locked'}">${m.icon} ${m.label}</div>`;
+      });
+      html += '</div>';
+      wrap.innerHTML = html;
+    }
+
+    function checkMilestonePop() {
+      const s = getBadgeStats();
+      MILESTONES.forEach(m => {
+        if (m.check(s)) {
+          const el = document.querySelector(`.badge-pill.locked`);
+          if (el && el.textContent.includes(m.label)) {
+            el.classList.remove('locked'); el.classList.add('earned', 'celebrate');
+          }
+        }
+      });
+    }
+
+    // ── WEEKLY RECAP ─────────────────────────────────────────
+    function renderRecap() {
+      const wrap = document.getElementById('recap-wrap');
+      if (!wrap) return;
+      const now = new Date(); now.setHours(0, 0, 0, 0);
+      const dayOfWeek = now.getDay();
+      let weekSolves = 0, bestDay = 0, bestDayName = '—';
+      for (let i = 0; i <= dayOfWeek; i++) {
+        const d = new Date(now); d.setDate(d.getDate() - (dayOfWeek - i));
+        const count = state.activity[d.toDateString()] || 0;
+        weekSolves += count;
+        if (count > bestDay) { bestDay = count; bestDayName = d.toLocaleDateString('en', { weekday: 'short' }); }
+      }
+      if (weekSolves === 0) { wrap.style.display = 'none'; return; }
+      wrap.style.display = 'block';
+      const cp = getCurrentPhase();
+      const pr = phaseProgress(cp);
+      wrap.innerHTML = `
+        <div class="recap-title">This week</div>
+        <div class="recap-stats">
+          <div><div class="recap-stat">${weekSolves}</div><div class="recap-stat-label">problems solved</div></div>
+          <div><div class="recap-stat">${bestDayName}</div><div class="recap-stat-label">best day (${bestDay})</div></div>
+          <div><div class="recap-stat">P${cp}</div><div class="recap-stat-label">${pr.pct}% done</div></div>
+          <div><div class="recap-stat">${state.streak}</div><div class="recap-stat-label">day streak</div></div>
+        </div>`;
+    }
+
+    // ── SPACED REPETITION ────────────────────────────────────
+    function renderReviewBanner() {
+      const banner = document.getElementById('review-banner');
+      if (!banner) return;
+      const now = Date.now();
+      const DAY_MS = 86400000;
+      const REVIEW_DAYS = [3, 7, 14, 30, 90];
+      const REVIEW_MS = REVIEW_DAYS.map(d => d * DAY_MS);
+      const due = [];
+      const validKeys = new Set();
+      PHASES.forEach(p => p.problems.forEach((_, i) => validKeys.add('p' + p.id + '_p_' + i)));
+      Object.entries(state.solvedDates).forEach(([key, ts]) => {
+        if (!validKeys.has(key)) return;
+        const elapsedDays = (now - ts) / DAY_MS;
+        const m = key.match(/^p(\d+)_p_(\d+)$/);
+        if (!m) return;
+        const phase = PHASES[+m[1]]; const idx = +m[2];
+        if (!phase || !phase.problems[idx]) return;
+        let dueToday = false;
+        for (let i = 0; i < REVIEW_DAYS.length; i++) {
+          const lower = REVIEW_DAYS[i];
+          const upper = i + 1 < REVIEW_DAYS.length ? REVIEW_DAYS[i + 1] : REVIEW_DAYS[i] * 2;
+          if (elapsedDays >= lower && elapsedDays < upper) { dueToday = true; break; }
+        }
+        if (dueToday) due.push({ key, name: phase.problems[idx].name });
+      });
+      if (due.length === 0) { banner.style.display = 'none'; return; }
+      banner.style.display = 'block';
+      banner.innerHTML = `<div>
+        <div class="review-banner-title">🔁 Review time — ${due.length} problem${due.length > 1 ? 's' : ''} you should re-solve today</div>
+        <div class="review-chips">${due.map(d =>
+        `<button class="review-chip" onclick="markReviewed('${d.key}')">${d.name} ✓</button>`
+      ).join('')}</div>
+      </div>`;
+    }
+
+    function markReviewed(key) {
+      state.solvedDates[key] = Date.now();
+      saveState(); renderReviewBanner();
+    }
+
+    // ── PATTERN MASTERY ──────────────────────────────────────
+    const PATTERN_ICONS = {
+      'Arrays': '📋', 'Hash Map': '🗺️', 'Hash Set': '🎯', 'Stack': '📚',
+      'Two Pointers': '👆', 'Sliding Window': '🪟', 'Binary Search': '🔍',
+      'Prefix': '📊', 'Kadane': '⚡', 'Monotonic Stack': '📈',
+      'DFS': '🌲', 'BFS': '🌊', 'Tree': '🌳', 'BST': '🌴',
+      'Topological Sort': '🔗', 'Union Find': '🔌',
+      'Heap': '⛰️', 'Backtracking': '🔄', 'DP': '🧩',
+      'Intervals': '📏', 'Greedy': '🎯', 'Recursion': '🔁',
+      'Math': '🔢', 'Strings': '📝', 'Loops': '🔄',
+      'Logic': '💡', 'Search': '🔎', 'LinkedList': '⛓️',
+    };
+
+    function getPatternIcon(name) {
+      for (const [key, icon] of Object.entries(PATTERN_ICONS)) {
+        if (name.includes(key)) return icon;
+      }
+      return '⚙️';
+    }
+
+    function renderPatternMastery() {
+      const wrap = document.getElementById('pattern-wrap');
+      if (!wrap) return;
+      const counts = {}, totals = {};
+      PHASES.forEach(p => p.problems.forEach((prob, i) => {
+        if (!prob.pattern) return;
+        const key = prob.pattern.split('/')[0].trim();
+        totals[key] = (totals[key] || 0) + 1;
+        const v = state.checks[getKey(p.id, 'p', i)];
+        if (v === 'clean' || v === 'hints') counts[key] = (counts[key] || 0) + 1;
+      }));
+      const patterns = Object.keys(totals).sort((a, b) => (counts[b] || 0) - (counts[a] || 0));
+      if (patterns.every(k => !counts[k])) { wrap.style.display = 'none'; return; }
+      wrap.style.display = 'block';
+
+      let totalSolved = 0, totalAll = 0;
+      patterns.forEach(k => { totalSolved += counts[k] || 0; totalAll += totals[k]; });
+      const overallPct = Math.round(totalSolved / totalAll * 100);
+
+      let html = `
+        <div class="pattern-header">
+          <div class="pattern-title">Pattern Mastery</div>
+          <span class="pattern-mastery-pct">${overallPct}% overall</span>
+        </div>
+        <div class="pattern-rows">`;
+
+      patterns.forEach(k => {
+        const solved = counts[k] || 0, total = totals[k];
+        if (solved === 0) return;
+        const pct = Math.round(solved / total * 100);
+        const lvl = solved >= total ? 'expert' : solved >= 4 ? 'fluent' : solved >= 2 ? 'learning' : 'beginner';
+        const lvlLabel = { expert: 'Expert', fluent: 'Fluent', learning: 'Learning', beginner: 'Beginner' }[lvl];
+        const icon = getPatternIcon(k);
+        html += `<div class="p-row">
+          <span class="p-icon">${icon}</span>
+          <span class="p-name">${k}</span>
+          <div class="p-track"><div class="p-fill ${lvl}" style="width:${pct}%"></div></div>
+          <span class="p-count">${solved}/${total}</span>
+          <span class="p-label ${lvl}">${lvlLabel}</span>
+        </div>`;
+      });
+
+      html += `
+        </div>
+        <div class="pattern-legend">
+          <span class="pattern-legend-item"><span class="pattern-legend-dot beginner"></span> Beginner</span>
+          <span class="pattern-legend-item"><span class="pattern-legend-dot learning"></span> Learning</span>
+          <span class="pattern-legend-item"><span class="pattern-legend-dot fluent"></span> Fluent</span>
+          <span class="pattern-legend-item"><span class="pattern-legend-dot expert"></span> Expert</span>
+        </div>`;
+
+      wrap.innerHTML = html;
+    }
+
+    function render() { renderRecap(); renderHeatmap(); renderBadges(); renderReviewBanner(); renderPatternMastery(); checkMilestonePop(); }
+
+    updateStreak();
+    render();
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,2676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Design Patterns — Mayank Thakur</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: #f0f2f5; --bg-card: #ffffff;
+      --text-primary: #000000; --text-secondary: #5f6368; --text-muted: #9aa0a6;
+      --accent-black: #000000; --accent-white: #ffffff;
+      --pastel-yellow: #ffeab6; --pastel-mint: #dcf0eb; --pastel-purple: #e6daff;
+      --pastel-pink: #ffd6e8; --pastel-blue: #d6eaff; --pastel-orange: #ffe4cc;
+      --pastel-green: #d4f5d4; --pastel-teal: #d0f0f0;
+      --border-radius-lg: 24px; --border-radius-md: 16px; --border-radius-pill: 9999px;
+      --font-sans: 'Outfit', 'Inter', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { max-width: 1200px; margin: 0 auto; background: var(--bg-main); font-family: var(--font-sans); color: var(--text-primary); min-height: 100vh; -webkit-font-smoothing: antialiased; line-height: 1.5; }
+    .cover { padding: 4rem 2.5rem 2rem; text-align: left; }
+    .cover-subtitle { font-size: 14px; letter-spacing: 0.05em; color: var(--text-secondary); font-weight: 500; margin-bottom: 0.5rem; }
+    .cover-title { font-size: 40px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
+    .cover-name { font-size: 16px; color: var(--text-secondary); font-weight: 500; margin-bottom: 2rem; display: flex; align-items: center; gap: 6px; }
+    .badge { font-size: 13px; font-weight: 500; padding: 2px 8px; border-radius: 6px; white-space: nowrap; }
+    .badge-api { background: var(--pastel-purple); color: #3C3489; }
+    .badge-faang { background: #EEEDFE; color: #3C3489; }
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.25rem; margin-bottom: 2rem; padding: 0 2.5rem; }
+    .stat { background: var(--bg-card); padding: 1.5rem; border-radius: var(--border-radius-lg); box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
+    .stat-val { font-size: 36px; font-weight: 600; line-height: 1.1; margin-bottom: 8px; }
+    .stat-label { font-size: 14px; color: var(--text-secondary); font-weight: 500; }
+    .streak-box { display: inline-flex; align-items: center; gap: 8px; background: var(--pastel-purple); padding: 8px 16px; border-radius: var(--border-radius-pill); margin: 0 2.5rem 2rem; }
+    .streak-text { font-size: 14px; font-weight: 600; }
+    .phase-nav { display: flex; gap: 0.75rem; overflow-x: auto; scrollbar-width: none; margin: 0 2rem 1.5rem; flex-wrap: nowrap; white-space: nowrap; }
+    .phase-nav::-webkit-scrollbar { display: none; }
+    .phase-tab { font-size: 14px; font-weight: 500; padding: 10px 20px; cursor: pointer; color: var(--text-secondary); background: var(--bg-card); border-radius: var(--border-radius-pill); border: 1px solid transparent; white-space: nowrap; transition: all 0.2s ease; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+    .phase-tab.active { color: var(--accent-white); background: var(--accent-black); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    .phase-tab:hover:not(.active) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .content { padding: 0 2.5rem 4rem; max-width: 900px; margin-inline: auto; }
+    .chapter-section { display: none; }
+    .chapter-section.active { display: block; }
+    .chapter-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1.5rem; padding: 2rem; border-radius: var(--border-radius-lg); }
+    .chapter-num { font-size: 13px; font-weight: 600; opacity: 0.7; margin-bottom: 0.4rem; }
+    .chapter-title { font-size: 28px; font-weight: 700; letter-spacing: -0.01em; }
+    .chapter-meta { text-align: right; }
+    .chapter-week { font-size: 16px; font-weight: 600; }
+    .chapter-time { font-size: 13px; opacity: 0.7; margin-top: 4px; font-weight: 500; }
+    .topic-card { background: var(--bg-card); border-radius: var(--border-radius-md); margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); overflow: hidden; transition: box-shadow 0.2s; }
+    .topic-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); }
+    .topic-card.mastered { background: var(--pastel-mint); }
+    .topic-card.in-progress { background: #fffbeb; border-left: 3px solid #f59e0b; }
+    .topic-card.in-progress .topic-name { color: #92400e; }
+    .topic-card.in-progress .topic-desc { color: #a0620e; }
+    .topic-header { display: flex; align-items: center; gap: 14px; padding: 18px 20px; cursor: pointer; user-select: none; }
+    .topic-check { width: 22px; height: 22px; flex-shrink: 0; cursor: pointer; border-radius: 4px; border: 1.5px solid #d0d0d0; display: flex; align-items: center; justify-content: center; background: var(--bg-card); transition: all 0.15s; }
+    .topic-check[data-state="mastered"] { background: var(--accent-black); border-color: var(--accent-black); }
+    .topic-check[data-state="in-progress"] { background: #f59e0b; border-color: #f59e0b; }
+    .chk-icon { display: none; font-size: 14px; line-height: 1; color: #fff; font-weight: 700; }
+    .topic-check[data-state="mastered"] .chk-icon.mastered { display: block; }
+    .topic-check[data-state="in-progress"] .chk-icon.in-progress { display: block; }
+    .topic-info { flex: 1; min-width: 0; }
+    .topic-name { font-size: 16px; font-weight: 600; margin-bottom: 3px; }
+    .topic-card.mastered .topic-name { text-decoration: line-through; color: var(--text-secondary); }
+    .topic-desc { font-size: 13px; color: var(--text-secondary); font-weight: 500; line-height: 1.4; }
+    .topic-badges { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+    .cat-badge { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: var(--border-radius-pill); background: var(--pastel-teal); color: #1a5a5a; white-space: nowrap; }
+    .cat-badge.basics { background: var(--pastel-yellow); color: #7a5200; }
+    .cat-badge.rest { background: var(--pastel-mint); color: #1a5a5a; }
+    .cat-badge.request-response { background: var(--pastel-purple); color: #3C3489; }
+    .cat-badge.auth { background: var(--pastel-pink); color: #7a1a4a; }
+    .cat-badge.versioning { background: var(--pastel-blue); color: #1a4a7a; }
+    .cat-badge.performance { background: var(--pastel-orange); color: #7a3a00; }
+    .cat-badge.advanced { background: var(--pastel-green); color: #1a5a1a; }
+    .expand-btn { background: var(--bg-main); border: none; border-radius: var(--border-radius-pill); padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; color: var(--text-secondary); transition: all 0.2s; flex-shrink: 0; }
+    .expand-btn:hover { background: var(--pastel-purple); }
+    .expand-btn.open { background: var(--accent-black); color: #fff; }
+    .filter-bar { display: flex; flex-wrap: wrap; gap: 16px 28px; align-items: center; margin-bottom: 1.25rem; margin-top: 0.25rem; padding: 0 2px; }
+    .filter-group { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+    .filter-label { font-size: 13px; font-weight: 600; color: var(--text-muted); white-space: nowrap; margin-right: 4px; }
+    .flt-btn { font-size: 12px; font-weight: 500; padding: 5px 12px; border-radius: var(--border-radius-pill); border: none; cursor: pointer; background: var(--bg-card); color: var(--text-secondary); font-family: var(--font-sans); transition: all 0.12s; white-space: nowrap; }
+    .flt-btn:hover { background: #e8e8e8; color: var(--text-primary); }
+    .flt-btn.flt-active { background: var(--accent-black); color: var(--accent-white); }
+    .flt-btn.flt-basics.flt-active { background: #7a5200; color: #fff; }
+    .flt-btn.flt-rest.flt-active { background: #1a5a5a; color: #fff; }
+    .flt-btn.flt-request-response.flt-active { background: #3C3489; color: #fff; }
+    .flt-btn.flt-auth.flt-active { background: #7a1a4a; color: #fff; }
+    .flt-btn.flt-versioning.flt-active { background: #1a4a7a; color: #fff; }
+    .flt-btn.flt-performance.flt-active { background: #7a3a00; color: #fff; }
+    .flt-btn.flt-advanced.flt-active { background: #1a5a1a; color: #fff; }
+    .filter-count { font-size: 12px; color: var(--text-muted); font-weight: 500; margin-left: auto; white-space: nowrap; }
+    .practice-panel { display: none; padding: 0 20px 20px; border-top: 1px solid var(--bg-main); }
+    .practice-panel.open { display: block; }
+    .interviewer-q { background: var(--pastel-purple); border-radius: var(--border-radius-md); padding: 14px 18px; margin: 16px 0 18px; font-size: 14px; font-weight: 600; display: flex; gap: 10px; align-items: flex-start; }
+    .interviewer-q .q-icon { font-size: 18px; flex-shrink: 0; }
+    .q-text { line-height: 1.5; }
+    .q-sub { font-weight: 500; color: var(--text-secondary); font-size: 13px; margin-top: 4px; }
+    .fields-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    @media (max-width: 600px) { .fields-grid { grid-template-columns: 1fr; } }
+    .field-group { display: flex; flex-direction: column; gap: 6px; }
+    .field-group.full { grid-column: 1 / -1; }
+    .field-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
+    .field-label span { font-size: 14px; }
+    .field-input { width: 100%; background: var(--bg-main); border: 1.5px solid transparent; border-radius: 12px; padding: 12px 14px; font-family: inherit; font-size: 14px; color: var(--text-primary); resize: vertical; min-height: 90px; transition: border-color 0.2s, background 0.2s; line-height: 1.5; }
+    .field-input:focus { outline: none; border-color: var(--accent-black); background: #fff; }
+    .field-input.filled { background: #fff; border-color: rgba(0,0,0,0.1); }
+    .field-input::placeholder { color: var(--text-muted); font-style: italic; }
+    .score-row { display: flex; align-items: center; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+    .score-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+    .score-btn { font-size: 12px; font-weight: 700; padding: 6px 16px; border-radius: var(--border-radius-pill); border: none; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+    .score-btn.s1 { background: var(--pastel-pink); color: #7a1a4a; }
+    .score-btn.s2 { background: var(--pastel-yellow); color: #7a5200; }
+    .score-btn.s3 { background: var(--pastel-mint); color: #1a5a3a; }
+    .score-btn.s4 { background: var(--accent-black); color: #fff; }
+    .score-btn:hover { transform: translateY(-1px); box-shadow: 0 3px 8px rgba(0,0,0,0.1); }
+    .score-btn.selected { box-shadow: 0 0 0 2.5px var(--accent-black); }
+    .save-note-btn { margin-left: auto; background: var(--accent-black); color: #fff; border: none; border-radius: var(--border-radius-pill); padding: 8px 20px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; transition: opacity 0.2s; }
+    .save-note-btn:hover { opacity: 0.85; }
+    .save-note-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .saved-flash { font-size: 12px; color: #1a5a3a; font-weight: 600; display: none; }
+    .saved-flash.show { display: inline; }
+    .quote { text-align: center; padding: 4rem 2.5rem 3rem; font-size: 18px; font-weight: 500; line-height: 1.6; color: var(--text-primary); }
+    .quote cite { display: block; font-size: 14px; font-style: normal; color: var(--text-secondary); margin-top: 1rem; font-weight: 600; }
+    .phase-progress-wrap { margin-bottom: 1.5rem; }
+    .phase-progress-label { font-size: 13px; color: var(--text-secondary); font-weight: 500; margin-bottom: 6px; }
+    .phase-progress-bar { height: 6px; background: var(--bg-card); border-radius: var(--border-radius-pill); overflow: hidden; }
+    .phase-progress-fill { height: 100%; background: var(--accent-black); transition: width 0.4s ease; border-radius: var(--border-radius-pill); }
+
+    /* ═════════ SAMJHO BLOCK ═════════ */
+    .learn-box { margin: 14px 0 0; background: var(--bg-card); border: 1.5px solid var(--border); border-radius: var(--border-radius-lg); overflow: hidden; }
+    .learn-box:not(.open) .learn-body { display: none; }
+    .learn-head { padding: 12px 16px; cursor: pointer; display: flex; align-items: center; gap: 10px; user-select: none; }
+    .learn-caret { transition: transform 0.2s; font-size: 11px; color: var(--text-secondary); }
+    .learn-box.open .learn-caret { transform: rotate(90deg); }
+    .learn-title { font-weight: 700; font-size: 15px; }
+    .learn-sub { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+    .learn-body { padding: 6px 18px 16px; }
+    .lblock { margin-top: 14px; }
+    .llabel { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); margin-bottom: 6px; }
+    .ltext { font-size: 14px; line-height: 1.55; color: var(--text-strong); }
+    .ltext code { background: var(--bg-subtle); padding: 1px 5px; border-radius: 5px; font-size: 12.5px; }
+    .lanalogy { margin-top: 8px; background: var(--bg-subtle); border-left: 3px solid var(--accent-pink); padding: 9px 12px; border-radius: 0 var(--border-radius-md) var(--border-radius-md) 0; font-size: 13.5px; line-height: 1.5; }
+    .lvis { margin-top: 8px; }
+    .lvis svg { width: 100%; height: auto; border-radius: var(--border-radius-md); background: var(--bg-soft); }
+    .lvis-cap { margin-top: 6px; font-size: 12px; color: var(--text-secondary); text-align: center; }
+    .lcode pre { margin: 0; background: var(--bg-code, #101418); color: #e6edf3; padding: 12px 14px; border-radius: var(--border-radius-md); font-size: 12.5px; line-height: 1.6; overflow-x: auto; }
+    .lcode .c { color: #8b949e; }
+    .lcode .s { color: #7ee787; }
+    .lcode .k { color: #ff7b72; }
+    .lterms { display: flex; flex-direction: column; gap: 6px; }
+    .lterm { display: flex; gap: 10px; align-items: baseline; font-size: 13.5px; }
+    .lterm-w { font-weight: 700; color: var(--accent-pink); min-width: 130px; white-space: nowrap; }
+    .lterm-m { color: var(--text-strong); line-height: 1.45; }
+    .lwhere { display: flex; flex-direction: column; gap: 7px; }
+    .lwhere-row { display: flex; gap: 10px; align-items: baseline; font-size: 13.5px; }
+    .lwhere-tag { font-weight: 700; background: var(--bg-subtle); padding: 1px 8px; border-radius: var(--border-radius-pill); min-width: 110px; text-align: center; white-space: nowrap; }
+    .lwhere-txt { color: var(--text-strong); line-height: 1.45; }
+    .lpc { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px; }
+    .lpc-col { border-radius: var(--border-radius-md); padding: 10px 12px; }
+    .lpc-pro { background: rgba(46, 160, 67, 0.08); border: 1px solid rgba(46, 160, 67, 0.25); }
+    .lpc-con { background: rgba(248, 81, 73, 0.07); border: 1px solid rgba(248, 81, 73, 0.25); }
+    .lpc-h { font-size: 12px; font-weight: 700; margin-bottom: 6px; letter-spacing: 0.03em; }
+    .lpc-pro .lpc-h { color: #2ea043; }
+    .lpc-con .lpc-h { color: #f85149; }
+    .lpc ul { margin: 0; padding-left: 16px; }
+    .lpc li { font-size: 12.5px; line-height: 1.5; margin-bottom: 4px; }
+    .lgot ul { margin: 0; padding-left: 16px; }
+    .lgot li { font-size: 12.5px; line-height: 1.5; margin-bottom: 5px; }
+    .lgot li span { color: var(--text-strong); }
+  </style>
+</head>
+<body>
+
+<div id="nav-container"></div>
+
+<div class="cover">
+  <div class="cover-subtitle">INTERVIEW MASTERY</div>
+  <div class="cover-title">API Design Patterns</div>
+  <div class="cover-name">
+    Mayank Thakur
+    <span class="badge badge-api">API Design</span>
+    <span class="badge badge-faang">FAANG Ready</span>
+  </div>
+</div>
+
+<div class="stats-row" id="stats-row">
+  <div class="stat"><div class="stat-val" id="stat-total">0</div><div class="stat-label">Topics Total</div></div>
+  <div class="stat"><div class="stat-val" id="stat-mastered">0</div><div class="stat-label">Mastered</div></div>
+  <div class="stat"><div class="stat-val" id="stat-inprogress" style="color:#92400e">0</div><div class="stat-label">In Progress</div></div>
+  <div class="stat"><div class="stat-val" id="stat-pct">0%</div><div class="stat-label">Completion</div></div>
+  <div class="stat"><div class="stat-val" id="stat-day">Day 1</div><div class="stat-label">Current Streak</div></div>
+</div>
+
+<div class="streak-box">
+  <span>🔌</span>
+  <span class="streak-text" id="streak-text">APIs are the user interface for developers. Design them well.</span>
+</div>
+
+<div class="phase-nav" id="phase-nav"></div>
+<div class="content" id="content"></div>
+
+<div class="quote">
+  "APIs are the user interface for developers. Design them with empathy."<cite>— API Design Principles</cite>
+</div>
+
+<script src="../../nav.js"></script>
+<script>
+const STORE_KEY = 'api-design-v1';
+
+const chapters = [
+  {
+    id: 'api-start-here',
+    title: 'What is an API?',
+    week: 'Week 0 — Start Here',
+    color: 'var(--pastel-yellow)',
+    topics: [
+      {
+        id: 'api-what',
+        name: 'What is an API?',
+        cat: 'basics',
+        desc: 'An API (Application Programming Interface) is a way for one program to talk to another. When you open a weather app and it shows today\'s forecast, that app is calling a weather API — asking a remote server "what is the temperature in Mumbai right now?"',
+        q: 'What is an API and how does it enable communication between programs?',
+        qsub: 'How does your frontend talk to your backend via an API? Give real-world examples like weather apps, Google Login, and Stripe payments.'
+      },
+      {
+        id: 'api-http',
+        name: 'What is HTTP?',
+        cat: 'basics',
+        desc: 'HTTP (HyperText Transfer Protocol) is the language that web clients and servers use to communicate. Every time you type a URL and press Enter, your browser sends an HTTP request. The server responds with an HTTP response.',
+        q: 'What is HTTP and how does it enable communication between web clients and servers?',
+        qsub: 'Why must you understand HTTP before learning about REST APIs, JWT, auth, and rate limiting?'
+      },
+      {
+        id: 'api-methods',
+        name: 'HTTP Methods — GET, POST, PUT, DELETE',
+        cat: 'basics',
+        desc: 'HTTP methods define what action you want to perform. GET = read/fetch data (never changes anything). POST = create something new. PUT = replace/update a resource. DELETE = remove a resource.',
+        q: 'What are the four basic HTTP methods and when do you use each? Give a to-do list analogy.',
+        qsub: 'Why is POST not idempotent while GET, PUT, and DELETE are? What does this mean for retry logic?'
+      },
+      {
+        id: 'api-status',
+        name: 'HTTP Status Codes',
+        cat: 'basics',
+        desc: 'After you send an HTTP request, the server responds with a 3-digit number called a status code. 2xx = success. 3xx = redirect. 4xx = you made a mistake. 5xx = the server made a mistake.',
+        q: 'What are the categories of HTTP status codes and what does each signify?',
+        qsub: 'What is the difference between 401 Unauthorized and 403 Forbidden? Give concrete examples of when each would be returned.'
+      },
+      {
+        id: 'api-first-call',
+        name: 'Make Your First API Call',
+        cat: 'basics',
+        desc: 'The fastest way to understand an API is to call one. Use curl (a command-line tool) to make an HTTP request and see the raw response. Try: curl https://api.github.com/users/torvalds — you\'ll get a JSON response.',
+        q: 'How do you make an API call using curl, Postman, or fetch()? What does the raw response look like?',
+        qsub: 'Why is making a real API call important before studying REST conventions and authentication?'
+      },
+      {
+        id: 'api-rest',
+        name: 'What is REST?',
+        cat: 'basics',
+        desc: 'REST (Representational State Transfer) is a set of conventions for building APIs on top of HTTP. A RESTful API uses URLs to identify resources, HTTP methods for actions, and returns data as JSON.',
+        q: 'What is REST and what are its key principles?',
+        qsub: 'Why is REST the default style of API design? How do GraphQL and gRPC differ from REST?'
+      }
+    ]
+  },
+  {
+    id: 'rest-fundamentals',
+    title: 'RESTful API Design Fundamentals',
+    week: 'Week 1',
+    color: 'var(--pastel-mint)',
+    topics: [
+      {
+        id: 'ap1',
+        name: 'Resource Naming Conventions',
+        cat: 'rest',
+        desc: 'REST APIs model resources as nouns (not verbs) with hierarchical paths (/users/:id/orders). Collections are always plural. Kebab-case for multi-word resources.',
+        q: 'What are REST resource naming conventions and why is consistency important?',
+        qsub: 'Should URLs use nouns or verbs? How do you handle hierarchy, filtering, and multi-word resources in REST?'
+      },
+      {
+        id: 'ap2',
+        name: 'HTTP Method Semantics',
+        cat: 'rest',
+        desc: 'Each HTTP method has specific semantics: GET is safe/idempotent, PUT is idempotent, POST is non-idempotent, DELETE is idempotent. Wrong method choice breaks caching and retry logic.',
+        q: 'Explain the semantics of GET, POST, PUT, PATCH, and DELETE. What does idempotency mean for each?',
+        qsub: 'How does choosing the wrong HTTP method break caching, retry logic, and client expectations?'
+      },
+      {
+        id: 'ap3',
+        name: 'HTTP Status Codes Guide',
+        cat: 'rest',
+        desc: 'Status codes communicate operation result at a glance: 200 OK, 201 Created, 204 No Content, 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 409 Conflict, 500 Server Error.',
+        q: 'What are the most important HTTP status codes and when should each be returned?',
+        qsub: 'What is the difference between 401 and 403? Between 404 and 410? When would you return 409 Conflict?'
+      },
+      {
+        id: 'ap4',
+        name: 'Idempotency & Safe Methods',
+        cat: 'rest',
+        desc: 'Idempotent operations produce the same result regardless of how many times applied. POST is NOT idempotent — use Idempotency-Key header for safe retry in payment and order APIs.',
+        q: 'What is idempotency and why does POST need idempotency keys for safe retry?',
+        qsub: 'How do payment APIs like Stripe implement Idempotency-Key headers and what happens on duplicate requests?'
+      },
+      {
+        id: 'ap5',
+        name: 'Richardson Maturity Model',
+        cat: 'rest',
+        desc: 'Richardson Maturity Model measures REST maturity across 4 levels: Level 0 (RPC), Level 1 (Resources), Level 2 (HTTP Verbs), Level 3 (HATEOAS with hypermedia controls).',
+        q: 'Explain the Richardson Maturity Model. What level do most production APIs target and why?',
+        qsub: 'What is HATEOAS and why is Level 3 ("true REST") rare in practice despite being the ideal?'
+      }
+    ]
+  },
+  {
+    id: 'request-response',
+    title: 'Request & Response Patterns',
+    week: 'Week 2',
+    color: 'var(--pastel-purple)',
+    topics: [
+      {
+        id: 'ap6',
+        name: 'Pagination: Cursor vs Offset',
+        cat: 'request-response',
+        desc: 'Offset pagination (?offset=0&limit=20) is simple but breaks under concurrent data changes. Cursor pagination (?cursor=abc123) is stable and uses index-based lookups for speed.',
+        q: 'Compare cursor-based vs offset-based pagination. What are the tradeoffs and when should you use each?',
+        qsub: 'Why does offset pagination cause duplicate records under concurrent writes? How do Stripe and Twitter handle pagination?'
+      },
+      {
+        id: 'ap7',
+        name: 'Filtering, Sorting & Field Selection',
+        cat: 'request-response',
+        desc: 'Standardize query parameters for data shaping: ?status=active (filter), ?sort=-created_at (sort), ?fields=id,name,email (sparse fieldsets). Consistent naming makes APIs predictable.',
+        q: 'How do you design filtering, sorting, and field selection in REST APIs?',
+        qsub: 'What are sparse fieldsets and why are they critical for mobile API clients with limited bandwidth?'
+      },
+      {
+        id: 'ap8',
+        name: 'Error Response Standardization (RFC 7807)',
+        cat: 'request-response',
+        desc: 'RFC 7807 standardizes error responses as { type, title, status, detail, instance }. Enables machine-readable error handling so clients write one handler for all errors.',
+        q: 'What is RFC 7807 (Problem Details) and how does it standardize API error responses?',
+        qsub: 'Why is standardizing error responses important for client developers? Show a before/after comparison.'
+      },
+      {
+        id: 'ap9',
+        name: 'Request Validation & Schema Checking',
+        cat: 'request-response',
+        desc: 'Validate all inputs against a schema (JSON Schema, Zod, Joi) before processing. Reject early with clear error messages. Never trust client input — validate at the controller boundary.',
+        q: 'Why is request validation critical for API security? What tools exist for schema validation?',
+        qsub: 'What security vulnerabilities arise from missing input validation? How do Zod and Joi infer types from schemas?'
+      },
+      {
+        id: 'ap10',
+        name: 'Content Negotiation',
+        cat: 'request-response',
+        desc: 'Clients specify desired format via Accept header (application/json, application/protobuf). Servers respond with matching Content-Type. Enables supporting multiple formats from one endpoint.',
+        q: 'What is content negotiation and how does the Accept/Content-Type header mechanism work?',
+        qsub: 'How does content negotiation enable API evolution alongside breaking format changes?'
+      }
+    ]
+  },
+  {
+    id: 'auth-authz',
+    title: 'Authentication & Authorization',
+    week: 'Week 3',
+    color: 'var(--pastel-pink)',
+    topics: [
+      {
+        id: 'ap11',
+        name: 'JWT Structure & Stateless Auth',
+        cat: 'auth',
+        desc: 'JWT is a self-contained token: base64(header).base64(payload).signature. No server-side session needed for verification — stateless auth verified in under 1ms with no DB query.',
+        q: 'What is a JWT and how does it enable stateless authentication?',
+        qsub: 'How does a server verify a JWT without a database lookup? What are the tradeoffs of JWT vs opaque tokens for session management?'
+      },
+      {
+        id: 'ap12',
+        name: 'OAuth 2.0 Flows',
+        cat: 'auth',
+        desc: 'OAuth2 defines authorization flows: Authorization Code (server-side apps), PKCE (mobile/SPA with no client_secret), Client Credentials (service-to-service with no user context).',
+        q: 'Explain the OAuth 2.0 Authorization Code flow. What problem does PKCE solve?',
+        qsub: 'What is the difference between Authorization Code and Client Credentials grants? When would you use each?'
+      },
+      {
+        id: 'ap13',
+        name: 'API Keys vs Bearer Tokens',
+        cat: 'auth',
+        desc: 'API keys identify the calling application (long-lived, static). Bearer tokens (JWT) authenticate a specific user session (short-lived, 15-60 min). Choosing wrong causes security holes.',
+        q: 'When should you use API keys vs bearer tokens for API authentication?',
+        qsub: 'Why should API keys never be placed in URLs? How do you manage API key rotation without downtime?'
+      },
+      {
+        id: 'ap14',
+        name: 'RBAC, ABAC & Permission Scoping',
+        cat: 'auth',
+        desc: 'RBAC assigns permissions to roles, roles to users. ABAC uses attribute-based policies evaluating user, resource, and environment attributes for fine-grained control.',
+        q: 'Compare RBAC and ABAC. When would you choose one over the other?',
+        qsub: 'What is role explosion in RBAC and how does ABAC solve it? What complexity tradeoffs does ABAC introduce?'
+      },
+      {
+        id: 'ap15',
+        name: 'Rate Limiting Strategies',
+        cat: 'auth',
+        desc: 'Rate limits prevent abuse. Token Bucket allows bursts, Leaky Bucket smooths traffic, Sliding Window gives precise per-window counts. Always return X-RateLimit-* headers to clients.',
+        q: 'Explain Token Bucket, Leaky Bucket, and Sliding Window rate limiting algorithms. What are the tradeoffs?',
+        qsub: 'What rate limit headers should your API return? How does the Retry-After header help clients avoid thundering herd?'
+      }
+    ]
+  },
+  {
+    id: 'versioning-evolution',
+    title: 'API Versioning & Evolution',
+    week: 'Week 4',
+    color: 'var(--pastel-blue)',
+    topics: [
+      {
+        id: 'ap16',
+        name: 'URI vs Header Versioning',
+        cat: 'versioning',
+        desc: 'URI versioning (/v1/users) is explicit and easy to route but pollutes URLs. Accept header versioning keeps URLs clean but is invisible to browsers and harder to debug.',
+        q: 'Compare URI versioning, Accept header versioning, and query param versioning. Which is most common?',
+        qsub: 'Why should you never version by subdomain (v1.api.com)? How does Stripe handle API versioning at scale?'
+      },
+      {
+        id: 'ap17',
+        name: 'Backward Compatibility',
+        cat: 'versioning',
+        desc: 'APIs should be additive-first: new optional fields, new endpoints, new params. Never rename, remove, or change types of existing fields. Deprecate before removing with Sunset headers.',
+        q: 'What makes an API change backward compatible? What changes are always breaking?',
+        qsub: 'How do you deprecate a field without breaking existing clients? What is the Sunset header (RFC 8594)?'
+      },
+      {
+        id: 'ap18',
+        name: 'Webhook Versioning & Delivery',
+        cat: 'versioning',
+        desc: 'Webhooks deliver event notifications to client-registered URLs with at-least-once delivery. Include api_version in payload, HMAC signature for authenticity, and unique event IDs for deduplication.',
+        q: 'How do you design a reliable webhook system with versioning, retries, and delivery guarantees?',
+        qsub: 'How do clients verify webhook authenticity using HMAC signatures? What is the retry schedule for failed deliveries?'
+      },
+      {
+        id: 'ap19',
+        name: 'API Deprecation Lifecycle',
+        cat: 'versioning',
+        desc: 'API deprecation follows: announce (blog/docs/email) → Deprecation + Sunset headers → read-only mode → 410 Gone. Minimum 12-month notice for breaking changes.',
+        q: 'What is the proper API deprecation lifecycle? How do you communicate breaking changes to developers?',
+        qsub: 'Why should you return 410 Gone instead of 404 for deprecated endpoints? What tools auto-warn about Deprecation headers?'
+      }
+    ]
+  },
+  {
+    id: 'performance-reliability',
+    title: 'Performance & Reliability',
+    week: 'Week 5',
+    color: 'var(--pastel-orange)',
+    topics: [
+      {
+        id: 'ap20',
+        name: 'HTTP Caching (ETag, Cache-Control)',
+        cat: 'performance',
+        desc: 'ETag (hash-based) and Last-Modified (timestamp-based) enable conditional requests returning 304 Not Modified. Cache-Control sets client/CDN caching policy — can cut server load by 90%.',
+        q: 'How do ETags and Cache-Control headers enable HTTP caching? What happens during a conditional request?',
+        qsub: 'What is the difference between public, private, no-cache, and no-store Cache-Control directives?'
+      },
+      {
+        id: 'ap21',
+        name: 'Bulk Operations & Async Processing',
+        cat: 'performance',
+        desc: 'Bulk endpoints accept arrays of operations (/users/batch) to avoid N+1 request overhead. For slow operations, return 202 Accepted with a status URL the client polls for completion.',
+        q: 'How do you design batch endpoints and async processing patterns? When would you use 202 Accepted?',
+        qsub: 'How do you communicate progress for async operations? What is the 207 Multi-Status response for batch results?'
+      },
+      {
+        id: 'ap22',
+        name: 'Retry & Backoff Strategies',
+        cat: 'performance',
+        desc: 'Clients retry on 429/5xx with exponential backoff (delay = base * 2^n + jitter). Circuit breakers stop calling failing services after N failures and probe periodically for recovery.',
+        q: 'What is exponential backoff with jitter? How does a circuit breaker differ from simple retries?',
+        qsub: 'Why is it dangerous to retry POST requests without idempotency keys? What is the thundering herd problem?'
+      },
+      {
+        id: 'ap23',
+        name: 'CQRS & Event Sourcing',
+        cat: 'performance',
+        desc: 'CQRS separates read and write models into different databases — optimized for each workload. Event Sourcing stores every state change as an append-only event log, enabling audit and time travel.',
+        q: 'What is CQRS and how does Event Sourcing differ? When are these patterns justified?',
+        qsub: 'How does CQRS solve the problem of read queries competing with write queries? What is eventual consistency?'
+      },
+      {
+        id: 'ap24',
+        name: 'REST vs GraphQL vs gRPC',
+        cat: 'performance',
+        desc: 'REST is resource-oriented (separate URLs per resource). GraphQL is query-oriented (one endpoint, client specifies fields). gRPC is contract-oriented (protobuf binary, streaming, fast).',
+        q: 'Compare REST, GraphQL, and gRPC. When would you choose each?',
+        qsub: 'Why is GraphQL better for complex UIs while gRPC is better for internal microservices? What are the downsides of each?'
+      }
+    ]
+  },
+  {
+    id: 'security-governance',
+    title: 'API Security & Governance',
+    week: 'Week 6',
+    color: 'var(--pastel-green)',
+    topics: [
+      {
+        id: 'ap25',
+        name: 'CORS Configuration',
+        cat: 'advanced',
+        desc: 'CORS (Cross-Origin Resource Sharing) controls browser-based cross-origin requests. Preflight OPTIONS asks server for permission. Never reflect origin blindly — validate against an allowlist.',
+        q: 'What is CORS and how does the preflight OPTIONS request work?',
+        qsub: 'Why is Access-Control-Allow-Origin: * incompatible with credentials: true? How do you properly configure CORS?'
+      },
+      {
+        id: 'ap26',
+        name: 'CSP, CSRF & API Hardening',
+        cat: 'advanced',
+        desc: 'CSP (Content Security Policy) prevents XSS by restricting resource origins. CSRF tokens prevent unauthorized state-changing requests. SameSite cookie attribute is the modern CSRF protection.',
+        q: 'What are CSRF and CSP? How do they protect APIs from web attacks?',
+        qsub: 'How does the SameSite cookie attribute prevent CSRF? What is the double-submit cookie pattern?'
+      },
+      {
+        id: 'ap27',
+        name: 'Input Sanitization & Injection Prevention',
+        cat: 'advanced',
+        desc: 'Sanitize and parameterize all inputs. Use parameterized queries (prepared statements) for DB access — never concatenate SQL strings. Escape HTML entities to prevent XSS on user-displayed content.',
+        q: 'How do SQL injection, NoSQL injection, and XSS attacks work? How do you prevent each?',
+        qsub: 'Why do parameterized queries prevent SQL injection while escaping does not? What is the OWASP Top 10 guidance?'
+      },
+      {
+        id: 'ap28',
+        name: 'API Gateways',
+        cat: 'advanced',
+        desc: 'An API Gateway sits in front of backend services handling cross-cutting concerns: auth, rate limiting, logging, routing, and request transformation. Kong and AWS API Gateway are common options.',
+        q: 'What is an API Gateway and what cross-cutting concerns does it handle?',
+        qsub: 'What is the difference between an API Gateway (north-south traffic) and a Service Mesh (east-west traffic)?'
+      },
+      {
+        id: 'ap29',
+        name: 'OpenAPI/Swagger & Spec-First Design',
+        cat: 'advanced',
+        desc: 'OpenAPI is a standard, language-agnostic interface for REST APIs. Spec-first design: write openapi.yaml first, then generate docs (Swagger UI), client SDKs, and contract tests automatically.',
+        q: 'What is OpenAPI and how does spec-first API design work?',
+        qsub: 'What tools can generate interactive docs, client SDKs, and contract tests from an OpenAPI spec?'
+      }
+    ]
+  },
+  {
+    id: 'advanced-api',
+    title: 'Advanced API Patterns',
+    week: 'Week 7',
+    color: 'var(--pastel-mint)',
+    topics: [
+      {
+        id: 'websocket-api',
+        name: 'WebSocket API Design — protocols, rooms, reconnection, scaling',
+        cat: 'advanced',
+        desc: 'WebSocket provides full-duplex communication over a single TCP connection. Design: authenticate on HTTP upgrade, use rooms/channels for pub-sub, handle reconnection with exponential backoff. Scale with Redis pub-sub or NATS. Socket.IO adds abstraction (fallback, rooms, namespaces).',
+        q: 'How do you design a WebSocket API for a real-time chat application? How do you handle authentication?',
+        qsub: 'What is the difference between WebSocket and Socket.IO? How do you scale WebSockets across multiple server instances?'
+      },
+      {
+        id: 'file-upload',
+        name: 'File Upload API — multipart/form-data, presigned URLs, chunked upload',
+        cat: 'advanced',
+        desc: 'multipart/form-data for small files. Presigned URLs (S3/GCS) for large files — client uploads directly to storage. Chunked upload for very large files — resume on failure. Use Content-Disposition for filename, Content-Type for MIME type validation.',
+        q: 'How do you design a file upload API for large files (100MB+)? What is the presigned URL pattern?',
+        qsub: 'What is the difference between multipart/form-data and presigned URL upload? How do you handle chunked upload resumption?'
+      },
+      {
+        id: 'streaming-api',
+        name: 'Streaming APIs — SSE, chunked transfer, streaming responses',
+        cat: 'advanced',
+        desc: 'Server-Sent Events (SSE) for server-to-client streaming over HTTP. Chunked Transfer-Encoding for streaming response bodies. Streaming APIs for LLM responses, large dataset exports, real-time logs. Use cases: AI chat, live feeds, progress updates.',
+        q: 'How do you implement Server-Sent Events in a REST API? When would you use SSE vs WebSocket?',
+        qsub: 'What is chunked transfer encoding? How do you handle streaming responses in a load balancer setup?'
+      }
+    ]
+  }
+];
+
+const LEARN = {
+
+
+  'api-what': {
+    terms: [
+      ['API', 'Application Programming Interface — do programs ke beech baat karne ka contract.'],
+      ['Client', 'Jo request bhejta hai — browser, mobile app, ya doosri service.'],
+      ['Server', 'Jo data ya kaam provide karta hai aur response bhejta hai.'],
+      ['Endpoint', 'Ek specific URL jahan request jaati hai — jaise /api/users.']
+    ],
+    what: `<p><b>API</b> do software ke beech ka <b>baat karne ka contract</b> hai. Aapka weather app har kuch minute mein weather server se poochta hai — "Mumbai mein kitni garmi hai?" — aur server JSON format mein jawab deta hai. Aapko server ke andar kya chal raha hai nahi jaanna hota — bas request bhejo, response lo.</p>
+<p>API ko developer ka <b>user interface</b> samjho: jaise app mein buttons aur gestures hote hain, waise hi API mein URLs aur methods hote hain jo aapka code call karta hai. Frontend aur backend aapas mein bhi isi se baat karte hain.</p>`,
+    analogy: `<b>Restaurant</b> samjho: aap (client) waiter (API) ko order dete ho, waiter kitchen (server) tak le jaakar khana (response) wapas laata hai. Waiter ke bina aap kitchen ke andar nahi jaate — API wahi boundary hai.`,
+    why: `<p>Har web baat-cheet — app se server, service se service, Stripe aur Google jaisi companies ke integrations — sab API ke through hoti hai. Interview ka "what is an API" yahi se shuru hota hai, aur baaki 37 topics isi foundation par khade hain.</p>`,
+    visual: {
+      cap: 'Client → API → Server. API = beech ka contract — aapko server ke andar nahi jaanna. Client request bhejta hai, API contract ke through server tak jaata hai, response wapas aata hai.',
+      svg: `<svg viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="8" y="30" width="150" height="50" rx="12" fill="#ffd6e8"/><text x="83" y="60" text-anchor="middle" font-size="14" font-weight="700" fill="#333">Client</text>
+<rect x="275" y="30" width="150" height="50" rx="12" fill="#fff3c4"/><text x="350" y="60" text-anchor="middle" font-size="14" font-weight="700" fill="#333">API</text>
+<rect x="542" y="30" width="150" height="50" rx="12" fill="#d6f5e3"/><text x="617" y="60" text-anchor="middle" font-size="14" font-weight="700" fill="#333">Server</text>
+<line x1="160" y1="55" x2="270" y2="55" stroke="#333" stroke-width="2" stroke-dasharray="6,4"/><polygon points="278,55 266,50 266,60" fill="#333"/>
+<line x1="430" y1="55" x2="537" y2="55" stroke="#333" stroke-width="2" stroke-dasharray="6,4"/><polygon points="545,55 533,50 533,60" fill="#333"/>
+<text x="215" y="42" text-anchor="middle" font-size="11" fill="#666">request</text>
+<text x="480" y="42" text-anchor="middle" font-size="11" fill="#666">forward</text>
+<line x1="537" y1="105" x2="430" y2="105" stroke="#333" stroke-width="2" stroke-dasharray="6,4"/><polygon points="422,105 434,100 434,110" fill="#333"/>
+<text x="480" y="125" text-anchor="middle" font-size="11" fill="#666">response back</text>
+<text x="350" y="15" text-anchor="middle" font-size="12" fill="#888">contract: URLs, methods, formats</text>
+</svg>`
+    },
+    code: `// Public API — bina key ke bhi kaam karta hai
+curl https://api.github.com/users/torvalds
+
+// JavaScript mein (browser ya Node 18+)
+const res = await fetch('https://api.github.com/users/torvalds');
+const user = await res.json();
+console.log(user.login, user.public_repos);`,
+    where: [
+      ['Web apps', 'Frontend aur backend ke beech REST calls.'],
+      ['Third-party', 'Stripe, Google, Twilio integrations.'],
+      ['Interview', '"What is an API?" ka pehla answer.']
+    ],
+    pros: [
+      'Ek contract — software aasani se jude.',
+      'Implementation details hidden rahti hai.',
+      'Same API, kayi clients (web/mobile).'
+    ],
+    cons: [
+      'Contract toota to sab clients toot gaye.',
+      'Versioning ka dhyan nahi rakha to masala.'
+    ],
+    gotchas: [
+      'Interview: API ko "data hai" mat bolo — contract/interface bolo, aur example do (weather app, Google Login).',
+      'Bas Itna Yaad: <b>API = beech ka contract; client poochta hai, server jawab deta hai.</b>'
+    ]
+  },
+
+  'api-http': {
+    terms: [
+      ['HTTP', 'HyperText Transfer Protocol — web ke request/response ka language.'],
+      ['Request/Response', 'Client bhejta hai request, server deta hai response.'],
+      ['Stateless', 'Har request independent — server pehle wali nahi yaad rakhta.']
+    ],
+    what: `<p><b>HTTP</b> wo language hai jisme browser aur server baat karte hain. Aap URL type karte ho, browser ek <b>request</b> bhejta hai (verb + URL + headers), aur server ek <b>response</b> deta hai (status code + headers + body).</p>
+<p>HTTP <b>stateless</b> hai — har request apne aap mein complete. Server ko yaad nahi ki aapne pehle kya manga tha; isliye auth state tokens (Cookie/JWT) se carry hoti hai.</p>`,
+    analogy: `<b>Letter system</b> samjho: request = patra (pata, tareek, bhejne wala), response = jawabpatra. Har patra naya hota hai — server ko yaad nahi ki aapne kal kya likha tha.`,
+    why: `<p>Har API interview API basics se HTTP tak jaata hai. Status codes, methods, headers — sab HTTP ke concepts hain. Ye topic fikr hai ki request/response ka flow kaise dikhta hai.</p>`,
+    visual: {
+      cap: 'Request: method + URL + headers (+ body). Response: status + headers + body.',
+      svg: `<svg viewBox="0 0 700 140" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="10" y="25" width="300" height="85" rx="10" fill="#ffd6e8"/><text x="160" y="48" text-anchor="middle" font-size="13" font-weight="700" fill="#333">REQUEST</text>
+<text x="160" y="68" text-anchor="middle" font-size="11" fill="#666">GET /users</text>
+<text x="160" y="85" text-anchor="middle" font-size="11" fill="#666">Accept: application/json</text>
+<rect x="390" y="25" width="300" height="85" rx="10" fill="#d6f5e3"/><text x="540" y="48" text-anchor="middle" font-size="13" font-weight="700" fill="#333">RESPONSE</text>
+<text x="540" y="68" text-anchor="middle" font-size="11" fill="#666">200 OK</text>
+<text x="540" y="85" text-anchor="middle" font-size="11" fill="#666">Content-Type: application/json</text>
+<line x1="312" y1="67" x2="385" y2="67" stroke="#333" stroke-width="2"/><polygon points="390,67 378,62 378,72" fill="#333"/>
+</svg>`
+    },
+    code: `curl -i https://api.github.com/users/torvalds | head -20
+# HTTP/2 200
+# content-type: application/json; charset=utf-8
+# + body` ,
+    where: [
+      ['Browser', 'Har page load ek HTTP exchange hai.'],
+      ['APIs', 'REST/GraphQL sab HTTP par chalti hain.']
+    ],
+    pros: [
+      'Universal — har device/server samajhta hai.',
+      'Simple request/response model.'
+    ],
+    cons: [
+      'Stateless — session maintain karna aapka kaam.',
+      'Raw bubbling ke liye extra layers chahiye.'
+    ],
+    gotchas: [
+      'Interview: HTTP stateless kyun kahate hain? — response ko result par rely nahi, context yaad nahi.',
+      'Bas Itna Yaad: <b>HTTP = request ka party + response ka pati, har baar naya.</b>'
+    ]
+  },
+
+  'api-methods': {
+    terms: [
+      ['GET', 'Data lao — bina side-effect, safe aur idempotent.'],
+      ['POST', 'Naya resource banao — side-effect, idempotent nahi.'],
+      ['PUT', 'Poora resource replace karo — idempotent.'],
+      ['DELETE', 'Resource hatao — idempotent.']
+    ],
+    what: `<p><b>HTTP methods</b> batate hain ki request <b>kya karne ko</b> kehlana hai. <b>GET</b> padhta hai, <b>POST</b> banata hai, <b>PUT</b> replace karta hai, <b>PATCH</b> partial update, <b>DELETE</b> hatata hai.</p>
+<p><b>Idempotent</b> = same request baar-baar bhejo, result same. GET/PUT/DELETE idempotent, POST nahi (har POST ek naya resource). Safe methods (GET) data ko badalte nahi.</p>`,
+    analogy: `<b>Library</b> samjho: GET = kitaab dekho (kuch badalta nahi), POST = nayi kitaab register karo (har baar new entry), PUT = kitaab ko doosri se replace karo, DELETE = kitaab nikalo.`,
+    why: `<p>Interview classic — "GET/POST/PUT/DELETE kya farak hai?" aur idempotency ka saboot. Wrong or trigger the entire API design ka first test.</p>`,
+    visual: {
+      cap: 'Method → purpose → idempotent? GET safa, PUT/DELETE repeat-safe, POST har baar naya.',
+      svg: `<svg viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="10" y="10" width="155" height="32" rx="8" fill="#d6f5e3"/><text x="87" y="31" text-anchor="middle" font-size="13" font-weight="700" fill="#333">GET /users</text>
+<rect x="10" y="52" width="155" height="32" rx="8" fill="#ffd6e8"/><text x="87" y="73" text-anchor="middle" font-size="13" font-weight="700" fill="#333">POST /users</text>
+<rect x="10" y="94" width="155" height="32" rx="8" fill="#fff3c4"/><text x="87" y="115" text-anchor="middle" font-size="13" font-weight="700" fill="#333">PUT /users/7</text>
+<text x="255" y="32" font-size="12" fill="#333">read (safe, idempotent)</text>
+<text x="255" y="74" font-size="12" fill="#333">create (not idempotent)</text>
+<text x="255" y="116" font-size="12" fill="#333">replace (idempotent)</text>
+<text x="255" y="95" font-size="11" fill="#666">DELETE /users/7 — remove (idempotent)</text>
+</svg>`
+    },
+    code: `GET    /users        ->  list (200)
+GET    /users/7      ->  one (200/404)
+POST   /users        ->  create (201)
+PUT    /users/7      ->  replace (200)
+PATCH  /users/7      ->  partial (200)
+DELETE /users/7      ->  remove (204)`,
+    where: [
+      ['REST', 'Methods hi CRUD map karte hain.'],
+      ['Design review', 'Wrong method = interview red flag.']
+    ],
+    pros: [
+      'Clear semantics — reader samajh jaata hai.',
+      'Caching/proxies GET ko optimize kar sakte hain.'
+    ],
+    cons: [
+      'Method abuse (GET mein delete) security risk.',
+      'POST ka "create" vs "action" fuzzy ho sakta hai.'
+    ],
+    gotchas: [
+      'Interview: Make "PUT = full replace, PATCH = partial"; "POST se naya resource ban sakta hai ya action ho sakta hai".',
+      'Bas Itna Yaad: <b>GET padho, POST banao, PUT replace, DELETE hatao.</b>'
+    ]
+  },
+
+  'api-status': {
+    terms: [
+      ['2xx', 'Success — sab theek. 200 OK, 201 Created, 204 No Content.'],
+      ['4xx', 'Client ki galti — 400 bad request, 401 unauth, 403 forbidden, 404 not found.'],
+      ['5xx', 'Server ki galti — 500 internal, 502 bad gateway, 503 unavailable.'],
+      ['304', 'Not Modified — caching ke liye, client ka cache valid hai.']
+    ],
+    what: `<p><b>HTTP status codes</b> response ka first line hai — tees sentence mein batate hain kya hua. <b>2xx</b> = success, <b>3xx</b> = redirect/cache, <b>4xx</b> = client galat (you messed up), <b>5xx</b> = server galat.</p>
+<p>Interview mein poochha jaata hai "aap apni API mein kaunse codes dete ho". Design decision: 200 always vs precise codes — precise better, kyunki client ko exact reason milta hai.</p>`,
+    analogy: `<b>Traffic lights</b> samjho: 2xx = green (chalo), 3xx = yellow (mode change), 4xx = red-1 (tum galat), 5xx = red-2 (raasta hi kharab). Number hi dim prediction deta hai.`,
+    why: `<p>Client errors ko sahi status se samjho — debugging, monitoring aur SDKs sab isi par chalte hain. "200 + error body" anti-pattern interview mein points kat-ta hai.</p>`,
+    visual: {
+      cap: '1xx info, 2xx success, 3xx redirect, 4xx client error, 5xx server error.',
+      svg: `<svg viewBox="0 0 700 130" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="10" y="15" width="120" height="55" rx="9" fill="#fff3c4"/><text x="70" y="38" text-anchor="middle" font-size="15" font-weight="700" fill="#333">1xx</text><text x="70" y="58" text-anchor="middle" font-size="10" fill="#666">info</text>
+<rect x="145" y="15" width="120" height="55" rx="9" fill="#d6f5e3"/><text x="205" y="38" text-anchor="middle" font-size="15" font-weight="700" fill="#333">2xx</text><text x="205" y="58" text-anchor="middle" font-size="10" fill="#666">success</text>
+<rect x="280" y="15" width="120" height="55" rx="9" fill="#cce3ff"/><text x="340" y="38" text-anchor="middle" font-size="15" font-weight="700" fill="#333">3xx</text><text x="340" y="58" text-anchor="middle" font-size="10" fill="#666">redirect</text>
+<rect x="415" y="15" width="120" height="55" rx="9" fill="#ffd6e8"/><text x="475" y="38" text-anchor="middle" font-size="15" font-weight="700" fill="#333">4xx</text><text x="475" y="58" text-anchor="middle" font-size="10" fill="#666">client error</text>
+<rect x="550" y="15" width="140" height="55" rx="9" fill="#ffe1e1"/><text x="620" y="38" text-anchor="middle" font-size="15" font-weight="700" fill="#333">5xx</text><text x="620" y="58" text-anchor="middle" font-size="10" fill="#666">server error</text>
+<text x="350" y="100" text-anchor="middle" font-size="11" fill="#888">200 OK | 201 Created | 400 Bad | 401/403 Auth | 404 Gone | 500 Oops</text>
+</svg>`
+    },
+    code: `200 OK              ->  sab theek
+201 Created         ->  create ho gaya
+204 No Content      ->  kaam ho gaya, body nahi
+400 Bad Request     ->  request hi galat
+401 / 403           ->  auth / permission
+404 Not Found       ->  exists hi nahi
+409 Conflict        ->  state conflict
+422 Unprocessable   ->  validation fail
+429 Too Many        ->  rate limit hit
+500 / 503          ->  server ki bimari`,
+    where: [
+      ['APIs', 'Har response ka status.'],
+      ['Monitoring', '5xx spikes = alert.']
+    ],
+    pros: [
+      'Client ko exact reason seedha milta hai.',
+      'Standard — har language samajhti hai.'
+    ],
+    cons: [
+      'Galat codes (200 for error) confuse karte hain.',
+      'Codes speceficity ka overengineering bhi hota hai.'
+    ],
+    gotchas: [
+      'Interview trap: kuch code 404 vs 403 (exists + no permission vs no access). Unauthorized vs Forbidden yaad rakhna.',
+      'Bas Itna Yaad: <b>2xx good, 4xx aap, 5xx server.</b>'
+    ]
+  },
+
+  'api-first-call': {
+    terms: [
+      ['cURL', 'Terminal-based HTTP client.'],
+      ['Endpoint', 'URL jahan request jaati hai.'],
+      ['Response body', 'JSON data jo server wapas deta hai.']
+    ],
+    what: `<p>Apni pehli API call: <code>curl https://api.github.com/users/torvalds</code>. cURL request bhejta hai aur response print karta hai. Web mein <code>fetch()</code> same kaam karta hai.</p>
+<p>Flow: URL (endpoint) → request (method+headers) → server processes → response (status+headers+body). Debug queue: <code>curl -i</code> headers dekho, <code>curl -v</code> full conversation.</p>`,
+    analogy: `<b>Landline pe pehla phone call</b> samjho: number dial karo (URL), ringing (server processing), palat line (response). Bas address sahi do to baat ho jati hai.`,
+    why: `<p>Interviews mein "ek example de kar batao ki aapne API call kaise kiya" — practical proof. cURL/fetch comfort interviewers ko instantly confident banata hai.</p>`,
+    visual: {
+      cap: 'END TO END: curl → DNS → server → response JSON.',
+      svg: `<svg viewBox="0 0 700 120" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="10" y="35" width="120" height="34" rx="9" fill="#ffd6e8"/><text x="70" y="57" text-anchor="middle" font-size="12" font-weight="700" fill="#333">curl</text>
+<line x1="132" y1="52" x2="205" y2="52" stroke="#333" stroke-width="2"/><polygon points="210,52 198,47 198,57" fill="#333"/>
+<rect x="215" y="35" width="140" height="34" rx="9" fill="#fff3c4"/><text x="285" y="57" text-anchor="middle" font-size="11" font-weight="700" fill="#333">GET /users/torvalds</text>
+<line x1="357" y1="52" x2="430" y2="52" stroke="#333" stroke-width="2"/><polygon points="435,52 423,47 423,57" fill="#333"/>
+<rect x="440" y="35" width="140" height="34" rx="9" fill="#d6f5e3"/><text x="510" y="57" text-anchor="middle" font-size="11" font-weight="700" fill="#333">200 + JSON</text>
+<text x="70" y="95" text-anchor="middle" font-size="10" fill="#888">request</text><text x="285" y="95" text-anchor="middle" font-size="10" fill="#888">network</text><text x="510" y="95" text-anchor="middle" font-size="10" fill="#888">response</text>
+</svg>`
+    },
+    code: `curl https://api.github.com/users/torvalds
+# -> {"login":"torvalds","public_repos":..}
+
+curl -i https://api.github.com/users/torvalds   # headers + body
+curl -X POST https://api.example.com/items -H "Content-Type: application/json" -d '{..}'
+
+// browser
+fetch('https://api.example.com/items').then(r => r.json());`,
+    where: [
+      ['Learning', 'Pehli API call yahin se hoti hai.'],
+      ['Debugging', 'cURL -v se har issue dekh sakte ho.']
+    ],
+    pros: [
+      'Zero setup — terminal hi kafi hai.',
+      'Headers/status sab visible.'
+    ],
+    cons: [
+      'Auth setup (tokens) thoda manual.',
+      'Complex flows ke liye code behtar.'
+    ],
+    gotchas: [
+      'Bas Itna Yaad: <b>URL + method + headers + body = request; status + headers + body = response.</b>'
+    ]
+  },
+
+  'api-rest': {
+    terms: [
+      ['REST', 'Representational State Transfer — HTTP par API design ki style.'],
+      ['Resource', 'Ek cheez — user, order, product — URL se addressable.'],
+      ['Stateless', 'Server client ka state nahi rakhta — har request mein sab needed context.'],
+      ['HATEOAS', 'Response mein links de do — explore karo jaise website.'],
+      ['Uniform interface', 'Same methods/resources — predictably design hoti hai.']
+    ],
+    what: `<p><b>REST</b> ek architectural style — API ko <b>resources</b> ke roop mein design karo, har resource ka ek URL, aur HTTP methods se us par operations (CRUD).</p>
+<p>Principles: <b>stateless</b> (client state carry kare), <b>cacheable</b>, <b>uniform interface</b> (same verbs), <b>layered system</b> (client ↔ server ke beech proxies/gateways), <b>client-server</b> separation. REST ≠ "chalane wala REST API" — real REST mein ye constraints + HATEOAS chahiye.</p>`,
+    analogy: `<b>Library catalog</b> samjho: har book = resource (URL), catalog me lookup (GET), book jodna (POST), replace (PUT). Aapko librarian ka internal system nahi jaanna — bas catalog style (uniform interface) follow karo.`,
+    why: `<p>Har backend interview mein "REST kya hai aur iske principles" — resources, statelessness, methods. Ye parte API design ki entire basis hai.</p>`,
+    visual: {
+      cap: 'Resources + methods = REST. Uniform interface + stateless + cacheable + layered.',
+      svg: `<svg viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="10" y="15" width="150" height="40" rx="9" fill="#fff3c4"/><text x="85" y="40" text-anchor="middle" font-size="13" font-weight="700" fill="#333">Client</text>
+<line x1="162" y1="35" x2="240" y2="35" stroke="#333" stroke-width="2"/><polygon points="246,35 234,30 234,40" fill="#333"/>
+<rect x="250" y="15" width="150" height="40" rx="9" fill="#cce3ff"/><text x="325" y="40" text-anchor="middle" font-size="13" font-weight="700" fill="#333">Uniform Interface</text>
+<line x1="402" y1="35" x2="480" y2="35" stroke="#333" stroke-width="2"/><polygon points="486,35 474,30 474,40" fill="#333"/>
+<rect x="490" y="15" width="200" height="40" rx="9" fill="#d6f5e3"/><text x="590" y="33" text-anchor="middle" font-size="13" font-weight="700" fill="#333">Resources</text>
+<text x="590" y="50" text-anchor="middle" font-size="10" fill="#555">GET /users, POST /orders</text>
+<text x="325" y="75" font-size="11" fill="#666">stateless   cacheable   layered</text>
+<text x="325" y="95" font-size="11" fill="#666">client-server (separate)  +  HATEOAS</text>
+</svg>`
+    },
+    code: `# Resources + methods
+GET    /users         # list
+POST   /users         # create
+GET    /users/7       # read one
+PUT    /users/7       # replace
+DELETE /users/7       # remove
+
+# Stateless: har request self-contained
+GET /users/7
+Authorization: Bearer <token>   # state yahan hai, server pe nahi`,
+    where: [
+      ['Public APIs', 'GitHub, Stripe, Twilio sab REST-ish.'],
+      ['Interview', 'REST principles = standard question.']
+    ],
+    pros: [
+      'Predictable — resources + methods = easy learn.',
+      'Cacheable, scalable (stateless).'
+    ],
+    cons: [
+      'HATEOAS rarely fully implement hota hai.',
+      'Over/under-fetching (GraphQL ka counter).'
+    ],
+    gotchas: [
+      'Interview trap: "REST = just CRUD over HTTP" weak answer — principles batao (stateless, uniform interface, layers, cache).',
+      'Bas Itna Yaad: <b>Resource = noun, Method = verb, Server stateless.</b>'
+    ]
+  },
+
+  'ap1': {
+    terms: [
+      ['Resource naming', 'URLs mein nouns (resources), verbs nahi.'],
+      ['Plural', '/users not /getUser — consistent plural.'],
+      ['Hierarchy', 'Nested — /users/7/orders = user ke orders.'],
+      ['Kebab-case', 'LowerCase + hyphens: /user-profiles.']
+    ],
+    what: `<p>REST URLs resources <b>nouns</b> naam dekar design hoti hain: <code>/users</code>, <code>/orders/123</code>. Action verbs (getUser) URL mein nahi — action method se hota hai (GET).</p>
+<p>Rules: plural consistent (<code>/users</code>, not mixed), hierarchy actual structure ho (<code>/users/7/orders</code>), lowercase + kebab-case, IDs path mein. Filters/actions query params ya POST endpoint se.</p>`,
+    analogy: `<b>Address system</b> samjho: ghar/street/city ka hierarchy jaise URLs ka hierarchy (resources → sub-resources). Action "khadi karo" telling address mein nahi likhte — ghar address (noun) pe khada karte hain.`,
+    why: `<p>Naming any API ka first impression hai — inconsistent naming interview mein instantly spotted. "Design /employees salary increment" jaisi cheezein isi convention se decide hoti hain.</p>`,
+    visual: {
+      cap: 'Nouns, plural, hierarchical, lowercase — verbs nahi.',
+      svg: `<svg viewBox="0 0 700 120" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<text x="15" y="28" font-size="11" fill="#f85149" font-weight="700">BAD</text>
+<text x="15" y="50" font-size="12" fill="#888">/getUserList?type=all</text>
+<text x="15" y="70" font-size="12" fill="#888">/UserProfile/7</text>
+<text x="15" y="90" font-size="12" fill="#888">/doCreateOrder</text>
+<text x="400" y="28" font-size="11" fill="#2ea043" font-weight="700">GOOD</text>
+<text x="400" y="50" font-size="12" fill="#333">GET /users</text>
+<text x="400" y="70" font-size="12" fill="#333">GET /user-profiles/7</text>
+<text x="400" y="90" font-size="12" fill="#333">POST /orders</text>
+</svg>`
+    },
+    code: `GET    /users
+GET    /users/7
+GET    /users/7/orders        # nested hierarchy
+GET    /orders?status=paid    # filter = query param
+POST   /orders                # create
+DELETE /users/7               # remove
+
+# avoid: /getUsers, /createOrder, /UserProfile`,
+    where: [
+      ['REST design', 'URL structure interview se bhi judge hota hai.'],
+      ['Internal APIs', 'Consistency team onboarding fast karti hai.']
+    ],
+    pros: [
+      'Consistent — URLs khud documentation.',
+      'Hierarchy real relationships batata hai.'
+    ],
+    cons: [
+      'Deep nesting ugly ho jaati hai.',
+      'Kuch actions (search) pure resource nahi hote.'
+    ],
+    gotchas: [
+      'Bas Itna Yaad: <b>URLs = nouns, methods = verbs, plural + lowercase + kebab.</b>'
+    ]
+  },
+
+  'ap2': {
+    terms: [
+      ['Safe method', 'GET/HEAD/OPTIONS — data badalte nahi, side-effects nahi.'],
+      ['Idempotent', 'Same request repeated -> result same.'],
+      ['Semantics', 'Har method ka meaning server/client dono ko pata hai.']
+    ],
+    what: `<p>Har HTTP method ka <b>contract</b> hota hai: <b>GET</b> read (safe), <b>POST</b> create (unsafe, non-idempotent), <b>PUT</b> full replace (idempotent), <b>PATCH</b> partial update (na-safe, na pure idempotent), <b>DELETE</b> remove (idempotent).</p>
+<p>Standards kyun important: client confidently retry kar sakta hai (network issue par), cache/proxy GET ko optimize karta hai, aur API consumer ko predictably behave karta hai.</p>`,
+    analogy: `<b>TV remote</b> samjho: volume up (POST — har press naya effect), channel 5 set (PUT — press repeat, same result = idempotent), power check (GET — sirf dekho).`,
+    why: `<p>"Idempotency" har REST interview ka touchstone hai — retry design, POST/PUT choice, financial APIs mein sab isi par tikta hai.</p>`,
+    visual: {
+      cap: 'Safe = data badalta nahi; Idempotent = repeat-safe.',
+      svg: `<svg viewBox="0 0 700 120" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<text x="15" y="30" font-size="12" font-weight="700" fill="#333">GET /users/7   </text><text x="120" y="30" font-size="11" fill="#2ea043">safe + idempotent</text>
+<text x="15" y="55" font-size="12" font-weight="700" fill="#333">POST /users    </text><text x="120" y="55" font-size="11" fill="#f85149">neither</text>
+<text x="15" y="80" font-size="12" font-weight="700" fill="#333">PUT /users/7   </text><text x="120" y="80" font-size="11" fill="#c9a000">idempotent</text>
+<text x="15" y="105" font-size="12" font-weight="700" fill="#333">DELETE /users/7</text><text x="120" y="105" font-size="11" fill="#c9a000">idempotent</text>
+</svg>`
+    },
+    code: `// Retry-safe pattern: client PUT /orders/7
+PUT /orders/7  { status: 'paid' }
+PUT /orders/7  { status: 'paid' }   // same result — ok
+
+// VS POST — har baar naya
+POST /orders { amount: 100 }   // creates order 1
+POST /orders { amount: 100 }   // creates order 2!!`,
+    where: [
+      ['Payments', 'Duplicate charge se bachaata hai.'],
+      ['Webhooks/retries', 'Same event baar-baar safe ho.']
+    ],
+    pros: [
+      'Retry dene ka confidence milta hai.',
+      'Proxy/cache GET ke liye safe.'
+    ],
+    cons: [
+      'PATCH partial semantics fuzzy.',
+      'POST actions (search) idempotency todti hain.'
+    ],
+    gotchas: [
+      'Interview trap: "PATCH idempotent hai?" — mostly accepted-ish, see RFC; safest: PUT idempotent, POST nahi.',
+      'Bas Itna Yaad: <b>Safe = GET family; Idempotent = repeat gives same result.</b>'
+    ]
+  },
+
+  'ap3': {
+    terms: [
+      ['2xx', 'Success. 200 OK, 201 Created, 202 Accepted, 204 No Content.'],
+      ['4xx', 'Client fail. 400, 401, 403, 404, 409, 422, 429.'],
+      ['5xx', 'Server fail. 500, 502, 503, 504.'],
+      ['Retry-After', '429 ke saath batao kitne der baad retry karein.']
+    ],
+    what: `<p><b>Status codes guide</b> — choose karo jo actually hua hai. Success: 200 (read), 201 (created + Location), 202 (queued/async accepted), 204 (delete/no body). Client errors: 400 (malformed), 401 (no auth), 403 (auth hai, permission nahi), 404 (nahi mila), 409 (conflict), 422 (validation), 429 (rate limited). Server: 500 (generic), 502/503/504 (gateway/overload/timeout).</p>
+<p>Anti-pattern: <b>200 + "error": true</b> — client ko body parse karni pade. Sahi status pe machine bhi samajh jaata hai.</p>`,
+    analogy: `<b>Hospital reception</b> samjho: 200 = sab fine (bandage haath mein), 401 = bina ticket (pehle admit), 403 = ward ka access nahi, 404 = aisa patient hai hi nahi, 500 = doctor ko samajh nahi aaya kya hua.`,
+    why: `<p>SDK developers aur operators dono code patterns isi par likhte hain. Interviewer poochta hai "kya codes aap aware design karte ho?" — preciseness = quality signal.</p>`,
+    visual: {
+      cap: 'Family tree: 2xx success, 3xx redirect, 4xx client, 5xx server.',
+      svg: `<svg viewBox="0 0 700 100" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="10" y="12" width="160" height="30" rx="8" fill="#d6f5e3"/><text x="90" y="32" text-anchor="middle" font-size="12" font-weight="700" fill="#333">2xx — success</text>
+<rect x="10" y="50" width="160" height="30" rx="8" fill="#ffd6e8"/><text x="90" y="70" text-anchor="middle" font-size="12" font-weight="700" fill="#333">4xx — client fail</text>
+<rect x="220" y="12" width="160" height="30" rx="8" fill="#ffe1e1"/><text x="300" y="32" text-anchor="middle" font-size="12" font-weight="700" fill="#333">5xx — server fail</text>
+<text x="300" y="70" font-size="11" fill="#666">Retry-After on 429/503</text>
+</svg>`
+    },
+    code: `201 Created   + Location: /orders/7
+202 Accepted  -> async started (check /jobs/9)
+204 No Content (DELETE done)
+400 Bad Request (body broken)
+401 Unauthorized (no/expired token)
+403 Forbidden (no permission)
+404 Not Found (resource nahi)
+422 Unprocessable (validation)
+429 Too Many Requests + Retry-After: 5
+500 Internal (server me problem)`,
+    where: [
+      ['Design', 'Har endpoint ke codes spec mein hon.'],
+      ['Ops', '4xx count vs 5xx count monitor.']
+    ],
+    pros: [
+      'Automatable — monitoring/retry SDK bana pate hain.',
+      'Client ko clear aksar.'
+    ],
+    cons: [
+      'Boht saare edge codes = tricky consistency.',
+      'Branded errors custom need hote hain.'
+    ],
+    gotchas: [
+      'Interview: 404 for wrong resource type (unauthorized vs not-found deliberate information hiding).',
+      'Bas Itna Yaad: <b>2xx green, 4xx aap ki galti, 5xx server ki.</b>'
+    ]
+  },
+
+  'ap4': {
+    terms: [
+      ['Safe', 'Data/data-structure badalta nahi — GET, HEAD, OPTIONS.'],
+      ['Idempotent', 'First like subsequent — PUT, DELETE.'],
+      ['POST', 'Neither safe nor idempotent (default).'],
+      ['Idempotency-Key', 'Client header — POST ko repeat-safe banana.']
+    ],
+    what: `<p><b>Safe methods</b> state nahi badalte (read-only) — browser can pre-fetch, cache. <b>Idempotent methods</b> repeat pe same result — network retry safe. GET/PUT/DELETE idempotent; POST nahi.</p>
+<p>POST ko idempotent banane ke liye client ek <b>Idempotency-Key</b> bhejta hai — server key memory mein rakhta hai, duplicate key pe pehla result wapas deta hai. Stripe jaisi payments mein ye standard hai.</p>`,
+    analogy: `<b>ATM withdraw vs balance check</b>: balance check (GET) kitni baar karo same — safe. "40 rupees ka naya statement print" (POST) har baar naya slip — risk. "Statement no 5 print" (PUT) repeat-safe.`,
+    why: `<p>Network/Double-Submit bugs sabse common production issues hain. "Kaise prevent karte ho duplicate POST?" — idempotency key ka answer interview mein standing deta hai.</p>`,
+    visual: {
+      cap: 'POST guarded by Idempotency-Key: same key => same response.',
+      svg: `<svg viewBox="0 0 700 130" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="10" y="18" width="250" height="70" rx="10" fill="#fff3c4"/><text x="135" y="42" text-anchor="middle" font-size="12" font-weight="700" fill="#333">POST /orders</text>
+<text x="135" y="60" text-anchor="middle" font-size="11" fill="#666">Idempotency-Key: abc-123</text>
+<text x="135" y="78" text-anchor="middle" font-size="10" fill="#666">same key = same response</text>
+<line x1="262" y1="53" x2="320" y2="53" stroke="#333" stroke-width="2"/><polygon points="326,53 314,48 314,58" fill="#333"/>
+<rect x="330" y="18" width="200" height="70" rx="10" fill="#d6f5e3"/><text x="430" y="42" text-anchor="middle" font-size="12" font-weight="700" fill="#333">Server</text>
+<text x="430" y="62" text-anchor="middle" font-size="10" fill="#666">key seen? -> old result</text>
+<text x="430" y="78" text-anchor="middle" font-size="10" fill="#666">new key? -> process once</text>
+</svg>`
+    },
+    code: `// Safe (read-only)
+GET /docs/spec                       // cache, prefetch ok
+
+// Idempotent
+PUT /users/7 {name:'X'}              // repeat = same state
+DELETE /users/7                      // repeat = 404 (same result-ish)
+
+// Guarded POST (payment)
+client.idempotencyKey = uuid()
+POST /charges  {Idempotency-Key: uuid}   // retry safe`,
+    where: [
+      ['Payments/orders', 'Double order dikhne ka risk.'],
+      ['Message queues', 'Exactly-once delivery.']
+    ],
+    pros: [
+      'Retry safely — zero duplicate states.',
+      'SDK simplicity (auto retries).'
+    ],
+    cons: [
+      'Key storage + expiry manage karna.',
+      'PUT full-replace semantics kuch teams bhul jaate hain.'
+    ],
+    gotchas: [
+      'Interview: Safe != Idempotent — GET safe & idempotent, PUT/DELETE idempotent but NOT safe.',
+      'Bas Itna Yaad: <b>POST ko Idempotency-Key se guard karo; safe = read-only.</b>'
+    ]
+  },
+
+  'ap5': {
+    terms: [
+      ['Level 0', 'HTTP tunnel — POX (Plain Old XML), bas ek endpoint.'],
+      ['Level 1', 'Resources — alag URLs har cheez ke liye.'],
+      ['Level 2', 'HTTP verbs — GET/POST/PUT/DELETE + status codes ka full use.'],
+      ['Level 3', 'HATEOAS — response mein links, discoverability.']
+    ],
+    what: `<p><b>Richardson Maturity Model</b> REST ki "how RESTful hai" scale hai 0-4 (0 to 3): <b>L0</b> ek generic endpoint sab ke liye, <b>L1</b> resources divide, <b>L2</b> methods + status codes proper, <b>L3</b> HATEOAS (hypermedia links) — client ko batate ho aage kya kar sakta hai.</p>
+<p>Practical interviews: L2 WO key milestone — "REST ho gaya" bol paate ho. L3 rarely fully shipping hota hai but understanding dikhana +1 impresses.</p>`,
+    analogy: `<b>Restaurant evolution</b>: L0 = ek window pe everything order (phone order with no menu); L1 = alag stalls (chaat, paratha); L2 = menu + proper ordering etiquette (verbs + statuses); L3 = menu par "aapko ye combos milenge" recommendations (links).`,
+    why: `<p>Interviewer: "REST kitna REST hai?" — esi model se mature design prove hota hai. Level ke names aur examples bolna hi solid answer deta hai.</p>`,
+    visual: {
+      cap: 'L0 → L3: tunnel → resources → verbs+codes → hypermedia.',
+      svg: `<svg viewBox="0 0 700 110" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="10" y="20" width="155" height="55" rx="9" fill="#fff3c4"/><text x="87" y="42" text-anchor="middle" font-size="13" font-weight="700" fill="#333">L0</text><text x="87" y="60" text-anchor="middle" font-size="9" fill="#666">POX tunnel</text>
+<rect x="180" y="20" width="155" height="55" rx="9" fill="#cce3ff"/><text x="257" y="42" text-anchor="middle" font-size="13" font-weight="700" fill="#333">L1</text><text x="257" y="60" text-anchor="middle" font-size="9" fill="#666">resources</text>
+<rect x="350" y="20" width="155" height="55" rx="9" fill="#d6f5e3"/><text x="427" y="42" text-anchor="middle" font-size="13" font-weight="700" fill="#333">L2</text><text x="427" y="60" text-anchor="middle" font-size="9" fill="#666">verbs + codes</text>
+<rect x="520" y="20" width="170" height="55" rx="9" fill="#ffd6e8"/><text x="605" y="42" text-anchor="middle" font-size="13" font-weight="700" fill="#333">L3</text><text x="605" y="60" text-anchor="middle" font-size="9" fill="#666">hypermedia links</text>
+</svg>`
+    },
+    code: `// Level 0: one endpoint, action in body
+POST /api  { action: 'getUsers' }
+
+// Level 1-2: resource + verb + proper status
+GET /users/7            -> 200
+POST /users             -> 201
+DELETE /users/7         -> 204
+
+// Level 3: links in response
+GET /orders/7
+{
+  "id": 7,
+  "_links": { "ship": "/orders/7/ship", "cancel": "/orders/7" }
+}`,
+    where: [
+      ['REST assessment', 'Framework-agnostic design quality.'],
+      ['Architecture discussions', 'Evolutionary (outline).']
+    ],
+    pros: [
+      'Clear rubric — agree karte ho kahan ho.',
+      'L2 baseline practical hai.'
+    ],
+    cons: [
+      'L3/HATEOAS operational complexity.',
+      'Kuch baat "worth it" nahi hoti (discoverability).'
+    ],
+    gotchas: [
+      'Bas Itna Yaad: <b>L2 = verbs + status codes; L3 = links (HATEOAS).</b>'
+    ]
+  },
+
+  'ap6': {
+    terms: [
+      ['Offset pagination', '?page=2&limit=20 — skip N rows.'],
+      ['Cursor pagination', '?cursor=abc — "is point se aage".'],
+      ['Cursors', 'Stable keyspace par tokens — new inserts se shift nahi hote.'],
+      ['Total count', 'Aggregate info — costly ho sakta hai.']
+    ],
+    what: `<p><b>Offset</b> pagination: page + limit. Simple but <b>deep offset slow</b> (DB last rows scan), aur live data par pages shift (naya row aaya to duplicates). <b>Cursor</b>: ek opaque token = "is point se agla batch", DB-index-friendly, inserts se stable.</p>
+<p>Best for large/stable datasets: cursor. Best for small/admin UIs: offset. Response mein next cursor + has_more dena standard hai.</p>`,
+    analogy: `<b>Books on a shelf</b>: offset = "books 21-40 chahiye" — har baar saare count karke skip; cursor = bookband bookmark — "is band se aage" — quickly. Constant search, sparse rows, no scan.`,
+    why: `<p>Scalability interview regular: "1M rows ka table — kaunsi pagination?" Cursor = performance rishta. Plus design of responses (next token) matters.</p>`,
+    visual: {
+      cap: 'Offset: page jumps (shift risk). Cursor: token-based stable walk.',
+      svg: `<svg viewBox="0 0 700 120" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="10" y="15" width="320" height="40" rx="9" fill="#fff3c4"/><text x="170" y="40" text-anchor="middle" font-size="12" font-weight="700" fill="#333">?page=2&limit=20 (offset)</text>
+<rect x="370" y="15" width="320" height="40" rx="9" fill="#d6f5e3"/><text x="530" y="40" text-anchor="middle" font-size="12" font-weight="700" fill="#333">?cursor=ngJ9s (stable)</text>
+<text x="170" y="85" text-anchor="middle" font-size="10" fill="#888">deep pages slow, rows shift</text>
+<text x="530" y="85" text-anchor="middle" font-size="10" fill="#888">index fast, insert-stable</text>
+</svg>`
+    },
+    code: `# Offset
+GET /users?page=2&limit=20
+# -> { items:[], page:2, hasMore:true }
+
+# Cursor
+GET /users?limit=20&cursor=abc123
+# -> { items:[], nextCursor:"xyz", hasMore:true }
+# cursor = encoded (created_at+id) — stable ordering
+
+# total count kabhi kabhi bada: /users?page=1&includeTotal=true`,
+    where: [
+      ['Feeds/timelines', 'Cursor best (live inserts).'],
+      ['Admin tables', 'Offset fine + page numbers.']
+    ],
+    pros: [
+      'Cursor: O(1) index seek, no skip.',
+      'Offset: simple, page-number UI.'
+    ],
+    cons: [
+      'Cursor opaque & total-count hard.',
+      'Offset slow deep + shifting pages.'
+    ],
+    gotchas: [
+      'Interview: sort must be stable for cursor (created_at + id ties) else duplicates.',
+      'Bas Itna Yaad: <b>Timeline/interview-size: cursor. Admin: offset.</b>'
+    ]
+  },
+
+  'ap7': {
+    terms: [
+      ['Filtering', '?status=paid — narrow rows.'],
+      ['Sorting', '?sort=-created_at — order.'],
+      ['Field selection', '?fields=id,name — lean responses.'],
+      ['Nested filters', '?age=gte:18 — operators in values.']
+    ],
+    what: `<p><b>Query params</b> se data shaping: <b>filter</b> (rows select karo), <b>sort</b> (order), <b>fields</b> (columns subset — mobile pe bandwidth bachao). Isko "query language" bola jaata hai, par keep it simple.</p>
+<p>Patterns: filter keys resource fields se match, operator syntax (eq, gt, in, contains) agar complex filters ho, sort with +/- for asc/desc, fields comma list. Defaults aur max limit batao.</p>`,
+    analogy: `<b>Supermarket aisle</b> samjho: filter = sirf dairy section, sort = price ke hisaab se arrange, fields = brand name chahiye ingredients nahi. Aur app (consumer) wahi products uthaata hai jo uska use case.`,
+    why: `<p>APIs jo scalable clients chahiye (mobile, reports) unhone field/sparse selection karte hain. Interview "kaise banaoge search/filter" — structured answer se design skills jhalakti hain.</p>`,
+    visual: {
+      cap: 'GET /orders?status=paid&sort=-total&fields=id,total,created',
+      svg: `<svg viewBox="0 0 700 110" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="10" y="25" width="680" height="55" rx="10" fill="#fff3c4"/>
+<text x="25" y="47" font-size="12" font-weight="700" fill="#333">/orders</text>
+<text x="100" y="47" font-size="11" fill="#666">?status=paid</text>
+<text x="240" y="47" font-size="11" fill="#666">(&amp;sort=-total)</text>
+<text x="400" y="47" font-size="11" fill="#666">(&amp;fields=id,total)</text>
+<text x="25" y="68" font-size="10" fill="#888">filter rows -> order -> select columns</text>
+</svg>`
+    },
+    code: `GET /orders?status=paid
+GET /orders?status=paid&sort=-created_at
+GET /orders?fields=id,total,created_at
+GET /orders?country[in]=IN,US&price[gte]=100   # complex sets
+
+// response without fields would be fat; with fields: lean`,
+    where: [
+      ['List endpoints', 'Almost universal.'],
+      ['Mobile APIs', 'Bandwidth na kam — fields selection.']
+    ],
+    pros: [
+      'Client control — fetches sirf needed.',
+      'Performance — DB query mapping direct.'
+    ],
+    cons: [
+      'Too-many-options = spec overkill.',
+      'Custom operator syntax consistency.'
+    ],
+    gotchas: [
+      'Interview: sort on unindexed column slow — index values = fast.',
+      'Bas Itna Yaad: <b>filter rows, sort order, fields columns — query params se.</b>'
+    ]
+  },
+
+  'ap8': {
+    terms: [
+      ['RFC 7807', 'Problem Details — standardized error format.'],
+      ['type/status', 'Machine-readable type + HTTP status.'],
+      ['title/detail', 'Human readable message.'],
+      ['instance', 'Kis request/uri par hua (debbuging).']
+    ],
+    what: `<p>Error responses standardized raho taaki <b>SDKs har API ki errors same sajavo se parse kar saken</b>. Format consists: <code>type</code> (error category URI), <code>status</code>, <code>title</code>, <code>detail</code>, <code>instance</code>, extra fields (errors array for validation).</p>
+<p>Benefits: docs autogenerate, error handling code reuse, caching by type. Response: <code>application/problem+json</code> — media type RFC 7807 ka.</p>`,
+    analogy: `<b>Hospital prescription</b> samjho: diagnosis code (type: "P-102"), severity (status), description (title/detail), patient name (instance) — doctors (clients) know exactly kya karna hai without reading instructions each time.`,
+    why: `<p>Production APIs ke errors sab log differently format karte hain — RFC 7807 common standard interview validators acknowledge karte hain.</p>`,
+    visual: {
+      cap: 'One error shape across the whole API = client happy.',
+      svg: `<svg viewBox="0 0 700 125" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="10" y="15" width="680" height="90" rx="9" fill="#ffe1e1"/>
+<text x="25" y="38" font-size="11" font-weight="700" fill="#333">Content-Type: application/problem+json</text>
+<text x="25" y="58" font-size="11" fill="#555">{</text>
+<text x="40" y="74" font-size="11" fill="#555">- type: "https://api.example.com/errors/validation",</text>
+<text x="40" y="88" font-size="11" fill="#555">- status: 422,  title: "Invalid input",</text>
+<text x="40" y="102" font-size="11" fill="#555">- detail: "age must be >= 18",  instance: "/users"</text>
+</svg>`
+    },
+    code: `HTTP/1.1 422 Unprocessable Entity
+Content-Type: application/problem+json
+
+{
+  "type": "https://api.example.com/errors/validation",
+  "status": 422,
+  "title": "Invalid input",
+  "detail": "age must be >= 18",
+  "instance": "/users",
+  "errors": [{ "field": "age", "reason": "min" }]
+}
+// Same shape for 400, 401, 403, 404, 409, 429, 500...`,
+    where: [
+      ['Public APIs', 'Spec-first platforms (Stripe-ish).'],
+      ['SDK teams', 'Error handling one code path.']
+    ],
+    pros: [
+      'Consistent parsing — SDK eazy.',
+      'Documentation +++.'
+    ],
+    cons: [
+      'Custom extras allowed but limited.',
+      'Migration legacy errors kurukchi.'
+    ],
+    gotchas: [
+      'Bas Itna Yaad: <b>type/status/title/detail/instance — problem+json.</b>'
+    ]
+  },
+
+  'ap9': {
+    terms: [
+      ['Validation', 'Request data check — type, range, enum, shape.'],
+      ['Schema', 'Fields + rules ka blueprint.'],
+      ['Sanitize', 'Input ko safe form mein normalize karna.'],
+      ['422 vs 400', '422 = structure valid, values fail; 400 = structure hi galat.']
+    ],
+    what: `<p><b>Request validation</b> = server ko galat input se bachana. Layers: size limit (body), type (string/number), enum (status field), format (email/date), structure (fields present). Tools: schema validators (JSON Schema/openapi, or Zod in JS, Pydantic in Python).</p>
+<p>Parser aapka first line of defense — <b>defense in depth</b>: validate on entry, don't trust. Errors batane ka format consistent rakho (field + reason).</p>`,
+    analogy: `<b>Airport security</b>: boarding pass (schema shape), ID check (format/type), bag x-ray (contents valid). Sab checkpoint pe verify — ek weak point = pura plane risk pe.`,
+    why: `<p>Security + DX dono: Valider API = safe + client ko clear errors. Interview "kaise handle karoge invalid JSON" — schema validation answer.</p>`,
+    visual: {
+      cap: 'Input → validate → sanitate → process; bad input rejected early.',
+      svg: `<svg viewBox="0 0 700 100" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="10" y="28" width="130" height="40" rx="9" fill="#fff3c4"/><text x="75" y="52" text-anchor="middle" font-size="12" font-weight="700" fill="#333">Input</text>
+<line x1="142" y1="48" x2="185" y2="48" stroke="#333" stroke-width="2"/><polygon points="191,48 179,43 179,53" fill="#333"/>
+<rect x="195" y="28" width="160" height="40" rx="9" fill="#cce3ff"/><text x="275" y="52" text-anchor="middle" font-size="12" font-weight="700" fill="#333">Validate</text>
+<line x1="357" y1="48" x2="400" y2="48" stroke="#333" stroke-width="2"/><polygon points="406,48 394,43 394,53" fill="#333"/>
+<rect x="410" y="28" width="150" height="40" rx="9" fill="#d6f5e3"/><text x="485" y="52" text-anchor="middle" font-size="12" font-weight="700" fill="#333">Process</text>
+<text x="275" y="88" text-anchor="middle" font-size="10" fill="#f85149">bad -> 422 + field errors</text>
+</svg>`
+    },
+    code: `// JSON Schema-ish
+{
+  "type": "object",
+  "required": ["email", "age"],
+  "properties": {
+    "email": { "type": "string", "format": "email" },
+    "age":   { "type": "integer", "minimum": 18 },
+    "role":  { "enum": ["admin", "user"] }
+  }
+}
+
+// -> invalid age?  422: { "errors": [ { "field": "age", "reason": "min" } ] }`,
+    where: [
+      ['Every POST/PUT body', 'Create/update endpoints.'],
+      ['OpenAPI validators', 'Fastify/Zod/Pydantic etc.']
+    ],
+    pros: [
+      'Garbage in garbage out se bachat.',
+      'Clear 422 errors = good DX.'
+    ],
+    cons: [
+      'Over-validation = brittle changes.',
+      'Unknown schema changes = heating.'
+    ],
+    gotchas: [
+      'Bas Itna Yaad: <b>Validate at gate, not inside; 422 for field errors.</b>'
+    ]
+  },
+
+  'ap10': {
+    terms: [
+      ['Content negotiation', 'Client/server decide content type kaise।'],
+      ['Accept', 'Client: "ye format bhejo".'],
+      ['Content-Type', 'Server: "ye format hai body mein".'],
+      ['Vary: Accept', 'Cache key mein headers shamil karne ka directive.']
+    ],
+    what: `<p><b>Content negotiation</b> — client bataata hai kya accept karta hai (<code>Accept: application/json</code>), server response mein <code>Content-Type</code> batata hai (real body format). Multiple formats: JSON, XML, plain text.</p>
+<p>Best practice: JSON default, X-Forwarded / other formats via headers, response <code>Content-Type</code> precise. Cache jab variants ho to <code>Vary: Accept</code> zaroori.</p>`,
+    analogy: `<b>Waiter se order</b> samjho: "mujhe north-Indian chahiye" (Accept), waiter "ye hai 7 master" (Content-Type) aur serve. Agar aap sirf Jain bolo to chef adjust kare (negotiate).`,
+    why: `<p>Interview: "JSON kab, XML kab, koi aur?" + caching variants. Aware headers = mature API developer signal.</p>`,
+    visual: {
+      cap: 'Accept (request) → Content-Type (response) = format contract.',
+      svg: `<svg viewBox="0 0 700 100" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="10" y="22" width="200" height="44" rx="9" fill="#ffd6e8"/><text x="110" y="42" text-anchor="middle" font-size="11" font-weight="700" fill="#333">Accept: application/json</text>
+<line x1="212" y1="44" x2="315" y2="44" stroke="#333" stroke-width="2"/><polygon points="321,44 309,39 309,49" fill="#333"/>
+<rect x="325" y="22" width="200" height="44" rx="9" fill="#d6f5e3"/><text x="425" y="42" text-anchor="middle" font-size="11" font-weight="700" fill="#333">Content-Type: application/json</text>
+<text x="250" y="88" text-anchor="middle" font-size="10" fill="#888">Vary: Accept when caching variants</text>
+</svg>`
+    },
+    code: `curl -H "Accept: application/json" https://api.example.com/users
+# -> Content-Type: application/json
+
+curl -H "Accept: application/xml" https://api.example.com/users
+# -> Content-Type: application/xml (if supported, else 406)
+
+// Server picks by quality: json > xml`,
+    where: [
+      ['Formats', 'JSON/XML/CSV endpoints.'],
+      ['Caching', 'Vary: Accept with caches.']
+    ],
+    pros: [
+      'One endpoint, many formats.',
+      'Client control precise.'
+    ],
+    cons: [
+      'More formats = more test matrix.',
+      'Vary header caching complexity.'
+    ],
+    gotchas: [
+      'Bas Itna Yaad: <b>Accept = request, Content-Type = response.</b>'
+    ]
+  },
+
+  'ap11': {
+    terms: [
+      ['JWT', 'JSON Web Token — signed token (header, payload, signature).'],
+      ['Stateless', 'Server token verify karta hai, state nahi rakhta.'],
+      ['Signature', 'Secret se signed — digitally tamper-proof.'],
+      ['Exp', 'Expiry — token ka "expiry date".'],
+      ['Payload', 'Claims — sub, exp, role, etc.']
+    ],
+    what: `<p><b>JWT</b> = encoded JSON claims jo server sign karta hai. Parts: <code>header</code> (alg), <code>payload</code> (claims: sub, exp, role), <code>signature</code> (secret/public key). Client token rakhta hai, har request <code>Authorization: Bearer &lt;token&gt;</code> bhejta hai.</p>
+<p><b>Stateless advantages</b>: server ke paas session store nahi chahiye, distributed scale easy. Lehaz: token expires (short-lived access + refresh), signature algorithm pin (RS256), secrets secure.</p>`,
+    analogy: `<b>Waterpark wristband</b>: band (token) pe name + expiry print, entry par guard bina DB dekhe verify karta hai (signature). Band kharab/expired = wapas pays/mair band. Server ko list maintain nahi karni.`,
+    why: `<p>JWT interview ka most common auth topic: structure, stateless pros/cons, expiry, refresh flow. Senior roles: claims vs session, revocation dilemma.</p>`,
+    visual: {
+      cap: 'header.payload.signature — verify, parse, trust claims.',
+      svg: `<svg viewBox="0 0 700 90" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="10" y="15" width="210" height="40" rx="8" fill="#cce3ff"/><text x="115" y="39" text-anchor="middle" font-size="11" font-weight="700" fill="#333">header</text>
+<rect x="235" y="15" width="210" height="40" rx="8" fill="#ffd6e8"/><text x="340" y="39" text-anchor="middle" font-size="11" font-weight="700" fill="#333">payload (claims)</text>
+<rect x="460" y="15" width="230" height="40" rx="8" fill="#d6f5e3"/><text x="575" y="39" text-anchor="middle" font-size="11" font-weight="700" fill="#333">signature (verify)</text>
+<text x="350" y="80" text-anchor="middle" font-size="11" fill="#555">base64url(header).base64url(payload).sign</text>
+</svg>`
+    },
+    code: `// 3 parts, dot-separated
+eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiIxMjMiLCJyb2xlIjoiYWRtaW4iLCJleHAiOjE3...<sig>
+
+// decode payload
+{ "sub": "123", "role": "admin", "exp": 1767899999 }
+
+// usage
+Authorization: Bearer eyJhbGciOiJSUzI1NiJ9...`,
+    where: [
+      ['SPA auth', 'Bearer tokens stateless scale.'],
+      ['Service-to-service', 'Machine identity (mTLS/JWT).']
+    ],
+    pros: [
+      'Stateless — no server session store.',
+      'Structures — claims self-contained.'
+    ],
+    cons: [
+      'Revocation hard (must wait expiry).',
+      'Payload readable (no secrets in claims).'
+    ],
+    gotchas: [
+      'Interview: token blacklist kyun nahi ideal (stateless loss); short exp + refresh solves.',
+      'Bas Itna Yaad: <b>header.payload.signature; verify signature, check exp.</b>'
+    ]
+  },
+
+  'ap12': {
+    terms: [
+      ['OAuth 2.0', 'Delegated authorization framework — aapka data doosri app ko do (scoped).'],
+      ['Authorization Code', 'Main flow — redirect + code + token exchange.'],
+      ['PKCE', 'Public clients ke liye code challenge — app ko code steal-proof.'],
+      ['Scopes', 'Permissions ka subset — "os.read" "os.upload".'],
+      ['Client Credentials', 'Server-to-server — app itself identity.']
+    ],
+    what: `<p><b>OAuth 2.0</b>: user ko password na do, app ko <b>scoped tokens</b> do. Flow (Authorization Code + PKCE): 1) app redirect user ko auth server, 2) user login + consent, 3) auth server app ko code de (redirect uri), 4) app code ko token se exchange kare. Token carries scopes.</p>
+<p>Flows: <b>Auth Code</b> (web/native), <b>Auth Code + PKCE</b> (public clients — SPA/mobile), <b>Client Credentials</b> (machine), <b>Implicit</b> (legacy, avoid). Token types: access (short), refresh (long, rotation).</p>`,
+    analogy: `<b>Hotel room card</b>: aap (resource owner) app (client) ko card do — card ada spartan scoped access (room + gym, but not SPA room). OAuth = card issuing system + scopes.`,
+    why: `<p>Any "Google Login se login" system = OAuth. Interview: flows, when to use which, CSRF protection in OAuth, token refresh.</p>`,
+    visual: {
+      cap: 'User ─ grant → App ─ code → Auth Server ─ tokens → App → Resource Server.',
+      svg: `<svg viewBox="0 0 700 110" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="10" y="15" width="140" height="36" rx="9" fill="#ffd6e8"/><text x="80" y="38" text-anchor="middle" font-size="11" font-weight="700" fill="#333">User</text>
+<rect x="200" y="15" width="140" height="36" rx="9" fill="#fff3c4"/><text x="270" y="38" text-anchor="middle" font-size="11" font-weight="700" fill="#333">App</text>
+<rect x="390" y="15" width="150" height="36" rx="9" fill="#cce3ff"/><text x="465" y="38" text-anchor="middle" font-size="11" font-weight="700" fill="#333">Auth Server</text>
+<line x1="150" y1="33" x2="196" y2="33" stroke="#333" stroke-width="1.5"/><polygon points="200,33 190,30 190,36" fill="#333"/>
+<line x1="342" y1="33" x2="386" y2="33" stroke="#333" stroke-width="1.5"/><polygon points="390,33 380,30 380,36" fill="#333"/>
+<line x1="465" y1="53" x2="465" y2="80" stroke="#333" stroke-width="1.5"/><polygon points="465,85 462,75 468,75" fill="#333"/>
+<line x1="270" y1="80" x2="270" y2="53" stroke="#333" stroke-width="1.5"/><polygon points="270,48 267,58 273,58" fill="#333"/>
+<text x="465" y="98" text-anchor="middle" font-size="10" fill="#555">tokens back to app</text>
+</svg>`
+    },
+    code: `// Flow (Authorization Code + PKCE simplified)
+1. GET /oauth/authorize?client_id=app&scopes=profile.read&code_challenge=..&redirect_uri=..
+2. user logs in -> redirect to app with ?code=xyz
+3. POST /oauth/token { code, code_verifier, client_id, redirect_uri }
+   -> { access_token, refresh_token, expires_in }
+
+// then
+Authorization: Bearer <access_token>  (scoped)`,
+    where: [
+      ['Third-party login', 'Google/GitHub Login.'],
+      ['Enterprise (SSO)', 'OIDC on top of OAuth.']
+    ],
+    pros: [
+      'User password na do.',
+      'Scoped tokens — least privilege.'
+    ],
+    cons: [
+      'Complex flows (redirects).',
+      'Token expiry/refresh dance.'
+    ],
+    gotchas: [
+      'Bas Itna Yaad: <b>Auth Code + PKCE main flow; Client Credentials machine.</b>'
+    ]
+  },
+
+  'ap13': {
+    terms: [
+      ['API Key', 'Opaque identifier — "who you are" (project).'],
+      ['Bearer Token', 'Short-lived, revocable — "who is acting + session".'],
+      ['Scopes', 'Token pe limits — least privilege.'],
+      ['Rotation', 'Keys/tokens ko periodic replace.'],
+      ['Secrets', 'Keys kaunse env/side pe, vault/secret manager.']
+    ],
+    what: `<p><b>API keys</b>: long-lived opaque keys — project identity (per-key limit, tracking). Simple, public analytics etc. <b>Bearer tokens</b>: short-lived signed tokens per user/session, scoped, revocable, expiring.</p>
+<p>Choice: server-to-server internal = API keys; user-context auth = bearer/JWT. Keys hamesha <code>Authorization</code>/<code>X-API-Key</code> header, never URL (leak via logs).</p>`,
+    analogy: `<b>Gym membership vs day pass</b>: API key = membership card (long term, project), bearer token = day pass (short, revocable anytime). Stadium ko pass check + expiry view chahiye humility.`,
+    why: `<p>Interview "API key vs token kya farak" — auth decisions everyday. Scope + expiry + rotation = security maturity signal.</p>`,
+    visual: {
+      cap: 'API Key = long-lived project; Bearer = expiring user session.',
+      svg: `<svg viewBox="0 0 700 100" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="10" y="20" width="320" height="46" rx="9" fill="#cce3ff"/><text x="170" y="40" text-anchor="middle" font-size="12" font-weight="700" fill="#333">API Key</text>
+<text x="170" y="58" text-anchor="middle" font-size="10" fill="#666">long-lived, project-scoped, rotate</text>
+<rect x="370" y="20" width="320" height="46" rx="9" fill="#d6f5e3"/><text x="530" y="40" text-anchor="middle" font-size="12" font-weight="700" fill="#333">Bearer Token</text>
+<text x="530" y="58" text-anchor="middle" font-size="10" fill="#666">short-lived, user session, revocable</text>
+</svg>`
+    },
+    code: `# API key (header, not URL!)
+Authorization: ApiKey sk_live_4f9...
+# or
+X-API-Key: sk_live_4f9...
+
+# Bearer token
+Authorization: Bearer eyJhbGciOiJSUzI1NiJ9...
+
+# rotate keys regularly; never in git/URLs/JS`,
+    where: [
+      ['Server-to-server', 'API keys (partner integrations).'],
+      ['User actions', 'Bearer/JWT per user.']
+    ],
+    pros: [
+      'Keys: simple + stable identity.',
+      'Tokens: scoped + revocable.'
+    ],
+    cons: [
+      'Keys: expiry hard, leak impact high.',
+      'Tokens: refresh dance needs infra.'
+    ],
+    gotchas: [
+      'Bas Itna Yaad: <b>keys = long project identity; tokens = short revocable sessions.</b>'
+    ]
+  },
+
+  'ap14': {
+    terms: [
+      ['RBAC', 'Role-Based Access Control — role = permission bundle (admin, editor).'],
+      ['ABAC', 'Attribute-Based — policies on user/resource/context attributes.'],
+      ['Scopes', 'Fine-grained API permissions.'],
+      ['Permission scoping', 'Least privilege — minimum required access.']
+    ],
+    what: `<p><b>RBAC</b>: user → role → permissions. Simple, predictable, admin-assigned. <b>ABAC</b>: policies (PDP) evaluate attributes (user dept, resource owner, IP, time) — flexible for fine-grained (resource owner write only, manager dept).</p>
+<p>API level: <b>scopes</b> (during OAuth/token) get jaat permissions; middleware checks. Map roles to scopes, or ABAC policies.</p>`,
+    analogy: `<b>Office badges</b>: RBAC = floor access by designation (badge L1/L2/L3), ABAC = dynamic (meeting room booked + timing + team), scopes = "can read finances" tags on the badge itself.`,
+    why: `<p>Interview: multi-user APIs — authorization design (roles, tenants, resource-owner). "Kis user ko kya access" = layering.</p>`,
+    visual: {
+      cap: 'User → Role → Permissions (RBAC) | ABAC = attribute policies.',
+      svg: `<svg viewBox="0 0 700 110" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="10" y="18" width="120" height="40" rx="9" fill="#ffd6e8"/><text x="70" y="42" text-anchor="middle" font-size="11" font-weight="700" fill="#333">User</text>
+<line x1="132" y1="38" x2="175" y2="38" stroke="#333" stroke-width="2"/><polygon points="181,38 169,33 169,43" fill="#333"/>
+<rect x="185" y="18" width="130" height="40" rx="9" fill="#fff3c4"/><text x="250" y="42" text-anchor="middle" font-size="11" font-weight="700" fill="#333">Role</text>
+<line x1="317" y1="38" x2="360" y2="38" stroke="#333" stroke-width="2"/><polygon points="366,38 354,33 354,43" fill="#333"/>
+<rect x="370" y="18" width="200" height="40" rx="9" fill="#d6f5e3"/><text x="470" y="42" text-anchor="middle" font-size="11" font-weight="700" fill="#333">Permissions</text>
+<text x="470" y="88" text-anchor="middle" font-size="10" fill="#666">ABAC: policy = attributes (dept, owner, time)</text>
+</svg>`
+    },
+    code: `// RBAC maps
+role "admin"  -> { users: rw, billing: rw }
+role "editor" -> { users: r, pages: rw }
+role "viewer" -> { users: r, pages: r }
+
+// API middleware check
+if (!user.hasScope('users:write')) return 403;
+
+// ABAC policy (e.g. OPA-like)
+allow {
+  resource.type == "doc"
+  resource.owner_id == user.id
+  user.role in ["admin", "editor"]
+}`,
+    where: [
+      ['Multi-tenant apps', 'Scopes + tenant isolation.'],
+      ['Enterprise', 'SAML/AD to roles.']
+    ],
+    pros: [
+      'RBAC: simple, auditable.',
+      'ABAC: expressive fine-grain.'
+    ],
+    cons: [
+      'RBAC: coarse, role explosion.',
+      'ABAC: policy complexity + tooling.'
+    ],
+    gotchas: [
+      'Bas Itna Yaad: <b>RBAC roles; ABAC attributes; always check resource-owner + tenant.</b>'
+    ]
+  },
+
+  'ap15': {
+    terms: [
+      ['Rate limit', 'Per user/key requests/time window.'],
+      ['429', 'Too Many Requests — status + Retry-After.'],
+      ['Token bucket', 'Algorithm — bucket capacity + refill rate.'],
+      ['Sliding window', 'Better fairness than fixed window.']
+    ],
+    what: `<p><b>Rate limiting</b> API ko abuse/overload se bachata hai: per key/user, per second/min. Algorithms: <b>token bucket</b> (burst allowed, steady refill), <b>fixed window</b> (simple, boundary spike), <b>sliding window</b> (fairer).</p>
+<p>Response headers: <code>X-RateLimit-Limit/Remaining/Reset</code>, errors <code>429 + Retry-After</code>. Distributed: Redis + Lua atomic ops. Give quota per tier (free/premium).</p>`,
+    analogy: `<b>Buffet counter</b> samjho: token bucket = har aadami ko plate milega lekin fixed rate (chef ek chhota breakfast); 429 = "plate bharne ke liye 30 sec wait karo". Distributed = kitchen counters synchronized via ledger.`,
+    why: `<p>Interviews production APIs ke liye: burst protection, per-client enforcement, quotas. Distributed rate limiting = system design talking point.</p>`,
+    visual: {
+      cap: 'Token bucket: capacity C, refill r/s. Over limit → 429.',
+      svg: `<svg viewBox="0 0 700 100" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="20" y="55" width="170" height="30" rx="6" fill="#d6f5e3"/><text x="105" y="75" text-anchor="middle" font-size="11" font-weight="700" fill="#333">Capacity 10 tokens</text>
+<text x="15" y="45" font-size="10" fill="#666">per window</text>
+<line x1="260" y1="70" x2="330" y2="70" stroke="#333" stroke-width="2" stroke-dasharray="5,4"/>
+<text x="295" y="60" text-anchor="middle" font-size="10" fill="#666">refill r/s</text>
+<rect x="370" y="45" width="150" height="36" rx="8" fill="#ffe1e1"/><text x="445" y="68" text-anchor="middle" font-size="11" font-weight="700" fill="#333">429 + Retry-After</text>
+<text x="620" y="70" text-anchor="middle" font-size="10" fill="#888">X-RateLimit-*</text>
+</svg>`
+    },
+    code: `# Headers
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 42
+X-RateLimit-Reset: 1767800000
+
+# Over limit
+HTTP/1.1 429 Too Many Requests
+Retry-After: 30
+
+# Token bucket (redis-ish)
+LIMIT key 100/60s   # capacity 100, 60s window
+# atomic: DECR; if < 0 -> reject`,
+    where: [
+      ['Public APIs', 'Abuse protection standard.'],
+      ['Tiered plans', 'Free/Premium quotas.']
+    ],
+    pros: [
+      'Stops abuse, keeps SLO stable.',
+      'Revenue control (tiers).'
+    ],
+    cons: [
+      'Distributed limits consistency.',
+      'Legitimate bursts blocked.'
+    ],
+    gotchas: [
+      'Bas Itna Yaad: <b>429 + Retry-After + X-RateLimit headers; token bucket classic.</b>'
+    ]
+  },
+
+  'ap16': {
+    terms: [
+      ['URI versioning', '/v1/users — URL mein major version.'],
+      ['Header versioning', 'Accept: application/vnd.api.v2+json / X-API-Version.'],
+      ['SemVer-ish', 'Major = breaking, minor = additive.'],
+      ['Deprecation', 'Old version announce + migration window.']
+    ],
+    what: `<p><b>URI versioning</b>: <code>/v1/users</code>, <code>/v2/users</code> — explicit, cache-friendly, most popular. <b>Header versioning</b>: content-negotiation style (<code>Accept: application/vnd.api.v2+json</code>) — cleaner URL but invisible in logs/docs jaada.</p>
+<p>Practical: URI /v1 major breaking changes; additive changes (new fields/endpoints) don't need version bump. Keep old versions alive with deprecation schedule.</p>`,
+    analogy: `<b>Flagship vs legacy store</b>: /v1 = old shop, /v2 = new building — customers (clients) address karte hain konsi branch ko jaana hai (URL). Header variant = same signboard par menu change (Accept header).`,
+    why: `<p>Interview: contract breaking kya hota hai, version strategy kaunsi, deprecation process. "Happy clients, safer evolution" decision matrix.</p>`,
+    visual: {
+      cap: 'URI: /v1 → /v2 (breaking). Additive = no bump.',
+      svg: `<svg viewBox="0 0 700 100" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="10" y="20" width="200" height="40" rx="9" fill="#fff3c4"/><text x="110" y="44" text-anchor="middle" font-size="12" font-weight="700" fill="#333">/v1/users</text>
+<rect x="240" y="20" width="200" height="40" rx="9" fill="#d6f5e3"/><text x="340" y="44" text-anchor="middle" font-size="12" font-weight="700" fill="#333">/v2/users</text>
+<text x="520" y="34" font-size="10" fill="#666">additive change: no bump</text>
+<text x="520" y="52" font-size="10" fill="#666">breaking: v2 + deprecation</text>
+</svg>`
+    },
+    code: `# URI version
+GET /v1/users      # old contract
+GET /v2/users      # new contract
+
+# Header version
+GET /users
+Accept: application/vnd.api.v2+json
+# or X-API-Version: 2
+
+# treat breaking change seriously
+# - additive: safe (new fields/endpoints)
+# - breaking: bump major, sunset old after N months`,
+    where: [
+      ['Public APIs', 'Versioning almost mandatory.'],
+      ['Internal monoliths', 'Can afford header/internal routes.']
+    ],
+    pros: [
+      'URI: explicit, cache/log friendly.',
+      'Header: cleaner URLs.'
+    ],
+    cons: [
+      'Multi-version code cost.',
+      'Header: invisible hardening.'
+    ],
+    gotchas: [
+      'Bas Itna Yaad: <b>URI /vN major; additive never bumps.</b>'
+    ]
+  },
+
+  'ap17': {
+    terms: [
+      ['Additive change', 'Nayi fields/endpoints — old clients safe.'],
+      ['Breaking change', 'Field rename/removal, type change, behavior change.'],
+      ['Contract', 'Client solid expectation — fields/types/semantics.'],
+      ['Compatibility', 'Nayi version purane clients tode na.']
+    ],
+    what: `<p><b>Backward compatibility</b> = changing API jaise purane clients toden na. <b>Additive</b> (safe): new optional fields, new endpoints, expanded enums. <b>Breaking</b>: removing/renaming/rettypeing field, changing status codes, changing behavior.</p>
+<p>Rules: new fields optional unless defaulted; don't change types/order; pagination cursors stable; eviction headers not removed. Breaking change = new version + deprecation.</p>`,
+    analogy: `<b>Building renovation</b>: naye lifts lagana (additive) puri building se chalta hai; likin lift shaft regular width change karna (breaking) — bas purane residents toote. Isliye pehle complain, phir migrate, phir dismantle.`,
+    why: `<p>Interview: "kaise change karoge API bina clients todta" — additive-first mindset is senior-level. Unknown clientcious contract handling.</p>`,
+    visual: {
+      cap: 'Additive = safe; Breaking = version bump + sunset.',
+      svg: `<svg viewBox="0 0 700 100" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="10" y="16" width="330" height="44" rx="9" fill="#d6f5e3"/><text x="175" y="34" text-anchor="middle" font-size="12" font-weight="700" fill="#333">Additive</text>
+<text x="175" y="52" text-anchor="middle" font-size="10" fill="#555">new optional field / endpoint — safe</text>
+<rect x="360" y="16" width="330" height="44" rx="9" fill="#ffe1e1"/><text x="525" y="34" text-anchor="middle" font-size="12" font-weight="700" fill="#333">Breaking</text>
+<text x="525" y="52" text-anchor="middle" font-size="10" fill="#555">rename / remove / type change — new version</text>
+</svg>`
+    },
+    code: `# Additive OK
+GET /v1/users/7
+{ "id": 7, "name": "A", "email": "a@x.com" }   # add "phone": null — safe
+
+# Breaking — avoid silently
+{ "name" -> "full_name" }      # breaks clients
+Remove "email"                  # breaks clients
+201 -> 200 change               # breaks clients
+
+# Breaking strategy: v2 + deprecated v1, sunset N months`,
+    where: [
+      ['Evolution', 'API lifecycle core.'],
+      ['Public SDKs', 'Versioned SDKs jalate hain.']
+    ],
+    pros: [
+      'Clients upgrade at their pace.',
+      'Trust in API provider.'
+    ],
+    cons: [
+      'Code burden maintaining old path.',
+      'Additive-first discipline hard.'
+    ],
+    gotchas: [
+      'Interview: defaulted new optional fields ARE additive; changing behavior of existing call is breaking.',
+      'Bas Itna Yaad: <b>additive safe, breaking = version + sunset.</b>'
+    ]
+  },
+
+  'ap18': {
+    terms: [
+      ['Webhook', 'Reverse API — server <> URL pe callback push.'],
+      ['Delivery', 'event → POST to subscriber URL.'],
+      ['Retries', 'Non-2xx → retry with backoff.'],
+      ['Signature', 'Verify authenticity (HMAC + payload).'],
+      ['Event vs payload version', 'Event type vs shape ke versions.']
+    ],
+    what: `<p><b>Webhooks</b>: server events ko client ke URL pe push karta hai (reverse of polling). Client URL register karta hai; event pe server <code>POST /url</code> bhejta hai with payload + signature. <b>Versioning</b>: event name (v1), payload shape (additive only), delivery semantics (at-least-once).</p>
+<p>Best practices: signature (HMAC-SHA256 header), idempotency (delivery-id), retries with backoff, dead-letter, subscriber verifies signature.</p>`,
+    analogy: `<b>News ticker</b> samjho: aap (subscriber) roz newspaper (polling) nahi kharidte — paper boy (webhook) home pe deta hai jab naya issue aaye. Payload version = newspaper edition format; at-least-once = duplicates ho sakte hain, isliye delivery-id se dedupe.`,
+    why: `<p>Interview: "searching API polling vs webhook vs SSE" — webhook delivery design (retries, signatures, ordering) is common senior question.</p>`,
+    visual: {
+      cap: 'Event → HTTP POST to subscriber URL, signed, with delivery-id.',
+      svg: `<svg viewBox="0 0 700 100" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="10" y="25" width="150" height="36" rx="9" fill="#fff3c4"/><text x="85" y="47" text-anchor="middle" font-size="11" font-weight="700" fill="#333">App</text>
+<line x1="162" y1="43" x2="220" y2="43" stroke="#333" stroke-width="2"/><polygon points="226,43 214,38 214,48" fill="#333"/>
+<rect x="230" y="25" width="160" height="36" rx="9" fill="#cce3ff"/><text x="310" y="47" text-anchor="middle" font-size="11" font-weight="700" fill="#333">Webhook POST</text>
+<line x1="392" y1="43" x2="450" y2="43" stroke="#333" stroke-width="2"/><polygon points="456,43 444,38 444,48" fill="#333"/>
+<rect x="460" y="25" width="160" height="36" rx="9" fill="#d6f5e3"/><text x="540" y="47" text-anchor="middle" font-size="11" font-weight="700" fill="#333">Subscriber URL</text>
+<text x="310" y="85" text-anchor="middle" font-size="10" fill="#666">signature + delivery-id + retry/backoff</text>
+</svg>`
+    },
+    code: `# Register
+POST /webhooks { events: ["order.created"], url: "https://c.example.com/h" }
+
+# Delivered (signed)
+POST https://c.example.com/h
+X-Webhook-Signature: sha256=<signed payload+secret>
+X-Webhook-Id: evt_9f3 (delivery id)
+{ "event": "order.created.v1", "data": { "orderId": 7 } }
+
+# Subscriber: verify sig, return 2xx fast, dedupe by evt id`,
+    where: [
+      ['Stripe, GitHub', 'Event-driven integrations.'],
+      ['Microservices', 'Async notifications.']
+    ],
+    pros: [
+      'Realtime push — no polling.',
+      'Client scales by its own infra.'
+    ],
+    cons: [
+      'Retry/delivery infra complex.',
+      'Ordering not guaranteed.'
+    ],
+    gotchas: [
+      'Bas Itna Yaad: <b>signed + idempotent + retry/backoff; event.version additive.</b>'
+    ]
+  },
+
+  'ap19': {
+    terms: [
+      ['Deprecation', 'Announce — old behavior sunset schedule.'],
+      ['Sunset header', 'Deprecation / Sunset HTTP headers.'],
+      ['Migration window', 'Time to update clients.'],
+      ['Breaking removal', 'Phone after N months with notices.']
+    ],
+    what: `<p><b>API deprecation lifecycle</b>: announce (release notes, email, headers) → keep working with warnings → sunset after deadline → remove/redirect. Headers: <code>Deprecation: true</code>, <code>Sunset: date</code> on old endpoints so clients/monitoring detect.</p>
+<p>Think: version contract (v1 is dead), migration guide, per-client outreach (top consumers), stats (usage dropped?). Remove only when safe.</p>`,
+    analogy: `<b>Bus route closure</b>: pehle notice (deprecation), phir temporary diverted route (migration), deadline ke baad route hatao. Passengers (clients) ko waqt do nayi route sikhne ke liye.`,
+    why: `<p>Interview: "aapne antar imajed API version kholi, purana kya" — lifecycle QC = production responsibility signal.</p>`,
+    visual: {
+      cap: 'Announce → warn (Sunset header) → sunset → remove.',
+      svg: `<svg viewBox="0 0 700 90" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="10" y="18" width="150" height="40" rx="9" fill="#fff3c4"/><text x="85" y="42" text-anchor="middle" font-size="11" font-weight="700" fill="#333">Announce</text>
+<rect x="180" y="18" width="150" height="40" rx="9" fill="#cce3ff"/><text x="255" y="42" text-anchor="middle" font-size="11" font-weight="700" fill="#333">Deprecation</text>
+<rect x="350" y="18" width="150" height="40" rx="9" fill="#ffd6e8"/><text x="425" y="42" text-anchor="middle" font-size="11" font-weight="700" fill="#333">Sunset</text>
+<rect x="520" y="18" width="150" height="40" rx="9" fill="#ffe1e1"/><text x="595" y="42" text-anchor="middle" font-size="11" font-weight="700" fill="#333">Remove</text>
+</svg>`
+    },
+    code: `# Deprecated endpoint response headers
+HTTP/1.1 200 OK
+Deprecation: true
+Sunset: Fri, 2027-01-01 00:00:00 GMT
+Link: <https://api.example.com/v2/users>; rel="successor-version"
+
+# Policy
+- additive: no deprecation
+- breaking: deprecate + warn >= N months
+- then remove (log via sunset header)`,
+    where: [
+      ['Public APIs', 'Deprecation policy standard.'],
+      ['SDK lifecycle', 'Versioned package sunset.']
+    ],
+    pros: [
+      'Clients prepared, no surprise break.',
+      'Trust + adoption of new versions.'
+    ],
+    cons: [
+      'Dead code lingering.',
+      'Active usage monitoring chahiye.'
+    ],
+    gotchas: [
+      'Bas Itna Yaad: <b>Deprecation:true + Sunset header + successor link.</b>'
+    ]
+  },
+
+  'ap20': {
+    terms: [
+      ['ETag', 'Resource version hash — If-None-Match.'],
+      ['Cache-Control', 'max-age, no-store, private — caching policy.'],
+      ['304 Not Modified', 'Cache valid — server hash match.'],
+      ['Vary', 'Response variant by header (e.g. Accept).']
+    ],
+    what: `<p><b>HTTP caching</b> saves both client + server. <code>Cache-Control: public, max-age=3600</code> — browsers/CDNs cache TTL. <code>ETag</code> — weak validator; client sends <code>If-None-Match</code> and gets <code>304</code> if unchanged (payload skip).</p>
+<p>Auth responses — <code>private</code> + <code>no-store</code>. Variants: <code>Vary: Accept</code>. REVALIDATION (ETag) > TTL (max-age) for stale consistency.</p>`,
+    analogy: `<b>Library book catalog</b>: cache = aapki notebook jahan pehla copy; max-age = "24 hours baad dubara check karna"; ETag = book edition number — "ye edition mast hai" bolo to library 304 bolti hai "haan wahi hai, copy color kar".`,
+    why: `<p>Interview: "API ko kaise fast karoge?" cache + ETag. Correct cache headers = performance pe explicit control.</p>`,
+    visual: {
+      cap: 'ETag validator + Cache-Control policy = fewer round trips.',
+      svg: `<svg viewBox="0 0 700 100" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="10" y="20" width="200" height="38" rx="9" fill="#d6f5e3"/><text x="110" y="43" text-anchor="middle" font-size="11" font-weight="700" fill="#333">GET + If-None-Match</text>
+<line x1="212" y1="39" x2="300" y2="39" stroke="#333" stroke-width="2"/><polygon points="306,39 294,34 294,44" fill="#333"/>
+<rect x="310" y="20" width="210" height="38" rx="9" fill="#fff3c4"/><text x="415" y="43" text-anchor="middle" font-size="11" font-weight="700" fill="#333">ETag match → 304 (no body)</text>
+<text x="415" y="88" text-anchor="middle" font-size="10" fill="#666">Cache-Control: public, max-age=3600</text>
+</svg>`
+    },
+    code: `# Response
+Cache-Control: public, max-age=3600
+ETag: "a1b2c3"
+
+# Revalidation (client sends)
+If-None-Match: "a1b2c3"
+# -> 304 Not Modified (no body) — cache reuse
+
+# Sensitive data
+Cache-Control: private, no-store
+
+# Variants
+Vary: Accept   (json vs xml cached separately)`,
+    where: [
+      ['Read-heavy APIs', 'GET optimization.'],
+      ['CDN edge', 'Cache-Control on public assets.']
+    ],
+    pros: [
+      'Huge latency/bandwidth savings.',
+      'Server load down.'
+    ],
+    cons: [
+      'Stale data risk — policy decisions.',
+      'Vary/Purge complexity.'
+    ],
+    gotchas: [
+      'Bas Itna Yaad: <b>ETag + 304 = revalidate; max-age = TTL; no-store for private.</b>'
+    ]
+  },
+
+  'ap21': {
+    terms: [
+      ['Bulk operations', 'Batch of items in one request — POST /batch, arrays.'],
+      ['Async processing', 'Long tasks: 202 Accepted + job status endpoint.'],
+      ['Idempotency keys', 'Bulk/async retry-safe.'],
+      ['Polling', 'Client GET /jobs/{id} to track.']
+    ],
+    what: `<p><b>Bulk</b>: multiple resources ek request mein (POST /orders/batch with array, or 2000 rows upload). Saves round-trips; response per-item results. <b>Async</b>: slow work (video transcode, report gen) — accept quickly (<code>202 Accepted</code> + <code>Location: /jobs/123</code>), process background, client polls status.</p>
+<p>Patterns: bulk step-limit (e.g. max 1000), partial success (per-item status), async = job queue + status + callback/webhook on done.</p>`,
+    analogy: `<b>Laundry service</b>: bulk = ek bag mein 20 cheezein do ek throat (ek + request queue), async = bade order "2 PM tak ready" — aapko track number (job id) milta hai, whirring machine pe manually nahi rukna.`,
+    why: `<p>Interview: "video upload processing" — 202 + job queue + status + webhook is the canonical system design answer.</p>`,
+    visual: {
+      cap: 'POST /jobs → 202 + jobId → client polls → result.',
+      svg: `<svg viewBox="0 0 700 100" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="10" y="22" width="150" height="38" rx="9" fill="#fff3c4"/><text x="85" y="45" text-anchor="middle" font-size="11" font-weight="700" fill="#333">Client</text>
+<line x1="162" y1="41" x2="225" y2="41" stroke="#333" stroke-width="2"/><polygon points="231,41 219,36 219,46" fill="#333"/>
+<rect x="235" y="22" width="170" height="38" rx="9" fill="#cce3ff"/><text x="320" y="45" text-anchor="middle" font-size="11" font-weight="700" fill="#333">202 + jobId</text>
+<line x1="407" y1="41" x2="470" y2="41" stroke="#333" stroke-width="2"/><polygon points="476,41 464,36 464,46" fill="#333"/>
+<rect x="480" y="22" width="160" height="38" rx="9" fill="#d6f5e3"/><text x="560" y="45" text-anchor="middle" font-size="11" font-weight="700" fill="#333">Queue + Worker</text>
+<text x="560" y="88" text-anchor="middle" font-size="10" fill="#666">poll GET /jobs/{id} → status: pending/running/done</text>
+</svg>`
+    },
+    code: `# Bulk
+POST /orders/batch
+{ "items": [ {..,..}, {..,..} ] }   # max 1000
+# -> 200 { "results": [ {ok, id}, {err, msg} ] }
+
+# Async
+POST /videos/transcode
+{ "videoId": "v7" }
+# -> 202 Accepted
+#    Location: /jobs/42
+#    { "jobId": 42, "status": "queued" }
+
+# Poll
+GET /jobs/42 -> { "status": "done", "output": "/cdn/v7.mp4" }
+# or webhook when done`,
+    where: [
+      ['Data imports/exports', 'Reports, ETL.'],
+      ['Media processing', 'Transcode, thumbnails.']
+    ],
+    pros: [
+      'Bulk: fewer round trips, throughput.',
+      'Async: instant ack, decoupled.'
+    ],
+    cons: [
+      'Batch limits & partial failures.',
+      'Job storage + cleanup.'
+    ],
+    gotchas: [
+      'Bas Itna Yaad: <b>202 + jobId + poll/webhook; batch = per-item results.</b>'
+    ]
+  },
+
+  'ap22': {
+    terms: [
+      ['Retry', 'Transient failure pe request repeat.'],
+      ['Backoff', 'Wait time badhaana retries ke beech.'],
+      ['Jitter', 'Random add — thundering herd se bachat.'],
+      ['Max retries', '3-5 typically — sirf idempotent par.'],
+      ['Exponential', '2x wait each attempt: 1s, 2s, 4s...']
+    ],
+    what: `<p><b>Retry with exponential backoff + jitter</b> is the reliability pattern: failure pe sirf transient errors (429, 503, timeout) retry karo, wait expand (1s → 2s → 4s), add <b>jitter</b> random ± so sab clients ek saath hit na karein (thundering herd).</p>
+<p>Must-have: retry only idempotent requests (or Idempotency-Key), Retry-After respect, max attempts (3-5), circuit breaker for long outages.</p>`,
+    analogy: `<b>Zoo pe cracker + phone booth</b>: "line try karo 1s baad, 2s, 4s..." — but agar sab queue bhar rahe to random jitter se sab ek jaise aaya na. Jab tak circuit breaker says "2 min band".`,
+    why: `<p>Interview: "service down, clients kaise behave karein" — backoff + jitter + circuit breaker pattern answer. "Rate limit retry" specific.</p>`,
+    visual: {
+      cap: 'Wait: 1s → 2s → 4s → 8s (+ jitter), then give up.',
+      svg: `<svg viewBox="0 0 700 90" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="10" y="20" width="60" height="30" rx="6" fill="#d6f5e3"/><text x="40" y="40" text-anchor="middle" font-size="11" font-weight="700" fill="#333">1s</text>
+<rect x="85" y="20" width="60" height="30" rx="6" fill="#d6f5e3"/><text x="115" y="40" text-anchor="middle" font-size="11" font-weight="700" fill="#333">2s</text>
+<rect x="160" y="20" width="60" height="30" rx="6" fill="#d6f5e3"/><text x="190" y="40" text-anchor="middle" font-size="11" font-weight="700" fill="#333">4s</text>
+<rect x="235" y="20" width="60" height="30" rx="6" fill="#d6f5e3"/><text x="265" y="40" text-anchor="middle" font-size="11" font-weight="700" fill="#333">8s</text>
+<rect x="310" y="20" width="110" height="30" rx="6" fill="#ffe1e1"/><text x="365" y="40" text-anchor="middle" font-size="11" font-weight="700" fill="#333">give up</text>
+<text x="365" y="80" text-anchor="middle" font-size="10" fill="#666">+ jitter (± random) throttles herd</text>
+</svg>`
+    },
+    code: `# Client pattern
+attempt = 0
+while attempt < 5:
+    res = do_request()
+    if res.ok: return res
+    if res.status in {400, 401, 403}: break     # hard errors
+    if res.status == 429: wait = res.Retry-After  # respect server
+    else: wait = min(2 ** attempt, 30)
+    wait += random(0, wait*0.1)                  # jitter
+    sleep(wait); attempt += 1
+
+# Server side: also cap, and give Retry-After`,
+    where: [
+      ['Networks', 'Transient failures standard.'],
+      ['Rate limits', '429 respected.']
+    ],
+    pros: [
+      'Self-healing — no manual alerts.',
+      'Jitter distributes load.'
+    ],
+    cons: [
+      'Worsens overload if wrong.',
+      'Non-idempotent retries risky.'
+    ],
+    gotchas: [
+      'Bas Itna Yaad: <b>backoff + jitter + max retries; retry only idempotent/429/503.</b>'
+    ]
+  },
+
+  'ap23': {
+    terms: [
+      ['CQRS', 'Command Query Responsibility Segregation — reads/writes alag models.'],
+      ['Read model', 'Optimized for queries (denormalized, cache).'],
+      ['Event Sourcing', 'State = append-only event log; current state = replay.'],
+      ['Snapshot', 'Bar bar replay se bachne ke liye periodic capture.']
+    ],
+    what: `<p><b>CQRS</b>: writes ek model (commands), reads doosra (queries) — optimize independently (read replica, projections). <b>Event Sourcing</b>: system state ko directly store mat karo — <b>events append</b> karo (OrderPlaced, PaymentCaptured). Current state = events replay/snapshot.</p>
+<p>Why: commands aur reads alag load/scale; events = audit + rebuild (new projection) + time travel. Cost: eventual consistency gap, event complexity.</p>`,
+    analogy: `<b>Bank statement</b>: aap balance (state) nahi, transactions (events) ko true record maante ho. Balance = snapshot computed from transactions. CQRS = "account balance read" aur "deposit write" alag systems pe.`,
+    why: `<p>Interview senior/distributed: rebuilding projections, audit trails, complex reads scalable design. High marks when you mention trade-offs.</p>`,
+    visual: {
+      cap: 'Commands + Events → projections (read model / snapshots).',
+      svg: `<svg viewBox="0 0 700 100" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="10" y="15" width="150" height="36" rx="9" fill="#cce3ff"/><text x="85" y="37" text-anchor="middle" font-size="11" font-weight="700" fill="#333">Commands</text>
+<line x1="162" y1="33" x2="220" y2="33" stroke="#333" stroke-width="2"/><polygon points="226,33 214,28 214,38" fill="#333"/>
+<rect x="230" y="15" width="200" height="36" rx="9" fill="#fff3c4"/><text x="330" y="37" text-anchor="middle" font-size="11" font-weight="700" fill="#333">Event Log (append-only)</text>
+<line x1="432" y1="33" x2="490" y2="33" stroke="#333" stroke-width="2"/><polygon points="496,33 484,28 484,38" fill="#333"/>
+<rect x="500" y="15" width="180" height="36" rx="9" fill="#d6f5e3"/><text x="590" y="37" text-anchor="middle" font-size="11" font-weight="700" fill="#333">Read Projection</text>
+<text x="330" y="78" text-anchor="middle" font-size="10" fill="#666">snapshot periodic; replay → state</text>
+</svg>`
+    },
+    code: `// Write: events only
+OrderCreated { id, items, total }
+PaymentCaptured { id, amount, txn }
+OrderShipped { id, tracking }
+
+// State = fold events (or snapshot + tail)
+balance = fold(events)[latest]
+
+// CQRS: read model in separate store
+orders_table = projection of events (denormalized for UI)`,
+    where: [
+      ['High-read systems', 'Separate query models.'],
+      ['Audit/regulatory', 'Event log as source of truth.']
+    ],
+    pros: [
+      'Audit + rebuild + time travel.',
+      'Read/write scale separately.'
+    ],
+    cons: [
+      'Eventual consistency gap.',
+      'Complexity high for simple apps.'
+    ],
+    gotchas: [
+      'Interview: don\'t bolt CQRS/ES on CRUD apps — say when justified.',
+      'Bas Itna Yaad: <b>events = truth, projections = reads; CQRS splits models.</b>'
+    ]
+  },
+
+  'ap24': {
+    terms: [
+      ['REST', 'Resources + HTTP — simple, cacheable, standard.'],
+      ['GraphQL', 'Single endpoint, client-defined shape queries.'],
+      ['gRPC', 'Binary protocol (protobuf), typed, bidirectional streaming, low latency.'],
+      ['BFF', 'Backend-for-Frontend — per-client aggregation.']
+    ],
+    what: `<p><b>REST</b>: simple, cache, layers, resources — standard web/HTTP. <b>GraphQL</b>: ek query mein nested data, over-fetching khatam, single /graphql; cons: caching hard, N+1, complex. <b>gRPC</b>: proto schema, HTTP/2, typed, streaming, efficient — internal services ka best.</p>
+<p>Choice: public web API = REST; complex client shapes = GraphQL; internal microservices/streaming = gRPC. Hybrid layers (BFF) aree common.</p>`,
+    analogy: `<b>Meal:</b> REST = a-la-carte restaurant (fixed menu dishes — sab dish card pe), GraphQL = "mujhe sabse pehle kal ka mango, juice ka size" custom thali (only what I want), gRPC = factory cafeteria binary meal packs (standardized, fast, precise portions).`,
+    why: `<p>Interview classic: "kaunsi API style kab use karoge" — decide by client type, caching, streaming, type-safety. Show trade-off awareness.</p>`,
+    visual: {
+      cap: 'REST: many endpoints. GraphQL: ONE endpoint (shape by client). gRPC: binary + streaming.',
+      svg: `<svg viewBox="0 0 700 100" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="10" y="20" width="200" height="34" rx="8" fill="#d6f5e3"/><text x="110" y="41" text-anchor="middle" font-size="11" font-weight="700" fill="#333">REST — resources</text>
+<rect x="225" y="20" width="200" height="34" rx="8" fill="#ffd6e8"/><text x="325" y="41" text-anchor="middle" font-size="11" font-weight="700" fill="#333">GraphQL — one endpoint</text>
+<rect x="440" y="20" width="200" height="34" rx="8" fill="#fff3c4"/><text x="540" y="41" text-anchor="middle" font-size="11" font-weight="700" fill="#333">gRPC — binary + stream</text>
+</svg>`
+    },
+    code: `# REST
+GET /users/7/orders
+
+# GraphQL
+query { user(id: 7) { name orders { total } } }
+
+# gRPC (proto)
+service UserService { rpc GetUser(UserId) returns (User); }
+// binary wire (protobuf), HTTP/2, typed stubs`,
+    where: [
+      ['Web public', 'REST.'],
+      ['Complex clients', 'GraphQL (mobile/frontend shapes).'],
+      ['Internal services', 'gRPC (low latency, typed).']
+    ],
+    pros: [
+      'REST: simple + cache. GraphQL: no over-fetch. gRPC: fast + typed.'
+    ],
+    cons: [
+      'REST: N+1 no. GraphQL: cache/security. gRPC: tooling + HTTP no.'
+    ],
+    gotchas: [
+      'Interview: don\'t say "always GraphQL" — say when cache/simplicity wins, use REST.',
+      'Bas Itna Yaad: <b>REST web, GraphQL shapes, gRPC internal streaming.</b>'
+    ]
+  },
+
+  'ap25': {
+    terms: [
+      ['CORS', 'Cross-Origin Resource Sharing — browser ka door guard.'],
+      ['Origin', 'Protocol + domain + port.'],
+      ['Preflight', 'OPTIONS request before real request (non-simple).'],
+      ['Access-Control-*', 'Allow-Origin/Allow-Methods/Allow-Headers/Allow-Credentials.']
+    ],
+    what: `<p><b>Same-origin policy</b> browsers default. <b>CORS</b> lets server say "is origin ko access hai". Simple requests (GET/header basic) directly; others <b>preflight</b> OPTIONS pehle, then main request.</p>
+<p>Config: <code>Access-Control-Allow-Origin</code> (specific origin, not * with credentials), <code>Allow-Methods</code>, <code>Allow-Headers</code>, <code>Allow-Credentials: true</code> (cookies), handle <code>Vary: Origin</code>. Wildcard * = no credentials.</p>`,
+    analogy: `<b>Office main gate</b> samjho: browser (security guard) lets you in only if visitor list (CORS) mentions your badge ID (origin). Cross-origin request bina pass = blocked; preflight = "pehle pass dikhao, main check karoon".`,
+    why: `<p>Interview: "frontend ko API call kyun block hota hai" — debug ka answer. CORS server-side header hai, not frontend fix.</p>`,
+    visual: {
+      cap: 'Browser asks server CORS → server Allow-Origin → response.',
+      svg: `<svg viewBox="0 0 700 100" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="10" y="22" width="140" height="38" rx="9" fill="#ffd6e8"/><text x="80" y="45" text-anchor="middle" font-size="11" font-weight="700" fill="#333">Browser</text>
+<line x1="152" y1="41" x2="215" y2="41" stroke="#333" stroke-width="2"/><polygon points="221,41 209,36 209,46" fill="#333"/>
+<rect x="225" y="22" width="170" height="38" rx="9" fill="#fff3c4"/><text x="310" y="45" text-anchor="middle" font-size="11" font-weight="700" fill="#333">OPTIONS preflight</text>
+<line x1="397" y1="41" x2="460" y2="41" stroke="#333" stroke-width="2"/><polygon points="466,41 454,36 454,46" fill="#333"/>
+<rect x="470" y="22" width="180" height="38" rx="9" fill="#d6f5e3"/><text x="560" y="45" text-anchor="middle" font-size="11" font-weight="700" fill="#333">Allow-Origin: app.com</text>
+<text x="310" y="88" text-anchor="middle" font-size="10" fill="#666">allow specific origin if credentials used</text>
+</svg>`
+    },
+    code: `# Server response
+Access-Control-Allow-Origin: https://app.example.com
+Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
+Access-Control-Allow-Headers: Authorization, Content-Type
+Access-Control-Allow-Credentials: true
+Access-Control-Max-Age: 86400
+Vary: Origin
+
+# * with credentials? no -> * means no credentials`,
+    where: [
+      ['SPA + API separate domains', 'Almost every web app.'],
+      ['API gateways', 'Central CORS policy.']
+    ],
+    pros: [
+      'Enable browser clients safely.',
+      'Serve under token with headers.'
+    ],
+    cons: [
+      'Preflight cost (2 requests).',
+      'Wildcard tempting but unsafe.'
+    ],
+    gotchas: [
+      'Bas Itna Yaad: <b>specific origin + credentials; preflight = OPTIONS; Vary: Origin.</b>'
+    ]
+  },
+
+  'ap26': {
+    terms: [
+      ['CSP', 'Content Security Policy — browser ko batana kya load karna allowed hai.'],
+      ['CSRF', 'Cross-Site Request Forgery — user ke session pe invisible action.'],
+      ['SameSite', 'Cookie attribute — cross-site requests block.'],
+      ['Clickjacking', 'X-Frame-Options / frame-ancestors.'],
+      ['Headers', 'X-Frame-Options, HSTS, Referrer-Policy.']
+    ],
+    what: `<p><b>Hardening headers</b>: CSP (script-src/source whitelist, block inline eval), <code>X-Frame-Options</code> (framing block), <code>Strict-Transport-Security</code>, <code>Referrer-Policy</code>, <code>X-Content-Type-Options: nosniff</code>. <b>CSRF</b>: symmetric cookie-session APIs par — protect with <code>SameSite=Lax/Strict</code>, CSRF tokens, double-submit cookie.</p>
+<p>CSP for APIs mostly N/A (headers matter for browsers); for SPAs + APIs: set CSP, HSTS, secure cookies, SameSite. </p>`,
+    analogy: `<b>School security</b>: CSP = authorised supplier list (konsi si scripts dekhni), CSRF = exam time fake form "wish Caesar" bina user ko pata action karwaana — SameSite cookie = "bair ki site se forms block", frame = school building ke andar hi sikh.`,
+    why: `<p>Interview security bucket: CORS+CSP+CSRF — which layer for which attack. Know header names + default protections by browser flags.</p>`,
+    visual: {
+      cap: 'Headers: CSP, HSTS, X-Frame-Options, SameSite cookies.',
+      svg: `<svg viewBox="0 0 700 100" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="10" y="18" width="220" height="30" rx="8" fill="#cce3ff"/><text x="120" y="38" text-anchor="middle" font-size="11" font-weight="700" fill="#333">CSP: script-src self</text>
+<rect x="245" y="18" width="210" height="30" rx="8" fill="#cce3ff"/><text x="350" y="38" text-anchor="middle" font-size="11" font-weight="700" fill="#333">X-Frame-Options: DENY</text>
+<rect x="470" y="18" width="220" height="30" rx="8" fill="#cce3ff"/><text x="580" y="38" text-anchor="middle" font-size="11" font-weight="700" fill="#333">SameSite=Lax cookie</text>
+<text x="350" y="85" text-anchor="middle" font-size="10" fill="#666">HSTS + nosniff + Referrer-Policy yaad rakho</text>
+</svg>`
+    },
+    code: `# Response headers
+Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'
+X-Frame-Options: DENY
+Strict-Transport-Security: max-age=31536000
+X-Content-Type-Options: nosniff
+Referrer-Policy: no-referrer
+
+# CSRF defense
+Set-Cookie: session=..; HttpOnly; Secure; SameSite=Lax
+# + CSRF token on state-changing requests (if SameSite not enough)`,
+    where: [
+      ['Browser-facing APIs', 'Security headers.'],
+      ['Banking flows', 'CSRF tokens + verification.']
+    ],
+    pros: [
+      'Multiple layers blocking attacks.',
+      'Configurable without code rewrite.'
+    ],
+    cons: [
+      'CSP strict break inline scripts.',
+      'Headers hard to test perfectly.'
+    ],
+    gotchas: [
+      'Interview: don\'t mix CSRF tokens with pure token auth (Bearer) — cookies are the vulnerable path.',
+      'Bas Itna Yaad: <b>CSP whitelists; SameSite+token stops CSRF; HSTS forces https.</b>'
+    ]
+  },
+
+  'ap27': {
+    terms: [
+      ['Injection', 'User input query/code ke roop mein execute.'],
+      ['SQL injection', 'input mein " OR 1=1 -- usable SQL.'],
+      ['Sanitization', 'Input clean/normalize — whitelist chars.'],
+      ['Parameterized queries', 'SQL building se bina — prepared statements.'],
+      ['Escaping', 'Output context ke hisaab se encode.']
+    ],
+    what: `<p><b>Injection prevention</b> ka seedha rule: <b>never trust input, never concatenate</b>. SQL: parameterized queries/prepared statements (never string concat). Shell/OS/HTML injection: escape per context or avoid. <strong>Validation</strong> (shape) separate from <strong>sanitization</strong> (content clean).</p>
+<p>Layers: allowlist validation, parameterized DB calls, ORM abstractions, output encoding (HTML entity for React etc.), least privilege DB user, scan with OS tools (SQLMap-ish).</p>`,
+    analogy: `<b>Kitchen guest</b>: guest bole to recipe book ek din banaya... SQL injection = guest ki extra recipe line (OR 1=1) book mein aapki banayi dish — tab aap prepared recipe (parameterized) use karte ho jo guest ka text as ingredient, not "cook me" instruction.`,
+    why: `<p>OWASP #1 SQL injection — interview security basics. "Kaise validate/sanitaate input" — parameterization is non-negotiable answer.</p>`,
+    visual: {
+      cap: 'Never concatenate user input into queries/code — parameterize + escape by context.',
+      svg: `<svg viewBox="0 0 700 90" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="10" y="22" width="200" height="40" rx="9" fill="#ffe1e1"/><text x="110" y="44" text-anchor="middle" font-size="11" font-weight="700" fill="#333">concat SQL — break</text>
+<line x1="250" y1="42" x2="310" y2="42" stroke="#333" stroke-width="2" stroke-dasharray="5,4"/>
+<rect x="350" y="22" width="200" height="40" rx="9" fill="#d6f5e3"/><text x="450" y="44" text-anchor="middle" font-size="11" font-weight="700" fill="#333">parameterized — safe</text>
+<text x="450" y="80" text-anchor="middle" font-size="10" fill="#666">input = data, kabhi code nahi</text>
+</svg>`
+    },
+    code: `# BAD — SQL injection
+query = "SELECT * FROM users WHERE email='" + email + "'"
+# email:  x' OR 1=1 --
+
+# GOOD — parameterized
+SELECT * FROM users WHERE email = $1     // pg
+# or: PreparedStatement, ?, etc. Inputs bound as data
+
+# Escape outputs by context
+# HTML: &lt; &gt; | React auto-escapes by default
+# Shell: avoid interpolation; use arg arrays`,
+    where: [
+      ['Any database query', 'Non-negotiable.'],
+      ['Public input surfaces', 'Search, import, webhooks.']
+    ],
+    pros: [
+      'OWASP top risk closed.',
+      'Safe by construction.'
+    ],
+    cons: [
+      'Legacy string queries migration.',
+      'Some ORM magic can hide issues.'
+    ],
+    gotchas: [
+      'Interview: entity-encoding is output-only; parameterization for storage. Both needed.',
+      'Bas Itna Yaad: <b>parameterize queries; escape outputs by context.</b>'
+    ]
+  },
+
+  'ap28': {
+    terms: [
+      ['API Gateway', 'Single entry — auth, rate limit, routing, caching, WAF.'],
+      ['Edge', 'CDN-level — latency low, scale high.'],
+      ['Backend split', 'Gateway → services.'],
+      ['Policy', 'Authentication, quotas, API keys, transformations.']
+    ],
+    what: `<p><b>API Gateway</b>: API ke saamne ek <b>entry point</b> jo cross-cutting cheezein handle karta hai: authentication/API keys, rate limiting, request routing, response caching, logging/metrics, transformations, WAF/security.</p>
+<p>Benefits: backend microservices clean (no auth logic repeat), abuse protection pehle, client contract stable. Trade-off: extra hop latency, gateway bottleneck-ish if not scaled, vendor/FaaS coupling.</p>`,
+    analogy: `<b>Airport security + check-in counter</b>: gateway = ek building jo har traveller (request) ko — ID check (auth), baggage limit (rate limit), route gate (routing), x-ray (WAF) — handle karke sahi aircraft (backend) tak reach karaata hai, without every service having its own guard.`,
+    why: `<p>Interview: every microservice architecture has gateway — auth/rate limit routing centralized. "Why gateway, not direct to services" — functional answer.</p>`,
+    visual: {
+      cap: 'Clients → Gateway (auth, limits, cache, route) → Services.',
+      svg: `<svg viewBox="0 0 700 110" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="10" y="25" width="140" height="34" rx="9" fill="#ffd6e8"/><text x="80" y="46" text-anchor="middle" font-size="11" font-weight="700" fill="#333">Clients</text>
+<line x1="152" y1="42" x2="215" y2="42" stroke="#333" stroke-width="2"/><polygon points="221,42 209,37 209,47" fill="#333"/>
+<rect x="225" y="12" width="200" height="60" rx="10" fill="#fff3c4"/><text x="325" y="34" text-anchor="middle" font-size="12" font-weight="700" fill="#333">API Gateway</text>
+<text x="325" y="52" text-anchor="middle" font-size="9" fill="#666">auth • rate-limit • cache •</text>
+<text x="325" y="65" text-anchor="middle" font-size="9" fill="#666">route • WAF</text>
+<line x1="427" y1="42" x2="490" y2="42" stroke="#333" stroke-width="2"/><polygon points="496,42 484,37 484,47" fill="#333"/>
+<rect x="500" y="25" width="150" height="34" rx="9" fill="#d6f5e3"/><text x="575" y="46" text-anchor="middle" font-size="11" font-weight="700" fill="#333">Services</text>
+</svg>`
+    },
+    code: `# Gateway responsibilities
+- authn/z (API keys, JWT validation)
+- rate limiting per key/user
+- routing: /v1/orders -> orders-service
+- response caching (ETag-aware)
+- request/response transformation (versioning)
+- WAF, DDoS mitigation
+- logging/metrics aggregation
+
+# (e.g. Kong, AWS API Gateway, nginx, Envoy)`,
+    where: [
+      ['Microservices', 'Almost standard.'],
+      ['Partner APIs', 'Per-partner keys/quotas.']
+    ],
+    pros: [
+      'Central policy — one place.',
+      'Backend stays lean.'
+    ],
+    cons: [
+      'Extra hop + config complexity.',
+      'Becomes bottleneck/power if fat.'
+    ],
+    gotchas: [
+      'Bas Itna Yaad: <b>gateway = auth + limits + routing + cache masala ek jagah.</b>'
+    ]
+  },
+
+  'ap29': {
+    terms: [
+      ['OpenAPI', '3.0/3.1 — machine-readable API spec (YAML/JSON).'],
+      ['Swagger UI', 'Generated interactive docs.'],
+      ['Spec-first', 'Pehle spec, phir code — contract-aligned.'],
+      ['Codegen', 'SDKs/clients/stubs automate.'],
+      ['Client generation', 'OpenAPI Generator → typed clients.']
+    ],
+    what: `<p><b>OpenAPI/Swagger</b>: API ka blueprint — endpoints, parameters, schemas, security, examples. Spec-first: develop contract first (docs/mock/server), then implement — <b>contract = single source of truth</b>.</p>
+<p>Benefits: auto-docs (Swagger UI), codegen servers/clients (stubs typed), validation (request against spec), versioning visibility, mock servers for parallel dev.</p>`,
+    analogy: `<b>Blueprint vs building</b>: OpenAPI = architect ka blueprint (rooms, wiring, doors) — contractor (code) blueprint se builds. Spec-first = pehle blueprint final, phir construction — koi bhi tool (docs, mocks, SDKs) blueprint se autogenerate.`,
+    why: `<p>Interview: "kaise dokument karte ho" — spec-first answer + names (OpenAPI, Swagger). Contract testing + codegen se DX ka +signal. Tools: Stoplight, Prism mock.</p>`,
+    visual: {
+      cap: 'OpenAPI spec → docs + mocks + clients + validation.',
+      svg: `<svg viewBox="0 0 700 100" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="10" y="25" width="200" height="44" rx="9" fill="#fff3c4"/><text x="110" y="47" text-anchor="middle" font-size="12" font-weight="700" fill="#333">openapi.yaml</text>
+<line x1="212" y1="47" x2="275" y2="47" stroke="#333" stroke-width="2" stroke-dasharray="5,4"/>
+<rect x="280" y="12" width="120" height="70" rx="9" fill="#d6f5e3"/><text x="340" y="47" text-anchor="middle" font-size="11" font-weight="700" fill="#333">Docs</text>
+<rect x="410" y="12" width="120" height="70" rx="9" fill="#cce3ff"/><text x="470" y="47" text-anchor="middle" font-size="11" font-weight="700" fill="#333">Mocks</text>
+<rect x="540" y="12" width="120" height="70" rx="9" fill="#ffd6e8"/><text x="600" y="47" text-anchor="middle" font-size="11" font-weight="700" fill="#333">Clients</text>
+</svg>`
+    },
+    code: `# openapi.yaml (excerpt)
+openapi: 3.1.0
+info: { title: Orders API, version: 1.0.0 }
+paths:
+  /orders/{id}:
+    get:
+      summary: Get order
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Order" }
+
+# then: generate docs, mock (Prism), typed client`,
+    where: [
+      ['Public APIs', 'Spec mandatory.'],
+      ['SDK teams', 'Codegen typjed clients.']
+    ],
+    pros: [
+      'Documents itself — zero drift (if enforced).',
+      'Mock/codegen = fast dev.'
+    ],
+    cons: [
+      'Spec drift if code-first.',
+      'Spec quality = maintenance cost.'
+    ],
+    gotchas: [
+      'Bas Itna Yaad: <b>spec = contract; docs/mocks/clients sab isi se.</b>'
+    ]
+  },
+
+  'websocket-api': {
+    terms: [
+      ['WebSocket', 'Persistent full-duplex TCP connection — HTTP upgrade.'],
+      ['Upgrade', '101 Switching Protocols.'],
+      ['Channels/Rooms', 'Grouped sockets (room = topic).'],
+      ['Heartbeat', 'Ping/Pong — dead connections detect.'],
+      ['Reconnection', 'Exponential backoff + resubscribe.']
+    ],
+    what: `<p><b>WebSocket</b>: HTTP ke baad upgrade — permanent connection, <b>client/server dono push</b> kar sakte hain (full-duplex), low latency — chat, games, live collab, trading. Init: <code>GET ... Upgrade: websocket</code> → <code>101</code> → binary/text frames.</p>
+<p>Design: rooms/channels (subscribe pattern), <b>heartbeats</b> (ping-pong JVM) dead conn detect, reconnect with backoff + resubscribe rooms, message schema (type + payload) versioned, scaling: sticky sessions / all nodes broadcast (Redis pub-sub / gateway).</p>`,
+    analogy: `<b>Walkie-talkie vs letter currier</b>: WebSocket = live walkie-talkie pe baat (dono side turant), REST polling = har baar letter bhej ke jawab ka intezaar. Room = aapki walkie channel (all crew members on same freq).`,
+    why: `<p>Interview: realtime systems — choices (WS vs polling vs SSE), rooms, reconnection strategy, scaling with multiple nodes.</p>`,
+    visual: {
+      cap: 'Client ↔ server persistent full-duplex; rooms group sockets.',
+      svg: `<svg viewBox="0 0 700 100" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="10" y="25" width="140" height="38" rx="9" fill="#ffd6e8"/><text x="80" y="47" text-anchor="middle" font-size="11" font-weight="700" fill="#333">Client</text>
+<line x1="152" y1="36" x2="520" y2="36" stroke="#333" stroke-width="2"/><line x1="152" y1="52" x2="520" y2="52" stroke="#333" stroke-width="2" stroke-dasharray="4,4"/>
+<polygon points="520,36 508,31 508,41" fill="#333"/><polygon points="152,52 140,47 140,57" fill="#333"/>
+<text x="336" y="28" text-anchor="middle" font-size="10" fill="#666">both ways</text>
+<rect x="525" y="25" width="160" height="38" rx="9" fill="#cce3ff"/><text x="605" y="47" text-anchor="middle" font-size="11" font-weight="700" fill="#333">Rooms / Server</text>
+<text x="336" y="85" text-anchor="middle" font-size="10" fill="#888">heartbeat ping/pong • reconnect + resubscribe</text>
+</svg>`
+    },
+    code: `// client
+const ws = new WebSocket('wss://api.example.com/chat');
+ws.onopen = () => ws.send(JSON.stringify({type:'join', room:'dev'}));
+ws.onmessage = e => render(JSON.parse(e.data));
+
+// server (concept)
+on('join')  -> add socket to room "dev"
+on('msg')   -> room.broadcast({type:'msg', text, room})
+
+// reconnect
+onclose -> setTimeout(connect, min(2**attempt, 30) + jitter);
+
+// scaling: sticky sessions / redis pub-sub across nodes`,
+    where: [
+      ['Chat / notifications', 'Classic use.'],
+      ['Games / live collab', 'Trading, editors, dashboards.']
+    ],
+    pros: [
+      'Low latency bidirectional.',
+      'Efficient — one connection.'
+    ],
+    cons: [
+      'Stateful — scaling tricky.',
+      'Proxies/timeouts, NAT, ops complexity.'
+    ],
+    gotchas: [
+      'Bas Itna Yaad: <b>101 upgrade, rooms, heartbeat, backoff reconnect.</b>'
+    ]
+  },
+
+  'file-upload': {
+    terms: [
+      ['multipart/form-data', 'File + fields ek request mein.'],
+      ['Presigned URL', 'Server-signed temporary direct-to-S3/OSS upload URL.'],
+      ['Chunked upload', 'Bade files — parts resume.'],
+      ['MIME validation', 'Type check (but never trust client-only).']
+    ],
+    what: `<p><b>File upload</b> options: 1) <b>multipart/form-data</b> — server receives file (small, fine). 2) <b>Presigned URL</b> — client directly S3/GCS ko upload (large, server load 0, per-file signature + expiry). 3) <b>Chunked/resumable</b> — big files in parts, resume on network drop (tus protocol).</p>
+<p>Must: size + type limits both sides, virus scan async, filename sanitize (no path traversal), store metadata (bucket key in DB), serving via signed URL/CDN with cache.</p>`,
+    analogy: `<b>Courier vs warehouse</b>: multipart = aap courier ko package do (office mail desk — small ok), presigned = warehouse ka temporary dock voucher jo aap seedha delivery guy ko de do (server jugadu) — sara berth customer se direct, chunked = bade crate ko alag karke send phir assemble (resume).`,
+    why: `<p>Interview: "profile picture / video upload kaise" — presigned URLs + chunking + scanning; avoid overtaxed app server.</p>`,
+    visual: {
+      cap: 'multipart → app (small) | presigned → storage direct (large/bulk).',
+      svg: `<svg viewBox="0 0 700 100" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="10" y="25" width="150" height="34" rx="9" fill="#ffd6e8"/><text x="85" y="47" text-anchor="middle" font-size="11" font-weight="700" fill="#333">Client</text>
+<line x1="162" y1="42" x2="225" y2="42" stroke="#333" stroke-width="2"/><polygon points="231,42 219,37 219,47" fill="#333"/>
+<rect x="235" y="25" width="180" height="34" rx="9" fill="#fff3c4"/><text x="325" y="47" text-anchor="middle" font-size="11" font-weight="700" fill="#333">Presigned URL / multipart</text>
+<line x1="417" y1="42" x2="480" y2="42" stroke="#333" stroke-width="2"/><polygon points="486,42 474,37 474,47" fill="#333"/>
+<rect x="490" y="25" width="160" height="34" rx="9" fill="#d6f5e3"/><text x="570" y="47" text-anchor="middle" font-size="11" font-weight="700" fill="#333">Object Storage</text>
+</svg>`
+    },
+    code: `# 1) multipart/form-data (small)
+POST /avatars
+Content-Type: multipart/form-data
+(profile.jpg + userId)
+
+# 2) presigned upload (large)
+POST /uploads/generate { name, type, size }
+-> { url, fields }   (S3 PUT presigned, 15min)
+client PUTs directly to S3
+then POST /uploads/complete { key }  -> metadata saved
+
+# 3) chunked (tus): PATCH parts, resume offset`,
+    where: [
+      ['Avatars/attachments', 'multipart or presigned.'],
+      ['Video/backups', 'Chunked + resume.']
+    ],
+    pros: [
+      'Presigned: server offloaded.',
+      'Chunked: resume broken uploads.'
+    ],
+    cons: [
+      'Scanning/size policy needed.',
+      'Multiple storages ordering.'
+    ],
+    gotchas: [
+      'Bas Itna Yaad: <b>small=multipart, large=presigned, huge=chunks + scan server-side.</b>'
+    ]
+  },
+
+  'streaming-api': {
+    terms: [
+      ['SSE', 'Server-Sent Events — server → client one-way over HTTP.'],
+      ['text/event-stream', 'Content-Type — events stream ki format.'],
+      ['Chunked transfer', 'Transfer-Encoding: chunked — body length unknown, pieces.'],
+      ['Streaming responses', 'LLM-style token-by-token generation.']
+    ],
+    what: `<p><b>Streaming APIs</b>: response body khulke aate raho — low TTFB. <b>SSE</b>: server→client push (event stream, auto-reconnect by EventSource). <b>Chunked transfer</b>: overall length na ho, pieces (HTTP/1.1). <b>Streaming LLM responses</b>: token by token as generated.</p>
+<p>Formats: SSE lines (<code>id/event/data</code>), JSONL (each line one JSON), NDJSON. Design: process cursor + keep-alive comments, reconnect semantics, backpressure.</p>`,
+    analogy: `<b>Fruitshaala delivery vs CRT berri</b>: normal = pura crate ek saath (wait for full response); streaming = jaise-jaise khane ready, har plate bhijti hai (first fruit jaldi). SSE = khana kitchen se sirf waiter aapki table tak push karte rahenge (one-way), no need to call waiter repeatedly.`,
+    why: `<p>Interview: LLM APIs, dashboards, notifications — streaming choices (SSE/WS/polling) & chunked transport. Show choice logic.</p>`,
+    visual: {
+      cap: 'HTTP response chunks: server pushes events → client consumes progressively.',
+      svg: `<svg viewBox="0 0 700 100" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,sans-serif">
+<rect x="10" y="25" width="140" height="38" rx="9" fill="#cce3ff"/><text x="80" y="47" text-anchor="middle" font-size="11" font-weight="700" fill="#333">Server</text>
+<line x1="152" y1="44" x2="520" y2="44" stroke="#333" stroke-width="2"/>
+<polygon points="520,44 508,39 508,49" fill="#333"/>
+<text x="336" y="28" text-anchor="middle" font-size="10" fill="#666">data: chunk1</text>
+<text x="336" y="78" text-anchor="middle" font-size="10" fill="#666">data: chunk2 ... (text/event-stream)</text>
+<rect x="525" y="25" width="160" height="38" rx="9" fill="#d6f5e3"/><text x="605" y="47" text-anchor="middle" font-size="11" font-weight="700" fill="#333">Client</text>
+</svg>`
+    },
+    code: `# Server response headers
+Content-Type: text/event-stream; charset=utf-8
+Cache-Control: no-cache
+Connection: keep-alive
+
+# body
+id: 1
+data: {"chunk": "Hey"}
+data: {"chunk": " world"}
+
+# client (SSE auto-reconnect)
+new EventSource('/v1/chat/stream').onmessage = e => append(e.data);
+
+# chunked: Transfer-Encoding: chunked (no Content-Length)`,
+    where: [
+      ['LLM chat', 'Token streaming.'],
+      ['Live dashboards', 'Server push metrics.']
+    ],
+    pros: [
+      'Low latency TTFB.',
+      'SSE: simple HTTP retry.'
+    ],
+    cons: [
+      'One-way only (SSE).',
+      'Proxies/timeouts careful.'
+    ],
+    gotchas: [
+      'Bas Itna Yaad: <b>SSE = one-way HTTP stream; chunked = no-length stream; keep-alive + reconnect.</b>'
+    ]
+  }
+}
+
+/* ── STATE ── */
+let store = {};
+try { store = JSON.parse(localStorage.getItem(STORE_KEY) || '{}'); } catch(e) {}
+function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch(e) {} }
+
+let activeChapter = chapters[0].id;
+let activeCatFilter = 'all';
+let activeStatusFilter = 'all';
+
+function updateStats() {
+  const allTopics = chapters.flatMap(c => c.topics);
+  const mastered = allTopics.filter(t => store[t.id]?.state === 'mastered').length;
+  const inprog = allTopics.filter(t => store[t.id]?.state === 'in-progress').length;
+  document.getElementById('stat-total').textContent = allTopics.length;
+  document.getElementById('stat-mastered').textContent = mastered;
+  document.getElementById('stat-inprogress').textContent = inprog;
+  document.getElementById('stat-pct').textContent = Math.round(mastered / allTopics.length * 100) + '%';
+  const streak = store.__streak || 1;
+  document.getElementById('stat-day').textContent = 'Day ' + streak;
+}
+
+function renderPhaseNav() {
+  const nav = document.getElementById('phase-nav');
+  nav.innerHTML = chapters.map(c => `<div class="phase-tab${c.id === activeChapter ? ' active' : ''}" data-ch="${c.id}">${c.title}</div>`).join('');
+  nav.querySelectorAll('.phase-tab').forEach(t => t.addEventListener('click', () => { activeChapter = t.dataset.ch; activeCatFilter = 'all'; activeStatusFilter = 'all'; renderContent(); renderPhaseNav(); }));
+}
+
+function getTopics(ch) {
+  let topics = ch.topics;
+  if (activeCatFilter !== 'all') topics = topics.filter(t => t.cat === activeCatFilter);
+  if (activeStatusFilter !== 'all') topics = topics.filter(t => (store[t.id]?.state || 'untouched') === activeStatusFilter);
+  return topics;
+}
+
+function renderContent() {
+  const ch = chapters.find(c => c.id === activeChapter);
+  const topics = getTopics(ch);
+  const allTopics = ch.topics;
+  const cats = [...new Set(allTopics.map(t => t.cat))];
+  const masteredCount = allTopics.filter(t => store[t.id]?.state === 'mastered').length;
+  const pct = Math.round(masteredCount / allTopics.length * 100);
+
+  const filterHTML = `<div class="filter-bar">
+    <div class="filter-group">
+      <span class="filter-label">Category:</span>
+      <button class="flt-btn${activeCatFilter === 'all' ? ' flt-active' : ''}" data-cat="all">All</button>
+      ${cats.map(c => `<button class="flt-btn flt-${c}${activeCatFilter === c ? ' flt-active' : ''}" data-cat="${c}">${c.charAt(0).toUpperCase() + c.slice(1)}</button>`).join('')}
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Status:</span>
+      <button class="flt-btn${activeStatusFilter === 'all' ? ' flt-active' : ''}" data-st="all">All</button>
+      <button class="flt-btn${activeStatusFilter === 'mastered' ? ' flt-active' : ''}" data-st="mastered">✓ Mastered</button>
+      <button class="flt-btn${activeStatusFilter === 'in-progress' ? ' flt-active' : ''}" data-st="in-progress">⟳ In Progress</button>
+    </div>
+    <span class="filter-count">${topics.length} topic${topics.length !== 1 ? 's' : ''}</span>
+  </div>`;
+
+  const progressHTML = `<div class="phase-progress-wrap">
+    <div class="phase-progress-label">${masteredCount} / ${allTopics.length} mastered — ${pct}%</div>
+    <div class="phase-progress-bar"><div class="phase-progress-fill" style="width:${pct}%"></div></div>
+  </div>`;
+
+  const topicsHTML = topics.map(t => {
+    const s = store[t.id] || {};
+    const state = s.state || 'untouched';
+    const cardClass = state === 'mastered' ? ' mastered' : state === 'in-progress' ? ' in-progress' : '';
+    const panelOpen = s.panelOpen ? ' open' : '';
+    const L = LEARN[t.id] || null;
+    const esc2 = str => String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const hl = src => esc2(src)
+      .replace(/(\/\/[^\n]*)/g, '<span class="c">$1</span>')
+      .replace(/(&#39;[^&\n]*?&#39;|&quot;[^&\n]*?&quot;)/g, '<span class="s">$1</span>')
+      .replace(/\b(return|const|let|var|if|else|for|while|new|this|async|await|function|throw|try|catch|finally|yield|extends|super|class|import|export|require|typeof)\b/g, '<span class="k">$1</span>');
+    const learnHTML = !L ? '' : `
+    <div class="learn-box open" id="learn-${t.id}">
+      <div class="learn-head" onclick="event.stopPropagation(); this.parentNode.classList.toggle('open')">
+        <span class="learn-caret">&#9654;</span>
+        <span class="learn-title">&#128214; Samjho</span>
+        <span class="learn-sub">padho, phir band karke neeche khud likho</span>
+      </div>
+      <div class="learn-body">
+        ${L.terms && L.terms.length ? `<div class="lblock lterms"><div class="llabel">Naye shabd</div>${L.terms.map(tm => `<div class="lterm"><span class="lterm-w">${esc2(tm[0])}</span><span class="lterm-m">${tm[1]}</span></div>`).join('')}</div>` : ''}
+        ${L.what ? `<div class="lblock"><div class="llabel">Kya hai</div><div class="ltext">${L.what}</div>${L.analogy ? `<div class="lanalogy">${L.analogy}</div>` : ''}</div>` : ''}
+        ${L.why ? `<div class="lblock"><div class="llabel">Kyu hai &mdash; kis dard ka ilaaj</div><div class="ltext">${L.why}</div></div>` : ''}
+        ${L.visual ? `<div class="lblock"><div class="llabel">Dekh kar samjho</div><div class="lvis">${L.visual.svg}${L.visual.cap ? `<div class="lvis-cap">${L.visual.cap}</div>` : ''}</div></div>` : ''}
+        ${L.code ? `<div class="lblock"><div class="llabel">Code</div><div class="lcode"><pre>${hl(L.code)}</pre></div></div>` : ''}
+        ${L.where && L.where.length ? `<div class="lblock"><div class="llabel">Kahan use aata hai &mdash; asli jagah</div><div class="lwhere">${L.where.map(w => `<div class="lwhere-row"><span class="lwhere-tag">${esc2(w[0])}</span><span class="lwhere-txt">${w[1]}</span></div>`).join('')}</div></div>` : ''}
+        ${(L.pros || L.cons) ? `<div class="lblock"><div class="llabel">Faayda aur nuksaan</div><div class="lpc">
+          <div class="lpc-col lpc-pro"><div class="lpc-h">Faayda</div><ul>${(L.pros || []).map(x => `<li><span>${x}</span></li>`).join('')}</ul></div>
+          <div class="lpc-col lpc-con"><div class="lpc-h">Nuksaan</div><ul>${(L.cons || []).map(x => `<li><span>${x}</span></li>`).join('')}</ul></div>
+        </div></div>` : ''}
+        ${L.gotchas && L.gotchas.length ? `<div class="lblock lgot"><div class="llabel">Interview traps &mdash; inse bacho</div><ul>${L.gotchas.map(g => `<li><span>${g}</span></li>`).join('')}</ul></div>` : ''}
+      </div>
+    </div>`;
+    return `<div class="topic-card${cardClass}" id="card-${t.id}">
+      <div class="topic-header" data-id="${t.id}">
+        <div class="topic-check" data-state="${state}" data-id="${t.id}">
+          <span class="chk-icon mastered">✓</span><span class="chk-icon in-progress">~</span>
+        </div>
+        <div class="topic-info">
+          <div class="topic-name">${t.name}</div>
+          <div class="topic-desc">${t.desc}</div>
+        </div>
+        <div class="topic-badges">
+          <span class="cat-badge ${t.cat}">${t.cat}</span>
+          <button class="expand-btn${panelOpen ? ' open' : ''}" data-id="${t.id}">${panelOpen ? 'Close' : 'Practice'}</button>
+        </div>
+      </div>
+      <div class="practice-panel${panelOpen}" id="panel-${t.id}">
+        ${learnHTML}
+        <div class="interviewer-q">
+          <span class="q-icon">🎤</span>
+          <div><div class="q-text">${t.q}</div>${t.qsub ? `<div class="q-sub">Follow-up: ${t.qsub}</div>` : ''}</div>
+        </div>
+        <div class="fields-grid">
+          <div class="field-group full">
+            <label class="field-label"><span>🧠</span> Your Explanation</label>
+            <textarea class="field-input${s.explanation ? ' filled' : ''}" data-field="explanation" data-id="${t.id}" placeholder="Explain it like you're in the interview...">${s.explanation || ''}</textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label"><span>📐</span> Diagram / Pseudocode</label>
+            <textarea class="field-input${s.code ? ' filled' : ''}" data-field="code" data-id="${t.id}" placeholder="Draw it out in ASCII or write pseudocode...">${s.code || ''}</textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label"><span>⚠️</span> Pitfalls / Edge Cases</label>
+            <textarea class="field-input${s.pitfalls ? ' filled' : ''}" data-field="pitfalls" data-id="${t.id}" placeholder="What subtle things do interviewers probe?">${s.pitfalls || ''}</textarea>
+          </div>
+        </div>
+        <div class="score-row">
+          <span class="score-label">Confidence:</span>
+          ${[1,2,3,4].map(n => `<button class="score-btn s${n}${s.score === n ? ' selected' : ''}" data-score="${n}" data-id="${t.id}">${['😰 Shaky','🤔 Getting There','👍 Solid','🚀 Expert'][n-1]}</button>`).join('')}
+          <button class="save-note-btn" data-id="${t.id}">Save</button>
+          <span class="saved-flash" id="flash-${t.id}">Saved ✓</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('content').innerHTML = `
+    <div class="chapter-head" style="background:${ch.color}">
+      <div><div class="chapter-num">CHAPTER ${chapters.indexOf(ch) + 1}</div><div class="chapter-title">${ch.title}</div></div>
+      <div class="chapter-meta"><div class="chapter-week">${ch.week}</div><div class="chapter-time">${ch.topics.length} topics</div></div>
+    </div>
+    ${filterHTML}${progressHTML}${topicsHTML}`;
+
+  bindEvents();
+  updateStats();
+}
+
+function bindEvents() {
+  document.querySelectorAll('.topic-check').forEach(el => {
+    el.addEventListener('click', e => {
+      e.stopPropagation();
+      const id = el.dataset.id;
+      const cur = store[id]?.state || 'untouched';
+      const next = cur === 'untouched' ? 'in-progress' : cur === 'in-progress' ? 'mastered' : 'untouched';
+      store[id] = { ...(store[id] || {}), state: next };
+      save(); renderContent(); renderPhaseNav();
+    });
+  });
+  document.querySelectorAll('.expand-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const id = btn.dataset.id;
+      store[id] = { ...(store[id] || {}), panelOpen: !store[id]?.panelOpen };
+      save(); renderContent();
+    });
+  });
+  document.querySelectorAll('.topic-header').forEach(h => {
+    h.addEventListener('click', () => {
+      const id = h.dataset.id;
+      store[id] = { ...(store[id] || {}), panelOpen: !store[id]?.panelOpen };
+      save(); renderContent();
+    });
+  });
+  document.querySelectorAll('.score-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const id = btn.dataset.id;
+      store[id] = { ...(store[id] || {}), score: parseInt(btn.dataset.score) };
+      save(); renderContent();
+    });
+  });
+  document.querySelectorAll('.field-input').forEach(inp => {
+    inp.addEventListener('input', () => inp.classList.toggle('filled', inp.value.length > 0));
+  });
+  document.querySelectorAll('.save-note-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const id = btn.dataset.id;
+      const panel = document.getElementById('panel-' + id);
+      panel.querySelectorAll('.field-input').forEach(inp => {
+        store[id] = { ...(store[id] || {}), [inp.dataset.field]: inp.value };
+      });
+      save();
+      const flash = document.getElementById('flash-' + id);
+      flash.classList.add('show');
+      setTimeout(() => flash.classList.remove('show'), 2000);
+    });
+  });
+  document.querySelectorAll('.flt-btn[data-cat]').forEach(btn => {
+    btn.addEventListener('click', () => { activeCatFilter = btn.dataset.cat; renderContent(); });
+  });
+  document.querySelectorAll('.flt-btn[data-st]').forEach(btn => {
+    btn.addEventListener('click', () => { activeStatusFilter = btn.dataset.st; renderContent(); });
+  });
+}
+
+renderPhaseNav();
+renderContent();
+</script>
+</body>
+</html>

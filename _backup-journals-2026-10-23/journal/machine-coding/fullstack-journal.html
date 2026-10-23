@@ -1,0 +1,2421 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Full-Stack Machine Coding — Mayank Thakur</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: #f0f2f5;
+      --bg-card: #ffffff;
+      --text-primary: #000000;
+      --text-secondary: #5f6368;
+      --text-muted: #9aa0a6;
+      --accent-black: #000000;
+      --accent-white: #ffffff;
+      --pastel-yellow: #ffeab6;
+      --pastel-mint: #dcf0eb;
+      --pastel-purple: #e6daff;
+      --pastel-pink: #ffd6e8;
+      --pastel-blue: #d6eaff;
+      --pastel-orange: #ffe4cc;
+      --pastel-teal: #ccf5f0;
+      --pastel-green: #d4edda;
+      --pastel-indigo: #e0e7ff;
+      --pastel-coral: #ffbfcb;
+      --border-radius-lg: 24px;
+      --border-radius-md: 16px;
+      --border-radius-pill: 9999px;
+      --font-sans: 'Outfit', 'Inter', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: var(--bg-main);
+      font-family: var(--font-sans);
+      color: var(--text-primary);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.5;
+    }
+
+    /* ── COVER ── */
+    .cover {
+      padding: 4rem 2.5rem 2rem;
+    }
+
+    .cover-subtitle {
+      font-size: 14px;
+      letter-spacing: .05em;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: .5rem;
+    }
+
+    .cover-title {
+      font-size: 40px;
+      font-weight: 700;
+      letter-spacing: -.02em;
+      margin-bottom: .5rem;
+    }
+
+    .cover-name {
+      font-size: 16px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 13px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+
+    .badge-fs {
+      background: var(--pastel-indigo);
+      color: #3730a3;
+    }
+
+    .badge-timed {
+      background: var(--pastel-pink);
+      color: #7a1a4a;
+    }
+
+    .badge-arch {
+      background: var(--pastel-mint);
+      color: #065f46;
+    }
+
+    /* ── STATS ROW ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+      padding: 0 2.5rem;
+    }
+
+    .stat {
+      background: var(--bg-card);
+      padding: 1.5rem;
+      border-radius: var(--border-radius-lg);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, .03);
+    }
+
+    .stat-val {
+      font-size: 36px;
+      font-weight: 600;
+      line-height: 1.1;
+      margin-bottom: 8px;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    /* ── PHASE TABS ── */
+    .phase-tabs {
+      display: flex;
+      gap: 8px;
+      padding: 1.5rem 2rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .phase-tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .phase-tab {
+      flex-shrink: 0;
+      padding: 8px 18px;
+      border-radius: var(--border-radius-pill);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      transition: all .2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .phase-tab:hover {
+      background: #e8e8e8;
+      color: var(--text-primary);
+    }
+
+    .phase-tab.active {
+      background: var(--accent-black);
+      color: #fff;
+    }
+
+    .phase-tab .tab-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, .18);
+    }
+
+    .phase-tab:not(.active) .tab-badge {
+      background: var(--bg-main);
+      color: var(--text-muted);
+    }
+
+    /* ── STREAK BOX ── */
+    .streak-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--pastel-indigo);
+      padding: 8px 16px;
+      border-radius: var(--border-radius-pill);
+      margin: 0 2.5rem 2rem;
+    }
+
+    .streak-text {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    /* ── QUOTE ── */
+    .quote {
+      text-align: center;
+      padding: 4rem 2.5rem 3rem;
+      font-size: 18px;
+      font-weight: 500;
+      line-height: 1.6;
+    }
+
+    .quote cite {
+      display: block;
+      font-size: 14px;
+      font-style: normal;
+      color: var(--text-secondary);
+      margin-top: 1rem;
+      font-weight: 600;
+    }
+
+    /* ── CONTENT ── */
+    .content {
+      padding: 0 2.5rem 4rem;
+      max-width: 900px;
+      margin-inline: auto;
+    }
+
+    .phase-header {
+      background: var(--bg-card);
+      border-radius: var(--border-radius-lg);
+      padding: 2rem 2.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .03);
+    }
+
+    .phase-eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: #6366f1;
+      margin-bottom: .5rem;
+    }
+
+    .phase-title {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: .5rem;
+      letter-spacing: -.02em;
+    }
+
+    .phase-meta {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .phase-tag {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: var(--border-radius-pill);
+      background: var(--bg-main);
+      color: var(--text-secondary);
+    }
+
+    .phase-desc {
+      margin-top: 1rem;
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      font-style: italic;
+    }
+
+    .phase-progress-bar {
+      height: 4px;
+      background: #e5e7eb;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 1rem;
+    }
+
+    .phase-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #6366f1, #a78bfa);
+      border-radius: 4px;
+      transition: width .5s;
+    }
+
+    .section-head {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--text-muted);
+      margin: 1.5rem 0 .75rem;
+    }
+
+    /* ── SD CONCEPTS (collapsed header preview) ── */
+    .sd-preview {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 5px;
+    }
+
+    .sd-pill {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: var(--border-radius-pill);
+      background: var(--pastel-indigo);
+      color: #3730a3;
+      white-space: nowrap;
+    }
+
+    /* ── SD SECTION (expanded panel) ── */
+    .sd-section {
+      background: var(--pastel-indigo);
+      border-radius: var(--border-radius-md);
+      padding: 14px 16px;
+      margin: 14px 0;
+    }
+
+    .sd-section-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: #3730a3;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .sd-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .sd-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #1e1b4b;
+      line-height: 1.4;
+    }
+
+    .sd-item::before {
+      content: '→';
+      font-weight: 700;
+      color: #6366f1;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* ── PROBLEM CARD (machine-coding style) ── */
+    .problem-card {
+      background: var(--bg-card);
+      border-radius: var(--border-radius-md);
+      margin-bottom: 14px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .03);
+      overflow: hidden;
+      transition: box-shadow .2s;
+    }
+
+    .problem-card:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, .07);
+    }
+
+    .problem-card.done {
+      background: var(--pastel-mint);
+    }
+
+    .problem-card.inprogress {
+      background: #fffbeb;
+      border-left: 3px solid #f59e0b;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 20px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .card-num {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      min-width: 28px;
+    }
+
+    .card-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 3px;
+    }
+
+    .problem-card.done .card-title {
+      text-decoration: line-through;
+      color: var(--text-secondary);
+    }
+
+    .card-brief {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      line-height: 1.4;
+    }
+
+    .card-badges {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .diff-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: var(--border-radius-pill);
+      white-space: nowrap;
+    }
+
+    .diff-beginner {
+      background: var(--pastel-green);
+      color: #155724;
+    }
+
+    .diff-mid {
+      background: var(--pastel-yellow);
+      color: #856404;
+    }
+
+    .diff-advanced {
+      background: var(--pastel-pink);
+      color: #7a1a4a;
+    }
+
+    .time-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: var(--border-radius-pill);
+      background: var(--bg-main);
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .expand-btn {
+      background: var(--bg-main);
+      border: none;
+      border-radius: var(--border-radius-pill);
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      color: var(--text-secondary);
+      transition: all .2s;
+      flex-shrink: 0;
+    }
+
+    .expand-btn:hover {
+      background: var(--pastel-orange);
+    }
+
+    .expand-btn.open {
+      background: var(--accent-black);
+      color: #fff;
+    }
+
+    /* ── EXPANDED PANEL ── */
+    .problem-panel {
+      display: none;
+      padding: 0 20px 20px;
+      border-top: 1px solid var(--bg-main);
+    }
+
+    .problem-panel.open {
+      display: block;
+    }
+
+    .statement-box {
+      background: var(--bg-main);
+      border-radius: var(--border-radius-md);
+      padding: 16px 18px;
+      margin: 16px 0 4px;
+    }
+
+    .statement-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .statement-text {
+      font-size: 14px;
+      color: var(--text-primary);
+      line-height: 1.7;
+      font-weight: 500;
+    }
+
+    .stack-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 12px 0;
+    }
+
+    .stack-tag {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: var(--border-radius-pill);
+    }
+
+    .stack-fe {
+      background: var(--pastel-indigo);
+      color: #3730a3;
+    }
+
+    .stack-be {
+      background: var(--pastel-teal);
+      color: #065f46;
+    }
+
+    .stack-db {
+      background: var(--pastel-yellow);
+      color: #7a5200;
+    }
+
+    .stack-arch {
+      background: var(--pastel-purple);
+      color: #3C3489;
+    }
+
+    .req-list {
+      margin: 14px 0;
+    }
+
+    .req-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .req-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 12px;
+      background: var(--bg-card);
+      border-radius: 10px;
+      margin-bottom: 6px;
+      cursor: pointer;
+      transition: background .15s;
+    }
+
+    .problem-card.done .req-item {
+      background: rgba(255, 255, 255, .6);
+    }
+
+    .req-item:hover {
+      background: #f8f8f8;
+    }
+
+    .req-cb {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent-black);
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .req-text {
+      font-size: 13px;
+      color: var(--text-primary);
+      font-weight: 500;
+      line-height: 1.4;
+    }
+
+    .req-text.checked {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    .concepts-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 10px 0 16px;
+    }
+
+    .concept-tag {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: var(--border-radius-pill);
+      background: var(--pastel-purple);
+      color: #3C3489;
+      white-space: nowrap;
+    }
+
+    .hints-wrap {
+      margin: 0 0 16px;
+    }
+
+    .hint-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--pastel-yellow);
+      border: none;
+      border-radius: var(--border-radius-pill);
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      color: #7a5200;
+      transition: all .15s;
+    }
+
+    .hint-toggle:hover {
+      opacity: .85;
+    }
+
+    .hint-content {
+      display: none;
+      margin-top: 10px;
+    }
+
+    .hint-content.show {
+      display: block;
+    }
+
+    .hint-item {
+      display: flex;
+      gap: 10px;
+      padding: 10px 14px;
+      background: var(--pastel-yellow);
+      border-radius: 12px;
+      margin-bottom: 8px;
+      font-size: 13px;
+      color: #7a5200;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    .hint-num {
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* ── TIMER ── */
+    .timer-section {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: var(--bg-main);
+      border-radius: var(--border-radius-md);
+      margin: 0 0 16px;
+      flex-wrap: wrap;
+    }
+
+    .timer-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .timer-display {
+      font-size: 22px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-primary);
+      letter-spacing: .02em;
+      min-width: 80px;
+    }
+
+    .timer-display.warning {
+      color: #d97706;
+    }
+
+    .timer-display.over {
+      color: #dc2626;
+    }
+
+    .timer-bar-wrap {
+      flex: 1;
+      min-width: 100px;
+      height: 6px;
+      background: rgba(0, 0, 0, .08);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .timer-bar {
+      height: 100%;
+      border-radius: 6px;
+      background: #6366f1;
+      transition: width 1s linear, background .4s;
+    }
+
+    .timer-controls {
+      display: flex;
+      gap: 6px;
+    }
+
+    .timer-btn {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: var(--border-radius-pill);
+      border: 1px solid rgba(0, 0, 0, .12);
+      cursor: pointer;
+      background: var(--bg-card);
+      color: var(--text-primary);
+      font-family: inherit;
+      transition: background .15s;
+      white-space: nowrap;
+    }
+
+    .timer-btn:hover {
+      background: #f0f0f0;
+    }
+
+    .timer-btn.running {
+      background: var(--pastel-yellow);
+      border-color: #f59e0b;
+      color: #92400e;
+    }
+
+    .timer-btn.reset-btn:hover {
+      background: var(--pastel-pink);
+    }
+
+    /* ── FIELDS ── */
+    .fields-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    @media(max-width:600px) {
+      .fields-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field-group.full {
+      grid-column: 1/-1;
+    }
+
+    .field-label-text {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .field-icon {
+      font-size: 14px;
+    }
+
+    .field-input {
+      width: 100%;
+      background: var(--bg-main);
+      border: 1.5px solid transparent;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--text-primary);
+      resize: vertical;
+      min-height: 100px;
+      transition: border-color .2s, background .2s;
+      line-height: 1.6;
+    }
+
+    .field-input:focus {
+      outline: none;
+      border-color: #6366f1;
+      background: #fff;
+    }
+
+    .field-input.filled {
+      background: #fff;
+      border-color: rgba(0, 0, 0, .1);
+    }
+
+    .field-input::placeholder {
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    /* ── ACTION ROW ── */
+    .action-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .score-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .score-btn {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: var(--border-radius-pill);
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all .2s;
+    }
+
+    .score-btn.s1 {
+      background: var(--pastel-pink);
+      color: #7a1a4a;
+    }
+
+    .score-btn.s2 {
+      background: var(--pastel-yellow);
+      color: #7a5200;
+    }
+
+    .score-btn.s3 {
+      background: var(--pastel-mint);
+      color: #1a5a3a;
+    }
+
+    .score-btn.s4 {
+      background: var(--accent-black);
+      color: #fff;
+    }
+
+    .score-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, .1);
+    }
+
+    .score-btn.selected {
+      box-shadow: 0 0 0 2.5px #6366f1;
+    }
+
+    .status-btns {
+      display: flex;
+      gap: 6px;
+      margin-left: auto;
+    }
+
+    .status-btn {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: var(--border-radius-pill);
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all .2s;
+      background: var(--bg-main);
+      color: var(--text-secondary);
+    }
+
+    .status-btn:hover {
+      background: #e8e8e8;
+    }
+
+    .status-btn.wip.active {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1.5px solid #f59e0b;
+    }
+
+    .status-btn.done.active {
+      background: var(--accent-black);
+      color: #fff;
+    }
+
+    .save-btn {
+      background: var(--accent-black);
+      color: #fff;
+      border: none;
+      border-radius: var(--border-radius-pill);
+      padding: 8px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity .2s;
+    }
+
+    .save-btn:hover {
+      opacity: .8;
+    }
+
+    .saved-flash {
+      font-size: 12px;
+      font-weight: 600;
+      color: #6366f1;
+      display: none;
+    }
+
+    /* ── MOVE-ON / COMPLETE ── */
+    .move-on-box {
+      background: var(--pastel-pink);
+      padding: 24px;
+      margin-top: 2rem;
+      border-radius: var(--border-radius-lg);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .move-on-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--accent-black);
+    }
+
+    .move-on-text {
+      font-size: 15px;
+      color: var(--accent-black);
+      line-height: 1.6;
+      font-weight: 500;
+    }
+
+    .complete-banner {
+      background: linear-gradient(135deg, #6366f1, #a78bfa);
+      color: #fff;
+      padding: 16px 24px;
+      border-radius: var(--border-radius-lg);
+      text-align: center;
+      margin-top: 2rem;
+      font-weight: 600;
+      font-size: 16px;
+      display: none;
+      box-shadow: 0 10px 30px rgba(99, 102, 241, .3);
+    }
+
+    @media(max-width:700px) {
+      .cover {
+        padding: 3rem 1.5rem 2rem;
+      }
+
+      .content {
+        padding: 1.5rem;
+      }
+
+      .card-badges {
+        display: none;
+      }
+
+      .cover-stats {
+        gap: 1rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="nav-container"></div>
+
+  <div class="cover">
+    <div class="cover-subtitle">FULL-STACK MACHINE CODING</div>
+    <div class="cover-title">🏗️ Full-Stack Engineering</div>
+    <div class="cover-name">
+      Mayank Thakur
+      <span class="badge badge-fs">React + Node.js</span>
+      <span class="badge badge-timed">Timed Practice</span>
+      <span class="badge badge-arch">System Design</span>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat">
+      <div class="stat-val" id="s-total">24</div>
+      <div class="stat-label">Total Problems</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="s-done">0</div>
+      <div class="stat-label">Completed</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="s-beginner">0/8</div>
+      <div class="stat-label">Beginner</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="s-mid">0/8</div>
+      <div class="stat-label">Mid</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="s-advanced">0/8</div>
+      <div class="stat-label">Advanced</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="s-pct">0%</div>
+      <div class="stat-label">Completion</div>
+    </div>
+  </div>
+
+  <div class="streak-box">
+    <span>🏗️</span>
+    <span class="streak-text" id="streak-text">Pick a problem. Design the system. Build it end-to-end.</span>
+  </div>
+
+  <div class="phase-tabs" id="phase-tabs"></div>
+  <div class="content" id="content"></div>
+
+  <div class="quote">"In a full-stack round, they don't care if you know every API — they care how you think about
+    schema, failure, and scale."<cite>— Every Senior Engineer</cite></div>
+
+  <script>
+    /* ── DATA ── */
+    const PHASES = [
+      {
+        id: 'beginner',
+        title: 'Beginner — Real-World Building Blocks',
+        eyebrow: 'Level 1 · 8 Problems · 60 min each',
+        desc: 'Not tutorials. Each problem is a stripped-down version of something running in production. You\'ll wire together a frontend, backend, and database — and you\'ll have to think about schema design, API contracts, and failure modes from the start.',
+        diff: 'Beginner',
+        moveOn: 'You can build each problem end-to-end without reference, can explain your schema decisions, and handle at least one edge case (race condition, validation failure, retry).',
+        problems: [
+          {
+            id: 'url-shortener',
+            title: 'URL Shortener Service',
+            brief: 'Production-grade bit.ly clone — API, collision-safe short codes, analytics, rate limiting',
+            diff: 'Beginner', time: 60,
+            statement: '<p>Build a URL shortening service. A user pastes a long URL, gets a short code, and that code redirects them. Sounds simple — but do it right: handle collisions, track analytics, and protect the API from abuse.</p>',
+            stack: [{ label: 'React', cls: 'stack-fe' }, { label: 'Node.js + Express', cls: 'stack-be' }, { label: 'MongoDB', cls: 'stack-db' }, { label: 'REST API', cls: 'stack-arch' }],
+            requirements: [
+              'POST /api/shorten — accepts {url, customAlias?}, returns {shortCode, shortUrl}',
+              'GET /:code — validates code, 301 redirects to original URL, increments click count',
+              'GET /api/stats/:code — returns {clicks, createdAt, topReferrers}',
+              'Custom alias support with collision detection',
+              'Rate limiting: max 10 shortens per IP per minute',
+              'Frontend: paste URL → show short link + copy-to-clipboard, analytics card per link',
+              'Handle expired or non-existent codes with proper 404 / 410 responses'
+            ],
+            concepts: ['Base62 encoding', 'Hash collision handling', '301 vs 302 redirect', 'MongoDB TTL index', 'Rate limiting (token bucket)', 'Click analytics aggregation'],
+            hints: [
+              'Generate a 7-char nanoid, check if it exists, retry on collision — don\'t generate sequentially (guessable).',
+              'Store {_id, shortCode, originalUrl, clicks, referrers: [], createdAt, expiresAt}. TTL index on expiresAt for auto-delete.',
+              'For analytics, store referrer on each redirect: update with $push: {referrers: {$each:[req.headers.referer], $slice:-10}}.',
+              'Rate limiter: in-memory Map {ip → {count, windowStart}}. Reset window every 60s.'
+            ]
+          },
+          {
+            id: 'feature-flags',
+            title: 'Feature Flag System',
+            brief: 'Toggle features per user or percentage rollout — LaunchDarkly lite',
+            diff: 'Beginner', time: 60,
+            statement: '<p>Build a feature flag service used to release features safely. Engineers create flags, set rollout percentage or target specific users, and the SDK (a simple GET endpoint) evaluates them at request time. The dashboard shows flag status and who sees what.</p>',
+            stack: [{ label: 'React', cls: 'stack-fe' }, { label: 'Node.js + Express', cls: 'stack-be' }, { label: 'MongoDB', cls: 'stack-db' }, { label: 'System Design', cls: 'stack-arch' }],
+            requirements: [
+              'Create / update / delete flags: {name, enabled, rolloutPct, targetUserIds[], rules[]}',
+              'GET /sdk/evaluate?userId=X&flagKey=Y — returns {enabled: true/false}',
+              'Percentage rollout must be deterministic: same userId always gets same result',
+              'Override rules: specific userIds always get true/false regardless of percentage',
+              'Flag versioning: keep last 10 evaluations per flag for audit trail',
+              'Dashboard: list all flags, toggle on/off, edit rollout %, see recent eval history'
+            ],
+            concepts: ['Deterministic hashing for rollout', 'Flag evaluation rules', 'Audit trail pattern', 'MongoDB schema design', 'SDK contract design'],
+            hints: [
+              'Deterministic: hash(userId + flagKey) → number 0-99. If < rolloutPct, enabled. Use murmur or FNV hash (or parseInt(crypto hash) % 100).',
+              'Rule evaluation order: explicit override → percentage → default (false).',
+              'Schema: flags collection {_id, key, enabled, rolloutPct, overrides: [{userId, value}], updatedAt}. Evals collection: {flagId, userId, result, ts}.',
+              'Keep SDK endpoint fast — it\'s in the hot path. Cache flags in-memory, invalidate on update via a version counter.'
+            ]
+          },
+          {
+            id: 'file-upload',
+            title: 'File Upload & Storage Service',
+            brief: 'Multipart upload, metadata in PostgreSQL, presigned download URLs, file listing',
+            diff: 'Beginner', time: 60,
+            statement: '<p>Build a file upload service. Users upload files via a React frontend, files are stored on disk (or a mock S3), metadata goes into PostgreSQL, and files are served via presigned time-limited URLs. Handle large files with streaming — no buffering the whole file in memory.</p>',
+            stack: [{ label: 'React', cls: 'stack-fe' }, { label: 'Node.js + Express', cls: 'stack-be' }, { label: 'PostgreSQL', cls: 'stack-db' }, { label: 'Streaming', cls: 'stack-arch' }],
+            requirements: [
+              'POST /api/upload — multipart/form-data, stream to disk, store metadata in PG',
+              'GET /api/files — paginated list with filename, size, mimeType, uploadedAt',
+              'GET /api/files/:id/download — generate presigned token (JWT, 15min TTL), redirect',
+              'GET /files/serve?token=X — validate token, stream file to client with Content-Type',
+              'Delete file: remove from disk + PG atomically (handle partial failure)',
+              'Frontend: drag-and-drop upload with progress bar, file list with download links',
+              'Validate MIME type server-side (not just extension), reject executables'
+            ],
+            concepts: ['Multipart streaming with multer', 'PostgreSQL schema design', 'Presigned URL pattern', 'File streaming (pipe)', 'Progress events (XMLHttpRequest)', 'MIME validation'],
+            hints: [
+              'multer with diskStorage, not memory storage. Set limits: {fileSize: 50MB}.',
+              'PG schema: files(id UUID PK, originalName TEXT, storedPath TEXT, mimeType TEXT, sizeBytes BIGINT, uploaderId UUID, createdAt TIMESTAMP).',
+              'Presigned token: sign {fileId, exp: now+15min} with JWT secret. On serve, verify + pipe fs.createReadStream(file.storedPath).',
+              'For delete: DELETE from PG first (if that fails, abort). Then fs.unlink. Log failures to a dead-letter table.'
+            ]
+          },
+          {
+            id: 'rate-limiter',
+            title: 'Rate Limiter API + Live Monitor',
+            brief: 'Token bucket rate limiter middleware with a real-time dashboard showing request patterns',
+            diff: 'Beginner', time: 60,
+            statement: '<p>Build a rate limiting middleware for an Express API, then build a monitoring dashboard that shows live request rates, throttled IPs, and bucket fill levels. This is the kind of thing that goes in front of every API at scale.</p>',
+            stack: [{ label: 'React', cls: 'stack-fe' }, { label: 'Node.js + Express', cls: 'stack-be' }, { label: 'WebSocket', cls: 'stack-arch' }],
+            requirements: [
+              'Token bucket per IP: 10 req/min burst, 2 req/s steady refill',
+              'Per-API-key rate limit as a second tier (100 req/min)',
+              'Return X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset headers on every response',
+              '429 Too Many Requests with Retry-After header on block',
+              'GET /api/metrics — returns top IPs by request count, current blocked IPs, system-wide req/s',
+              'Dashboard: live chart (req/s over time via WebSocket), blocked IPs table, refill animation'
+            ],
+            concepts: ['Token bucket algorithm', 'Sliding window vs fixed window', 'Rate limit headers (RFC 6585)', 'In-memory vs distributed rate limiting', 'WebSocket for real-time metrics'],
+            hints: [
+              'Bucket state: Map {key → {tokens, lastRefill}}. On each request: elapsed = now - lastRefill; tokens = min(capacity, tokens + elapsed * refillRate); if tokens >= 1, allow + tokens--; else 429.',
+              'X-RateLimit-Reset = timestamp when bucket will be full (now + (capacity - tokens) / refillRate).',
+              'Metrics endpoint: iterate the Map, collect counts. Flush every 60s to keep memory bounded.',
+              'WebSocket: setInterval(1000) on server → count requests in last second → broadcast to all dashboard clients.'
+            ]
+          },
+          {
+            id: 'webhook-system',
+            title: 'Webhook Delivery System',
+            brief: 'Event dispatcher that POSTs to subscriber URLs with exponential backoff retries',
+            diff: 'Beginner', time: 60,
+            statement: '<p>Build a webhook system: services emit events, your system fans out to all subscriber URLs, tracks delivery status, and retries failed deliveries with exponential backoff. This pattern is used by Stripe, GitHub, and every major API platform.</p>',
+            stack: [{ label: 'React', cls: 'stack-fe' }, { label: 'Node.js + Express', cls: 'stack-be' }, { label: 'PostgreSQL', cls: 'stack-db' }, { label: 'Background Jobs', cls: 'stack-arch' }],
+            requirements: [
+              'POST /api/webhooks — register a subscriber {url, events[], secret}',
+              'POST /api/events — emit an event {type, payload}. Fan out to all matching subscribers',
+              'Deliver: POST to subscriber URL with HMAC-SHA256 signature header (X-Webhook-Sig)',
+              'Track each delivery: {status: pending|success|failed, attempts, lastAttemptAt, responseStatus}',
+              'Retry failed deliveries: exponential backoff (1s, 2s, 4s, 8s...) up to 5 attempts',
+              'Dashboard: delivery log per webhook, success/fail counts, re-trigger failed deliveries manually'
+            ],
+            concepts: ['Exponential backoff', 'HMAC signature verification', 'At-least-once delivery', 'PostgreSQL schema for events+deliveries', 'Background retry worker'],
+            hints: [
+              'Schema: webhooks(id, url, events[], secret, createdAt). events(id, type, payload, createdAt). deliveries(id, webhookId, eventId, status, attempts, nextRetryAt, responseStatus).',
+              'HMAC: sign payload with webhook.secret using crypto.createHmac("sha256", secret).update(body).digest("hex"). Send as X-Webhook-Sig.',
+              'Retry worker: setInterval every 5s, SELECT * FROM deliveries WHERE status=\'failed\' AND attempts < 5 AND nextRetryAt <= NOW(). nextRetryAt = now + 2^attempts seconds.',
+              'Delivery is async: emit event → insert deliveries immediately → worker picks them up. Never deliver synchronously in the request path.'
+            ]
+          },
+          {
+            id: 'job-queue',
+            title: 'Background Job Queue + Dashboard',
+            brief: 'Persistent job queue with worker, priority support, and live monitoring dashboard',
+            diff: 'Beginner', time: 60,
+            statement: '<p>Build a background job processing system backed by PostgreSQL. Jobs have priorities, workers process them concurrently without double-processing, and a React dashboard shows live job status with WebSocket updates. This is the foundation of every async workflow.</p>',
+            stack: [{ label: 'React', cls: 'stack-fe' }, { label: 'Node.js', cls: 'stack-be' }, { label: 'PostgreSQL', cls: 'stack-db' }, { label: 'WebSocket', cls: 'stack-arch' }],
+            requirements: [
+              'POST /api/jobs — enqueue a job {type, payload, priority: 1-10}',
+              'Worker: polls PostgreSQL with SELECT FOR UPDATE SKIP LOCKED to claim jobs safely',
+              'Job lifecycle: queued → processing → done | failed (with error message)',
+              'Concurrency: run N workers in parallel (configurable), each picks one job at a time',
+              'Dead letter: after 3 failed attempts, move to failed_jobs table',
+              'Dashboard: live job list with status badges, queue depth chart (WebSocket), manual retry button'
+            ],
+            concepts: ['SELECT FOR UPDATE SKIP LOCKED', 'Concurrent worker pattern', 'Job state machine', 'Dead letter queue', 'PostgreSQL as a queue', 'WebSocket broadcasting'],
+            hints: [
+              'Schema: jobs(id, type, payload JSONB, priority INT, status, attempts, errorMsg, createdAt, claimedAt, completedAt).',
+              'Worker: BEGIN; SELECT ... FOR UPDATE SKIP LOCKED LIMIT 1 ORDER BY priority DESC, createdAt ASC; UPDATE status=processing; COMMIT. Process. UPDATE status=done.',
+              'Never process a job outside a transaction — if worker crashes, SKIP LOCKED releases the lock automatically.',
+              'WebSocket: on each job status change, broadcast {type: \'job_update\', job} to all connected dashboard clients. React updates list reactively.'
+            ]
+          },
+          {
+            id: 'rbac-system',
+            title: 'RBAC Permission System',
+            brief: 'Role-based access control with resource-level permissions, middleware, and admin dashboard',
+            diff: 'Beginner', time: 60,
+            statement: '<p>Build an RBAC (role-based access control) system. Users are assigned roles, roles have permissions, and a middleware enforces access on every API route. An admin dashboard lets you manage roles and permissions without touching code. This is in every SaaS product.</p>',
+            stack: [{ label: 'React', cls: 'stack-fe' }, { label: 'Node.js + Express', cls: 'stack-be' }, { label: 'PostgreSQL', cls: 'stack-db' }, { label: 'Auth', cls: 'stack-arch' }],
+            requirements: [
+              'Schema: users, roles, permissions, user_roles (many-to-many), role_permissions (many-to-many)',
+              'Permission format: "resource:action" e.g. "posts:create", "users:delete"',
+              'requirePermission("posts:create") middleware that checks user roles → permissions',
+              'Permission caching: load user permissions once per request (or cache per session)',
+              'Admin API: CRUD for roles, assign/remove permissions, assign/remove user roles',
+              'Dashboard: role manager, user role assignment, permission matrix view, audit log of role changes'
+            ],
+            concepts: ['RBAC vs ABAC', 'SQL many-to-many joins', 'Middleware composition', 'Permission caching strategy', 'Audit logging pattern'],
+            hints: [
+              'Schema: role_permissions(roleId FK, permissionId FK, PK(roleId, permissionId)). user_roles(userId FK, roleId FK). Check: SELECT p.name FROM permissions p JOIN role_permissions rp ON... JOIN user_roles ur ON... WHERE ur.userId = ?.',
+              'Cache permissions: on login, load all user permissions into JWT payload or Redis. Middleware reads from token — zero DB queries on check.',
+              'Audit log: permission_audit(id, actorId, targetUserId, action, roleName, ts). INSERT on every role grant/revoke.',
+              'For resource-level: add resourceId to permissions — e.g. "posts:edit:own" checks post.authorId === req.user.id in middleware.'
+            ]
+          },
+          {
+            id: 'fulltext-search',
+            title: 'Product Search with Full-Text + Facets',
+            brief: 'PostgreSQL full-text search with filters, faceted counts, and debounced React UI',
+            diff: 'Beginner', time: 60,
+            statement: '<p>Build a product search that feels like a real e-commerce site: full-text search with ranking, category/price/rating filters, faceted navigation (e.g. "Electronics (42)"), and a fast debounced React frontend with cursor-based pagination. No Elasticsearch — pure PostgreSQL.</p>',
+            stack: [{ label: 'React', cls: 'stack-fe' }, { label: 'Node.js + Express', cls: 'stack-be' }, { label: 'PostgreSQL', cls: 'stack-db' }, { label: 'Search', cls: 'stack-arch' }],
+            requirements: [
+              'PostgreSQL tsvector full-text search on (name, description, brand) with ts_rank ranking',
+              'Filters: category, price range (min/max), rating (min), in-stock only',
+              'Faceted counts: return {categories: [{name, count}], priceRanges: [...]} alongside results',
+              'Cursor-based pagination (not offset) using (score, id) as cursor',
+              'GIN index on tsvector column for performance',
+              'Frontend: debounced search (300ms), filter sidebar with counts, infinite scroll, skeleton loaders'
+            ],
+            concepts: ['PostgreSQL tsvector / tsquery', 'GIN index', 'ts_rank ranking', 'Cursor-based pagination', 'Faceted search with CTEs', 'React debounce + skeleton'],
+            hints: [
+              'ALTER TABLE products ADD COLUMN search_vec tsvector GENERATED ALWAYS AS (to_tsvector(\'english\', name ||\' \'|| description)) STORED; CREATE INDEX ON products USING GIN(search_vec).',
+              'Query: WHERE search_vec @@ plainto_tsquery(\'english\', $1) ORDER BY ts_rank(search_vec, query) DESC, id.',
+              'Faceted counts: use a CTE for filtered results, then GROUP BY category without re-filtering. Or use FILTER(WHERE ...) aggregate.',
+              'Cursor: encode (rank, id) as base64. Next page: WHERE (rank, id) < (cursorRank, cursorId) — works with composite index.'
+            ]
+          },
+          {
+            id: 'pastebin',
+            title: 'Pastebin / Code Snippet Service',
+            brief: 'Snippet sharing with syntax highlighting, TTL expiry, raw view, secret mode',
+            diff: 'Beginner', time: 60,
+            statement: '<p>Build a Pastebin clone — a service where users paste code or text and get a shareable URL. Support syntax highlighting (auto-detect language), TTL expiry, burn-after-read for secrets, raw text view, and a user\'s snippet list. The core challenge: how do you handle secrets that self-destruct on first read atomically?</p>',
+            stack: [{ label: 'React', cls: 'stack-fe' }, { label: 'Node.js + Express', cls: 'stack-be' }, { label: 'PostgreSQL', cls: 'stack-db' }, { label: 'CRUD', cls: 'stack-arch' }],
+            requirements: [
+              'POST /api/snippets — accepts {content, title?, language?, ttlMinutes?, burnAfterRead?, secret?}',
+              'GET /:id — returns rendered snippet with syntax highlighting. If burnAfterRead, mark burned on first read',
+              'GET /raw/:id — returns raw content with Content-Type: text/plain',
+              'Auto-detect language (highlight.js) with manual override',
+              'TTL expiry: periodic cleanup of expired snippets (cron every 60s)',
+              'Secret mode: snippets are not listed in public feed, require direct URL',
+              'Frontend: code editor (textarea with monospace), language selector, expiry picker, highlighted preview with copy button'
+            ],
+            concepts: ['Atomic read-burn with row locking', 'Syntax highlighting (Prism.js / highlight.js)', 'TTL-based cleanup (cron)', 'URL-safe ID generation (nanoid)', 'Language auto-detection', 'Secret vs public access model'],
+            hints: [
+              'Burn-after-read: UPDATE snippets SET burned=true, content=null WHERE id=$1 AND burned=false RETURNING id. If 0 rows returned → snippet already read or URL is invalid → return 404. Atomic and race-condition safe.',
+              'Language auto-detect: pass content to highlight.js detectLanguage() function or use a simple heuristic (first line). Store detected language so it will not re-detect on every view.',
+              'Schema: snippets(id TEXT PK, title TEXT, content TEXT, language TEXT, ttl_minutes INT, burn_after_read BOOL, secret BOOL, burned BOOL DEFAULT false, created_at TIMESTAMPTZ). TTL cleanup: use a scheduled job that deletes expired rows based on created_at + ttl_minutes.',
+              'Syntax highlighting on server: use highlight.js to render <pre><code class="hljs"> on page load. Or client-side: send raw + language, let Prism.js handle it.'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'mid',
+        title: 'Mid — Distributed Systems Thinking',
+        eyebrow: 'Level 2 · 8 Problems · 90 min each',
+        desc: 'Problems that require you to think about concurrency, consistency, and scalability. Each one has at least one hard part — a race condition to handle, a fanout problem to solve, or a schema that breaks under load. This is senior-level territory.',
+        diff: 'Mid',
+        moveOn: 'You can identify the hard part of each problem before starting, explain the trade-offs of your approach, and handle the core failure mode without looking it up.',
+        problems: [
+          {
+            id: 'collab-editor',
+            title: 'Real-Time Collaborative Document Editor',
+            brief: 'Multi-user live editing with WebSocket sync, conflict resolution, and document history',
+            diff: 'Mid', time: 90,
+            statement: '<p>Build a collaborative text editor where multiple users see each other\'s changes in real time — think Google Docs lite. Users type, deltas broadcast via WebSocket, conflicts are resolved, and document history is persisted. The hard part: what happens when two users edit the same spot simultaneously?</p>',
+            stack: [{ label: 'React', cls: 'stack-fe' }, { label: 'Node.js + WebSocket', cls: 'stack-be' }, { label: 'MongoDB', cls: 'stack-db' }, { label: 'Real-Time', cls: 'stack-arch' }],
+            requirements: [
+              'Socket.io rooms: each document is a room, users join/leave',
+              'Broadcast text deltas (not full doc) to all room members on each keystroke',
+              'Last-write-wins conflict resolution (implement, then explain limitations)',
+              'Persist snapshots to MongoDB every 30s or on each user disconnect',
+              'Cursor positions: broadcast each user\'s cursor position with a color',
+              'Document history: list of snapshots with timestamps, allow restore to any snapshot',
+              'Presence indicators: show who is currently editing with avatar/name'
+            ],
+            concepts: ['WebSocket rooms (Socket.io)', 'Operational transforms (concept)', 'Last-write-wins', 'Delta vs full-doc sync', 'MongoDB schema for doc versions', 'Presence via WebSocket'],
+            hints: [
+              'On keystroke: socket.emit("delta", {docId, pos, insert?, delete?, userId}). Server: io.to(docId).emit("delta", delta) — broadcast to room excluding sender.',
+              'LWW: apply deltas in arrival order server-side. Maintain authoritative doc state in memory per room. Send full doc to new joiners.',
+              'MongoDB: docs({_id, content, version, updatedAt}), snapshots({docId, content, version, savedAt, savedBy}). Save snapshot on disconnect or interval.',
+              'For OT: each delta carries a revision number. Server re-bases conflicting deltas. Explain this as a follow-up even if not implemented.'
+            ]
+          },
+          {
+            id: 'inventory-cart',
+            title: 'E-Commerce Inventory + Cart (Concurrency-Safe)',
+            brief: 'Cart + checkout that prevents overselling under concurrent purchases using optimistic locking',
+            diff: 'Mid', time: 90,
+            statement: '<p>Build a cart and checkout flow where inventory can never go negative, even when 100 users check out the last item simultaneously. This requires database-level concurrency control — optimistic locking, version fields, and retry logic. Then build a React cart with optimistic UI updates.</p>',
+            stack: [{ label: 'React', cls: 'stack-fe' }, { label: 'Node.js + Express', cls: 'stack-be' }, { label: 'PostgreSQL', cls: 'stack-db' }, { label: 'Concurrency', cls: 'stack-arch' }],
+            requirements: [
+              'Products table with stock quantity and version column',
+              'Add to cart: reserve stock (decrement quantity) atomically — no negative stock',
+              'Checkout: validate cart items still in stock, create order in a single transaction',
+              'Optimistic locking: UPDATE products SET qty=qty-1, version=version+1 WHERE id=? AND version=? — retry 3x if version mismatch',
+              'Cart persistence: stored in PostgreSQL per user, not just localStorage',
+              'React: optimistic cart update (show added immediately, rollback on server failure)',
+              'Show "Only N left" warnings when stock < 5. Sold-out state.'
+            ],
+            concepts: ['Optimistic locking (version field)', 'SELECT FOR UPDATE', 'PostgreSQL transactions', 'Atomic decrement with constraint', 'React optimistic UI + rollback', 'Idempotent checkout'],
+            hints: [
+              'Optimistic lock: const result = await db.query("UPDATE products SET qty=qty-$1, version=version+1 WHERE id=$2 AND version=$3 AND qty>=$1", [qty, id, version]); if result.rowCount === 0, someone else got it — retry.',
+              'Alternative (simpler): UPDATE products SET qty=qty-1 WHERE id=? AND qty > 0 RETURNING qty. If no rows updated → out of stock.',
+              'Checkout transaction: BEGIN; lock rows (SELECT FOR UPDATE); validate qty; INSERT order; INSERT order_items; UPDATE inventory; COMMIT.',
+              'React optimistic: dispatch ADD_TO_CART locally → call API → on error dispatch ROLLBACK_CART_ITEM + show toast.'
+            ]
+          },
+          {
+            id: 'social-feed',
+            title: 'Social Feed with Follow + Timeline',
+            brief: 'Twitter-like feed using fanout-on-write, cursor pagination, and infinite scroll',
+            diff: 'Mid', time: 90,
+            statement: '<p>Build a social feed: users follow each other, post tweets, and see a personalized timeline. The real challenge is timeline generation at scale — fanout-on-write pre-computes each user\'s feed on post creation. Then add cursor-based pagination and a React infinite scroll.</p>',
+            stack: [{ label: 'React', cls: 'stack-fe' }, { label: 'Node.js + Express', cls: 'stack-be' }, { label: 'PostgreSQL + MongoDB', cls: 'stack-db' }, { label: 'Feed Design', cls: 'stack-arch' }],
+            requirements: [
+              'Users can follow/unfollow. posts stored in PostgreSQL with authorId, createdAt',
+              'On new post: fan out to all followers\' timelines in MongoDB (async background job)',
+              'GET /api/timeline?cursor=X — returns 20 posts, sorted by createdAt DESC, cursor for next page',
+              'Cursor-based pagination using post createdAt timestamp as cursor',
+              'Fanout worker: on large follower counts (>1000), use a job queue — don\'t block the post API',
+              'React: infinite scroll (IntersectionObserver), skeleton loader, optimistic post creation'
+            ],
+            concepts: ['Fanout-on-write vs fanout-on-read', 'Cursor-based pagination', 'Hybrid fanout for celebrities', 'MongoDB for timelines', 'IntersectionObserver API', 'Async fanout worker'],
+            hints: [
+              'Fanout-on-write: after INSERT post, enqueue a job. Worker: SELECT follower_ids WHERE followeeId=authorId. For each: insert into MongoDB timelines collection: {userId, postId, ts}.',
+              'Timeline query: db.timelines.find({userId}).sort({ts: -1}).limit(20). Cursor = last post\'s ts (base64 encode). Next page: find({userId, ts: {$lt: cursor}}).limit(20).',
+              'Celebrity problem (10M followers): skip fanout, they\'re always fetched on read and merged. Hybrid fanout = fanout for regular users + merge celebrities\' posts at read time.',
+              'React infinite scroll: IntersectionObserver on a sentinel div at bottom of list. When visible → fetch next page with cursor.'
+            ]
+          },
+          {
+            id: 'auth-service',
+            title: 'JWT Auth with Refresh Token Rotation',
+            brief: 'Complete auth service: access tokens, refresh token rotation, reuse detection, device management',
+            diff: 'Mid', time: 90,
+            statement: '<p>Build a production-quality auth service. Short-lived access tokens (15min) paired with long-lived refresh tokens (7 days). Refresh token rotation on every use — detect reuse (which indicates theft) and revoke all sessions for that user. Manage per-device sessions. This is auth done right.</p>',
+            stack: [{ label: 'React', cls: 'stack-fe' }, { label: 'Node.js + Express', cls: 'stack-be' }, { label: 'PostgreSQL', cls: 'stack-db' }, { label: 'Security', cls: 'stack-arch' }],
+            requirements: [
+              'Register, login: return {accessToken, refreshToken}. Store refresh token HASH in PG',
+              'POST /auth/refresh — verify refresh token, issue new pair, rotate (invalidate old)',
+              'Reuse detection: if a token is used that was already rotated → revoke ALL sessions for user',
+              'POST /auth/logout — invalidate current refresh token',
+              'GET /auth/sessions — list all active sessions (device, IP, lastUsed)',
+              'Forgot password: generate time-limited reset token (hashed in DB), email link, verify + update password',
+              'Frontend: silent refresh (intercept 401, refresh token, retry original request)'
+            ],
+            concepts: ['JWT access vs refresh token', 'Refresh token rotation', 'Reuse detection = token theft signal', 'bcrypt cost factor', 'httpOnly cookie for refresh token', 'Axios interceptor for silent refresh'],
+            hints: [
+              'Never store raw refresh token. Store SHA-256 hash. On refresh: hash incoming token, lookup in DB.',
+              'Rotation: on valid refresh → INSERT new token, UPDATE old token as rotated=true. If incoming token\'s rotated=true → someone is reusing it → DELETE all tokens for userId.',
+              'Schema: refresh_tokens(id, userId, tokenHash, deviceInfo, ip, rotated BOOL, expiresAt, createdAt).',
+              'Silent refresh: axios.interceptors.response.use(null, async err => { if (err.response.status === 401) { await refreshToken(); return axios(originalRequest); } }).'
+            ]
+          },
+          {
+            id: 'notification-system',
+            title: 'Multi-Channel Notification System',
+            brief: 'Email + in-app + push notifications with user preferences, fanout, and delivery tracking',
+            diff: 'Mid', time: 90,
+            statement: '<p>Build a notification system that delivers to email, in-app, and push channels. Users control their preferences per notification type. The system fans out notifications asynchronously, tracks delivery status per channel, and shows an in-app notification center with unread count.</p>',
+            stack: [{ label: 'React', cls: 'stack-fe' }, { label: 'Node.js', cls: 'stack-be' }, { label: 'PostgreSQL + MongoDB', cls: 'stack-db' }, { label: 'Fanout', cls: 'stack-arch' }],
+            requirements: [
+              'Notification types: "order_placed", "comment", "mention", "system_alert"',
+              'User preferences: per-type per-channel (email on/off, in-app on/off, push on/off) in PostgreSQL',
+              'Emit notification: fan out to enabled channels based on preferences',
+              'In-app notifications: stored in MongoDB, GET /api/notifications (paginated), mark as read',
+              'Unread count: WebSocket push on new notification, badge in React header',
+              'Email: use Nodemailer with template. Idempotency key to prevent duplicate sends',
+              'Delivery tracking: MongoDB deliveries collection per notification per channel'
+            ],
+            concepts: ['Fanout with preference lookup', 'Idempotency keys', 'MongoDB for notifications', 'PostgreSQL for preferences', 'WebSocket push for real-time badge', 'Channel abstraction'],
+            hints: [
+              'Preference check: SELECT channels FROM notification_prefs WHERE userId=? AND type=?. For each enabled channel → enqueue delivery job.',
+              'Idempotency: deliveries({notifId, channel, idempotencyKey, status}). Before sending: INSERT OR IGNORE. On duplicate key → skip.',
+              'In-app schema (Mongo): notifications({userId, type, title, body, read: false, link, createdAt}). Index on {userId, read}.',
+              'WebSocket unread: on INSERT new notification → look up userId\'s socket → emit {type: "notif", unreadCount: N}. Server tracks userId→socketId map.'
+            ]
+          },
+          {
+            id: 'analytics-pipeline',
+            title: 'Event Analytics Pipeline + Dashboard',
+            brief: 'High-throughput event ingestion with batching, aggregation, and Chart.js dashboard',
+            diff: 'Mid', time: 90,
+            statement: '<p>Build an analytics event pipeline that ingests high-volume events (pageviews, clicks, purchases), buffers them in memory for batch inserts, aggregates into time-series buckets, and serves a dashboard with charts. The challenge is making ingestion fast without hammering the DB on every event.</p>',
+            stack: [{ label: 'React + Chart.js', cls: 'stack-fe' }, { label: 'Node.js', cls: 'stack-be' }, { label: 'PostgreSQL', cls: 'stack-db' }, { label: 'Batch Processing', cls: 'stack-arch' }],
+            requirements: [
+              'POST /api/track — accepts events {type, userId?, metadata, ts}. Return 200 immediately (async)',
+              'Buffer events in-memory: flush to DB every 1 second OR every 500 events (whichever first)',
+              'Schema: events(id, type, userId, metadata JSONB, ts TIMESTAMPTZ) with time-based partitioning concept',
+              'Aggregate on read: GROUP BY type, date_trunc(\'hour\', ts). Precompute into hourly_stats table on flush',
+              'Dashboard: line chart (events/hour, last 24h), bar chart (events by type), real-time event counter via WebSocket',
+              'Query API: GET /api/stats?from=&to=&type= — returns aggregated data for chart'
+            ],
+            concepts: ['In-memory buffering + batch insert', 'Time-series aggregation', 'PostgreSQL date_trunc + WINDOW functions', 'Write vs read optimization', 'Chart.js with live data', 'Backpressure concept'],
+            hints: [
+              'Buffer: const buf = []; setInterval(() => { if (buf.length) { db.insert(buf.splice(0)); } }, 1000). Add shutdown hook: flush on SIGTERM.',
+              'On flush: also run INSERT INTO hourly_stats SELECT type, date_trunc(\'hour\', ts), COUNT(*) FROM events WHERE ts >= batchStart GROUP BY 1,2 ON CONFLICT (type, bucket) DO UPDATE SET count = count + EXCLUDED.count.',
+              'WebSocket: client connects → server streams live event count every 2s from an in-memory counter (don\'t query DB for this).',
+              'Partitioning concept: CREATE TABLE events_2024_01 PARTITION OF events FOR VALUES FROM (\'2024-01-01\') TO (\'2024-02-01\'). Explain this even if you just use a regular table.'
+            ]
+          },
+          {
+            id: 'multi-tenant-saas',
+            title: 'Multi-Tenant SaaS with Plan Limits',
+            brief: 'Shared-schema multi-tenancy, subscription plans, usage enforcement, and billing dashboard',
+            diff: 'Mid', time: 90,
+            statement: '<p>Build a SaaS platform where multiple companies (tenants) share the same database but their data is isolated. Each tenant has a subscription plan (free/pro/enterprise) with enforced limits. A billing dashboard shows usage. The hard part: enforcing limits without missing edge cases.</p>',
+            stack: [{ label: 'React', cls: 'stack-fe' }, { label: 'Node.js + Express', cls: 'stack-be' }, { label: 'PostgreSQL', cls: 'stack-db' }, { label: 'SaaS Architecture', cls: 'stack-arch' }],
+            requirements: [
+              'Shared schema: all tables have tenantId FK. Tenant context set in middleware from JWT',
+              'Plans: free (5 users, 1GB storage, 100 API calls/day), pro (50 users, 50GB, 10k/day), enterprise (unlimited)',
+              'Plan limit middleware: check usage before every create/upload operation',
+              'Usage tracking: users_count, storage_bytes, api_calls_today — updated on every operation',
+              'PostgreSQL Row-Level Security (RLS): policy ensures queries only see own tenant\'s data',
+              'Admin dashboard: current plan, usage bars, upgrade prompt, per-resource usage breakdown'
+            ],
+            concepts: ['Multi-tenancy patterns (shared schema)', 'PostgreSQL Row Level Security', 'Plan limits middleware', 'Usage metering', 'Context propagation via middleware', 'Tenant isolation testing'],
+            hints: [
+              'RLS: ALTER TABLE posts ENABLE ROW LEVEL SECURITY; CREATE POLICY tenant_isolation ON posts USING (tenantId = current_setting(\'app.tenantId\')::uuid). Set via: SET app.tenantId = ?.',
+              'Middleware: const tenant = await db.query("SELECT plan, usageToday FROM tenants WHERE id=?"); req.tenant = tenant. LimitCheck: if tenant.usageToday >= PLANS[tenant.plan].apiLimit → 429.',
+              'Usage: UPDATE tenants SET apiCallsToday = apiCallsToday + 1 WHERE id=?. Reset with a cron at midnight.',
+              'Testing isolation: use two tenants in tests, verify that tenant A\'s queries never return tenant B\'s data even without explicit tenantId filter.'
+            ]
+          },
+          {
+            id: 'lru-cache-service',
+            title: 'In-Memory Cache Service (LRU + TTL)',
+            brief: 'Build Redis-lite: LRU eviction, TTL expiry, REST API, hit/miss metrics, monitoring dashboard',
+            diff: 'Mid', time: 90,
+            statement: '<p>Build a key-value cache service with LRU eviction and TTL support — from scratch, without using Redis. Implement the LRU data structure, TTL lazy expiry, REST API, and a monitoring dashboard. This tests your understanding of data structures, memory management, and API design.</p>',
+            stack: [{ label: 'React', cls: 'stack-fe' }, { label: 'Node.js', cls: 'stack-be' }, { label: 'Data Structures', cls: 'stack-arch' }],
+            requirements: [
+              'SET key value [EX seconds] — store with optional TTL',
+              'GET key — return value or null if expired/not found. Lazy TTL deletion on access',
+              'DEL key — remove immediately',
+              'LRU eviction: when capacity (e.g. 1000 keys) exceeded, evict least-recently-used',
+              'GET /metrics — {hits, misses, evictions, currentSize, hitRate}',
+              'TTL scan: background sweep every 10s to remove expired keys proactively',
+              'Dashboard: gauge charts for hit rate, size, eviction rate. Key browser with TTL display'
+            ],
+            concepts: ['LRU with Map (insertion-order) or doubly linked list + hashmap', 'Lazy vs active TTL expiry', 'Cache metrics (hit rate)', 'O(1) LRU operations', 'Memory-bounded cache design'],
+            hints: [
+              'JavaScript Map preserves insertion order. Move-to-end on access = LRU. Evict = delete first key (map.keys().next().value).',
+              'Full O(1) LRU: doubly linked list (head=LRU, tail=MRU) + Map{key → node}. GET: find node → move to tail. SET: add to tail → if full, remove head.',
+              'TTL: store {value, expiresAt}. On GET: if expiresAt && Date.now() > expiresAt → delete, return null, increment misses. Background: iterate map, delete expired.',
+              'Metrics: counters for hits, misses, evictions. hitRate = hits/(hits+misses). Expose via GET /metrics. Reset daily or on restart.'
+            ]
+          },
+          {
+            id: 'chat-system',
+            title: 'Real-Time Chat Application',
+            brief: 'WebSocket-based messaging with rooms, typing indicators, online presence, message history',
+            diff: 'Mid', time: 90,
+            statement: '<p>Build a real-time chat app — WhatsApp/Messenger-lite. Users create chat rooms, send messages in real-time via WebSocket, see typing indicators and online presence, share images, and scroll through paginated message history. The hard parts: managing socket connections per room, handling reconnection gracefully, and designing a message schema that scales.</p>',
+            stack: [{ label: 'React', cls: 'stack-fe' }, { label: 'Node.js + Socket.io', cls: 'stack-be' }, { label: 'PostgreSQL', cls: 'stack-db' }, { label: 'Real-Time', cls: 'stack-arch' }],
+            requirements: [
+              'POST /api/rooms — create chat room {name, isGroup, memberIds[]}, returns roomId',
+              'WebSocket events: join room, send message, typing indicator, mark as read',
+              'Message persistence: store in PostgreSQL, paginate with cursor (createdAt)',
+              'Typing indicators: broadcast to room with 2s debounce — show "X is typing..." in React',
+              'Online presence: track connected sockets per user, broadcast join/leave to shared rooms',
+              'Image sharing: upload image → return URL → send as message with type:image (reuse file-upload pattern)',
+              'Read receipts: track lastReadMessageId per user per room, show double-check ✓✓ when all read'
+            ],
+            concepts: ['Socket.io room management', 'Online presence via connect/disconnect tracking', 'Cursor-based message pagination', 'Typing debounce pattern', 'Read receipt tracking (lastReadMessageId)', 'WebSocket reconnection + state reconciliation'],
+            hints: [
+              'Socket state: Map<userId, Set<socketId>>. On connect: add socket to user connection set. On disconnect: remove, if set empty → broadcast offline to all rooms the user was in. Reconnect: rejoin all rooms, fetch missed messages since lastSeen.',
+              'Typing: client emits "typing" on keypress (debounced 300ms). Server: io.to(roomId).emit("typing", {userId, username}). Client clears after 2s of no event or on blur.',
+              'Message schema: messages(id UUID, roomId UUID, senderId UUID, content TEXT, type TEXT, imageUrl TEXT, createdAt TIMESTAMPTZ). Index on (roomId, createdAt DESC) for cursor pagination.',
+              'Read receipts: read_receipts(userId, roomId, lastReadMessageId). On opening room: UPDATE read_receipts SET lastReadMessageId=(SELECT MAX(id) FROM messages WHERE roomId=X) WHERE userId=Y AND roomId=X. Broadcast "lastRead" update to room so others see ✓✓.'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'advanced',
+        title: 'Advanced — Production Architecture',
+        eyebrow: 'Level 3 · 8 Problems · 120 min each',
+        desc: 'Complex, multi-service systems that require architectural decisions, not just code. You\'ll design distributed workflows, handle failure modes, implement industry patterns (saga, circuit breaker, CQRS), and optimize for scale. Expect to draw before you code.',
+        diff: 'Advanced',
+        moveOn: 'You can architect the system on a whiteboard, implement the core flow, and answer "what happens if X fails?" for every step.',
+        problems: [
+          {
+            id: 'chunked-file-storage',
+            title: 'Distributed File Storage (Dropbox-Lite)',
+            brief: 'Chunked upload, content-based deduplication, versioning, shared links, folder hierarchy',
+            diff: 'Advanced', time: 120,
+            statement: '<p>Build a cloud storage system. Files are uploaded in chunks (resumable), deduplicated by content hash (two users uploading the same file share one copy on disk), versioned (restore old versions), and shareable via access-controlled links. Folder hierarchy uses a proper tree structure.</p>',
+            stack: [{ label: 'React', cls: 'stack-fe' }, { label: 'Node.js', cls: 'stack-be' }, { label: 'PostgreSQL + MongoDB', cls: 'stack-db' }, { label: 'Distributed Storage', cls: 'stack-arch' }],
+            requirements: [
+              'Chunked upload protocol: POST /upload/init → uploadId; PUT /upload/:id/chunk/:n; POST /upload/:id/complete',
+              'Content-addressed storage: SHA-256 hash of file. If hash exists → dedup (no disk write), just add a reference',
+              'File versioning: each upload creates a new version, not overwrite. GET /files/:id?version=N',
+              'Folder tree: closure table or adjacency list in PG. MOVE, RENAME, nested DELETE',
+              'Shared links: {token, fileId, expiresAt, maxDownloads, passwordHash?}',
+              'Resumable upload: track which chunks received, client can resume after disconnect',
+              'React: drag-and-drop multi-file upload, folder tree nav, version history drawer'
+            ],
+            concepts: ['Chunked/resumable upload', 'Content-addressed deduplication', 'Closure table for folder hierarchy', 'File versioning schema', 'Presigned token for shared links', 'SHA-256 for content fingerprinting'],
+            hints: [
+              'Chunk table: chunks(uploadId, chunkNumber, checksum, storedPath, size). On complete: assemble OR store chunks separately and serve with range requests.',
+              'Dedup: const hash = sha256(file). SELECT id FROM blobs WHERE hash=? — if exists, link new file row to same blob. If not, write to disk as blobs/{hash}.',
+              'Closure table for folders: folder_tree(ancestor_id, descendant_id, depth). DELETE subtree: DELETE WHERE ancestor_id IN (SELECT descendant_id FROM folder_tree WHERE ancestor_id=folderId).',
+              'Versioning: files(id, name, folderId, currentVersionId). file_versions(id, fileId, blobId, versionNum, createdAt, createdBy). UPDATE files.currentVersionId on new upload.'
+            ]
+          },
+          {
+            id: 'auction-engine',
+            title: 'Real-Time Auction Engine',
+            brief: 'Concurrent bidding with optimistic locking, WebSocket updates, auto-close, and settlement',
+            diff: 'Advanced', time: 120,
+            statement: '<p>Build an auction system. Users place bids in real-time, the highest bid wins when the auction closes. The critical challenge: 1000 users bidding simultaneously on the last second must not corrupt data. Design the locking strategy, WebSocket broadcast architecture, and settlement flow.</p>',
+            stack: [{ label: 'React', cls: 'stack-fe' }, { label: 'Node.js + WebSocket', cls: 'stack-be' }, { label: 'PostgreSQL', cls: 'stack-db' }, { label: 'Concurrency', cls: 'stack-arch' }],
+            requirements: [
+              'Create auction: {itemId, startPrice, reservePrice, endsAt}',
+              'Place bid: must be higher than current highest. Race-condition safe (two users bid same amount simultaneously)',
+              'WebSocket broadcast: every new valid bid → push to all auction room subscribers {highestBid, bidder, remainingSeconds}',
+              'Auto-close: server-side job closes auction at endsAt. No bids accepted after close',
+              'Anti-snipe extension: bid in last 60s extends auction by 60s',
+              'Settlement: mark winner, debit balance (mock), send winner/loser notifications',
+              'Bid history: full log with timestamps. Shill bidding detection (flag if same user bids consecutively)'
+            ],
+            concepts: ['Optimistic locking for bids', 'Database-level UNIQUE constraint', 'WebSocket room broadcast', 'Cron/scheduled job for auto-close', 'Auction state machine', 'Anti-snipe extension logic'],
+            hints: [
+              'Bid safety: INSERT INTO bids(auctionId, userId, amount) WHERE amount > (SELECT MAX(amount) FROM bids WHERE auctionId=?). Or: UPDATE auctions SET highestBid=?, highestBidderId=? WHERE id=? AND highestBid < ? RETURNING *. If 0 rows updated → someone bid higher simultaneously → return "outbid".',
+              'Anti-snipe: on valid bid, if auction.endsAt - now < 60s → UPDATE auctions SET endsAt = endsAt + INTERVAL \'60 seconds\'.',
+              'Auto-close job: SELECT * FROM auctions WHERE endsAt <= NOW() AND status=\'active\'. UPDATE status=\'closed\', call settlement function.',
+              'WebSocket: io.to(auctionId).emit("bid", {amount, bidder, endsAt}). Join room on page load, leave on unmount.'
+            ]
+          },
+          {
+            id: 'api-gateway',
+            title: 'API Gateway with Circuit Breaker',
+            brief: 'Reverse proxy with rate limiting, circuit breaker state machine, request logging, dashboard',
+            diff: 'Advanced', time: 120,
+            statement: '<p>Build an API gateway that sits in front of microservices. It routes requests, enforces per-key rate limits, protects downstream services with a circuit breaker (open/half-open/closed state machine), logs all requests, and exposes a dashboard. Real infrastructure code.</p>',
+            stack: [{ label: 'React', cls: 'stack-fe' }, { label: 'Node.js + Express', cls: 'stack-be' }, { label: 'MongoDB', cls: 'stack-db' }, { label: 'Infrastructure', cls: 'stack-arch' }],
+            requirements: [
+              'Route config: {path, upstream, rateLimit: {requests, window}, timeout}',
+              'Reverse proxy: forward request to upstream, return response',
+              'Circuit breaker per route: CLOSED → OPEN (after N failures in window) → HALF-OPEN (after timeout) → CLOSED (on success)',
+              'Rate limiting: sliding window per API key across routes',
+              'Request log: store {route, apiKey, status, latencyMs, ts} in MongoDB',
+              'Dashboard: circuit breaker status per service (green/red), error rate chart, latency histogram, top consumers'
+            ],
+            concepts: ['Circuit breaker state machine', 'Sliding window rate limiter', 'Reverse proxy pattern', 'Failure threshold + recovery', 'Request logging pipeline', 'Health check polling'],
+            hints: [
+              'Circuit breaker: class CircuitBreaker { state: CLOSED|OPEN|HALF_OPEN; failures: 0; lastFailureTime; call(fn): if OPEN && time < lastFailureTime+timeout → throw OPEN error; try { result=fn(); onSuccess(); } catch { onFailure(); } }.',
+              'OPEN: failures >= threshold. HALF_OPEN: timeout elapsed → allow one probe request. If probe succeeds → CLOSED, reset. If probe fails → back to OPEN.',
+              'Sliding window: store request timestamps in a circular buffer or sorted array per key. Count timestamps in last windowMs. If >= limit → 429.',
+              'Proxy: use http-proxy-middleware or node-http-proxy. Wrap in circuit breaker. On proxy error → increment failure count.'
+            ]
+          },
+          {
+            id: 'saga-order',
+            title: 'Order Management with Saga Pattern',
+            brief: 'Distributed transaction across services using orchestrated saga with compensating transactions',
+            diff: 'Advanced', time: 120,
+            statement: '<p>Build an order system where placing an order involves multiple steps across conceptual services: reserve inventory, process payment, confirm order, send notification. Any step can fail. The Saga pattern ensures the system always reaches a consistent state via compensating transactions. No two-phase commit.</p>',
+            stack: [{ label: 'React', cls: 'stack-fe' }, { label: 'Node.js', cls: 'stack-be' }, { label: 'PostgreSQL + MongoDB', cls: 'stack-db' }, { label: 'Saga Pattern', cls: 'stack-arch' }],
+            requirements: [
+              'Order saga steps: reserveInventory → processPayment → createOrder → sendNotification',
+              'Each step has a compensating transaction: releaseInventory, refundPayment, cancelOrder, (notification is best-effort)',
+              'On step N failure: execute compensations for steps N-1 down to 1',
+              'Event sourcing: all state transitions stored as events in MongoDB',
+              'Rebuild order state from event log (no separate state column)',
+              'Saga state persisted in PostgreSQL: {sagaId, step, status, payload}',
+              'Dashboard: live saga execution view with step-by-step status, failed sagas with compensation log'
+            ],
+            concepts: ['Saga pattern (orchestration vs choreography)', 'Compensating transactions', 'Event sourcing basics', 'Idempotent saga steps', 'At-least-once step execution', 'Saga recovery on crash'],
+            hints: [
+              'Orchestrator class: steps = [reserveInventory, processPayment, createOrder, sendNotification]. async execute(): for each step → try { await step.execute(); await saveProgress(step) } catch { await compensateFrom(currentStep-1); throw; }.',
+              'Idempotent: each step checks "has this been done?" before executing. Use sagaId + stepName as idempotency key.',
+              'Event sourcing: on each state change → append event to MongoDB: {sagaId, type: "INVENTORY_RESERVED", payload, ts}. State = events.reduce(applyEvent, {}).',
+              'Crash recovery: on restart → load in-progress sagas from PG → resume from last successful step. Must re-execute current step (must be idempotent).'
+            ]
+          },
+          {
+            id: 'realtime-quiz',
+            title: 'Real-Time Multiplayer Quiz Game',
+            brief: 'Kahoot-lite: rooms, synchronized game state, WebSocket, scoring, leaderboard, scaling',
+            diff: 'Advanced', time: 120,
+            statement: '<p>Build a real-time quiz game (Kahoot-style). Host creates a room, players join with a code, host starts the game, all players see the same question simultaneously with a countdown, submit answers, and see a live leaderboard. Then tackle the hardest part: making it work across multiple Node.js instances.</p>',
+            stack: [{ label: 'React', cls: 'stack-fe' }, { label: 'Node.js + WebSocket', cls: 'stack-be' }, { label: 'PostgreSQL + Redis-concept', cls: 'stack-db' }, { label: 'Real-Time Scaling', cls: 'stack-arch' }],
+            requirements: [
+              'Game lifecycle: LOBBY → QUESTION_ACTIVE (10s countdown) → ANSWER_REVEAL → LEADERBOARD → NEXT_QUESTION → GAME_OVER',
+              'Synchronized countdown: server is the source of truth for time, not client',
+              'Answer window: accept answers only during QUESTION_ACTIVE. Score by (correct + speed)',
+              'Leaderboard: update after each question, animated in React',
+              'Disconnect handling: player reconnects within 30s, rejoins game in current state',
+              'Horizontal scaling concept: explain how to use Redis pub/sub so multiple Node.js instances handle the same room',
+              'Persist final results to PostgreSQL for game history'
+            ],
+            concepts: ['Game state machine', 'Synchronized timer (server-authoritative)', 'WebSocket room management', 'Scoring algorithm (correct + latency)', 'Reconnect + state sync', 'Redis pub/sub for horizontal scaling'],
+            hints: [
+              'Game state: Map{roomCode → {state, currentQ, players: {id, score, answered}, questionTimer}}. On join → send full current state.',
+              'Synchronized timer: server sends QUESTION_START with {startsAt: Date.now()}. Client counts down from startsAt. Server ends question at startsAt+10000 regardless of client state.',
+              'Scoring: if answer correct → points += 1000 * (1 - (answerTime / questionDuration) * 0.5). Faster = more points.',
+              'Horizontal scaling: io.adapter(createAdapter(pubClient, subClient)) with Redis. One instance emits to room → Redis broadcasts to all instances → all sockets in room receive it.'
+            ]
+          },
+          {
+            id: 'cdn-cache',
+            title: 'Edge Cache / CDN Layer',
+            brief: 'HTTP caching proxy with cache-control parsing, stale-while-revalidate, invalidation, metrics',
+            diff: 'Advanced', time: 120,
+            statement: '<p>Build a caching layer that sits between clients and origin servers — a simple CDN edge node. It parses Cache-Control headers, stores responses, serves stale content while revalidating in the background, prevents cache stampedes, and exposes a cache inspector dashboard. Pure HTTP semantics.</p>',
+            stack: [{ label: 'React', cls: 'stack-fe' }, { label: 'Node.js', cls: 'stack-be' }, { label: 'MongoDB', cls: 'stack-db' }, { label: 'HTTP Caching', cls: 'stack-arch' }],
+            requirements: [
+              'Proxy any request to origin; cache response keyed by URL + Vary headers',
+              'Parse Cache-Control: max-age, s-maxage, no-store, no-cache, stale-while-revalidate',
+              'stale-while-revalidate: serve stale immediately, trigger background refresh',
+              'Cache stampede prevention: when cache misses, only one request goes to origin; others wait (promise coalescing)',
+              'POST /cache/invalidate — invalidate by URL pattern (exact or prefix)',
+              'GET /cache/inspect/:key — show cached headers, age, stale status',
+              'Dashboard: hit/miss/stale rates, cache size, most-cached URLs, invalidation log'
+            ],
+            concepts: ['HTTP caching semantics (RFC 7234)', 'Cache key design (URL + Vary)', 'Stale-while-revalidate', 'Cache stampede / dogpile prevention', 'Vary header handling', 'Cache invalidation strategies'],
+            hints: [
+              'Cache key: sha256(url + sorted(varyHeaders)). Store: {key, body, headers, cachedAt, maxAge, swr}.',
+              'Age: now - cachedAt. Fresh if age < maxAge. Stale if age >= maxAge but age < maxAge + swr → serve stale, revalidate in background.',
+              'Stampede: inflight = Map{key → Promise}. On miss: if inflight.has(key) → return await inflight.get(key). else → const p = fetchOrigin(); inflight.set(key, p); result = await p; inflight.delete(key).',
+              'Vary: if response has Vary: Accept-Encoding, the cache key must include the request\'s Accept-Encoding value. Different encodings → different cache entries.'
+            ]
+          },
+          {
+            id: 'data-export',
+            title: 'Streaming Data Export + Reporting Pipeline',
+            brief: 'Large dataset export as background job: streaming PostgreSQL → CSV/Excel → presigned URL + WebSocket progress',
+            diff: 'Advanced', time: 120,
+            statement: '<p>Build a reporting system where users request large data exports. The export runs as a background job, streams millions of rows from PostgreSQL via cursor (no memory overflow), generates CSV or XLSX, uploads to storage, and notifies the user via WebSocket with real-time progress. Backpressure handling is critical.</p>',
+            stack: [{ label: 'React', cls: 'stack-fe' }, { label: 'Node.js', cls: 'stack-be' }, { label: 'PostgreSQL + MongoDB', cls: 'stack-db' }, { label: 'Streaming', cls: 'stack-arch' }],
+            requirements: [
+              'POST /api/reports — accepts {query, format: csv|xlsx, userId}. Returns {jobId} immediately',
+              'Worker: stream rows from PG using cursor (pg-cursor), transform to CSV/XLSX, write to temp file',
+              'Backpressure: pause DB cursor when write stream is full, resume when drained',
+              'Progress: worker emits progress events (rows processed / total) via WebSocket to user',
+              'On complete: generate presigned download URL (token-based, 24h), store in MongoDB job record',
+              'Email notification on job complete with download link (bonus)',
+              'Dashboard: job list, progress bars, download buttons, expire/cancel controls'
+            ],
+            concepts: ['PostgreSQL streaming cursor (pg-cursor)', 'Node.js stream backpressure', 'Pipeline pattern (Readable → Transform → Writable)', 'XLSX streaming generation', 'Presigned URL', 'WebSocket progress push'],
+            hints: [
+              'pg-cursor: const cursor = client.query(new Cursor("SELECT ...", params)); cursor.read(1000, (err, rows) => { ... cursor.read(1000, ...) }). Batch of 1000 rows at a time.',
+              'Backpressure: const ok = writeStream.write(csvRow); if (!ok) { cursor.pause(); writeStream.once("drain", () => cursor.resume()); }.',
+              'XLSX streaming: use exceljs streaming writer. exceljs has addRow() method on streaming worksheet — no full workbook in memory.',
+              'Progress: track rowsProcessed counter. On each batch: io.to(userId).emit("progress", {jobId, pct: (rowsProcessed/totalRows)*100, rows: rowsProcessed}).'
+            ]
+          },
+          {
+            id: 'search-ranking',
+            title: 'Autocomplete + Ranking Engine',
+            brief: 'Trie-based autocomplete with BM25 ranking, personalization signals, and A/B test variants',
+            diff: 'Advanced', time: 120,
+            statement: '<p>Build an autocomplete and search ranking system. Prefix matching uses a trie (stored in MongoDB). Results are ranked using a BM25-inspired formula combining term frequency, recency, and personalization signals (user\'s history). Two ranking variants run as an A/B test. React UI has keyboard navigation and virtual scroll.</p>',
+            stack: [{ label: 'React', cls: 'stack-fe' }, { label: 'Node.js', cls: 'stack-be' }, { label: 'MongoDB + PostgreSQL', cls: 'stack-db' }, { label: 'Search + ML-adjacent', cls: 'stack-arch' }],
+            requirements: [
+              'Trie stored in MongoDB: nodes({char, children: {char → nodeId}, isEnd, docIds[], frequency})',
+              'GET /autocomplete?q=X&userId=Y — prefix traversal, return top 10 suggestions',
+              'Ranking formula: score = (textScore * 0.5) + (popularity * 0.3) + (personalization * 0.2)',
+              'Personalization: user\'s recent search/click history stored in PG, boost matching categories',
+              'A/B test: userId % 2 → variant A (textScore heavy) or B (popularity heavy). Log which variant served',
+              'Query analytics: log every search, click, and no-result. Feed back into popularity scores',
+              'React: debounced autocomplete, keyboard arrow nav, highlight matching prefix, virtual list for 50+ results'
+            ],
+            concepts: ['Trie data structure', 'BM25 ranking concept', 'Personalization scoring', 'A/B testing at query level', 'Query analytics feedback loop', 'React virtual list', 'Prefix index in MongoDB'],
+            hints: [
+              'Trie traversal: from root, navigate char by char to prefix node. Then BFS/DFS to collect all isEnd nodes below. Limit depth for performance.',
+              'MongoDB trie: trie_nodes({_id, char, parentId, isEnd, docIds, frequency}). Index on parentId+char. Prefix walk = O(prefix_length) queries — cache hot prefixes in LRU.',
+              'Ranking: fetchDocs(docIds) from PG → compute textScore (prefix match depth), popularity (click count), personalScore (category overlap with user history). Weighted sum.',
+              'A/B: const variant = murmurHash(userId) % 2 === 0 ? "A" : "B". Log: ab_events({userId, variant, query, clicked, ts}). Compare CTR per variant weekly.'
+            ]
+          },
+          {
+            id: 'trello-board',
+            title: 'Kanban Board (Trello-Lite)',
+            brief: 'Drag-and-drop board with real-time sync, fractional indexing, user assignment, activity log',
+            diff: 'Advanced', time: 120,
+            statement: '<p>Build a collaborative Kanban board — Trello-lite. Columns and cards, drag-and-drop to reorder within and between columns, real-time sync across users, user assignment, and an activity log. The hard part: ordering. Use fractional indexing (insert between 1.0 and 2.0 → 1.5) to avoid re-indexing every card on every move. Then add WebSocket broadcast so collaborators see updates live.</p>',
+            stack: [{ label: 'React + dnd-kit', cls: 'stack-fe' }, { label: 'Node.js + WebSocket', cls: 'stack-be' }, { label: 'PostgreSQL', cls: 'stack-db' }, { label: 'Real-Time', cls: 'stack-arch' }],
+            requirements: [
+              'CRUD columns and cards: create, rename, delete (with confirmation for non-empty)',
+              'Drag-and-drop: reorder cards within a column, move cards between columns',
+              'Fractional indexing: card.order stores a double. Insert between two cards → order = (prev + next) / 2. No re-indexing needed.',
+              'WebSocket sync: every card/column mutation broadcasts to all board viewers',
+              'Optimistic UI: move card immediately on drag-end, revert if server rejects (conflict)',
+              'User assignment: assign users to cards, filter by assignee',
+              'Activity log: log every create/move/rename/assign event with timestamp + user'
+            ],
+            concepts: ['Fractional indexing for ordering', 'Drag-and-drop with dnd-kit', 'Optimistic UI with conflict rollback', 'WebSocket broadcast for collaborative state', 'Activity log as event stream', 'Board state reconciliation'],
+            hints: [
+              'Fractional indexing: card positions are doubles. Inserting between adjacent cards 1.0 and 2.0 → assign 1.5. Between 1.5 and 2.0 → 1.75. Safeguard: after N inserts between the same two cards (say 5), re-index that column to redistribute evenly.',
+              'dnd-kit: use DndContext with SortableContext per column. OnDragEnd: compute new position, optimistically update state, send PUT /api/cards/:id/position {columnId, order} to server.',
+              'Conflict handling: server assigns a version to each card. On move: server checks version matches. If conflict → server rejects → client rolls back to previous state. Show toast "Board updated by another user".',
+              'Schema: columns(id, boardId, title, order DOUBLE, createdAt). cards(id, columnId, title, description, order DOUBLE, assigneeId, version INT, createdAt). activity_log(id, boardId, userId, action, details JSONB, createdAt).',
+              'WebSocket: on every mutation, server broadcasts to board room: {type: "card_moved"|"card_created"|"card_updated", payload}. Client applies event to local state. Re-fetch full board on reconnect for consistency.'
+            ]
+          },
+          {
+            id: 'graphql-apollo',
+            title: 'GraphQL API with Apollo Client',
+            brief: 'GraphQL schema design, resolvers, Apollo Client with cache normalization',
+            diff: 'Mid', time: 90,
+            statement: '<p>Build a GraphQL API with Apollo Client on the frontend. Design a schema for a blog platform (users, posts, comments). Implement resolvers with DataLoader for N+1 prevention. Set up Apollo Client with normalized cache, optimistic updates, and error handling.</p>',
+            stack: [{label:'React + Apollo Client', cls:'stack-fe'}, {label:'Node.js + Apollo Server', cls:'stack-be'}, {label:'PostgreSQL', cls:'stack-db'}, {label:'GraphQL', cls:'stack-arch'}],
+            requirements: [
+              'GraphQL schema: User, Post, Comment types with Query and Mutation definitions',
+              'Resolvers: N+1 prevention using DataLoader for batch loading related entities',
+              'Apollo Client cache: normalized cache with cache policies (cache-first, network-only)',
+              'Optimistic updates: update UI immediately on mutation, rollback on error',
+              'Error handling: GraphQL errors vs network errors, partial data responses',
+              'Pagination: cursor-based pagination with Connection pattern (edges, nodes, pageInfo)',
+              'Subscriptions: real-time updates for new comments using GraphQL subscriptions'
+            ],
+            concepts: ['GraphQL schema design', 'DataLoader for N+1 prevention', 'Apollo Client normalized cache', 'Optimistic UI updates', 'Cursor-based pagination', 'GraphQL subscriptions'],
+            hints: [
+              'DataLoader batches and deduplicates database queries within a single request — not across requests.',
+              'Apollo Client cache: __typename is used for cache normalization. Cache key = TypeName:ID.',
+              'Optimistic update: cache.writeData immediately, then server confirms or reverts.',
+              'Cursor pagination: { edges: [{node, cursor}], pageInfo: {hasNextPage, endCursor} }'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'testing-cicd',
+        title: 'Testing & CI/CD',
+        eyebrow: 'Week 9 · 2 Problems · 90 min each',
+        desc: 'Testing strategies and CI/CD pipelines that ship production code with confidence. Unit, integration, E2E testing across the full stack, and automated deployment pipelines.',
+        diff: 'Mid',
+        moveOn: 'You can set up a full test suite with meaningful coverage, design a CI/CD pipeline that catches regressions, and explain trade-offs between testing strategies.',
+        problems: [
+          {
+            id: 'testing-strategy',
+            title: 'Full-Stack Testing Strategy',
+            brief: 'Unit, integration, E2E testing across frontend + backend + database',
+            diff: 'Mid', time: 90,
+            statement: '<p>Design a comprehensive testing strategy for a full-stack application. Cover unit tests (functions, components), integration tests (API endpoints, database queries), and E2E tests (user journeys). Set up test database with fixtures, mock external services, and achieve meaningful coverage without testing implementation details.</p>',
+            stack: [{ label: 'React + Jest/Vitest', cls: 'stack-fe' }, { label: 'Node.js + Supertest', cls: 'stack-be' }, { label: 'PostgreSQL + Testcontainers', cls: 'stack-db' }, { label: 'Playwright', cls: 'stack-arch' }],
+            requirements: [
+              'Unit tests for utility functions and React components (mock hooks, test rendering)',
+              'Integration tests for API endpoints using Supertest + test database',
+              'Test database setup: migrations + seed data per test suite using Testcontainers',
+              'E2E tests for critical user journeys (signup → login → create item → view list)',
+              'Mock external services (email, payment) using MSW (Mock Service Worker)',
+              'Test isolation: each test runs independently, no shared state between tests',
+              'Coverage reporting: aim for 80%+ on business logic, lower on UI'
+            ],
+            concepts: ['Test pyramid (unit > integration > E2E)', 'Testcontainers for database tests', 'MSW for API mocking', 'Factory pattern for test data', 'Query-by-testid for React testing'],
+            hints: [
+              'Use Testcontainers to spin up a real PostgreSQL instance per test suite — not a shared test DB.',
+              'MSW intercepts network requests at the HTTP level — no need to mock fetch/axios directly.',
+              "Factory pattern: createTestUser({email: 'test@test.com'}) that generates valid test data with overrides.",
+              'Playwright for E2E: use page.getByRole() for accessible selectors, avoid CSS selectors.'
+            ]
+          },
+          {
+            id: 'cicd-pipeline',
+            title: 'CI/CD Pipeline Design',
+            brief: 'GitHub Actions pipeline with lint, test, build, deploy stages',
+            diff: 'Mid', time: 90,
+            statement: '<p>Design a CI/CD pipeline for a full-stack application using GitHub Actions. The pipeline should lint, test, build, and deploy. Include caching for faster builds, matrix testing across Node versions, environment-specific deployments (staging → production), and rollback capability.</p>',
+            stack: [{ label: 'GitHub Actions', cls: 'stack-fe' }, { label: 'Docker', cls: 'stack-be' }, { label: 'AWS ECS/EC2', cls: 'stack-db' }, { label: 'Terraform', cls: 'stack-arch' }],
+            requirements: [
+              'Lint stage: ESLint, Prettier check, TypeScript type check — fail fast on lint errors',
+              'Test stage: run unit + integration tests with PostgreSQL service container',
+              'Build stage: build frontend (Vite) and backend (Docker), push images to ECR',
+              'Deploy stage: deploy to staging on main branch, manual approval for production',
+              'Caching: cache node_modules, Docker layers, Vite build cache',
+              'Rollback: ability to revert to previous deployment if health checks fail',
+              'Branch strategy: feature branches → PR → main → staging → production'
+            ],
+            concepts: ['GitHub Actions workflow YAML', 'Docker layer caching', 'Environment protection rules', 'Health check gates', 'Blue-green deployment', 'Rollback strategies'],
+            hints: [
+              'Cache node_modules with actions/cache and hashFiles("package-lock.json") for cache key.',
+              'Use Docker layer caching: COPY package*.json first, then RUN npm ci, then COPY source (leverages layer cache).',
+              'GitHub Actions environments: staging (auto-deploy on main), production (manual approval required).',
+              'Health check gate: after deploy, curl the health endpoint. If non-200, auto-rollback.'
+            ]
+          }
+        ]
+      }
+    ];
+
+    /* ── SYSTEM DESIGN MAP ── */
+    const SD_MAP = {
+      /* ── BEGINNER ── */
+      'url-shortener': [
+        'Collision-safe ID generation (Base62 + retry)',
+        'Read-heavy optimization — 301 redirect + CDN cache',
+        'Write-aside analytics pipeline (click tracking)',
+        'Token bucket rate limiting per IP',
+        'TTL index for auto-expiry (schema design)',
+      ],
+      'feature-flags': [
+        'Canary deployment & percentage rollout',
+        'Deterministic hashing for user bucketing',
+        'SDK hot-path design (low-latency evaluation)',
+        'Eventual consistency for config propagation',
+        'Audit trail pattern for compliance',
+      ],
+      'file-upload': [
+        'Binary data ↔ metadata separation (object storage model)',
+        'Presigned URL for secure direct access',
+        'Streaming vs buffering trade-offs',
+        'Atomic consistency: file on disk + DB record',
+        'MIME validation at API ingress',
+      ],
+      'rate-limiter': [
+        'Token bucket vs sliding window vs leaky bucket',
+        'Distributed rate limiting (in-memory vs Redis)',
+        'Rate limit header standards (RFC 6585)',
+        'Tiered limits: IP → API key → user',
+        'Real-time metrics aggregation via WebSocket',
+      ],
+      'webhook-system': [
+        'Event-driven architecture (publisher → subscriber)',
+        'At-least-once delivery guarantee',
+        'Exponential backoff with jitter',
+        'Dead letter queue pattern',
+        'HMAC-SHA256 payload signing for security',
+      ],
+      'job-queue': [
+        'Database-as-queue pattern (PostgreSQL)',
+        'SELECT FOR UPDATE SKIP LOCKED (safe concurrency)',
+        'Worker pool with configurable concurrency',
+        'Job state machine (queued → processing → done/failed)',
+        'Dead letter + retry policy design',
+      ],
+      'rbac-system': [
+        'Permission model design (RBAC vs ABAC)',
+        'Many-to-many join optimization',
+        'Permissions caching per request vs per session',
+        'Audit log for compliance (who changed what, when)',
+        'Resource-level vs role-level access control',
+      ],
+      'fulltext-search': [
+        'Inverted index (tsvector) design',
+        'Search ranking: tf-idf / BM25 concept',
+        'Faceted navigation with aggregation queries',
+        'GIN index for full-text performance',
+        'Cursor-based pagination at scale',
+      ],
+      'pastebin': [
+        'Atomic read-burn (SELECT FOR UPDATE + row-level check)',
+        'TTL-based cleanup with cron job',
+        'URL-safe ID generation for share links',
+        'Syntax highlighting: server-side vs client-side trade-off',
+        'Secret mode: unlisted resources vs auth-gated access',
+      ],
+      /* ── MID ── */
+      'collab-editor': [
+        'Conflict resolution: LWW vs Operational Transforms vs CRDTs',
+        'Delta sync vs full-doc sync trade-off',
+        'WebSocket room management + presence',
+        'Document versioning + snapshot strategy',
+        'Eventual consistency in real-time systems',
+      ],
+      'inventory-cart': [
+        'Optimistic locking (version field + retry)',
+        'Pessimistic locking (SELECT FOR UPDATE)',
+        'Atomic decrement with stock constraint',
+        'Idempotent checkout flow design',
+        'Oversell prevention under high concurrency',
+      ],
+      'social-feed': [
+        'Fanout-on-write vs fanout-on-read',
+        'Timeline precomputation trade-offs',
+        'Celebrity / whale problem (hybrid fanout)',
+        'Cursor-based pagination for feeds',
+        'Async fanout via job queue',
+      ],
+      'auth-service': [
+        'Stateless auth — short-lived access tokens',
+        'Refresh token rotation pattern',
+        'Token theft detection via reuse signal',
+        'httpOnly cookie security model',
+        'Silent refresh with Axios interceptor',
+      ],
+      'notification-system': [
+        'Multi-channel fanout architecture',
+        'User preference lookup at dispatch time',
+        'Idempotency keys to prevent duplicate sends',
+        'WebSocket push for real-time badge updates',
+        'MongoDB vs PostgreSQL for different data shapes',
+      ],
+      'analytics-pipeline': [
+        'Write batching for high-throughput ingestion',
+        'In-memory buffer + periodic flush pattern',
+        'OLTP vs OLAP separation',
+        'Time-series aggregation (date_trunc + WINDOW)',
+        'Backpressure + graceful shutdown (SIGTERM)',
+      ],
+      'multi-tenant-saas': [
+        'Multi-tenancy models: shared schema vs silo vs pooled',
+        'PostgreSQL Row Level Security (RLS)',
+        'Tenant context propagation via middleware',
+        'Usage metering + plan quota enforcement',
+        'Tenant isolation testing strategy',
+      ],
+      'lru-cache-service': [
+        'LRU eviction with O(1) operations (doubly linked list + hashmap)',
+        'Lazy vs active TTL expiry trade-off',
+        'Cache hit/miss rate metrics',
+        'Memory-bounded cache design',
+        'Cache stampede prevention',
+      ],
+      'chat-system': [
+        'WebSocket room management + socket→user mapping',
+        'Online presence via connect/disconnect tracking',
+        'Cursor-based pagination for message history',
+        'Typing debounce: client rate-limit + server TTL',
+        'Read receipt pattern (lastReadMessageId per room)',
+      ],
+      /* ── ADVANCED ── */
+      'chunked-file-storage': [
+        'Chunked + resumable upload protocol',
+        'Content-addressed deduplication (SHA-256 fingerprinting)',
+        'Closure table for folder hierarchy',
+        'File versioning schema design',
+        'Presigned shared links with expiry + access control',
+      ],
+      'auction-engine': [
+        'Optimistic locking for concurrent writes at scale',
+        'Anti-snipe extension logic (state mutation under load)',
+        'WebSocket room broadcast architecture',
+        'Auction state machine design',
+        'Settlement flow + notification fan-out',
+      ],
+      'api-gateway': [
+        'Circuit breaker state machine (CLOSED → OPEN → HALF_OPEN)',
+        'Reverse proxy pattern',
+        'Sliding window rate limiting per API key',
+        'Request logging pipeline (observability)',
+        'Health check polling + automatic recovery',
+      ],
+      'saga-order': [
+        'Saga pattern: orchestration vs choreography',
+        'Compensating transactions (distributed rollback)',
+        'Event sourcing — rebuild state from event log',
+        'Idempotent step execution',
+        'Crash recovery + saga resume from last checkpoint',
+      ],
+      'realtime-quiz': [
+        'Game state machine synchronization',
+        'Server-authoritative timing (no client trust)',
+        'Redis pub/sub for horizontal scaling',
+        'WebSocket room management + reconnect handling',
+        'Scoring algorithm: correctness + latency bonus',
+      ],
+      'cdn-cache': [
+        'HTTP caching semantics (RFC 7234: max-age, s-maxage)',
+        'Cache stampede / dogpile prevention (promise coalescing)',
+        'Stale-while-revalidate pattern',
+        'Cache key design (URL + Vary headers)',
+        'Cache invalidation strategies (exact vs prefix)',
+      ],
+      'data-export': [
+        'PostgreSQL streaming cursor (pg-cursor) for large datasets',
+        'Node.js stream backpressure handling',
+        'Pipeline pattern (Readable → Transform → Writable)',
+        'Progress reporting via WebSocket push',
+        'Presigned download URL with TTL',
+      ],
+      'search-ranking': [
+        'Trie data structure for O(prefix) autocomplete',
+        'BM25 ranking formula (TF × IDF)',
+        'Personalization scoring with user history signals',
+        'A/B testing infrastructure at query level',
+        'Analytics feedback loop (clicks → popularity scores)',
+      ],
+      'trello-board': [
+        'Fractional indexing for O(1) position changes without re-indexing',
+        'Drag-and-drop with dnd-kit: DndContext + SortableContext',
+        'Optimistic UI with version-based conflict detection',
+        'WebSocket broadcast for collaborative board state',
+        'Activity log as append-only event stream for audit',
+      ],
+      /* ── TESTING & CI/CD ── */
+      'testing-strategy': [
+        'Test pyramid strategy (unit > integration > E2E)',
+        'Testcontainers for ephemeral database instances',
+        'MSW for network-level API mocking',
+        'Factory pattern for test data generation',
+        'Test isolation and deterministic test suites',
+      ],
+      'cicd-pipeline': [
+        'GitHub Actions workflow orchestration',
+        'Docker layer caching for fast builds',
+        'Environment protection rules (staging → production)',
+        'Health check gates for deployment validation',
+        'Blue-green deployment and rollback strategies',
+      ],
+      'graphql-apollo': [
+        'GraphQL schema design: types, queries, mutations, subscriptions',
+        'DataLoader for N+1 query prevention (batch + deduplicate)',
+        'Apollo Client normalized cache (__typename + ID as cache key)',
+        'Optimistic UI updates with cache rollback on error',
+        'Cursor-based pagination with Connection pattern (edges, nodes, pageInfo)',
+      ],
+    };
+
+    /* ── STATE ── */
+    const STORE_KEY = 'fullstack-journal-v1';
+    let S = (() => { try { return JSON.parse(localStorage.getItem(STORE_KEY) || '{}'); } catch { return {}; } })();
+    function save(s) { localStorage.setItem(STORE_KEY, JSON.stringify(s)); }
+    function getPS(id) { return S[id] || { status: '', reqChecks: {}, score: 0, approach: '', edgecases: '', reflections: '' }; }
+
+    /* ── TIMER ── */
+    const TIMER_KEY = 'fullstack-timer-v1';
+    let timerState = (() => { try { return JSON.parse(localStorage.getItem(TIMER_KEY) || '{}'); } catch { return {}; } })();
+    let timerIntervals = {};
+    function saveTimers() { localStorage.setItem(TIMER_KEY, JSON.stringify(timerState)); }
+    function fmtTime(secs) {
+      const h = Math.floor(secs / 3600);
+      const m = Math.floor((secs % 3600) / 60);
+      const s = Math.floor(secs % 60);
+      if (h > 0) return h + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+      return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+    }
+
+    function updateTimerUI(id, totalSecs) {
+      const t = timerState[id];
+      if (!t) return;
+      const elapsed = t.elapsed + (t.running && t.startedAt ? Math.floor((Date.now() - t.startedAt) / 1000) : 0);
+      const remaining = Math.max(0, totalSecs * 60 - elapsed);
+      const pct = (remaining / (totalSecs * 60)) * 100;
+      const disp = document.getElementById('tdisp-' + id);
+      const bar = document.getElementById('tbar-' + id);
+      const btn = document.getElementById('tbtn-' + id);
+      if (disp) { disp.textContent = fmtTime(remaining); disp.className = 'timer-display' + (pct < 20 ? ' over' : pct < 40 ? ' warning' : ''); }
+      if (bar) { bar.style.width = pct + '%'; bar.style.background = pct > 50 ? '#6366f1' : pct > 25 ? '#d97706' : '#dc2626'; }
+      if (btn) { btn.textContent = t.running ? '⏸ Pause' : '▶ Start'; btn.className = 'timer-btn' + (t.running ? ' running' : ''); }
+    }
+
+    function toggleTimer(id, totalSecs) {
+      if (!timerState[id]) timerState[id] = { elapsed: 0, running: false, startedAt: null };
+      const t = timerState[id];
+      if (t.running) {
+        t.elapsed += Math.floor((Date.now() - t.startedAt) / 1000);
+        t.running = false; t.startedAt = null;
+        clearInterval(timerIntervals[id]);
+        delete timerIntervals[id];
+      } else {
+        t.running = true; t.startedAt = Date.now();
+        timerIntervals[id] = setInterval(() => updateTimerUI(id, totalSecs), 1000);
+      }
+      saveTimers();
+      updateTimerUI(id, totalSecs);
+    }
+
+    function resetTimer(id, totalSecs) {
+      if (timerIntervals[id]) { clearInterval(timerIntervals[id]); delete timerIntervals[id]; }
+      timerState[id] = { elapsed: 0, running: false, startedAt: null };
+      saveTimers();
+      updateTimerUI(id, totalSecs);
+    }
+
+    /* ── ACTIVE PHASE ── */
+    let activePhase = 0;
+
+    /* ── STATS ── */
+    function updateStats() {
+      let total = 0, solved = 0;
+      const counts = { beginner: [0, 0], mid: [0, 0], advanced: [0, 0] };
+      PHASES.forEach((p, pi) => {
+        const key = p.diff.toLowerCase();
+        p.problems.forEach(prob => {
+          total++;
+          const ps = getPS(prob.id);
+          const isDone = ps.status === 'done';
+          if (counts[key]) { counts[key][0] += isDone ? 1 : 0; counts[key][1]++; }
+          if (isDone) solved++;
+        });
+      });
+      const pct = total ? Math.round(solved / total * 100) : 0;
+      setText('s-total', total);
+      setText('s-done', solved);
+      setText('s-pct', pct + '%');
+      setText('s-beginner', counts.beginner[0] + '/' + counts.beginner[1]);
+      setText('s-mid', counts.mid[0] + '/' + counts.mid[1]);
+      setText('s-advanced', counts.advanced[0] + '/' + counts.advanced[1]);
+    }
+    function setText(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
+
+    /* ── PHASE TABS ── */
+    function renderTabs() {
+      const el = document.getElementById('phase-tabs');
+      if (!el) return;
+      el.innerHTML = PHASES.map((p, i) => {
+        const done = p.problems.filter(pr => getPS(pr.id).status === 'done').length;
+        return `<button class="phase-tab${i === activePhase ? ' active' : ''}" onclick="switchPhase(${i})">${p.diff} <span class="tab-badge">${done}/${p.problems.length}</span></button>`;
+      }).join('');
+    }
+
+    function switchPhase(i) {
+      activePhase = i;
+      renderTabs();
+      renderContent();
+    }
+
+    /* ── CARD ── */
+    function diffClass(d) { return d === 'Beginner' ? 'diff-beginner' : d === 'Mid' ? 'diff-mid' : 'diff-advanced'; }
+
+    function buildCard(prob, phaseId, idx) {
+      const ps = getPS(prob.id);
+      const totalSecs = prob.time * 60;
+      const card = document.createElement('div');
+      card.id = 'card-' + prob.id;
+      card.className = 'problem-card' + (ps.status === 'done' ? ' done' : ps.status === 'wip' ? ' inprogress' : '');
+
+      const reqHTML = prob.requirements.map((req, ri) => {
+        const checked = ps.reqChecks?.[ri] || false;
+        return `<div class="req-item" onclick="toggleReq('${prob.id}',${ri})">
+      <input class="req-cb" type="checkbox" id="req-${prob.id}-${ri}" ${checked ? 'checked' : ''} onclick="event.stopPropagation();toggleReq('${prob.id}',${ri})">
+      <span class="req-text${checked ? ' checked' : ''}" id="reqtext-${prob.id}-${ri}">${req}</span>
+    </div>`;
+      }).join('');
+
+      const stackHTML = (prob.stack || []).map(s => `<span class="stack-tag ${s.cls}">${s.label}</span>`).join('');
+      const conceptsHTML = prob.concepts.map(c => `<span class="concept-tag">${c}</span>`).join('');
+      const hintsHTML = prob.hints.map((h, hi) => `<div class="hint-item"><span class="hint-num">Hint ${hi + 1}:</span>${h}</div>`).join('');
+      const scoreHTML = [{ v: 1, cls: 's1', l: "Didn't finish" }, { v: 2, cls: 's2', l: 'Partial' }, { v: 3, cls: 's3', l: 'Completed' }, { v: 4, cls: 's4', l: 'Nailed it ✓' }]
+        .map(s => `<button class="score-btn ${s.cls}${ps.score === s.v ? ' selected' : ''}" data-pid="${prob.id}" data-score="${s.v}">${s.l}</button>`).join('');
+
+      const sdConcepts = SD_MAP[prob.id] || [];
+      const sdPreviewHTML = sdConcepts.slice(0, 2).map(c => `<span class="sd-pill">${c}</span>`).join('');
+      const sdListHTML = sdConcepts.map(c => `<div class="sd-item">${c}</div>`).join('');
+
+      card.innerHTML = `
+    <div class="card-header" onclick="toggleCard('${prob.id}')">
+      <span class="card-num">${String(idx + 1).padStart(2, '0')}</span>
+      <div class="card-info">
+        <div class="card-title">${prob.title}</div>
+        <div class="card-brief">${prob.brief}</div>
+        ${sdPreviewHTML ? `<div class="sd-preview">${sdPreviewHTML}</div>` : ''}
+      </div>
+      <div class="card-badges">
+        <span class="diff-badge ${diffClass(prob.diff)}">${prob.diff}</span>
+        <span class="time-badge">⏱ ${prob.time} min</span>
+      </div>
+      <button class="expand-btn" id="expbtn-${prob.id}" onclick="event.stopPropagation();toggleCard('${prob.id}')">Open</button>
+    </div>
+    <div class="problem-panel" id="panel-${prob.id}">
+      ${sdListHTML ? `<div class="sd-section">
+        <div class="sd-section-label">📐 System Design — what you\'re learning here</div>
+        <div class="sd-list">${sdListHTML}</div>
+      </div>` : ''}
+      <div class="statement-box">
+        <div class="statement-label">📋 Problem Statement</div>
+        <div class="statement-text">${prob.statement}</div>
+      </div>
+      <div class="stack-row">${stackHTML}</div>
+      <div class="req-list">
+        <div class="req-label">✅ Requirements Checklist</div>
+        ${reqHTML}
+      </div>
+      <div class="concepts-row">${conceptsHTML}</div>
+      <div class="hints-wrap">
+        <button class="hint-toggle" onclick="toggleHints('${prob.id}')">💡 Architecture Hints</button>
+        <div class="hint-content" id="hints-${prob.id}">${hintsHTML}</div>
+      </div>
+      <div class="timer-section">
+        <span class="timer-label">⏱ Timer</span>
+        <span class="timer-display" id="tdisp-${prob.id}">${fmtTime(totalSecs)}</span>
+        <div class="timer-bar-wrap"><div class="timer-bar" id="tbar-${prob.id}" style="width:100%"></div></div>
+        <div class="timer-controls">
+          <button class="timer-btn" id="tbtn-${prob.id}" onclick="toggleTimer('${prob.id}',${prob.time})">▶ Start</button>
+          <button class="timer-btn reset-btn" onclick="resetTimer('${prob.id}',${prob.time})">↺ Reset</button>
+        </div>
+      </div>
+      <div class="fields-grid">
+        <div class="field-group full">
+          <div class="field-label-text"><span class="field-icon">🏗️</span>System Design — draw & plan before coding</div>
+          <textarea class="field-input${ps.approach ? ' filled' : ''}" data-pid="${prob.id}" data-field="approach"
+            placeholder="Draw the architecture: what components? what data flows where? what DB schema? what API contracts? Think before you code..."
+            rows="5">${ps.approach || ''}</textarea>
+        </div>
+        <div class="field-group">
+          <div class="field-label-text"><span class="field-icon">⚠️</span>Edge Cases & Failure Modes</div>
+          <textarea class="field-input${ps.edgecases ? ' filled' : ''}" data-pid="${prob.id}" data-field="edgecases"
+            placeholder="What breaks under load? What if the DB is slow? What race conditions exist? How do you handle partial failures?..."
+            rows="4">${ps.edgecases || ''}</textarea>
+        </div>
+        <div class="field-group">
+          <div class="field-label-text"><span class="field-icon">📈</span>Scale & Trade-offs</div>
+          <textarea class="field-input${ps.reflections ? ' filled' : ''}" data-pid="${prob.id}" data-field="reflections"
+            placeholder="How does this scale to 10x traffic? What would you change? What did you compromise? What would you add with more time?..."
+            rows="4">${ps.reflections || ''}</textarea>
+        </div>
+      </div>
+      <div class="action-row">
+        <span class="score-label">Result:</span>
+        ${scoreHTML}
+        <div class="status-btns">
+          <button class="status-btn wip${ps.status === 'wip' ? ' active' : ''}" onclick="setStatus('${prob.id}','${phaseId}','wip')">🔄 Working</button>
+          <button class="status-btn done${ps.status === 'done' ? ' active' : ''}" onclick="setStatus('${prob.id}','${phaseId}','done')">✓ Done</button>
+        </div>
+        <button class="save-btn" onclick="saveCard('${prob.id}')">Save</button>
+        <span class="saved-flash" id="flash-${prob.id}">Saved ✓</span>
+      </div>
+    </div>`;
+
+      setTimeout(() => {
+        card.querySelectorAll('.field-input').forEach(ta => {
+          ta.addEventListener('input', function () { this.classList.toggle('filled', this.value.length > 0); });
+        });
+        card.querySelectorAll('.score-btn').forEach(btn => {
+          btn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            const pid = this.dataset.pid;
+            card.querySelectorAll('.score-btn').forEach(b => b.classList.remove('selected'));
+            this.classList.add('selected');
+            const ps = getPS(pid); ps.score = parseInt(this.dataset.score); S[pid] = ps; save(S);
+          });
+        });
+      }, 0);
+
+      return card;
+    }
+
+    /* ── RENDER CONTENT ── */
+    function renderContent() {
+      const p = PHASES[activePhase];
+      const el = document.getElementById('content');
+      const done = p.problems.filter(pr => getPS(pr.id).status === 'done').length;
+      const pct = Math.round(done / p.problems.length * 100);
+
+      const header = document.createElement('div');
+      header.className = 'phase-header';
+      header.innerHTML = `
+    <div class="phase-eyebrow">${p.eyebrow}</div>
+    <div class="phase-title">${p.title}</div>
+    <div class="phase-meta">
+      <span class="phase-tag">${done}/${p.problems.length} complete</span>
+      <span class="phase-tag">${p.diff === 'Beginner' ? '⏱ 60 min/problem' : p.diff === 'Mid' ? '⏱ 90 min/problem' : '⏱ 120 min/problem'}</span>
+    </div>
+    <div class="phase-desc">${p.desc}</div>
+    <div class="phase-progress-bar"><div class="phase-progress-fill" style="width:${pct}%"></div></div>`;
+
+      const section = document.createElement('div');
+      section.innerHTML = `<div class="section-head">Problems (${p.problems.length})</div>`;
+
+      p.problems.forEach((prob, i) => {
+        section.appendChild(buildCard(prob, p.id, i));
+      });
+
+      const moveOn = document.createElement('div');
+      moveOn.className = 'move-on-box';
+      moveOn.innerHTML = `<div class="move-on-label">✅ Move to next level when</div><div class="move-on-text">${p.moveOn}</div>`;
+
+      const banner = document.createElement('div');
+      banner.className = 'complete-banner';
+      banner.style.display = pct === 100 ? 'block' : 'none';
+      banner.textContent = `🎉 ${p.diff} complete! ${activePhase < PHASES.length - 1 ? 'Time for ' + PHASES[activePhase + 1].diff + ' →' : 'You\'ve completed all levels!'}`;
+
+      el.innerHTML = '';
+      el.appendChild(header);
+      el.appendChild(section);
+      el.appendChild(moveOn);
+      el.appendChild(banner);
+
+      // restore timers
+      Object.entries(timerState).forEach(([id, t]) => {
+        if (!t || !t.running) return;
+        const btn = document.getElementById('tbtn-' + id);
+        if (!btn) return;
+        const match = (btn.getAttribute('onclick') || '').match(/toggleTimer\('[^']+',(\d+)\)/);
+        const mins = match ? parseInt(match[1]) : 60;
+        if (t.startedAt) { t.elapsed += Math.floor((Date.now() - t.startedAt) / 1000); t.startedAt = Date.now(); }
+        timerIntervals[id] = setInterval(() => updateTimerUI(id, mins), 1000);
+        updateTimerUI(id, mins);
+      });
+    }
+
+    /* ── INTERACTIONS ── */
+    function toggleCard(id) {
+      const panel = document.getElementById('panel-' + id);
+      const btn = document.getElementById('expbtn-' + id);
+      const open = panel.classList.toggle('open');
+      btn.classList.toggle('open', open);
+      btn.textContent = open ? 'Close' : 'Open';
+    }
+
+    function toggleHints(id) {
+      const el = document.getElementById('hints-' + id);
+      const show = el.classList.toggle('show');
+      el.previousElementSibling.textContent = show ? '🙈 Hide Hints' : '💡 Architecture Hints';
+    }
+
+    function toggleReq(probId, ri) {
+      const ps = getPS(probId);
+      if (!ps.reqChecks) ps.reqChecks = {};
+      ps.reqChecks[ri] = !ps.reqChecks[ri];
+      S[probId] = ps; save(S);
+      const cb = document.getElementById(`req-${probId}-${ri}`);
+      const tx = document.getElementById(`reqtext-${probId}-${ri}`);
+      if (cb) cb.checked = ps.reqChecks[ri];
+      if (tx) tx.classList.toggle('checked', ps.reqChecks[ri]);
+    }
+
+    function setStatus(probId, phaseId, status) {
+      const ps = getPS(probId);
+      ps.status = ps.status === status ? '' : status;
+      S[probId] = ps; save(S);
+      const card = document.getElementById('card-' + probId);
+      card.className = 'problem-card' + (ps.status === 'done' ? ' done' : ps.status === 'wip' ? ' inprogress' : '');
+      card.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
+      if (ps.status) {
+        const activeBtn = card.querySelector(`.status-btn.${ps.status}`);
+        if (activeBtn) activeBtn.classList.add('active');
+      }
+      updateStats();
+      renderTabs();
+    }
+
+    function saveCard(probId) {
+      const card = document.getElementById('card-' + probId);
+      const ps = getPS(probId);
+      card.querySelectorAll('.field-input').forEach(ta => {
+        ps[ta.dataset.field] = ta.value;
+      });
+      S[probId] = ps; save(S);
+      const flash = document.getElementById('flash-' + probId);
+      if (flash) { flash.style.display = 'inline'; setTimeout(() => flash.style.display = 'none', 2000); }
+    }
+
+    /* ── INIT ── */
+    updateStats();
+    renderTabs();
+    renderContent();
+  </script>
+
+  <script src="../../nav.js"></script>
+
+<!-- ── TAB-TITLE TIMER ──────────────────────────────────────────────
+     Mirrors whichever timer card is currently counting into the
+     browser tab title, so you can see it while working in another tab.
+     Watches .timer-display for changes; touches no timer logic. -->
+<script>
+(function () {
+  const BASE = document.title;
+  const isTime = s => /^-?\d{1,3}:\d{2}$/.test(s);
+  let restore = null, blink = null, flip = false;
+
+  function stop() {
+    clearInterval(blink); blink = null;
+    document.title = BASE;
+  }
+
+  function show(txt, over) {
+    clearTimeout(restore);
+
+    if (over) {
+      // time is up: blink so it is noticeable from another tab
+      if (!blink) {
+        blink = setInterval(() => {
+          flip = !flip;
+          document.title = (flip ? "⏰ TIME UP " : "⏱ ") + txt + " · " + BASE;
+        }, 900);
+      }
+    } else {
+      clearInterval(blink); blink = null;
+      document.title = "⏱ " + txt + " · " + BASE;
+    }
+
+    // if nothing ticks for 3s the timer is paused or gone: put the title back
+    restore = setTimeout(stop, 3000);
+  }
+
+  new MutationObserver(muts => {
+    for (const m of muts) {
+      const el = m.target.nodeType === 1 ? m.target : m.target.parentElement;
+      if (!el || !el.classList || !el.classList.contains("timer-display")) continue;
+      const txt = (el.textContent || "").trim();
+      if (!isTime(txt)) continue;
+      show(txt, txt.startsWith("-") || el.classList.contains("over"));
+    }
+  }).observe(document.body, { childList: true, characterData: true, subtree: true });
+
+  window.addEventListener("beforeunload", stop);
+})();
+</script>
+
+</body>
+
+</html>
