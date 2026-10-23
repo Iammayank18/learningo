@@ -4,6 +4,9 @@ import { lid, useProgress, DAY } from '../lib/store'
 import { href } from '../lib/router'
 import { HUES } from '../lib/sections'
 import { metaOf } from '../data/load'
+import { usePrefs } from '../lib/prefs'
+import { lockedIds } from '../lib/unlock'
+import { sfx } from '../lib/sound'
 import type { Course, Lesson } from '../types'
 
 const OFFSETS = [0, 38, 62, 38, 0, -38, -62, -38]
@@ -16,6 +19,7 @@ function firstIncomplete(course: Course, done: Record<string, number>) {
 export function Learn({ courseId }: { courseId: string }) {
   const { course, loading, error } = useCourse(courseId)
   const p = useProgress()
+  const { unlockAll } = usePrefs()
   const [open, setOpen] = useState<string | null>(null)
   const [now] = useState(() => Date.now())
   if (error) return <div className="empty">Course load nahi hua.</div>
@@ -24,6 +28,7 @@ export function Learn({ courseId }: { courseId: string }) {
   const meta = metaOf(course.id)
   const hue = HUES[course.hue] ?? '#58cc02'
   const current = firstIncomplete(course, p.done)
+  const { locked, blocker } = lockedIds(course, p.done, unlockAll)
   const total = course.units.reduce((n, u) => n + u.lessons.length, 0)
   const done = course.units.reduce((n, u) => n + u.lessons.filter((l) => p.done[lid(course.id, l.id)]).length, 0)
 
@@ -57,27 +62,32 @@ export function Learn({ courseId }: { courseId: string }) {
                 const isDone = !!p.done[id]
                 const isCur = l.id === current
                 const isDue = !!card && card.due <= now
+                const isLocked = locked.has(l.id)
                 const off = OFFSETS[li % OFFSETS.length]
                 const sel = open === id
                 return (
                   <div key={l.id} className={'node-wrap' + (sel ? ' open' : '')} style={{ transform: `translateX(${off}px)` }}>
                     {isCur && <div className="start-bubble">START</div>}
                     <button
-                      className={'node' + (isDone ? ' done' : '') + (isCur ? ' cur' : '') + (isDue ? ' due' : '')}
+                      className={'node' + (isDone ? ' done' : '') + (isCur ? ' cur' : '') + (isDue ? ' due' : '') + (isLocked ? ' locked' : '')}
                       aria-label={l.name}
                       aria-expanded={sel}
-                      onClick={() => setOpen(sel ? null : id)}
+                      onClick={() => { if (isLocked) sfx.lock(); else sfx.tap(); setOpen(sel ? null : id) }}
                     >
-                      {isDone ? (isDue ? '⏰' : '★') : isCur ? '▶' : li + 1}
+                      {isLocked ? '🔒' : isDone ? (isDue ? '⏰' : '★') : isCur ? '▶' : li + 1}
                       {isDone && card && <span className="crowns">{'●'.repeat(card.stage)}{'○'.repeat(5 - card.stage)}</span>}
                     </button>
                     {sel && (
                       <div className="popover" role="dialog">
                         <h4>{l.name}</h4>
                         <p className="muted small">
-                          {isDone && card ? (isDue ? 'Revision due!' : `Next revision ${fmtIn(card.due - now)}`) : l.desc ? l.desc.slice(0, 110) + '…' : ''}
+                          {isLocked ? 'Pichla lesson complete hone par ye khulega.' : isDone && card ? (isDue ? 'Revision due!' : `Next revision ${fmtIn(card.due - now)}`) : l.desc ? l.desc.slice(0, 110) + '…' : ''}
                         </p>
-                        <a className="btn btn-green" href={href('lesson', course.id, l.id)}>{isDone ? 'Practice again' : 'Start'} · +{25} XP</a>
+                        {isLocked ? (
+                          <a className="btn btn-green" href={href('lesson', course.id, blocker[l.id].id)}>🔒 Pehle: {blocker[l.id].name.slice(0, 32)}</a>
+                        ) : (
+                          <a className="btn btn-green" href={href('lesson', course.id, l.id)}>{isDone ? 'Practice again' : 'Start'} · +{25} XP</a>
+                        )}
                         <a className="btn btn-outline" href={href('read', course.id, l.id)}>Read notes</a>
                       </div>
                     )}

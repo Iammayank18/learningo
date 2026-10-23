@@ -1,0 +1,1788 @@
+{
+"what-is-process": {
+"terms": [
+[
+"Process",
+"Running program ka instance — apna address space, file descriptors, PID."
+],
+[
+"Address space",
+"Har process ko OS virtual memory deta hai; dusre process ki memory dikhti nahi."
+],
+[
+"PCB",
+"Process Control Block — OS ka record: PID, state, registers, memory maps."
+]
+],
+"analogy": "<p>Process ek alag <b>flat</b> jaisa hai: apni rasoi, apna bijli meter, apna darwaza. Padosi ke flat mein aag lage to tumhara flat safe.</p>",
+"what": "<p><b>Definition:</b> Process = disk par pada program jab OS use memory mein load karke chalata hai. OS use code, heap, stack, open files aur ek PID deta hai.</p><p>Isolation hardware (MMU) enforce karta hai — ek process dusre ki memory seedhe padh/likh nahi sakta. Baat karni ho to IPC (pipes, sockets, shared memory) chahiye.</p>",
+"why": "<p>Isolation se ek buggy program poore system ko nahi girata. Browser har tab alag process mein isiliye chalata hai — tab crash ho to baaki tabs bachte hain.</p>",
+"code": "// Node.js: naya process spawn\nconst { spawn } = require('node:child_process');\nconst child = spawn('node', ['worker.js']);\nchild.stdout.on('data', d => console.log('child:', d.toString()));\nchild.on('exit', code => console.log('exit', code));\nconsole.log('parent pid', process.pid, 'child pid', child.pid);",
+"where": [
+[
+"Browsers",
+"Chrome har tab/extension ko alag process deta hai."
+],
+[
+"Web servers",
+"nginx/PM2 multiple worker processes chalate hain."
+]
+],
+"pros": [
+"Strong isolation — crash ya memory corruption contain rehta hai",
+"Security boundary (alag permissions/user)"
+],
+"cons": [
+"Creation aur context switch mahanga",
+"Data share karna IPC ke through — slow aur complex"
+],
+"gotchas": [
+"Process create karna thread se kaafi heavy hai",
+"Zombie process: child exit ho gaya par parent ne <code>wait()</code> nahi kiya",
+"Do processes ka PID same nahi hota par fork ke baad memory copy-on-write hoti hai"
+]
+},
+"what-is-thread": {
+"terms": [
+[
+"Thread",
+"Process ke andar execution ka ek sequence — apna stack aur registers."
+],
+[
+"TID",
+"Thread ID; OS thread ko schedule karta hai."
+],
+[
+"Shared heap",
+"Same process ke saare threads same heap/globals dekhte hain."
+]
+],
+"analogy": "<p>Ek process = ek restaurant. Threads = uske waiters. Sab same rasoi (heap) aur menu share karte hain, par har waiter ka apna order-notepad (stack) hai.</p>",
+"what": "<p><b>Definition:</b> Thread CPU scheduling ki sabse chhoti unit hai. Ek process mein ek ya zyada threads hote hain jo code, heap aur file descriptors share karte hain, par stack aur program counter alag rakhte hain.</p><p>Shared memory ki wajah se threads aapas mein tezi se data exchange kar sakte hain — par yahi sabse badi bug-source bhi hai.</p>",
+"why": "<p>Ek hi program mein kaam parallel ya overlap karne ka sasta tareeka: UI thread responsive rahe aur background thread file/network ka kaam kare.</p>",
+"code": "// Java\nThread t = new Thread(() -> {\n  System.out.println(\"hello from \" + Thread.currentThread().getName());\n});\nt.start();   // run() nahi, start() — naya thread banta hai\nt.join();    // main wait karta hai",
+"where": [
+[
+"GUI apps",
+"UI thread + worker threads."
+],
+[
+"Servers",
+"Har request ke liye thread ya pool se thread."
+]
+],
+"pros": [
+"Process se halka — creation aur switch sasta",
+"Memory share hone se communication fast"
+],
+"cons": [
+"Shared state = race conditions aur deadlocks",
+"Ek thread ka crash poore process ko gira sakta hai"
+],
+"gotchas": [
+"<code>t.run()</code> call karne se naya thread nahi banta, normal method call hota hai",
+"Har thread ka stack (≈1MB) memory khata hai — hazaaron threads banana costly",
+"Thread ka output order non-deterministic hai"
+]
+},
+"why-threads": {
+"terms": [
+[
+"Responsiveness",
+"Slow kaam background mein, UI/main flow block nahi hota."
+],
+[
+"Throughput",
+"Multi-core par ek saath zyada kaam."
+],
+[
+"I/O overlap",
+"Ek thread I/O par wait kare to dusra CPU use kare."
+]
+],
+"what": "<p><b>Definition:</b> Multiple threads ke do bade fayde hain: (1) responsiveness — blocking kaam alag thread mein, (2) parallelism — multi-core CPU ka poora use.</p><p>Jab ek thread disk/network par wait kar raha ho, CPU khali baithne ki jagah dusre thread ko mil jaata hai.</p>",
+"why": "<p>Aaj ki machines multi-core hain; single thread sirf ek core use karega. Server ko hazaaron concurrent clients bhi serve karne hote hain.</p>",
+"code": "# Python: I/O-bound kaam threads se overlap\nfrom concurrent.futures import ThreadPoolExecutor\nimport urllib.request\n\nurls = ['https://example.com'] * 5\ndef fetch(u): return len(urllib.request.urlopen(u).read())\n\nwith ThreadPoolExecutor(max_workers=5) as ex:\n    print(list(ex.map(fetch, urls)))   # 5 requests ek saath",
+"where": [
+[
+"Web crawlers",
+"Network wait ke dauraan dusre pages fetch."
+],
+[
+"Desktop/mobile apps",
+"UI thread free rakhna."
+]
+],
+"pros": [
+"Better CPU aur I/O utilization",
+"Responsive applications"
+],
+"cons": [
+"Synchronization ka bojh aur bugs",
+"Zyada threads = context-switch overhead"
+],
+"gotchas": [
+"Threads CPU-bound kaam ko tabhi tez karte hain jab real cores hon (aur Python mein GIL ke bina nahi)",
+"Zyada threads hamesha zyada speed nahi — ek limit ke baad slower",
+"Amdahl's law: serial hissa speedup ki upper limit tay karta hai"
+]
+},
+"process-vs-thread": {
+"terms": [
+[
+"Isolation",
+"Process alag memory; thread shared memory."
+],
+[
+"Context switch cost",
+"Process switch mein address-space switch + TLB flush, thread mein kam."
+],
+[
+"IPC",
+"Process ke beech communication ke liye pipes/sockets/shared mem."
+]
+],
+"what": "<p><b>Definition:</b> Process ke paas apna code, heap, stack, file descriptors hote hain (poora isolated). Thread ek process ke andar rehta hai — code, heap, globals share karta hai, sirf stack aur registers apne hote hain.</p><table><tr><th></th><th>Process</th><th>Thread</th></tr><tr><td>Memory</td><td>Alag</td><td>Shared heap</td></tr><tr><td>Creation</td><td>Heavy</td><td>Light</td></tr><tr><td>Crash</td><td>Contained</td><td>Poora process</td></tr><tr><td>Comm.</td><td>IPC</td><td>Direct memory</td></tr></table>",
+"why": "<p>Design choice: safety chahiye to process, speed aur sharing chahiye to thread. Interview mein ye trade-off sabse common question hai.</p>",
+"code": "// Node: process (isolation) vs worker thread (shared-ish)\nconst { fork } = require('node:child_process');\nconst { Worker } = require('node:worker_threads');\n\nfork('./job.js');              // alag process, IPC se message\nnew Worker('./job.js');        // same process, alag V8 isolate",
+"where": [
+[
+"Chrome",
+"Process-per-tab — isolation."
+],
+[
+"Databases",
+"PostgreSQL process-per-connection; MySQL thread-per-connection."
+]
+],
+"pros": [
+"Process: security + fault isolation",
+"Thread: fast sharing, low overhead"
+],
+"cons": [
+"Process: heavy, IPC complex",
+"Thread: races, ek bug sab giraye"
+],
+"gotchas": [
+"Threads ka stack alag hota hai — heap nahi",
+"fork() ke baad child ko parent ki memory ka copy-on-write mapping milta hai",
+"Interview trap: 'threads ko alag address space milta hai' — galat"
+]
+},
+"cpu-multitasking": {
+"terms": [
+[
+"Scheduler",
+"OS ka part jo tay karta hai ab kaunsa thread CPU par chalega."
+],
+[
+"Context switch",
+"Chalte thread ka state save karke dusre ka load karna."
+],
+[
+"Time slice",
+"Thread ko ek baar mein milne wala CPU time (ms)."
+]
+],
+"analogy": "<p>Ek chef (core) kai dishes sambhal raha hai — thodi der ek dish, phir note karke dusri. Dikhta hai sab saath ban rahi hain, par chef ek hi hai.</p>",
+"what": "<p><b>Definition:</b> Ek core ek samay mein ek hi thread chalata hai. Scheduler time-slice khatam hone par (preemption) ya thread ke block hone par state (registers, PC) save karke dusra thread chalata hai — ise context switch kehte hain.</p><p>Switch ka kaam seedha productive nahi hota; cache bhi thanda ho jaata hai.</p>",
+"why": "<p>Isi se illusion banta hai ki hazaaron threads saath chal rahe hain. Par zyada threads = zyada switches = overhead.</p>",
+"code": "# Linux par context switches dekho\n$ pidstat -w -p <PID> 1      # voluntary vs involuntary switches\n$ vmstat 1                    # 'cs' column = system-wide context switches/sec\n$ nproc                       # cores kitne hain",
+"where": [
+[
+"Performance tuning",
+"High 'cs' = thread contention ka signal."
+],
+[
+"Capacity planning",
+"Thread pool size cores ke hisaab se."
+]
+],
+"pros": [
+"Ek core par bhi multitasking",
+"I/O wait ke time CPU waste nahi"
+],
+"cons": [
+"Switch overhead aur cache pollution",
+"Latency unpredictable"
+],
+"gotchas": [
+"Voluntary switch (I/O wait) vs involuntary (time slice khatam) alag cheezein",
+"Thread count ≫ cores CPU-bound kaam ko slow karta hai",
+"Process switch thread switch se mahanga hai (TLB flush)"
+]
+},
+"concurrency-vs-parallelism": {
+"terms": [
+[
+"Concurrency",
+"Kai tasks ek saath <i>progress</i> karte hain — interleaving, ek core par bhi."
+],
+[
+"Parallelism",
+"Kai tasks <i>literally ek hi time par</i> chalte hain — multi-core."
+],
+[
+"Rob Pike",
+"'Concurrency is about dealing with lots of things at once; parallelism is about doing lots of things at once.'"
+]
+],
+"analogy": "<p>Ek cashier do line sambhale (baari-baari) = concurrency. Do cashier, har ek ek line = parallelism.</p>",
+"what": "<p><b>Definition:</b> Concurrency ek structure/design property hai — program ko independent tasks mein todna. Parallelism execution property hai — un tasks ko multiple cores par ek saath chalana.</p><p>Concurrent program single core par bhi sahi chal sakta hai; parallelism ke liye hardware chahiye. Node.js event loop concurrent hai par JS code parallel nahi.</p>",
+"why": "<p>I/O-bound kaam ke liye concurrency kaafi hai; CPU-bound kaam ke liye parallelism chahiye. Galat tool chunna performance kharab karta hai.</p>",
+"code": "// Concurrency, no parallelism (single thread)\nawait Promise.all([fetch(a), fetch(b)]);  // I/O overlap\n\n// Parallelism (multi-core)\nconst { Worker } = require('node:worker_threads');\n[1,2,3,4].forEach(n => new Worker('./cpu-heavy.js', { workerData: n }));",
+"where": [
+[
+"I/O-heavy API",
+"Concurrency (async) kaafi."
+],
+[
+"Video encoding / ML",
+"Parallelism chahiye."
+]
+],
+"pros": [
+"Concurrency: simple resource use, scalable I/O",
+"Parallelism: real speedup CPU-bound par"
+],
+"cons": [
+"Concurrency: logic complex",
+"Parallelism: hardware, sync, Amdahl limit"
+],
+"gotchas": [
+"Concurrent ≠ parallel — interview ka favourite",
+"Parallel hamesha concurrent hota hai, ulta nahi",
+"Threads banana parallelism ki guarantee nahi (GIL, single core)"
+]
+},
+"race-condition": {
+"terms": [
+[
+"Race condition",
+"Result thread scheduling ke order par depend kare."
+],
+[
+"Read-modify-write",
+"count++ asal mein read, add, write — 3 steps."
+],
+[
+"Heisenbug",
+"Debug karte hi gayab hone wala non-deterministic bug."
+]
+],
+"what": "<p><b>Definition:</b> Jab do ya zyada threads shared data ko ek saath access karein aur kam se kam ek write kare, aur outcome timing par depend kare.</p><p><code>count++</code> atomic nahi hai: read → add → write. Do threads dono ne 5 padha, dono ne 6 likha — ek update kho gaya (lost update).</p>",
+"why": "<p>Race bugs production mein kabhi-kabhi aate hain, test mein nahi — paise ya inventory galat ho sakti hai (double booking, negative balance).</p>",
+"code": "// Java: lost update demo\nclass Counter { int c = 0; void inc() { c++; } }   // BUG\nCounter k = new Counter();\nThread a = new Thread(() -> { for (int i=0;i<100000;i++) k.inc(); });\nThread b = new Thread(() -> { for (int i=0;i<100000;i++) k.inc(); });\na.start(); b.start(); a.join(); b.join();\nSystem.out.println(k.c);   // < 200000\n// Fix: synchronized void inc() ya AtomicInteger",
+"where": [
+[
+"Banking / inventory",
+"Check-then-act races (balance check phir debit)."
+],
+[
+"Web apps",
+"Do requests ek hi row ek saath update karein."
+]
+],
+"pros": [
+"(Bug hai — pros nahi) Samajhne se design behtar hota hai"
+],
+"cons": [
+"Non-deterministic, reproduce karna mushkil",
+"Silent data corruption"
+],
+"gotchas": [
+"Check-then-act (<code>if (!exists) create</code>) classic race hai",
+"Data race aur race condition alag cheezein hain — dono ho sakte hain",
+"'Mere machine par chal raha hai' — races load par dikhte hain"
+]
+},
+"critical-section": {
+"terms": [
+[
+"Critical section",
+"Code ka hissa jo shared resource chhuta hai."
+],
+[
+"Mutual exclusion",
+"Ek samay par sirf ek thread andar."
+],
+[
+"Progress & bounded wait",
+"Koi thread hamesha ke liye bahar na rahe."
+]
+],
+"what": "<p><b>Definition:</b> Critical section wo code region hai jahan shared data access hota hai. Sahi solution ke teen gun: mutual exclusion, progress (koi andar nahi to doosre ko ghusne do), bounded waiting (starvation nahi).</p><p>Lock ya mutex se ise protect karte hain; section jitna chhota, utna better concurrency.</p>",
+"why": "<p>Chhota critical section = kam contention = zyada throughput. Bada lock sab threads ko serial bana deta hai.</p>",
+"code": "import threading\nlock = threading.Lock()\nbalance = 100\n\ndef withdraw(n):\n    global balance\n    with lock:                 # critical section start\n        if balance >= n:\n            balance -= n\n    # critical section end — lock auto-release",
+"where": [
+[
+"Counters / balances",
+"Update critical section mein."
+],
+[
+"Shared caches",
+"Insert/evict ke time lock."
+]
+],
+"pros": [
+"Data consistency guarantee",
+"Reasoning aasaan"
+],
+"cons": [
+"Contention throughput gira deta hai",
+"Galat lock-use se deadlock"
+],
+"gotchas": [
+"Lock ke andar slow I/O mat karo",
+"Exception par lock release hona chahiye — <code>try/finally</code> ya <code>with</code>",
+"Alag locks se same data protect karna kaam nahi karta"
+]
+},
+"atomicity": {
+"terms": [
+[
+"Atomic",
+"Operation poora hota hai ya bilkul nahi; beech ki state koi nahi dekhta."
+],
+[
+"Indivisible",
+"Beech mein interrupt nahi ho sakta."
+],
+[
+"Atomic types",
+"AtomicInteger, std::atomic, Atomics (JS)."
+]
+],
+"what": "<p><b>Definition:</b> Atomic operation ek instant mein hota hua dikhta hai. Hardware kuch operations (aligned read/write, CAS, fetch-add) ko atomic banata hai; baaki ke liye lock ya atomic library chahiye.</p><p><code>x++</code>, <code>x = x + 1</code> normally atomic nahi hain.</p>",
+"why": "<p>Lock ke bina simple counters aur flags safe banane ka sabse sasta tareeka atomics hain.</p>",
+"code": "// Java\nAtomicInteger hits = new AtomicInteger();\nhits.incrementAndGet();               // thread-safe, lock-free\nhits.compareAndSet(10, 0);            // CAS\n\n// JS SharedArrayBuffer\nconst a = new Int32Array(new SharedArrayBuffer(4));\nAtomics.add(a, 0, 1);",
+"where": [
+[
+"Metrics counters",
+"Request count, hit counter."
+],
+[
+"Flags",
+"Shutdown/ready flags."
+]
+],
+"pros": [
+"Lock-free, fast",
+"Deadlock ka khatra nahi"
+],
+"cons": [
+"Sirf single-variable operations",
+"Multi-variable invariants ke liye lock chahiye"
+],
+"gotchas": [
+"Do atomic ops ka combination atomic nahi hota (check-then-act)",
+"Atomicity ≠ visibility ordering ka poora jawab",
+"64-bit long/double kuch platforms par atomic nahi"
+]
+},
+"memory-visibility": {
+"terms": [
+[
+"CPU cache",
+"Har core ka private L1/L2 — writes turant dusre core ko nahi dikhte."
+],
+[
+"Visibility",
+"Ek thread ki write kab dusre thread ko dikhe."
+],
+[
+"Happens-before",
+"Ordering rule jo visibility guarantee karta hai."
+]
+],
+"what": "<p><b>Definition:</b> Modern CPU aur compiler reorder/cache karte hain. Ek thread ne <code>flag = true</code> likha, par dusra thread purani value cache se padhta reh sakta hai — bina synchronization ke guarantee nahi.</p><p>Lock, volatile, atomics visibility ke liye memory barriers lagate hain.</p>",
+"why": "<p>Ye bug 'while(!done)' loop jo kabhi khatam nahi hota — jaise subtle problems ka kaaran hai.</p>",
+"code": "// Java: volatile ke bina loop kabhi na bhi ruke\nclass Worker extends Thread {\n  volatile boolean stop = false;   // bina volatile risk\n  public void run() { while (!stop) { /* work */ } }\n}\nworker.stop = true;   // ab loop ko dikhega",
+"where": [
+[
+"Shutdown flags",
+"Volatile/atomic flag."
+],
+[
+"Double-checked locking",
+"Singleton ke liye volatile zaroori."
+]
+],
+"pros": [
+"Rules samajhne par predictable concurrent code"
+],
+"cons": [
+"Hardware-dependent surprises",
+"Testing se pakadna mushkil"
+],
+"gotchas": [
+"x86 par chalne wala code ARM par toot sakta hai",
+"Visibility aur atomicity alag problems hain",
+"Lock lena/chhodna bhi memory barrier hai"
+]
+},
+"mutex": {
+"terms": [
+[
+"Mutex",
+"Ek samay mein ek hi owner wala lock."
+],
+[
+"Lock / unlock",
+"Acquire karo, kaam, release."
+],
+[
+"Reentrant",
+"Same thread dobara lock le sake bina deadlock."
+]
+],
+"what": "<p><b>Definition:</b> Mutex critical section ko protect karta hai. Jo thread lock leta hai wahi chhodta hai (ownership). Lock mila hua ho to dusre thread block (sleep) ho jaate hain.</p><p>Reentrant mutex ek hi thread ko baar-baar lene deta hai (count rakhta hai).</p>",
+"why": "<p>Shared data ko sahi rakhne ka sabse basic tool — baaki primitives isi par bane hain.</p>",
+"code": "// Go\nvar mu sync.Mutex\nvar count int\nfunc inc() {\n  mu.Lock()\n  defer mu.Unlock()   // panic par bhi release\n  count++\n}",
+"where": [
+[
+"Shared maps/caches",
+"Insert/read protect."
+],
+[
+"Resource pools",
+"Free-list ka lock."
+]
+],
+"pros": [
+"Simple, correct mutual exclusion",
+"Sleep karta hai — CPU waste nahi"
+],
+"cons": [
+"Contention aur deadlock risk",
+"Priority inversion"
+],
+"gotchas": [
+"Unlock bhoolna = poora system hang",
+"Lock ke andar callbacks/I/O mat chalao",
+"Non-reentrant mutex ko same thread dobara le to self-deadlock"
+]
+},
+"semaphore": {
+"terms": [
+[
+"Counting semaphore",
+"N permits; acquire se ghatta, release se badhta."
+],
+[
+"Binary semaphore",
+"0/1 — mutex jaisa par ownership nahi."
+],
+[
+"P / V",
+"wait() / signal() — Dijkstra ke operations."
+]
+],
+"analogy": "<p>Parking lot jisme 5 slots hain: gaadi aaye to slot lo, bhar gaya to bahar intezar, koi nikle to ek slot free.</p>",
+"what": "<p><b>Definition:</b> Semaphore ek counter hai. <code>acquire()</code> counter ghatata hai (0 ho to block), <code>release()</code> badhata hai. Isse N threads tak ko resource access de sakte ho.</p><p>Mutex se fark: semaphore ko koi bhi thread release kar sakta hai, isliye signaling ke liye bhi use hota hai.</p>",
+"why": "<p>Connection pools, rate limiting aur producer-consumer buffers mein 'max N concurrent' enforce karne ke liye.</p>",
+"code": "// Java: max 3 concurrent DB calls\nSemaphore sem = new Semaphore(3);\nvoid query() throws InterruptedException {\n  sem.acquire();\n  try { db.run(); }\n  finally { sem.release(); }\n}",
+"where": [
+[
+"Connection pool",
+"Max N connections."
+],
+[
+"Bounded buffer",
+"empty/full semaphores."
+]
+],
+"pros": [
+"Resource limit aur signaling dono",
+"Flexible"
+],
+"cons": [
+"Ownership nahi — galat release se bug",
+"Debug mushkil"
+],
+"gotchas": [
+"release() bhool gaye to permits leak",
+"Semaphore(1) aur mutex ek cheez nahi",
+"Zyada release se count limit se upar ja sakta hai"
+]
+},
+"monitor-condition": {
+"terms": [
+[
+"Monitor",
+"Mutex + condition variables ka bundle."
+],
+[
+"wait()",
+"Lock chhod ke sleep; signal par wapas lock lekar jaagta hai."
+],
+[
+"Spurious wakeup",
+"Bina signal ke bhi jaag sakta hai."
+]
+],
+"what": "<p><b>Definition:</b> Monitor mein lock ke andar thread kisi condition ka wait kar sakta hai (<code>wait</code>), aur dusra thread condition badal kar <code>notify/signal</code> kar deta hai. wait atomic roop se lock release karke sleep karta hai.</p>",
+"why": "<p>Busy-waiting CPU jalati hai; condition variable thread ko sula kar efficient coordination deta hai (queue empty/full jaise cases).</p>",
+"code": "synchronized (queue) {\n  while (queue.isEmpty()) {   // if nahi, WHILE\n    queue.wait();\n  }\n  item = queue.poll();\n}\n// producer\nsynchronized (queue) { queue.add(x); queue.notifyAll(); }",
+"where": [
+[
+"Blocking queues",
+"Empty/full conditions."
+],
+[
+"Thread coordination",
+"Ready/started signals."
+]
+],
+"pros": [
+"Efficient waiting",
+"Mutex ke saath safely bundled"
+],
+"cons": [
+"Missed signal / lost wakeup ka risk",
+"notify vs notifyAll confusion"
+],
+"gotchas": [
+"Hamesha <code>while</code> mein condition check karo (spurious wakeup)",
+"wait/notify sirf lock hold karke",
+"notify() sirf ek thread jagata hai — galat thread jaag sakta hai"
+]
+},
+"rwlock": {
+"terms": [
+[
+"Shared lock",
+"Kai readers ek saath."
+],
+[
+"Exclusive lock",
+"Writer akela."
+],
+[
+"Writer starvation",
+"Readers lagatar aate rahein to writer ruka rahe."
+]
+],
+"what": "<p><b>Definition:</b> ReadWriteLock multiple readers ya ek writer allow karta hai. Read-heavy workload (95% reads) mein mutex se behtar throughput deta hai.</p>",
+"why": "<p>Reads ko serialize karna waste hai jab wo data badalte hi nahi.</p>",
+"code": "ReadWriteLock rw = new ReentrantReadWriteLock();\nString get(String k) {\n  rw.readLock().lock();\n  try { return map.get(k); } finally { rw.readLock().unlock(); }\n}\nvoid put(String k, String v) {\n  rw.writeLock().lock();\n  try { map.put(k, v); } finally { rw.writeLock().unlock(); }\n}",
+"where": [
+[
+"Config / cache reads",
+"Read-mostly data."
+],
+[
+"Routing tables",
+"Rare updates."
+]
+],
+"pros": [
+"Read-heavy par high concurrency"
+],
+"cons": [
+"Mutex se zyada overhead",
+"Writer starvation ya reader starvation"
+],
+"gotchas": [
+"Read lock ko write lock mein upgrade karna aksar deadlock karta hai",
+"Write-heavy workload mein mutex se slow",
+"Fair vs non-fair policy samajh kar chuno"
+]
+},
+"barrier": {
+"terms": [
+[
+"Barrier",
+"N threads wait karte hain jab tak sab pahunch na jayein."
+],
+[
+"Latch",
+"Count 0 hone par ek baar sab release; reuse nahi."
+],
+[
+"Phase",
+"Parallel algorithm ke steps jo sync maangte hain."
+]
+],
+"what": "<p><b>Definition:</b> CyclicBarrier reusable hai — har phase ke baad sab ek saath aage badhte hain. CountDownLatch ek-baar: main thread tab tak wait karta hai jab tak workers <code>countDown()</code> na kar dein.</p>",
+"why": "<p>Parallel simulations/matrix steps mein agle phase ko pichle phase ka poora data chahiye hota hai.</p>",
+"code": "CountDownLatch done = new CountDownLatch(3);\nfor (int i=0;i<3;i++) pool.submit(() -> { work(); done.countDown(); });\ndone.await();   // 3 workers khatam hone tak\n\nCyclicBarrier b = new CyclicBarrier(4, () -> System.out.println(\"phase done\"));\n// har thread phase ke end par b.await()",
+"where": [
+[
+"Startup",
+"Sab services ready hone ka wait."
+],
+[
+"Parallel algorithms",
+"Phase sync."
+]
+],
+"pros": [
+"Simple coordination"
+],
+"cons": [
+"Ek thread atak jaye to sab atak jaate hain"
+],
+"gotchas": [
+"Latch dobara use nahi hota",
+"Barrier mein ek thread fail ho to BrokenBarrierException",
+"Worker exception par countDown finally mein karo"
+]
+},
+"deadlock-conditions": {
+"terms": [
+[
+"Mutual exclusion",
+"Resource ek hi holder."
+],
+[
+"Hold & wait",
+"Ek hold karke dusra maange."
+],
+[
+"No preemption",
+"Zabardasti nahi chheeni ja sakti."
+],
+[
+"Circular wait",
+"A→B→A cycle."
+]
+],
+"analogy": "<p>Chaurahe par chaaron taraf se gaadiyan fans gayi — koi peeche nahi hat sakta, sab agle ka wait kar rahe hain.</p>",
+"what": "<p><b>Definition:</b> Deadlock tab hota hai jab Coffman ki chaaron conditions ek saath hon. Inme se ek bhi tod do to deadlock nahi ho sakta.</p><p>Classic: Thread 1 ne lock A liya, B maanga; Thread 2 ne B liya, A maanga.</p>",
+"why": "<p>Chaaron yaad rakhne se prevention strategy turant samajh aati hai: har condition ek tarah ka fix suggest karti hai.</p>",
+"code": "// Deadlock\nThread 1: lock(A); lock(B);\nThread 2: lock(B); lock(A);   // cycle\n// Fix: dono mein pehle A phir B (lock ordering)",
+"where": [
+[
+"Databases",
+"Row locks par transaction deadlock."
+],
+[
+"Services",
+"Dono taraf se lock lene wale."
+]
+],
+"pros": [
+"Conditions jaanne se systematic debugging"
+],
+"cons": [
+"Runtime par rare aur reproduce karna mushkil"
+],
+"gotchas": [
+"Chaaron conditions hone chahiye — ek todo, solve",
+"Database deadlock detection ke baad ek transaction abort karta hai",
+"Thread dump (jstack) se cycle dikhta hai"
+]
+},
+"deadlock-prevention": {
+"terms": [
+[
+"Prevention",
+"Ek Coffman condition tod do."
+],
+[
+"Avoidance",
+"Banker's algorithm — safe state mein hi allocate."
+],
+[
+"Detection",
+"Wait-for graph mein cycle dhoondho, phir recover."
+]
+],
+"what": "<p><b>Definition:</b> Prevention: lock ordering (circular wait), sab locks ek saath lena (hold & wait), tryLock+timeout (no preemption). Avoidance system-state dekh kar decide karta hai. Detection+recovery: cycle mile to ek victim abort.</p>",
+"why": "<p>Production mein practical tareeka lock ordering + timeouts + chhote critical sections hai.</p>",
+"code": "if (a.tryLock(100, MILLISECONDS)) {\n  try {\n    if (b.tryLock(100, MILLISECONDS)) {\n      try { work(); } finally { b.unlock(); }\n    }\n  } finally { a.unlock(); }\n}   // fail ho to backoff + retry",
+"where": [
+[
+"DB engines",
+"Deadlock detector."
+],
+[
+"Application code",
+"Lock ordering convention."
+]
+],
+"pros": [
+"Hang se bachav"
+],
+"cons": [
+"Avoidance practically mahanga",
+"tryLock se livelock ho sakta hai"
+],
+"gotchas": [
+"Timeout lagana cause nahi chhupata — log karo",
+"Retry mein random backoff",
+"Banker's algorithm real systems mein shaayad hi use hota hai"
+]
+},
+"livelock-starvation": {
+"terms": [
+[
+"Livelock",
+"Threads active hain par progress zero."
+],
+[
+"Starvation",
+"Ek thread ko resource kabhi nahi milta."
+],
+[
+"Backoff",
+"Random wait se symmetry todna."
+]
+],
+"analogy": "<p>Corridor mein do log ek-dusre ko raasta dene ke chakkar mein dono ek hi taraf hat rahe hain — dono hil rahe hain, par aage koi nahi badh raha.</p>",
+"what": "<p><b>Definition:</b> Deadlock mein threads block hote hain; livelock mein wo chalte rehte hain par kuch kaam nahi hota. Starvation mein scheduler/lock policy ki wajah se ek thread hamesha peeche reh jaata hai.</p>",
+"why": "<p>Retry loops aur unfair locks mein ye dikhte hain; CPU 100% par aur throughput zero.</p>",
+"code": "// Randomized backoff livelock todta hai\nfor (int i=0;;i++) {\n  if (tryBoth()) break;\n  Thread.sleep(ThreadLocalRandom.current().nextInt(1, 10 << Math.min(i,6)));\n}",
+"where": [
+[
+"Network retries",
+"Collision par exponential backoff."
+],
+[
+"Priority schedulers",
+"Low priority thread starvation."
+]
+],
+"pros": [
+"Pehchan karne se fairness design"
+],
+"cons": [
+"Diagnose mushkil — CPU busy dikhta hai"
+],
+"gotchas": [
+"Starvation fix: fair locks, aging",
+"Fixed retry delay dono ko sync rakhta hai",
+"Priority inversion alag problem hai"
+]
+},
+"lock-ordering": {
+"terms": [
+[
+"Global order",
+"Saare locks ka ek fixed rank."
+],
+[
+"Ordered acquire",
+"Hamesha chhote rank se bade."
+],
+[
+"Identity hash",
+"Ordering ke liye id/address."
+]
+],
+"what": "<p><b>Definition:</b> Agar har thread locks ek hi order mein le (jaise account id ke ascending order mein), to circular wait possible nahi, isliye deadlock nahi.</p>",
+"why": "<p>Bank transfer(A→B) aur transfer(B→A) ek saath chalein to deadlock hota hai — ordering se fix.</p>",
+"code": "void transfer(Account a, Account b, int amt) {\n  Account first = a.id < b.id ? a : b;\n  Account second = a.id < b.id ? b : a;\n  synchronized (first) { synchronized (second) {\n    a.debit(amt); b.credit(amt);\n  }}\n}",
+"where": [
+[
+"Transfers",
+"Do accounts lock."
+],
+[
+"DB updates",
+"Rows sorted order mein update."
+]
+],
+"pros": [
+"Zero runtime overhead",
+"Simple rule"
+],
+"cons": [
+"Dynamic locks mein order pata karna mushkil",
+"Discipline chahiye"
+],
+"gotchas": [
+"Equal id/hash par tie-breaker lock",
+"Callbacks ke andar naye locks hidden order tod dete hain",
+"Order document karo"
+]
+},
+"thread-pool": {
+"terms": [
+[
+"Worker threads",
+"Pehle se bane, reuse hote hain."
+],
+[
+"Task queue",
+"Pending tasks ka buffer."
+],
+[
+"Rejection policy",
+"Queue bhar jaye to kya karna hai."
+]
+],
+"what": "<p><b>Definition:</b> Thread pool fixed/bounded threads rakhta hai jo queue se tasks uthate hain. Thread creation cost bachta hai aur concurrency limit hoti hai.</p><p>Sizing: CPU-bound ≈ cores; I/O-bound ≈ cores × (1 + wait/compute).</p>",
+"why": "<p>Unbounded thread-per-request server load par memory khatam karke crash ho jaata hai.</p>",
+"code": "ExecutorService pool = new ThreadPoolExecutor(\n  4, 8, 60, TimeUnit.SECONDS,\n  new ArrayBlockingQueue<>(100),\n  new ThreadPoolExecutor.CallerRunsPolicy());\nFuture<Integer> f = pool.submit(() -> compute());\npool.shutdown();",
+"where": [
+[
+"Web servers",
+"Request handling."
+],
+[
+"Batch jobs",
+"Parallel tasks."
+]
+],
+"pros": [
+"Thread reuse",
+"Resource bounded"
+],
+"cons": [
+"Sizing galat ho to starvation",
+"Queue unbounded ho to OOM"
+],
+"gotchas": [
+"Pool ke andar pool ka wait karne wale tasks deadlock karte hain",
+"Unbounded queue memory leak jaisa",
+"shutdown() bhoolne par JVM exit nahi hota"
+]
+},
+"cas-atomic": {
+"terms": [
+[
+"CAS",
+"compareAndSwap(addr, expected, new) atomically."
+],
+[
+"Retry loop",
+"CAS fail ho to phir se padho aur try karo."
+],
+[
+"ABA problem",
+"Value A→B→A ho gayi, CAS ko pata nahi."
+]
+],
+"what": "<p><b>Definition:</b> CAS CPU instruction hai: memory mein value expected ke barabar ho to nayi value likho, warna fail. Is par lock-free counters/stacks bante hain.</p>",
+"why": "<p>Lock ke bina atomic update — contention kam hoti hai aur deadlock nahi.</p>",
+"code": "AtomicInteger v = new AtomicInteger();\nint old, next;\ndo {\n  old = v.get();\n  next = old * 2;\n} while (!v.compareAndSet(old, next));   // retry",
+"where": [
+[
+"Counters",
+"AtomicLong, LongAdder."
+],
+[
+"Lock-free structures",
+"ConcurrentLinkedQueue."
+]
+],
+"pros": [
+"Non-blocking",
+"Low overhead under light contention"
+],
+"cons": [
+"High contention par spin waste",
+"ABA aur complexity"
+],
+"gotchas": [
+"ABA fix: version stamp (AtomicStampedReference)",
+"Heavy contention mein LongAdder behtar",
+"CAS ek variable par hi atomic hai"
+]
+},
+"lock-free": {
+"terms": [
+[
+"Lock-free",
+"Kam se kam ek thread hamesha aage badhta hai."
+],
+[
+"Wait-free",
+"Har thread bounded steps mein khatam."
+],
+[
+"Obstruction-free",
+"Akela chale to khatam."
+]
+],
+"what": "<p><b>Definition:</b> Lock-free algorithms mutex ki jagah CAS use karte hain, isliye ek thread ka stall/suspension baakiyon ko block nahi karta. Wait-free sabse strong guarantee hai par likhna bahut mushkil.</p>",
+"why": "<p>Low-latency systems (trading, kernels) mein lock ka blocking aur priority inversion bardasht nahi hota.</p>",
+"code": "// Treiber stack push\nvoid push(T v) {\n  Node<T> n = new Node<>(v);\n  do { n.next = head.get(); }\n  while (!head.compareAndSet(n.next, n));\n}",
+"where": [
+[
+"Queues in OS/JVM",
+"Disruptor, ConcurrentLinkedQueue."
+],
+[
+"Logging / metrics",
+"Hot path."
+]
+],
+"pros": [
+"No deadlock, no blocking",
+"Scales under contention (kabhi)"
+],
+"cons": [
+"Likhna aur prove karna mushkil",
+"Memory reclamation (ABA, hazard pointers)"
+],
+"gotchas": [
+"Lock-free ≠ hamesha tez",
+"Pehle proven library use karo, khud mat likho",
+"Starvation individual thread ki ho sakti hai"
+]
+},
+"future-promise": {
+"terms": [
+[
+"Future",
+"Abhi na mili value ka placeholder."
+],
+[
+"Promise",
+"Value set karne wala writable side."
+],
+[
+"async/await",
+"Future par sequential-looking syntax."
+]
+],
+"what": "<p><b>Definition:</b> Future ek pending result hai jo baad mein resolve ya reject hota hai. async/await compiler/runtime state machine banata hai jo await par thread chhod deta hai (block nahi karta).</p>",
+"why": "<p>Callback hell ke bina asynchronous kaam compose karna (chain, all, race) aur errors ek jagah handle karna.</p>",
+"code": "// JS\nconst [u, o] = await Promise.all([getUser(), getOrders()]);   // parallel\ntry { await Promise.race([job(), timeout(2000)]); }\ncatch (e) { /* error ya timeout */ }\n\n// Java\nCompletableFuture.supplyAsync(() -> load())\n  .thenApply(this::parse)\n  .exceptionally(e -> fallback());",
+"where": [
+[
+"API calls",
+"Parallel fetch."
+],
+[
+"Pipelines",
+"thenApply chains."
+]
+],
+"pros": [
+"Composable, readable",
+"Non-blocking"
+],
+"cons": [
+"Error handling aur cancellation subtle",
+"Sequential await galti se serial ho jaata hai"
+],
+"gotchas": [
+"<code>await</code> loop mein serial hota hai — Promise.all use karo",
+"Future.get() blocking hai",
+"Unhandled rejection process crash kar sakta hai"
+]
+},
+"actor-model": {
+"terms": [
+[
+"Actor",
+"Private state + mailbox; ek time par ek message."
+],
+[
+"Message passing",
+"Shared memory nahi, sirf messages."
+],
+[
+"Supervision",
+"Parent actor child ke fail par restart tay karta hai (Erlang)."
+]
+],
+"what": "<p><b>Definition:</b> Actor model mein har actor apni state ka akela maalik hai; doosre actor sirf message bhej sakte hain. Mailbox ke messages ek-ek karke process hote hain, isliye locks ki zaroorat nahi.</p><p>Go ka mantra: 'share memory by communicating'.</p>",
+"why": "<p>Shared mutable state hata do to races khatam. Distributed systems par bhi naturally scale hota hai.</p>",
+"code": "// Go: channel se message passing\nfunc counter(inc <-chan int, get chan<- int) {\n  c := 0\n  for {\n    select {\n    case n := <-inc: c += n\n    case get <- c:\n    }\n  }\n}   // sirf yahi goroutine c ko chhoota hai",
+"where": [
+[
+"Erlang / Elixir",
+"Telecom, WhatsApp."
+],
+[
+"Akka",
+"JVM microservices."
+]
+],
+"pros": [
+"Races nahi",
+"Distribution-friendly"
+],
+"cons": [
+"Message ordering/backpressure sochna padta hai",
+"Debugging flow mushkil"
+],
+"gotchas": [
+"Mailbox unbounded ho to OOM",
+"Actor ke andar blocking call poora actor rokta hai",
+"Request-reply pattern deadlock kar sakta hai"
+]
+},
+"memory-ordering": {
+"terms": [
+[
+"Sequential consistency",
+"Saare threads ek hi global order dekhte hain."
+],
+[
+"Acquire/release",
+"Release se pehle ki writes acquire karne wale ko dikhengi."
+],
+[
+"Relaxed",
+"Sirf atomicity, koi ordering nahi."
+]
+],
+"what": "<p><b>Definition:</b> CPU/compiler instructions reorder karte hain. Memory model tay karta hai kaun si orderings guaranteed hain. SC sabse safe aur slow; acquire-release publish pattern ke liye kaafi; relaxed counters ke liye.</p>",
+"why": "<p>Lock-free code sahi likhne ke liye zaroori — galat ordering par bug sirf kisi architecture par dikhta hai.</p>",
+"code": "// C++\nstd::atomic<bool> ready{false}; int data;\n// producer\ndata = 42;\nready.store(true, std::memory_order_release);\n// consumer\nwhile (!ready.load(std::memory_order_acquire));\nassert(data == 42);   // guaranteed",
+"where": [
+[
+"Lock-free libs",
+"Queues, ref counts."
+],
+[
+"Language runtimes",
+"JMM / C++ memory model."
+]
+],
+"pros": [
+"Fine-grained performance control"
+],
+"cons": [
+"Bahut error-prone"
+],
+"gotchas": [
+"Default seq_cst rakho jab tak profile na kahe",
+"Relaxed se data publish nahi hota",
+"x86 strong hai, ARM weak — testing dono par"
+]
+},
+"volatile-keyword": {
+"terms": [
+[
+"Java volatile",
+"Visibility + happens-before; atomicity nahi."
+],
+[
+"C++ volatile",
+"Compiler optimization roke; thread-safety nahi."
+],
+[
+"JS",
+"volatile nahi hota; Atomics use karo."
+]
+],
+"what": "<p><b>Definition:</b> Java mein volatile variable ki write turant sab threads ko dikhti hai aur reordering rokti hai. Par <code>volatile int x; x++</code> atomic nahi. C++ mein volatile threading ke liye nahi hai (std::atomic use karo).</p>",
+"why": "<p>Flags (stop/ready) ke liye perfect; counters ke liye galat tool.</p>",
+"code": "class Server {\n  private volatile boolean running = true;\n  void stop() { running = false; }\n  void loop() { while (running) { handle(); } }\n}\n// counter ke liye AtomicInteger, volatile int nahi",
+"where": [
+[
+"Stop flags",
+"Single writer flag."
+],
+[
+"Safe publication",
+"Double-checked locking."
+]
+],
+"pros": [
+"Lock-free visibility, simple"
+],
+"cons": [
+"Compound ops atomic nahi"
+],
+"gotchas": [
+"volatile count++ race hai",
+"C++ volatile ≠ Java volatile",
+"Double-checked singleton mein volatile zaroori"
+]
+},
+"thread-interruption": {
+"terms": [
+[
+"Cooperative",
+"Thread ko khud check karke ruk-na hota hai."
+],
+[
+"InterruptedException",
+"Blocking call interrupt par throw karta hai."
+],
+[
+"Cancellation token",
+"JS/C#/Go (context) ka equivalent."
+]
+],
+"what": "<p><b>Definition:</b> Thread ko zabardasti maarna unsafe hai (locks leak). Isliye interrupt sirf flag set karta hai; thread blocking calls par ya <code>isInterrupted()</code> check karke cleanly exit karta hai.</p>",
+"why": "<p>Graceful shutdown aur timeouts ke liye cancellation zaroori hai bina resources leak kiye.</p>",
+"code": "Runnable r = () -> {\n  try {\n    while (!Thread.currentThread().isInterrupted()) {\n      process(queue.take());   // block par interrupt\n    }\n  } catch (InterruptedException e) {\n    Thread.currentThread().interrupt();   // flag restore\n  } finally { cleanup(); }\n};",
+"where": [
+[
+"Shutdown",
+"Executor shutdownNow."
+],
+[
+"Timeouts",
+"Future.cancel(true)."
+]
+],
+"pros": [
+"Safe cleanup"
+],
+"cons": [
+"Code cooperate na kare to cancel nahi hota"
+],
+"gotchas": [
+"InterruptedException swallow mat karo — flag restore karo",
+"Thread.stop deprecated/unsafe",
+"CPU loop mein check na ho to interrupt kaam nahi karega"
+]
+},
+"green-threads": {
+"terms": [
+[
+"Goroutine",
+"Go ka lightweight thread (~2KB stack)."
+],
+[
+"M:N scheduling",
+"M green threads N OS threads par."
+],
+[
+"Virtual threads",
+"Java 21 ke lightweight threads."
+]
+],
+"what": "<p><b>Definition:</b> Green threads runtime ke scheduler se chalte hain, OS ke nahi. Blocking I/O par runtime thread ko park karke OS thread dusre green thread ko de deta hai. Isliye lakhon concurrent tasks possible.</p>",
+"why": "<p>Thread-per-request ka simple code style, par async jaisi scalability.</p>",
+"code": "// Go\nfor i := 0; i < 100000; i++ {\n  go func(i int) { handle(i) }(i)   // lakhon goroutines OK\n}\n// Java 21\nExecutors.newVirtualThreadPerTaskExecutor().submit(() -> call());",
+"where": [
+[
+"Go servers",
+"Goroutine per connection."
+],
+[
+"Kotlin / Java 21",
+"Coroutines, virtual threads."
+]
+],
+"pros": [
+"Bahut kam memory",
+"Simple blocking-style code"
+],
+"cons": [
+"CPU-bound kaam scheduler ko starve kar sakta hai",
+"Native blocking calls pin kar dete hain"
+],
+"gotchas": [
+"Goroutine leak — exit path zaroori",
+"Virtual threads pooling ke liye nahi hain",
+"CPU-bound par parallelism cores se hi limited"
+]
+},
+"event-loop-deep": {
+"terms": [
+[
+"Call stack",
+"Abhi chalta sync code."
+],
+[
+"Microtask queue",
+"Promise.then, queueMicrotask — pehle chalti hai."
+],
+[
+"Macrotask",
+"setTimeout, I/O callbacks."
+]
+],
+"what": "<p><b>Definition:</b> Loop: stack khali ho → saari microtasks drain → ek macrotask → repeat. Node mein libuv phases hain (timers, poll, check) aur <code>process.nextTick</code> microtasks se bhi pehle.</p>",
+"why": "<p>Ordering aur blocking samajhna — ek heavy sync function poore server ko freeze kar deta hai.</p>",
+"code": "console.log('1');\nsetTimeout(() => console.log('timeout'), 0);\nPromise.resolve().then(() => console.log('micro'));\nprocess.nextTick(() => console.log('tick'));\nconsole.log('2');\n// 1, 2, tick, micro, timeout",
+"where": [
+[
+"Node servers",
+"Non-blocking I/O."
+],
+[
+"Browsers",
+"UI rendering ke beech tasks."
+]
+],
+"pros": [
+"Locks nahi, simple model"
+],
+"cons": [
+"CPU-bound kaam loop block karta hai"
+],
+"gotchas": [
+"Microtask loop (recursive then) macrotasks ko starve karta hai",
+"setTimeout(0) turant nahi chalta",
+"JSON.parse bade payload par loop block"
+]
+},
+"worker-threads": {
+"terms": [
+[
+"Worker",
+"Alag V8 isolate + event loop."
+],
+[
+"postMessage",
+"Structured clone se data copy."
+],
+[
+"SharedArrayBuffer",
+"Zero-copy shared memory + Atomics."
+]
+],
+"what": "<p><b>Definition:</b> worker_threads CPU-heavy kaam main loop se hata deta hai. Workers memory share nahi karte (default) — messages copy hote hain; SharedArrayBuffer se share kar sakte ho.</p>",
+"why": "<p>Image resize, hashing, parsing jaise kaam main thread par API ko slow nahi karte.</p>",
+"code": "// main.js\nconst { Worker } = require('node:worker_threads');\nconst w = new Worker('./hash.js', { workerData: bigBuffer });\nw.on('message', h => console.log(h));\n\n// hash.js\nconst { parentPort, workerData } = require('node:worker_threads');\nparentPort.postMessage(crypto.createHash('sha256').update(workerData).digest('hex'));",
+"where": [
+[
+"Image/PDF processing",
+"CPU-bound."
+],
+[
+"Piscina pool",
+"Reusable workers."
+]
+],
+"pros": [
+"True parallelism",
+"Main loop free"
+],
+"cons": [
+"Message copy cost",
+"Startup cost"
+],
+"gotchas": [
+"I/O ke liye worker ki zaroorat nahi",
+"Har request par naya worker banana mahanga — pool use karo",
+"Functions postMessage nahi ho sakte"
+]
+},
+"promises-internals": {
+"terms": [
+[
+"States",
+"pending → fulfilled / rejected (settled, immutable)."
+],
+[
+"then chain",
+"Har then naya promise return karta hai."
+],
+[
+"unhandledRejection",
+"Node 15+ default: process crash."
+]
+],
+"what": "<p><b>Definition:</b> Promise ke callbacks microtask queue mein chalte hain. then ka return value agle promise ko resolve karta hai; throw rejection mein badal jaata hai.</p>",
+"why": "<p>Error propagation aur ordering ke bugs samajhne ke liye.</p>",
+"code": "fetchUser()\n  .then(u => fetchOrders(u.id))   // return promise → chain\n  .then(o => render(o))\n  .catch(err => log(err))         // upar ke kisi bhi step ka error\n  .finally(() => spinner.hide());\n\nprocess.on('unhandledRejection', e => { log(e); process.exit(1); });",
+"where": [
+[
+"Async APIs",
+"fetch, fs.promises."
+],
+[
+"Libraries",
+"Promise combinators."
+]
+],
+"pros": [
+"Chaining + centralized errors"
+],
+"cons": [
+"Zombie promise (return bhool gaye)"
+],
+"gotchas": [
+"then mein return bhoolna chain tod deta hai",
+"async function ke bina await ka error catch nahi hota",
+"Promise.all ek fail par fast-reject karta hai — allSettled alag"
+]
+},
+"node-cluster": {
+"terms": [
+[
+"Primary/worker",
+"Master fork karta hai, workers port share karte hain."
+],
+[
+"Round-robin",
+"Linux par default distribution."
+],
+[
+"PM2",
+"Cluster manager."
+]
+],
+"what": "<p><b>Definition:</b> cluster module har CPU core par ek Node process chalata hai, sab ek hi port par. Memory share nahi hoti, isliye in-memory session/cache workers ke beech consistent nahi.</p>",
+"why": "<p>Single-threaded Node ek core hi use karta hai; cluster se throughput multi-core par badhta hai aur ek worker crash par baaki chalte rehte hain.</p>",
+"code": "const cluster = require('node:cluster');\nconst os = require('node:os');\nif (cluster.isPrimary) {\n  os.availableParallelism && Array.from({length: os.availableParallelism()}).forEach(() => cluster.fork());\n  cluster.on('exit', () => cluster.fork());   // auto-restart\n} else {\n  require('./server');\n}",
+"where": [
+[
+"Node production",
+"PM2 cluster mode."
+],
+[
+"Containers",
+"Aksar ek process per container + orchestrator."
+]
+],
+"pros": [
+"Multi-core use",
+"Crash isolation"
+],
+"cons": [
+"State share nahi — Redis chahiye"
+],
+"gotchas": [
+"WebSocket sticky sessions chahiye",
+"In-memory cache har worker ka alag",
+"K8s mein cluster ki jagah pod replicas"
+]
+},
+"producer-consumer": {
+"terms": [
+[
+"Bounded buffer",
+"Fixed size queue — backpressure deta hai."
+],
+[
+"empty/full",
+"Consumer empty par, producer full par wait."
+],
+[
+"BlockingQueue",
+"Built-in thread-safe implementation."
+]
+],
+"what": "<p><b>Definition:</b> Producers queue mein items daalte hain, consumers nikalte hain. Bounded buffer producers ko slow karta hai jab consumers peeche hon (backpressure).</p>",
+"why": "<p>Decoupling aur load smoothing — message queues, logging pipelines, worker pools sab isi par bane hain.</p>",
+"code": "BlockingQueue<Job> q = new ArrayBlockingQueue<>(100);\n// producer\nq.put(job);                  // full ho to block\n// consumer\nwhile (true) { handle(q.take()); }   // empty ho to block\n// shutdown: poison pill\nq.put(POISON);",
+"where": [
+[
+"Logging",
+"Async log writer."
+],
+[
+"Kafka / RabbitMQ",
+"Distributed version."
+]
+],
+"pros": [
+"Decoupled, backpressure"
+],
+"cons": [
+"Queue sizing aur shutdown handling"
+],
+"gotchas": [
+"Unbounded queue memory fill karti hai",
+"Shutdown ke liye poison pill ya close signal",
+"Ek consumer slow ho to queue bhar jaati hai"
+]
+},
+"readers-writers": {
+"terms": [
+[
+"Reader-preference",
+"Readers ko priority — writer starve ho sakta hai."
+],
+[
+"Writer-preference",
+"Writer wait mein ho to naye readers rokte hain."
+],
+[
+"Fair",
+"Arrival order."
+]
+],
+"what": "<p><b>Definition:</b> Shared data par kai readers ek saath, writer exclusive. Variants fairness tay karte hain. Solution: ReadWriteLock ya semaphores + reader count.</p>",
+"why": "<p>Read-heavy caches/configs mein performance aur fairness ka balance.</p>",
+"code": "// reader-preference (semaphores)\nreaders++ under mutex; if first reader: wLock.acquire()\nread()\nreaders-- under mutex; if last reader: wLock.release()\n// writer: wLock.acquire(); write(); wLock.release()",
+"where": [
+[
+"Caches",
+"Config store."
+],
+[
+"Databases",
+"Shared/exclusive locks."
+]
+],
+"pros": [
+"Concurrent reads"
+],
+"cons": [
+"Starvation variants"
+],
+"gotchas": [
+"Reader-preference mein writer bhookha reh sakta hai",
+"Reader count update bhi mutex se",
+"Production mein ready ReadWriteLock use karo"
+]
+},
+"dining-philosophers": {
+"terms": [
+[
+"Forks",
+"Shared resources (N)."
+],
+[
+"Circular wait",
+"Sab ne left fork utha li → deadlock."
+],
+[
+"Resource hierarchy",
+"Forks ko number do, chhota pehle."
+]
+],
+"what": "<p><b>Definition:</b> N philosophers ko khane ke liye do forks chahiye. Sab ek saath left fork uthayein to deadlock. Fixes: fork ordering, max N−1 philosophers table par (semaphore), ya odd/even alag order.</p>",
+"why": "<p>Deadlock/starvation ka standard model; interview mein lock ordering explain karne ka example.</p>",
+"code": "void eat(int i) {\n  int a = Math.min(i, (i+1)%N), b = Math.max(i, (i+1)%N);\n  forks[a].lock(); forks[b].lock();   // ordering → no cycle\n  try { eatFood(); }\n  finally { forks[b].unlock(); forks[a].unlock(); }\n}",
+"where": [
+[
+"Resource allocation",
+"Multi-lock acquisition."
+]
+],
+"pros": [
+"Patterns clear karta hai"
+],
+"cons": [
+"Toy problem"
+],
+"gotchas": [
+"Semaphore(N-1) bhi kaam karta hai",
+"Ordering fix starvation nahi hataata",
+"Real fix = fewer locks"
+]
+},
+"thread-safe-singleton": {
+"terms": [
+[
+"Double-checked locking",
+"Pehle bina lock check, phir lock mein."
+],
+[
+"Holder idiom",
+"Static inner class lazy + thread-safe."
+],
+[
+"Enum singleton",
+"Java mein simplest safe."
+]
+],
+"what": "<p><b>Definition:</b> Naive <code>if (inst==null) inst=new X()</code> do threads mein do instances bana sakta hai. Safe options: eager static, holder class, enum, ya volatile + double-checked locking.</p>",
+"why": "<p>Reordering ki wajah se half-constructed object dikh sakta hai — volatile bina DCL toota hua hai.</p>",
+"code": "class Config {\n  private static volatile Config inst;\n  static Config get() {\n    if (inst == null) {\n      synchronized (Config.class) {\n        if (inst == null) inst = new Config();\n      }\n    }\n    return inst;\n  }\n}\n// ya: private static class Holder { static final Config I = new Config(); }",
+"where": [
+[
+"Config, loggers",
+"Single instance."
+]
+],
+"pros": [
+"Lazy aur safe"
+],
+"cons": [
+"Global state testing mushkil"
+],
+"gotchas": [
+"volatile ke bina DCL broken",
+"Class loader alag ho to multiple instances",
+"DI container behtar option"
+]
+},
+"design-rate-limiter": {
+"terms": [
+[
+"Token bucket",
+"Tokens refill hote hain, burst allow."
+],
+[
+"Leaky bucket",
+"Fixed rate se output."
+],
+[
+"Sliding window",
+"Time window mein count."
+]
+],
+"what": "<p><b>Definition:</b> Token bucket: capacity C, refill rate r. Har request ek token leti hai. Thread-safe banane ke liye lock ya CAS par (tokens, lastRefill) ko ek unit mein update karo.</p>",
+"why": "<p>API ko abuse se bachana; concurrency ki wajah se limiter ka khud ka race sahi karna zaroori hai.</p>",
+"code": "class TokenBucket {\n  private double tokens = CAP; private long last = System.nanoTime();\n  synchronized boolean tryAcquire() {\n    long now = System.nanoTime();\n    tokens = Math.min(CAP, tokens + (now - last) * RATE / 1e9);\n    last = now;\n    if (tokens >= 1) { tokens -= 1; return true; }\n    return false;\n  }\n}",
+"where": [
+[
+"API gateways",
+"Per-user limits."
+],
+[
+"Redis",
+"Lua script se distributed."
+]
+],
+"pros": [
+"Burst allow, simple"
+],
+"cons": [
+"Distributed mein shared state"
+],
+"gotchas": [
+"Refill aur consume atomic ho",
+"Clock monotonic use karo",
+"Multi-node ke liye Redis Lua/atomic"
+]
+},
+"design-cache": {
+"terms": [
+[
+"LRU",
+"HashMap + doubly linked list."
+],
+[
+"Lock striping",
+"Segments par alag locks."
+],
+[
+"Read-through",
+"Miss par load aur store."
+]
+],
+"what": "<p><b>Definition:</b> Ek global lock throughput maar deta hai. Options: segmented/striped locks, ya Caffeine jaisa library; get par bhi list reorder hoti hai isliye read-lock kaafi nahi.</p>",
+"why": "<p>Cache hot path hai — contention seedha latency banta hai.</p>",
+"code": "class Striped<K,V> {\n  final Segment<K,V>[] segs;\n  V get(K k) { return seg(k).get(k); }    // sirf us segment ka lock\n  Segment<K,V> seg(K k) { return segs[(k.hashCode() & 0x7fffffff) % segs.length]; }\n}\n// Production: Caffeine / Guava Cache",
+"where": [
+[
+"Services",
+"In-process cache."
+]
+],
+"pros": [
+"Contention kam"
+],
+"cons": [
+"Global LRU order approximate"
+],
+"gotchas": [
+"Cache stampede: ek key par sab miss → single-flight",
+"Eviction aur get ke beech race",
+"Memory bound zaroor rakho"
+]
+},
+"debug-concurrency": {
+"terms": [
+[
+"Thread dump",
+"Sab threads ka stack snapshot."
+],
+[
+"Race detector",
+"Go -race, ThreadSanitizer."
+],
+[
+"Stress test",
+"Zyada threads, repeat runs."
+]
+],
+"what": "<p><b>Definition:</b> Approach: logs mein thread-id + timestamp, thread dump (jstack) se deadlock cycle, TSan/<code>go test -race</code>, stress + randomized delays, aur minimal repro.</p>",
+"why": "<p>Non-deterministic bugs ko tools ke bina pakadna lagbhag impossible hai.</p>",
+"code": "$ jstack <pid> | grep -A5 \"deadlock\"\n$ go test -race ./...\n$ clang -fsanitize=thread app.c\n# stress\n$ for i in $(seq 1 1000); do ./test || break; done",
+"where": [
+[
+"Production incidents",
+"Hang / high CPU triage."
+]
+],
+"pros": [
+"Systematic approach"
+],
+"cons": [
+"Time-consuming"
+],
+"gotchas": [
+"Logging khud timing badal deta hai",
+"Race detector sirf executed paths dekhta hai",
+"Fix ke baad bhi stress run karo"
+]
+},
+"web-server-concurrency": {
+"terms": [
+[
+"Thread-per-request",
+"Simple, blocking, memory heavy."
+],
+[
+"Thread pool",
+"Bounded threads + queue."
+],
+[
+"Event-driven",
+"Kam threads, non-blocking (nginx, Node)."
+]
+],
+"what": "<p><b>Definition:</b> Thread-per-request (Apache prefork) simple par 10k connections par fail (C10K). Pool resource bound karta hai. Event loop I/O-bound par best par CPU kaam block karta hai. Hybrid: event loop + worker pool.</p>",
+"why": "<p>Model workload (I/O vs CPU, connections) ke hisaab se chuno.</p>",
+"code": "# nginx: few workers, epoll event loop\nworker_processes auto;\nevents { worker_connections 10240; }\n# Node: loop + worker_threads for CPU\n# Java 21: virtual threads for blocking-style code",
+"where": [
+[
+"nginx / Node",
+"Event-driven."
+],
+[
+"Tomcat / Spring",
+"Thread pool."
+]
+],
+"pros": [
+"Right model = high throughput"
+],
+"cons": [
+"Hybrid complexity"
+],
+"gotchas": [
+"Event-loop mein blocking call = sab ruk jaate",
+"Pool size = latency ke liye critical",
+"Little's law: concurrency = rate × latency"
+]
+},
+"gil": {
+"terms": [
+[
+"GIL",
+"CPython mein ek time par ek thread bytecode chalata hai."
+],
+[
+"CPU-bound",
+"Threads se fayda nahi."
+],
+[
+"I/O-bound",
+"I/O par GIL release hota hai — threads kaam karte hain."
+]
+],
+"what": "<p><b>Definition:</b> GIL CPython ke reference counting ko safe rakhta hai. CPU-bound threads parallel nahi chalte; I/O (sockets, files) ya C extensions (NumPy) GIL release karte hain. Python 3.13+ mein free-threaded build experimental hai.</p>",
+"why": "<p>Galat model chuna to 8 threads se bhi speed nahi badhegi.</p>",
+"code": "import threading, time\ndef cpu(): sum(i*i for i in range(10**7))\nt=time.time()\nts=[threading.Thread(target=cpu) for _ in range(4)]\n[x.start() for x in ts]; [x.join() for x in ts]\nprint(time.time()-t)   # ≈ 4× single, parallel nahi",
+"where": [
+[
+"Python services",
+"CPU kaam ke liye multiprocessing."
+]
+],
+"pros": [
+"Simple memory management"
+],
+"cons": [
+"CPU parallelism nahi"
+],
+"gotchas": [
+"GIL data race se nahi bachata (<code>x += 1</code> race hai)",
+"NumPy/IO GIL release karte hain",
+"Free-threaded Python abhi default nahi"
+]
+},
+"python-threads": {
+"terms": [
+[
+"threading.Thread",
+"OS thread wrapper."
+],
+[
+"daemon",
+"Main exit par band, bina wait ke."
+],
+[
+"Lock / Event",
+"Sync primitives."
+]
+],
+"what": "<p><b>Definition:</b> <code>threading</code> I/O-bound concurrency ke liye. <code>Thread(target=fn, args=...)</code>, <code>start()</code>, <code>join()</code>. Daemon threads program exit nahi rokte.</p>",
+"why": "<p>Network/file wait overlap karna sabse aasaan: ThreadPoolExecutor.</p>",
+"code": "import threading\nlock = threading.Lock()\ntotal = 0\ndef work(n):\n    global total\n    with lock:\n        total += n\nts = [threading.Thread(target=work, args=(i,)) for i in range(10)]\nfor t in ts: t.start()\nfor t in ts: t.join()",
+"where": [
+[
+"Scrapers",
+"Parallel HTTP."
+]
+],
+"pros": [
+"Simple I/O concurrency"
+],
+"cons": [
+"GIL: CPU kaam nahi"
+],
+"gotchas": [
+"Thread(target=f()) — call mat karo, f pass karo",
+"Daemon thread ka cleanup nahi hota",
+"Exceptions thread ke andar silently mar jaate hain"
+]
+},
+"python-asyncio": {
+"terms": [
+[
+"Coroutine",
+"async def function."
+],
+[
+"await",
+"Control event loop ko wapas."
+],
+[
+"gather",
+"Kai coroutines saath chalao."
+]
+],
+"what": "<p><b>Definition:</b> asyncio single thread par cooperative multitasking karta hai. <code>await</code> par task suspend hota hai aur loop dusra chalata hai. Blocking call (time.sleep, requests) poora loop rok deta hai.</p>",
+"why": "<p>Hazaaron network connections kam memory se — threads se zyada scalable.</p>",
+"code": "import asyncio, aiohttp\nasync def fetch(s, u):\n    async with s.get(u) as r: return r.status\nasync def main():\n    async with aiohttp.ClientSession() as s:\n        print(await asyncio.gather(*[fetch(s,u) for u in urls]))\nasyncio.run(main())",
+"where": [
+[
+"FastAPI",
+"Async endpoints."
+],
+[
+"Crawlers",
+"High concurrency."
+]
+],
+"pros": [
+"Low overhead, high concurrency"
+],
+"cons": [
+"Poora stack async hona chahiye"
+],
+"gotchas": [
+"<code>time.sleep</code> ki jagah <code>asyncio.sleep</code>",
+"Blocking code ke liye <code>asyncio.to_thread</code>",
+"await bhoole coroutine run hi nahi hota"
+]
+},
+"python-multiprocessing": {
+"terms": [
+[
+"Process",
+"Alag interpreter + GIL."
+],
+[
+"Pool",
+"Worker processes ka pool."
+],
+[
+"Pickling",
+"Args/results serialize hote hain."
+]
+],
+"what": "<p><b>Definition:</b> multiprocessing alag processes chalata hai, isliye CPU-bound kaam true parallel hota hai. Data pickling se jaata hai (overhead); shared_memory se zero-copy sharing possible.</p>",
+"why": "<p>GIL bypass karke multi-core ka poora fayda.</p>",
+"code": "from multiprocessing import Pool\ndef square(n): return n*n\nif __name__ == '__main__':      # zaroori (spawn on mac/win)\n    with Pool() as p:\n        print(p.map(square, range(10)))",
+"where": [
+[
+"Data processing",
+"CPU-heavy transforms."
+]
+],
+"pros": [
+"True parallelism"
+],
+"cons": [
+"Memory heavy, IPC cost"
+],
+"gotchas": [
+"<code>if __name__ == '__main__'</code> guard bhoolna infinite spawn",
+"Lambda/closures pickle nahi hote",
+"Chhote tasks mein overhead benefit khata hai"
+]
+}
+}

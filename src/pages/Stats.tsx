@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { courseIndex } from '../data/load'
+import { setPref, usePrefs } from '../lib/prefs'
 import { DAY, dayKey, levelOf, resetAll, setGoal, streakOf, importState, useProgress, getProgress } from '../lib/store'
 
 export function Stats() {
   const p = useProgress()
+  const prefs = usePrefs()
   const [now] = useState(() => Date.now())
   const s = streakOf(p)
   const lv = levelOf(p.xp)
@@ -52,6 +54,12 @@ export function Stats() {
             [20, 'Casual · 20'], [30, 'Regular · 30'], [50, 'Serious · 50'], [100, 'Intense · 100'],
           ].map(([g, l]) => <button key={g} className={'seg-btn' + (p.goal === g ? ' on' : '')} onClick={() => setGoal(g as number)}>{l}</button>)}
         </div>
+      </section>
+
+      <section className="card">
+        <h3>Settings</h3>
+        <label className="toggle"><input type="checkbox" checked={prefs.sound} onChange={(e) => setPref('sound', e.target.checked)} /> <span>🔊 Sound effects</span></label>
+        <label className="toggle"><input type="checkbox" checked={prefs.unlockAll} onChange={(e) => setPref('unlockAll', e.target.checked)} /> <span>🔓 Saare lessons unlock rakho (lock band)</span></label>
       </section>
 
       <section className="card">

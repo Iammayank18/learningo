@@ -143,6 +143,14 @@ function toLesson(t, L, phase) {
 }
 const plainText = (h) => String(h).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
 
+const ENRICH_DIR = path.join(ROOT, 'scripts/enrich')
+/** Hand-written lesson content for journals that only have title + description (scripts/enrich/<course>.json). */
+function loadEnrich(courseId) {
+  const f = path.join(ENRICH_DIR, courseId + '.json')
+  return fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : {}
+}
+const FIELDS = ['terms', 'what', 'analogy', 'why', 'visual', 'code', 'where', 'pros', 'cons', 'gotchas']
+
 const index = []
 const search = []
 for (const [key, [title, icon, group, hue]] of Object.entries(META)) {
@@ -164,6 +172,8 @@ for (const [key, [title, icon, group, hue]] of Object.entries(META)) {
   const cats = (() => { const a = grab(s, 'ALL_CATS'); try { return a ? evalLit(a) : [] } catch { return [] } })()
   const kidsKey = ['topics', 'lessons', 'items', 'problems'].find((k) => chapters.some((c) => Array.isArray(c[k]) && c[k].length))
   if (!kidsKey) { console.log('no kids', key); continue }
+  const enrich = loadEnrich(id)
+  let enriched = 0
   let n = 0
   const usedIds = new Set()
   const course = {
@@ -176,6 +186,8 @@ for (const [key, [title, icon, group, hue]] of Object.entries(META)) {
         lessons: c[kidsKey].filter((t) => t && t.id).map((t) => {
           n++
           const lesson = toLesson(t, learn[t.id], c)
+          const extra = enrich[t.id]
+          if (extra && !lesson.what) { for (const k of FIELDS) if (extra[k] !== undefined) lesson[k] = extra[k]; enriched++ }
           while (usedIds.has(lesson.id)) lesson.id += '-2'
           usedIds.add(lesson.id)
           search.push({ c: id, u: String(uid), l: lesson.id, n: lesson.name, t: utitle, x: [lesson.desc, lesson.q, ...lesson.terms.map((x) => x[0] + ' ' + x[1]), plainText(lesson.what).slice(0, 300)].join(' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').slice(0, 700) })
@@ -187,7 +199,7 @@ for (const [key, [title, icon, group, hue]] of Object.entries(META)) {
   fs.writeFileSync(path.join(OUT, 'courses', id + '.json'), JSON.stringify(course))
   const hasDeep = course.units.some((u) => u.lessons.some((l) => l.what))
   index.push({ id, title, icon, group, hue, source: course.source, lessons: n, units: course.units.length, featured: FEATURED.includes(id), hasDeep })
-  console.log(id.padEnd(28), course.units.length, 'units', String(n).padStart(3), 'lessons', (fs.statSync(path.join(OUT, 'courses', id + '.json')).size / 1024).toFixed(0) + 'KB')
+  console.log(id.padEnd(28), course.units.length, 'units', String(n).padStart(3), 'lessons', (fs.statSync(path.join(OUT, 'courses', id + '.json')).size / 1024).toFixed(0) + 'KB', enriched ? `(+${enriched} enriched)` : '')
 }
 fs.writeFileSync(path.join(OUT, 'index.json'), JSON.stringify(index))
 fs.writeFileSync(path.join(OUT, 'search.json'), JSON.stringify(search))

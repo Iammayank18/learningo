@@ -14,6 +14,7 @@ export function QuizRunner({ items, baseDone = 0, baseTotal = 0, onExit, onFinis
   const [i, setI] = useState(0)
   const [correct, setCorrect] = useState(0)
   const [mistakes, setMistakes] = useState(0)
+  const [combo, setCombo] = useState(0)
   const [ok, setOk] = useState<Record<string, boolean>>(() => Object.fromEntries(items.map((it) => [it.group, true])))
 
   const total = baseTotal + queue.length
@@ -25,6 +26,7 @@ export function QuizRunner({ items, baseDone = 0, baseTotal = 0, onExit, onFinis
     const nOk = right ? ok : { ...ok, [cur.group]: false }
     let q = queue
     if (!right && !cur.retry) q = [...queue, { ...cur, retry: true }]
+    setCombo(right ? combo + 1 : 0)
     setCorrect(nCorrect); setMistakes(nMistakes); setOk(nOk); setQueue(q)
     if (i + 1 >= q.length) onFinish({ correct: nCorrect, total: items.length, mistakes: nMistakes, ok: nOk })
     else setI(i + 1)
@@ -33,8 +35,8 @@ export function QuizRunner({ items, baseDone = 0, baseTotal = 0, onExit, onFinis
   if (!cur) return null
   return (
     <div className="runner">
-      <TopBar progress={(baseDone + i) / total} onExit={onExit} mistakes={mistakes} />
-      <ExerciseView key={i} ex={cur.ex} onNext={next} />
+      <TopBar progress={(baseDone + i) / total} onExit={onExit} mistakes={mistakes} combo={combo} />
+      <ExerciseView key={i} ex={cur.ex} combo={combo} onNext={next} />
     </div>
   )
 }

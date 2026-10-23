@@ -8,6 +8,7 @@ import { Courses } from './pages/Courses'
 import { LessonPage } from './pages/Lesson'
 import { Read } from './pages/Read'
 import { Review } from './pages/Review'
+import { Roadmaps } from './pages/Roadmaps'
 import { Stats } from './pages/Stats'
 
 export default function App() {
@@ -32,7 +33,8 @@ export default function App() {
   switch (page) {
     case 'lesson': view = a && b ? <LessonPage courseId={a} lessonId={b} /> : null; fullscreen = true; break
     case 'read': view = a && b ? <Read courseId={a} lessonId={b} /> : null; break
-    case 'review': view = <Review />; fullscreen = true; break
+    case 'review': view = <Review />; break
+    case 'roadmaps': view = <Roadmaps id={a} />; break
     case 'courses': view = <Courses />; break
     case 'stats': view = <Stats />; break
     default: view = <Learn courseId={p.activeCourse} />

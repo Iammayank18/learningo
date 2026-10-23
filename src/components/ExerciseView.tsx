@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { Exercise } from '../lib/quiz'
+import { sfx } from '../lib/sound'
+import { Mascot } from './Mascot'
 
-interface Props { ex: Exercise; onNext: (correct: boolean) => void }
+const PRAISE = ['Sahi jawab!', 'Bilkul sahi!', 'Zabardast!', 'Ekdum correct!', 'Shabaash!', 'Mast!']
+const OOPS = ['Galat — sahi jawab:', 'Koi baat nahi — sahi jawab:', 'Almost! Sahi jawab:']
+
+interface Props { ex: Exercise; onNext: (correct: boolean) => void; combo?: number }
 
 const shuffled = <T,>(a: T[]) => {
   const b = [...a]
@@ -9,31 +14,38 @@ const shuffled = <T,>(a: T[]) => {
   return b
 }
 
-export function ExerciseView({ ex, onNext }: Props) {
-  if (ex.kind === 'mcq') return <Mcq ex={ex} onNext={onNext} />
-  if (ex.kind === 'match') return <Match ex={ex} onNext={onNext} />
-  return <Recall ex={ex} onNext={onNext} />
+export function ExerciseView({ ex, onNext, combo = 0 }: Props) {
+  if (ex.kind === 'mcq') return <Mcq ex={ex} onNext={onNext} combo={combo} />
+  if (ex.kind === 'match') return <Match ex={ex} onNext={onNext} combo={combo} />
+  return <Recall ex={ex} onNext={onNext} combo={combo} />
 }
 
-function Footer({ state, explain, onPrimary, primary, disabled, children }: {
-  state: 'idle' | 'ok' | 'bad'; explain?: string; onPrimary: () => void; primary: string; disabled?: boolean; children?: React.ReactNode
+function Footer({ state, explain, onPrimary, primary, disabled, children, combo = 0 }: {
+  state: 'idle' | 'ok' | 'bad'; combo?: number; explain?: string; onPrimary: () => void; primary: string; disabled?: boolean; children?: React.ReactNode
 }) {
+  const [line] = useState(() => ({ ok: PRAISE[Math.floor(Math.random() * PRAISE.length)], bad: OOPS[Math.floor(Math.random() * OOPS.length)] }))
+  useEffect(() => {
+    if (state === 'ok') sfx.correct(combo + 1)
+    else if (state === 'bad') sfx.wrong()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state])
   return (
     <footer className={'qfooter ' + state}>
       <div className="qfooter-in">
+        {state !== 'idle' && <Mascot mood={state === 'ok' ? 'happy' : 'sad'} size={52} />}
         <div className="qfeedback">
-          {state === 'ok' && <strong>🎉 Sahi jawab!</strong>}
-          {state === 'bad' && <strong>Galat — sahi jawab:</strong>}
+          {state === 'ok' && <strong>🎉 {combo >= 2 ? `${combo + 1} in a row! ${line.ok}` : line.ok}</strong>}
+          {state === 'bad' && <strong>{line.bad}</strong>}
           {state !== 'idle' && explain && <div className="qexplain">{explain}</div>}
           {children}
         </div>
-        <button className={'btn ' + (state === 'bad' ? 'btn-red' : 'btn-green')} disabled={disabled} onClick={onPrimary}>{primary}</button>
+        <button className={'btn ' + (state === 'bad' ? 'btn-red' : 'btn-green')} disabled={disabled} onClick={() => { sfx.tap(); onPrimary() }}>{primary}</button>
       </div>
     </footer>
   )
 }
 
-function Mcq({ ex, onNext }: { ex: Extract<Exercise, { kind: 'mcq' }>; onNext: Props['onNext'] }) {
+function Mcq({ ex, onNext, combo }: { ex: Extract<Exercise, { kind: 'mcq' }>; onNext: Props['onNext']; combo: number }) {
   const [sel, setSel] = useState<number | null>(null)
   const [checked, setChecked] = useState(false)
   const correct = sel === ex.answer
@@ -65,7 +77,7 @@ function Mcq({ ex, onNext }: { ex: Extract<Exercise, { kind: 'mcq' }>; onNext: P
             if (checked && i === ex.answer) cls += ' right'
             if (checked && sel === i && i !== ex.answer) cls += ' wrong'
             return (
-              <button key={i} className={cls} disabled={checked} onClick={() => setSel(i)}>
+              <button key={i} className={cls} disabled={checked} onClick={() => { sfx.select(); setSel(i) }}>
                 <kbd>{i + 1}</kbd><span>{o}</span>
               </button>
             )
@@ -73,7 +85,7 @@ function Mcq({ ex, onNext }: { ex: Extract<Exercise, { kind: 'mcq' }>; onNext: P
         </div>
       </div>
       {checked ? (
-        <Footer state={correct ? 'ok' : 'bad'} explain={correct ? undefined : ex.explain} primary="Continue" onPrimary={() => onNext(correct)} />
+        <Footer combo={combo} state={correct ? 'ok' : 'bad'} explain={correct ? undefined : ex.explain} primary="Continue" onPrimary={() => onNext(correct)} />
       ) : (
         <Footer state="idle" primary="Check" disabled={sel === null} onPrimary={() => setChecked(true)} />
       )}
@@ -81,7 +93,7 @@ function Mcq({ ex, onNext }: { ex: Extract<Exercise, { kind: 'mcq' }>; onNext: P
   )
 }
 
-function Match({ ex, onNext }: { ex: Extract<Exercise, { kind: 'match' }>; onNext: Props['onNext'] }) {
+function Match({ ex, onNext, combo }: { ex: Extract<Exercise, { kind: 'match' }>; onNext: Props['onNext']; combo: number }) {
   const lefts = useMemo(() => ex.pairs.map((p, i) => ({ t: p[0], i })), [ex])
   const rights = useMemo(() => shuffled(ex.pairs.map((p, i) => ({ t: p[1], i }))), [ex])
   const [left, setLeft] = useState<number | null>(null)
@@ -93,9 +105,9 @@ function Match({ ex, onNext }: { ex: Extract<Exercise, { kind: 'match' }>; onNex
   const pickRight = (i: number) => {
     if (left === null || done.has(i)) return
     if (left === i) {
-      setDone(new Set(done).add(i)); setLeft(null)
+      setDone(new Set(done).add(i)); setLeft(null); sfx.match()
     } else {
-      setMistakes(mistakes + 1); setFlash(i)
+      setMistakes(mistakes + 1); setFlash(i); sfx.wrong()
       setTimeout(() => setFlash(null), 450)
     }
   }
@@ -107,7 +119,7 @@ function Match({ ex, onNext }: { ex: Extract<Exercise, { kind: 'match' }>; onNex
         <div className="match">
           <div className="match-col">
             {lefts.map((l) => (
-              <button key={l.i} disabled={done.has(l.i)} className={'opt' + (left === l.i ? ' sel' : '') + (done.has(l.i) ? ' right' : '')} onClick={() => setLeft(l.i)}>{l.t}</button>
+              <button key={l.i} disabled={done.has(l.i)} className={'opt' + (left === l.i ? ' sel' : '') + (done.has(l.i) ? ' right' : '')} onClick={() => { sfx.select(); setLeft(l.i) }}>{l.t}</button>
             ))}
           </div>
           <div className="match-col">
@@ -118,7 +130,7 @@ function Match({ ex, onNext }: { ex: Extract<Exercise, { kind: 'match' }>; onNex
         </div>
       </div>
       {finished ? (
-        <Footer state={mistakes === 0 ? 'ok' : 'bad'} explain={mistakes ? 'Kuch pairs galat try hue — ek baar upar dekh lo.' : undefined} primary="Continue" onPrimary={() => onNext(mistakes === 0)} />
+        <Footer combo={combo} state={mistakes === 0 ? 'ok' : 'bad'} explain={mistakes ? 'Kuch pairs galat try hue — ek baar upar dekh lo.' : undefined} primary="Continue" onPrimary={() => onNext(mistakes === 0)} />
       ) : (
         <Footer state="idle" primary="Pehle sab jodo" disabled onPrimary={() => {}} />
       )}
@@ -126,7 +138,7 @@ function Match({ ex, onNext }: { ex: Extract<Exercise, { kind: 'match' }>; onNex
   )
 }
 
-function Recall({ ex, onNext }: { ex: Extract<Exercise, { kind: 'recall' }>; onNext: Props['onNext'] }) {
+function Recall({ ex, onNext, combo }: { ex: Extract<Exercise, { kind: 'recall' }>; onNext: Props['onNext']; combo: number }) {
   const [shown, setShown] = useState(false)
   return (
     <>
@@ -144,11 +156,11 @@ function Recall({ ex, onNext }: { ex: Extract<Exercise, { kind: 'recall' }>; onN
         <div className="qfooter-in">
           {shown ? (
             <div className="recall-btns">
-              <button className="btn btn-red" onClick={() => onNext(false)}>Dobara padhna padega</button>
-              <button className="btn btn-green" onClick={() => onNext(true)}>Yaad tha ✓</button>
+              <button className="btn btn-red" onClick={() => { sfx.wrong(); onNext(false) }}>Dobara padhna padega</button>
+              <button className="btn btn-green" onClick={() => { sfx.correct(combo + 1); onNext(true) }}>Yaad tha ✓</button>
             </div>
           ) : (
-            <button className="btn btn-blue" onClick={() => setShown(true)}>Answer dikhao</button>
+            <button className="btn btn-blue" onClick={() => { sfx.tap(); setShown(true) }}>Answer dikhao</button>
           )}
         </div>
       </footer>

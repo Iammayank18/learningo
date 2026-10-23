@@ -76,3 +76,10 @@ export function highlightParts(text: string, query: string): { s: string; hit: b
   const parts = text.split(new RegExp(`(${esc.join('|')})`, 'gi'))
   return parts.map((s, i) => ({ s, hit: i % 2 === 1 })).filter((p) => p.s)
 }
+
+let names: Promise<Record<string, string>> | null = null
+/** "course/lesson" -> lesson name, built from the lazy search index. */
+export function lessonNames(): Promise<Record<string, string>> {
+  names ??= ensureSearch().then(() => Object.fromEntries(pre.map((p) => [`${p.e.c}/${p.e.l}`, p.e.n])))
+  return names
+}

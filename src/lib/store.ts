@@ -10,13 +10,14 @@ export interface Progress {
   xp: number
   goal: number
   activeCourse: string
+  track: string // selected roadmap id ('' = none)
   days: Record<string, number> // yyyy-mm-dd -> xp earned
   done: Record<string, number> // "course/lesson" -> times completed
   cards: Record<string, Card>
 }
 
 const KEY = 'interview-prep:v1'
-const empty = (): Progress => ({ xp: 0, goal: 30, activeCourse: 'react-mastery', days: {}, done: {}, cards: {} })
+const empty = (): Progress => ({ xp: 0, goal: 30, activeCourse: 'react-mastery', track: '', days: {}, done: {}, cards: {} })
 
 function read(): Progress {
   try {
@@ -81,6 +82,10 @@ export function reviewLesson(course: string, lesson: string, ok: boolean, xp: nu
 
 export function setGoal(goal: number) { commit({ ...state, goal }) }
 export function setActiveCourse(activeCourse: string) { commit({ ...state, activeCourse }) }
+export function setTrack(track: string) { commit({ ...state, track }) }
+/** XP only — free practice that doesn't touch the spaced-repetition schedule. */
+export function addXp(n: number) { commit(withXp(state, n)) }
+export const doneCount = (p: Progress, course: string) => Object.keys(p.done).filter((k) => k.startsWith(course + '/')).length
 export function resetAll() { commit(empty()) }
 export function importState(json: string) { commit({ ...empty(), ...JSON.parse(json) }) }
 
