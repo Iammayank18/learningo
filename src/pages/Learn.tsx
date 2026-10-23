@@ -1,15 +1,25 @@
 import { useState } from 'react'
 import { useCourse } from '../lib/useCourse'
-import { lid, useProgress, DAY } from '../lib/store'
+import { lid, useProgress, passedMap, openChest, placeLessons, DAY } from '../lib/store'
 import { href } from '../lib/router'
 import { HUES } from '../lib/sections'
 import { metaOf } from '../data/load'
 import { usePrefs } from '../lib/prefs'
 import { lockedIds } from '../lib/unlock'
 import { sfx } from '../lib/sound'
+import { buildReviewQuiz } from '../lib/quiz'
+import { Mascot, Confetti, type Mood } from '../components/Mascot'
+import { QuizRunner, type QuizItem, type QuizResult } from '../components/QuizRunner'
+import { StarIcon, LockIcon, CheckIcon, ChestIcon, TrophyIcon, FastIcon } from '../components/Icons'
 import type { Course, Lesson } from '../types'
 
-const OFFSETS = [0, 38, 62, 38, 0, -38, -62, -38]
+const OFFSETS = [0, 46, 74, 46, 0, -46, -74, -46]
+const CHEST_EVERY = 4
+
+type Item =
+  | { t: 'lesson'; l: Lesson; li: number }
+  | { t: 'chest'; key: string; need: string[] } // need = lesson ids that must be passed
+  | { t: 'trophy' }
 
 function firstIncomplete(course: Course, done: Record<string, number>) {
   for (const u of course.units) for (const l of u.lessons) if (!done[lid(course.id, l.id)]) return l.id
@@ -22,21 +32,29 @@ export function Learn({ courseId }: { courseId: string }) {
   const { unlockAll } = usePrefs()
   const [open, setOpen] = useState<string | null>(null)
   const [now] = useState(() => Date.now())
+  const [burst, setBurst] = useState<string | null>(null)
+  const [jump, setJump] = useState<number | null>(null) // unit index being tested
   if (error) return <div className="empty">Course load nahi hua.</div>
   if (loading || !course) return <div className="empty">Loading…</div>
 
   const meta = metaOf(course.id)
   const hue = HUES[course.hue] ?? '#58cc02'
-  const current = firstIncomplete(course, p.done)
-  const { locked, blocker } = lockedIds(course, p.done, unlockAll)
+  const pass = passedMap(p)
+  const current = firstIncomplete(course, pass)
+  const { locked, blocker } = lockedIds(course, pass, unlockAll)
   const total = course.units.reduce((n, u) => n + u.lessons.length, 0)
   const done = course.units.reduce((n, u) => n + u.lessons.filter((l) => p.done[lid(course.id, l.id)]).length, 0)
+  const curUnit = course.units.findIndex((u) => u.lessons.some((l) => l.id === current))
+
+  if (jump !== null) {
+    return <JumpTest course={course} unitIndex={jump} onClose={() => setJump(null)} />
+  }
 
   return (
     <div className="path" style={{ ['--hue' as string]: hue }}>
       <div className="course-head">
         <div>
-          <div className="eyebrow">{course.group}</div>
+          <div className="eyebrow">{p.profile?.name ? `Hi ${p.profile.name} 👋 · ` : ''}{course.group}</div>
           <h1>{course.icon} {course.title}</h1>
           <div className="muted small">{done}/{total} lessons · {meta?.hasDeep ? 'full lessons + quizzes' : 'concept cards + recall'}</div>
         </div>
@@ -45,61 +63,163 @@ export function Learn({ courseId }: { courseId: string }) {
       <div className="pbar slim"><div className="pbar-fill" style={{ width: `${(done / total) * 100}%` }} /></div>
 
       {course.units.map((u, ui) => {
-        const ud = u.lessons.filter((l) => p.done[lid(course.id, l.id)]).length
+        const ud = u.lessons.filter((l) => pass[lid(course.id, l.id)]).length
+        const unitDone = ud === u.lessons.length
+        const unitLocked = !unitDone && ui > curUnit && curUnit !== -1 && !unlockAll
+        // build item list: lessons with a chest after every CHEST_EVERY, trophy at the end
+        const items: Item[] = []
+        u.lessons.forEach((l, li) => {
+          items.push({ t: 'lesson', l, li })
+          if ((li + 1) % CHEST_EVERY === 0 && li < u.lessons.length - 1) {
+            items.push({ t: 'chest', key: `${course.id}/${u.id}/${li}`, need: u.lessons.slice(0, li + 1).map((x) => x.id) })
+          }
+        })
+        items.push({ t: 'trophy' })
+        const mid = Math.floor(items.length / 2)
+        const mood: Mood = unitDone ? 'cheer' : unitLocked ? 'sleep' : 'idle'
+        const say = unitDone ? 'Unit complete! 🎉' : unitLocked ? 'Zzz…' : ui === curUnit ? 'Chalo, shuru karo!' : ''
+        const next = course.units[ui + 1]
         return (
-          <section key={u.id} className="unit">
+          <section key={u.id} className={'unit' + (unitLocked ? ' locked' : '') + (unitDone ? ' complete' : '')}>
             <div className="unit-banner">
               <div>
-                <div className="eyebrow">Unit {ui + 1}{u.week ? ` · ${u.week}` : ''}</div>
+                <div className="eyebrow">Unit {ui + 1}{u.week ? ` · ${u.week}` : ''} · {ud}/{u.lessons.length}</div>
                 <h2>{u.title}</h2>
               </div>
-              <div className="unit-count">{ud}/{u.lessons.length}</div>
+              <a className="notes-btn" href={href('read', course.id, u.lessons[0].id)}>📖 Notes</a>
             </div>
             <div className="nodes">
-              {u.lessons.map((l: Lesson, li) => {
-                const id = lid(course.id, l.id)
-                const card = p.cards[id]
-                const isDone = !!p.done[id]
-                const isCur = l.id === current
-                const isDue = !!card && card.due <= now
-                const isLocked = locked.has(l.id)
-                const off = OFFSETS[li % OFFSETS.length]
-                const sel = open === id
-                return (
-                  <div key={l.id} className={'node-wrap' + (sel ? ' open' : '')} style={{ transform: `translateX(${off}px)` }}>
-                    {isCur && <div className="start-bubble">START</div>}
-                    <button
-                      className={'node' + (isDone ? ' done' : '') + (isCur ? ' cur' : '') + (isDue ? ' due' : '') + (isLocked ? ' locked' : '')}
-                      aria-label={l.name}
-                      aria-expanded={sel}
-                      onClick={() => { if (isLocked) sfx.lock(); else sfx.tap(); setOpen(sel ? null : id) }}
-                    >
-                      {isLocked ? '🔒' : isDone ? (isDue ? '⏰' : '★') : isCur ? '▶' : li + 1}
-                      {isDone && card && <span className="crowns">{'●'.repeat(card.stage)}{'○'.repeat(5 - card.stage)}</span>}
-                    </button>
-                    {sel && (
-                      <div className="popover" role="dialog">
-                        <h4>{l.name}</h4>
-                        <p className="muted small">
-                          {isLocked ? 'Pichla lesson complete hone par ye khulega.' : isDone && card ? (isDue ? 'Revision due!' : `Next revision ${fmtIn(card.due - now)}`) : l.desc ? l.desc.slice(0, 110) + '…' : ''}
-                        </p>
-                        {isLocked ? (
-                          <a className="btn btn-green" href={href('lesson', course.id, blocker[l.id].id)}>🔒 Pehle: {blocker[l.id].name.slice(0, 32)}</a>
-                        ) : (
-                          <a className="btn btn-green" href={href('lesson', course.id, l.id)}>{isDone ? 'Practice again' : 'Start'} · +{25} XP</a>
-                        )}
-                        <a className="btn btn-outline" href={href('read', course.id, l.id)}>Read notes</a>
+              {items.map((it, k) => {
+                const off = OFFSETS[k % OFFSETS.length]
+                const mascotSide = off > 0 ? 'left' : 'right'
+                const mascot = k === mid && (
+                  <div className={'side-mascot ' + mascotSide}><Mascot mood={mood} size={96} say={say || undefined} /></div>
+                )
+                if (it.t === 'lesson') {
+                  const l = it.l
+                  const id = lid(course.id, l.id)
+                  const card = p.cards[id]
+                  const isDone = !!p.done[id]
+                  const isCur = l.id === current
+                  const isDue = !!card && card.due <= now
+                  const isLocked = locked.has(l.id)
+                  const isPlaced = !isDone && !!p.placed[id]
+                  const sel = open === id
+                  return (
+                    <div key={l.id} className={'node-wrap' + (sel ? ' open' : '')} style={{ transform: `translateX(${off}px)` }}>
+                      {mascot}
+                      {isCur && <div className="start-bubble">START</div>}
+                      <div className={'node-ring' + (isCur ? ' cur' : '')}>
+                        <button
+                          className={'node' + (isDone ? ' done' : '') + (isCur ? ' cur' : '') + (isDue ? ' due' : '') + (isLocked ? ' locked' : '') + (isPlaced ? ' placed' : '')}
+                          aria-label={l.name} aria-expanded={sel}
+                          onClick={() => { if (isLocked) sfx.lock(); else sfx.tap(); setOpen(sel ? null : id) }}
+                        >
+                          {isLocked ? <LockIcon /> : isPlaced ? <CheckIcon /> : <StarIcon />}
+                          {isDone && card && <span className="crowns">{'●'.repeat(card.stage)}{'○'.repeat(5 - card.stage)}</span>}
+                        </button>
                       </div>
-                    )}
+                      {sel && (
+                        <div className="popover" role="dialog">
+                          <h4>{l.name}</h4>
+                          <p className="muted small">
+                            {isLocked ? 'Pichla lesson complete hone par ye khulega.' : isPlaced ? 'Placement test se skip — chaho to practice kar lo.' : isDone && card ? (isDue ? 'Revision due!' : `Next revision ${fmtIn(card.due - now)}`) : l.desc ? l.desc.slice(0, 110) + '…' : ''}
+                          </p>
+                          {isLocked ? (
+                            <a className="btn btn-green" href={href('lesson', course.id, blocker[l.id].id)}>🔒 Pehle: {blocker[l.id].name.slice(0, 32)}</a>
+                          ) : (
+                            <a className="btn btn-green" href={href('lesson', course.id, l.id)}>{isDone ? 'Practice again' : 'Start'} · +{25} XP</a>
+                          )}
+                          <a className="btn btn-outline" href={href('read', course.id, l.id)}>Read notes</a>
+                        </div>
+                      )}
+                    </div>
+                  )
+                }
+                if (it.t === 'chest') {
+                  const ready = it.need.every((x) => pass[lid(course.id, x)])
+                  const opened = !!p.chests[it.key]
+                  return (
+                    <div key={it.key} className="node-wrap" style={{ transform: `translateX(${off}px)` }}>
+                      {mascot}
+                      <button className={'chest' + (ready && !opened ? ' ready' : '') + (opened ? ' opened' : '')} aria-label="Reward chest"
+                        onClick={() => {
+                          if (!ready) { sfx.lock(); return }
+                          if (!opened) { openChest(it.key, 15); sfx.goal(); setBurst(it.key); setTimeout(() => setBurst(null), 2200) }
+                        }}>
+                        <ChestIcon size={62} open={opened} dim={!ready && !opened} />
+                        {ready && !opened && <span className="chest-tag">+15 XP</span>}
+                      </button>
+                      {burst === it.key && <><Confetti count={36} /><div className="xp-pop">+15 XP ⚡</div></>}
+                    </div>
+                  )
+                }
+                return (
+                  <div key="trophy" className="node-wrap" style={{ transform: `translateX(${off}px)` }}>
+                    {mascot}
+                    <button className={'trophy' + (unitDone ? ' won' : '')} aria-label="Unit trophy" onClick={() => unitDone ? sfx.goal() : sfx.lock()}>
+                      <TrophyIcon size={64} dim={!unitDone} />
+                    </button>
                   </div>
                 )
               })}
             </div>
+            {next && !unitDone && ui === curUnit && !unlockAll && (
+              <div className="jump-wrap">
+                <div className="jump-line"><span>{next.title}</span></div>
+                <div className="start-bubble jump-bubble">JUMP HERE?</div>
+                <button className="jump-btn" aria-label={`Jump to ${next.title}`} onClick={() => { sfx.tap(); setJump(ui + 1) }}><FastIcon /></button>
+              </div>
+            )}
           </section>
         )
       })}
     </div>
   )
+}
+
+/** "Jump here?" — pass a short test on a later unit to skip everything before it. */
+function JumpTest({ course, unitIndex, onClose }: { course: Course; unitIndex: number; onClose: () => void }) {
+  const unit = course.units[unitIndex]
+  const [items] = useState<QuizItem[]>(() => {
+    const ls = unit.lessons
+    const n = Math.min(5, ls.length)
+    const out: QuizItem[] = []
+    for (let i = 0; i < n; i++) {
+      const l = ls[Math.floor((i * ls.length) / n)]
+      const ex = buildReviewQuiz(course, l.id, 'jump').find((e) => e.kind === 'mcq')
+      if (ex) out.push({ ex, group: l.id })
+    }
+    return out
+  })
+  const [res, setRes] = useState<{ ok: boolean; skipped: number } | null>(null)
+
+  const finish = (r: QuizResult) => {
+    const ok = r.mistakes === 0
+    let skipped = 0
+    if (ok) {
+      const ids: string[] = []
+      for (let ui = 0; ui < unitIndex; ui++) for (const l of course.units[ui].lessons) ids.push(lid(course.id, l.id))
+      skipped = ids.length
+      placeLessons(ids)
+      sfx.complete()
+    } else sfx.wrong()
+    setRes({ ok, skipped })
+  }
+
+  if (res) {
+    return (
+      <div className="overlay"><div className="done-screen">
+        {res.ok && <Confetti count={70} />}
+        <Mascot mood={res.ok ? 'cheer' : 'sad'} size={120} say={res.ok ? 'Perfect! Seedha aage!' : 'Abhi nahi — pehle yahi pakka karo'} />
+        <h1>{res.ok ? `Jump! ${res.skipped} lessons skip` : 'Thoda aur practice'}</h1>
+        <p className="muted">{res.ok ? `Ab "${unit.title}" se shuru.` : 'Jump ke liye saare sawal sahi hone chahiye.'}</p>
+        <button className="btn btn-green" onClick={onClose}>Continue</button>
+      </div></div>
+    )
+  }
+  if (!items.length) return <div className="overlay"><div className="done-screen"><p className="muted">Is unit ke liye test available nahi.</p><button className="btn btn-green" onClick={onClose}>Wapas</button></div></div>
+  return <div className="overlay"><QuizRunner items={items} onExit={onClose} onFinish={finish} /></div>
 }
 
 function fmtIn(ms: number) {

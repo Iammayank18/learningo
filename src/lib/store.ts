@@ -6,6 +6,7 @@ export interface Card {
   seen: number
   lastOk: boolean
 }
+export interface Profile { name: string; why: string; level: number; when: string; onboarded: boolean }
 export interface Progress {
   xp: number
   goal: number
@@ -14,10 +15,15 @@ export interface Progress {
   days: Record<string, number> // yyyy-mm-dd -> xp earned
   done: Record<string, number> // "course/lesson" -> times completed
   cards: Record<string, Card>
+  placed: Record<string, number> // lessons skipped via placement test (count as unlocked, not as completed)
+  chests: Record<string, number> // opened path chests
+  acts: Record<string, { l: number; r: number }> // per-day lessons completed / topics reviewed (for daily quests)
+  claimed: Record<string, number> // claimed daily-quest rewards ("day:quest")
+  profile?: Profile
 }
 
 const KEY = 'interview-prep:v1'
-const empty = (): Progress => ({ xp: 0, goal: 30, activeCourse: 'react-mastery', track: '', days: {}, done: {}, cards: {} })
+const empty = (): Progress => ({ xp: 0, goal: 30, activeCourse: 'react-mastery', track: '', days: {}, done: {}, cards: {}, placed: {}, chests: {}, acts: {}, claimed: {} })
 
 function read(): Progress {
   try {
@@ -60,6 +66,26 @@ function withXp(s: Progress, n: number): Progress {
   return { ...s, xp: s.xp + n, days: { ...s.days, [k]: (s.days[k] ?? 0) + n } }
 }
 
+function bump(s: Progress, k: 'l' | 'r') {
+  const d = dayKey()
+  const cur = s.acts[d] ?? { l: 0, r: 0 }
+  return { ...s.acts, [d]: { ...cur, [k]: cur[k] + 1 } }
+}
+
+/** Open a path chest once (bonus XP). */
+export function openChest(key: string, xp: number) {
+  if (state.chests[key]) return
+  const s = withXp(state, xp)
+  commit({ ...s, chests: { ...s.chests, [key]: Date.now() } })
+}
+/** Claim a daily-quest reward once per day. */
+export function claimQuest(quest: string, xp: number) {
+  const k = `${dayKey()}:${quest}`
+  if (state.claimed[k]) return
+  const s = withXp(state, xp)
+  commit({ ...s, claimed: { ...s.claimed, [k]: 1 } })
+}
+
 /** Called when a lesson (learn + practice) is finished. */
 export function completeLesson(course: string, lesson: string, xp: number, perfect: boolean) {
   const id = lid(course, lesson)
@@ -67,7 +93,7 @@ export function completeLesson(course: string, lesson: string, xp: number, perfe
   const stage = prev ? prev.stage : perfect ? 2 : 1
   const card: Card = { stage, due: Date.now() + INTERVALS[stage - 1] * DAY, seen: (prev?.seen ?? 0) + 1, lastOk: true }
   const s = withXp(state, xp)
-  commit({ ...s, done: { ...s.done, [id]: (s.done[id] ?? 0) + 1 }, cards: { ...s.cards, [id]: card } })
+  commit({ ...s, done: { ...s.done, [id]: (s.done[id] ?? 0) + 1 }, cards: { ...s.cards, [id]: card }, acts: bump(s, 'l') })
 }
 
 /** Called after reviewing one lesson. */
@@ -77,11 +103,25 @@ export function reviewLesson(course: string, lesson: string, ok: boolean, xp: nu
   const stage = ok ? Math.min(5, prev.stage + 1) : Math.max(1, prev.stage - 2)
   const due = Date.now() + (ok ? INTERVALS[stage - 1] : 1) * DAY
   const s = withXp(state, xp)
-  commit({ ...s, cards: { ...s.cards, [id]: { stage, due, seen: prev.seen + 1, lastOk: ok } } })
+  commit({ ...s, cards: { ...s.cards, [id]: { stage, due, seen: prev.seen + 1, lastOk: ok } }, acts: bump(s, 'r') })
 }
 
 export function setGoal(goal: number) { commit({ ...state, goal }) }
 export function setActiveCourse(activeCourse: string) { commit({ ...state, activeCourse }) }
+export function setProfile(patch: Partial<Profile>) {
+  const cur = state.profile ?? { name: '', why: '', level: 0, when: '', onboarded: isOnboarded(state) }
+  commit({ ...state, profile: { ...cur, ...patch } })
+}
+export function placeLessons(ids: string[]) {
+  commit({ ...state, placed: { ...state.placed, ...Object.fromEntries(ids.map((i) => [i, 1])) } })
+}
+/** Existing users (with any progress) skip onboarding; new ones see it once. */
+export function isOnboarded(p: Progress): boolean {
+  if (p.profile) return p.profile.onboarded
+  return p.xp > 0 || Object.keys(p.done).length > 0
+}
+/** done ∪ placed — what the lock logic and the path treat as "already passed". */
+export const passedMap = (p: Progress): Record<string, number> => ({ ...p.placed, ...p.done })
 export function setTrack(track: string) { commit({ ...state, track }) }
 /** XP only — free practice that doesn't touch the spaced-repetition schedule. */
 export function addXp(n: number) { commit(withXp(state, n)) }

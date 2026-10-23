@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useCourse } from '../lib/useCourse'
 import { buildLessonQuiz, locate } from '../lib/quiz'
 import { sectionKinds } from '../lib/sections'
-import { completeLesson, useProgress } from '../lib/store'
+import { completeLesson, passedMap, useProgress } from '../lib/store'
 import { go, href } from '../lib/router'
 import { LessonSection } from '../components/LessonSection'
 import { QuizRunner, type QuizResult } from '../components/QuizRunner'
@@ -26,7 +26,7 @@ function Gate({ course, lessonId }: { course: Course; lessonId: string }) {
   const p = useProgress()
   const { unlockAll } = usePrefs()
   // decide once on entry, so finishing the lesson doesn't re-lock/unlock the screen mid-run
-  const [blocked] = useState(() => lockedIds(course, p.done, unlockAll).blocker[lessonId] ?? null)
+  const [blocked] = useState(() => lockedIds(course, passedMap(p), unlockAll).blocker[lessonId] ?? null)
   useEffect(() => { if (blocked) sfx.lock() }, [blocked])
   if (blocked) {
     return (

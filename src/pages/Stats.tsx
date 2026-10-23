@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { courseIndex } from '../data/load'
 import { setPref, usePrefs } from '../lib/prefs'
-import { DAY, dayKey, levelOf, resetAll, setGoal, streakOf, importState, useProgress, getProgress } from '../lib/store'
+import { DAY, dayKey, levelOf, resetAll, setGoal, setProfile, streakOf, importState, useProgress, getProgress } from '../lib/store'
 
 export function Stats() {
   const p = useProgress()
@@ -59,6 +59,7 @@ export function Stats() {
       <section className="card">
         <h3>Settings</h3>
         <label className="toggle"><input type="checkbox" checked={prefs.sound} onChange={(e) => setPref('sound', e.target.checked)} /> <span>🔊 Sound effects</span></label>
+        <div className="row-btns" style={{ margin: '8px 0' }}><button className="btn btn-outline" onClick={() => { if (confirm('Onboarding dobara shuru hoga (progress safe rahegi).')) setProfile({ onboarded: false }) }}>🔄 Track / goal dobara chuno</button></div>
         <label className="toggle"><input type="checkbox" checked={prefs.unlockAll} onChange={(e) => setPref('unlockAll', e.target.checked)} /> <span>🔓 Saare lessons unlock rakho (lock band)</span></label>
       </section>
 

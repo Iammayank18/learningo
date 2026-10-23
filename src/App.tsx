@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useRoute } from './lib/router'
-import { useProgress } from './lib/store'
+import { isOnboarded, useProgress } from './lib/store'
 import { Shell } from './components/Shell'
 import { SearchPalette } from './components/SearchPalette'
 import { Learn } from './pages/Learn'
@@ -9,6 +9,7 @@ import { LessonPage } from './pages/Lesson'
 import { Read } from './pages/Read'
 import { Review } from './pages/Review'
 import { Roadmaps } from './pages/Roadmaps'
+import { Onboarding } from './pages/Onboarding'
 import { Stats } from './pages/Stats'
 
 export default function App() {
@@ -26,6 +27,8 @@ export default function App() {
     window.addEventListener('keydown', h)
     return () => window.removeEventListener('keydown', h)
   }, [])
+
+  if (!isOnboarded(p)) return <Onboarding />
 
   const [page, a, b] = route
   let view: React.ReactNode

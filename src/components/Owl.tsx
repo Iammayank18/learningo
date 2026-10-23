@@ -1,7 +1,8 @@
-export type OwlMood = 'idle' | 'happy' | 'sad' | 'cheer'
+export type OwlMood = 'idle' | 'happy' | 'sad' | 'cheer' | 'sleep'
 
 /** Original owl mascot drawn in SVG so it can change pose/expression. */
 export function Owl({ mood = 'idle', size = 96 }: { mood?: OwlMood; size?: number }) {
+  const sleep = mood === 'sleep'
   const happy = mood === 'happy' || mood === 'cheer'
   const sad = mood === 'sad'
   const cheer = mood === 'cheer'
@@ -30,7 +31,14 @@ export function Owl({ mood = 'idle', size = 96 }: { mood?: OwlMood; size?: numbe
       {/* eyes */}
       <circle cx="68" cy="90" r="29" fill="#fff" />
       <circle cx="132" cy="90" r="29" fill="#fff" />
-      {happy ? (
+      {sleep ? (
+        <>
+          <path d="M48 92 Q68 104 88 92" stroke={ink} strokeWidth="6" strokeLinecap="round" fill="none" />
+          <path d="M112 92 Q132 104 152 92" stroke={ink} strokeWidth="6" strokeLinecap="round" fill="none" />
+          <text className="zzz" x="150" y="40" fontSize="30" fontWeight="900" fill="#8fa3ab">z</text>
+          <text className="zzz z2" x="168" y="22" fontSize="22" fontWeight="900" fill="#8fa3ab">z</text>
+        </>
+      ) : happy ? (
         <>
           <path d="M52 96 Q68 70 84 96" stroke={ink} strokeWidth="7" strokeLinecap="round" fill="none" />
           <path d="M116 96 Q132 70 148 96" stroke={ink} strokeWidth="7" strokeLinecap="round" fill="none" />

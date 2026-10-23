@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Owl } from './Owl'
 
-export type Mood = 'idle' | 'happy' | 'sad' | 'cheer'
+export type Mood = 'idle' | 'happy' | 'sad' | 'cheer' | 'sleep'
 
 /** Our owl mascot. Mood changes the animation (hop / droop / dance). */
 export function Mascot({ mood = 'idle', size = 96, say }: { mood?: Mood; size?: number; say?: string }) {
