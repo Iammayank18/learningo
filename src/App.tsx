@@ -11,8 +11,16 @@ import { Review } from './pages/Review'
 import { Roadmaps } from './pages/Roadmaps'
 import { Onboarding } from './pages/Onboarding'
 import { Stats } from './pages/Stats'
+import { Settings } from './pages/Settings'
+import { useLang } from './lib/i18n'
 
+/** Remount everything when the UI language changes, so plain tr() calls re-evaluate. */
 export default function App() {
+  const lang = useLang()
+  return <AppInner key={lang} />
+}
+
+function AppInner() {
   const route = useRoute()
   const p = useProgress()
   const [open, setOpen] = useState(false)
@@ -40,6 +48,7 @@ export default function App() {
     case 'roadmaps': view = <Roadmaps id={a} />; break
     case 'courses': view = <Courses />; break
     case 'stats': view = <Stats />; break
+    case 'settings': view = <Settings />; break
     default: view = <Learn courseId={p.activeCourse} />
   }
   const section = page === 'read' ? '' : (page ?? '')

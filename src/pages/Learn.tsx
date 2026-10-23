@@ -11,6 +11,7 @@ import { Mascot, Confetti, type Mood } from '../components/Mascot'
 import { QuizRunner, type QuizItem, type QuizResult } from '../components/QuizRunner'
 import { StarIcon, LockIcon, CheckIcon, ChestIcon, TrophyIcon, FastIcon } from '../components/Icons'
 import type { Course, Lesson } from '../types'
+import { tr } from '../lib/i18n'
 
 const OFFSETS = [0, 46, 74, 46, 0, -46, -74, -46]
 const CHEST_EVERY = 4
@@ -42,7 +43,7 @@ export function Learn({ courseId }: { courseId: string }) {
   const [now] = useState(() => Date.now())
   const [burst, setBurst] = useState<string | null>(null)
   const [jump, setJump] = useState<number | null>(null) // unit index being tested
-  if (error) return <div className="empty">Course load nahi hua.</div>
+  if (error) return <div className="empty">{tr('Course load nahi hua.')}</div>
   if (loading || !course) return <div className="empty">Loading…</div>
 
   const hue = HUES[course.hue] ?? '#58cc02'
@@ -71,7 +72,7 @@ export function Learn({ courseId }: { courseId: string }) {
             <span className="shrink-0 text-[13px] font-extrabold text-(--muted)">{done}/{total} · {Math.round((done / total) * 100)}%</span>
           </div>
         </div>
-        <a href={href('courses')} title="Course badlo" className="grid size-11 shrink-0 place-items-center gap-0.5 rounded-2xl border-2 border-(--line) text-[11px] sm:size-auto sm:self-stretch sm:px-3 font-extrabold tracking-wider text-(--blue-d) uppercase no-underline shadow-[0_3px_0_var(--line)] transition-[translate,box-shadow] duration-100 hover:translate-y-[1.5px] hover:shadow-[0_1.5px_0_var(--line)] active:translate-y-[3px] active:shadow-none">
+        <a href={href('courses')} title={tr('Course badlo')} className="grid size-11 shrink-0 place-items-center gap-0.5 rounded-2xl border-2 border-(--line) text-[11px] sm:size-auto sm:self-stretch sm:px-3 font-extrabold tracking-wider text-(--blue-d) uppercase no-underline shadow-[0_3px_0_var(--line)] transition-[translate,box-shadow] duration-100 hover:translate-y-[1.5px] hover:shadow-[0_1.5px_0_var(--line)] active:translate-y-[3px] active:shadow-none">
           <span className="text-xl leading-none">⇄</span><span className="hidden sm:inline">Switch</span>
         </a>
       </header>
@@ -91,7 +92,7 @@ export function Learn({ courseId }: { courseId: string }) {
         items.push({ t: 'trophy' })
         const mid = Math.floor(items.length / 2)
         const mood: Mood = unitDone ? 'cheer' : unitLocked ? 'sleep' : 'idle'
-        const say = unitDone ? 'Unit complete! 🎉' : unitLocked ? 'Zzz…' : ui === curUnit ? 'Chalo, shuru karo!' : ''
+        const say = unitDone ? 'Unit complete! 🎉' : unitLocked ? 'Zzz…' : ui === curUnit ? tr('Chalo, shuru karo!') : ''
         const next = course.units[ui + 1]
         return (
           <section key={u.id} className={'unit' + (unitLocked ? ' locked' : '') + (unitDone ? ' complete' : '')}>
@@ -152,7 +153,7 @@ export function Learn({ courseId }: { courseId: string }) {
                           <span aria-hidden className={'absolute -top-[9px] left-1/2 size-4 -translate-x-1/2 rotate-45 rounded-tl-[3px] border-t-2 border-l-2 ' + (isLocked ? 'border-(--ring) bg-(--card)' : 'border-transparent bg-(--hue)')} />
                           <h4 className={'m-0! text-[18px] leading-tight ' + (isLocked ? 'text-(--lock-ic)!' : 'text-white!')}>{l.name}</h4>
                           <p className={'mt-2! mb-4! text-[15px] leading-snug ' + (isLocked ? 'text-(--lock-ic)' : 'text-white/90')}>
-                            {isLocked ? `Upar wale lessons complete karo, tab ye khulega! Agla: “${blocker[l.id].name}”.` : isPlaced ? 'Placement test se skip — chaho to practice kar lo.' : isDone && card ? (isDue ? 'Revision due hai — chalo pakka kar lein!' : `Next revision ${fmtIn(card.due - now)}`) : l.desc ? l.desc.slice(0, 110) + '…' : 'Chalo shuru karte hain!'}
+                            {isLocked ? tr('Upar wale lessons complete karo, tab ye khulega! Agla: “{n}”.', { n: blocker[l.id].name }) : isPlaced ? tr('Placement test se skip — chaho to practice kar lo.') : isDone && card ? (isDue ? tr('Revision due hai — chalo pakka kar lein!') : `Next revision ${fmtIn(card.due - now)}`) : l.desc ? l.desc.slice(0, 110) + '…' : tr('Chalo shuru karte hain!')}
                           </p>
                           {isLocked ? (
                             <button disabled className="w-full cursor-not-allowed rounded-xl border-0 bg-(--ring) py-3 text-sm font-extrabold tracking-widest text-(--lock-ic) uppercase">Locked</button>
@@ -244,14 +245,14 @@ function JumpTest({ course, unitIndex, onClose }: { course: Course; unitIndex: n
     return (
       <div className="overlay"><div className="done-screen">
         {res.ok && <Confetti count={70} />}
-        <Mascot mood={res.ok ? 'cheer' : 'sad'} size={120} say={res.ok ? 'Perfect! Seedha aage!' : 'Abhi nahi — pehle yahi pakka karo'} />
-        <h1>{res.ok ? `Jump! ${res.skipped} lessons skip` : 'Thoda aur practice'}</h1>
-        <p className="muted">{res.ok ? `Ab "${unit.title}" se shuru.` : 'Jump ke liye saare sawal sahi hone chahiye.'}</p>
+        <Mascot mood={res.ok ? 'cheer' : 'sad'} size={120} say={res.ok ? tr('Perfect! Seedha aage!') : tr('Abhi nahi — pehle yahi pakka karo')} />
+        <h1>{res.ok ? tr('Jump! {n} lessons skip', { n: res.skipped }) : tr('Thoda aur practice')}</h1>
+        <p className="muted">{res.ok ? tr('Ab "{t}" se shuru.', { t: unit.title }) : tr('Jump ke liye saare sawal sahi hone chahiye.')}</p>
         <button className="btn btn-green" onClick={onClose}>Continue</button>
       </div></div>
     )
   }
-  if (!items.length) return <div className="overlay"><div className="done-screen"><p className="muted">Is unit ke liye test available nahi.</p><button className="btn btn-green" onClick={onClose}>Wapas</button></div></div>
+  if (!items.length) return <div className="overlay"><div className="done-screen"><p className="muted">{tr('Is unit ke liye test available nahi.')}</p><button className="btn btn-green" onClick={onClose}>{tr('Wapas')}</button></div></div>
   return <div className="overlay"><QuizRunner items={items} onExit={onClose} onFinish={finish} /></div>
 }
 

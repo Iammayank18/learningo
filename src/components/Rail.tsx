@@ -4,6 +4,7 @@ import { href } from '../lib/router'
 import { sfx } from '../lib/sound'
 import { Flame } from './Flame'
 import { BoltIcon, ChestIcon } from './Icons'
+import { tr } from '../lib/i18n'
 
 export function Ring({ value, size = 64, light = false, children }: { value: number; size?: number; light?: boolean; children?: React.ReactNode }) {
   const r = (size - 10) / 2
@@ -32,9 +33,9 @@ export function Rail() {
   const week = Array.from({ length: 7 }, (_, i) => ({ label: 'MTWTFSS'[i], on: (p.days[dayKey(now + (i - dow) * DAY)] ?? 0) > 0, today: i === dow }))
 
   const quests = [
-    { id: 'xp', label: `Aaj ${p.goal} XP kamao`, now: today, goal: p.goal, reward: 10, icon: <BoltIcon size={34} /> },
-    { id: 'lessons', label: '2 lessons complete karo', now: acts.l, goal: 2, reward: 15, icon: <span className="q-emoji">📘</span> },
-    { id: 'review', label: '3 topics revise karo', now: acts.r, goal: 3, reward: 10, icon: <span className="q-emoji">🔁</span> },
+    { id: 'xp', label: tr('Aaj {g} XP kamao', { g: p.goal }), now: today, goal: p.goal, reward: 10, icon: <BoltIcon size={34} /> },
+    { id: 'lessons', label: tr('2 lessons complete karo'), now: acts.l, goal: 2, reward: 15, icon: <span className="q-emoji">📘</span> },
+    { id: 'review', label: tr('3 topics revise karo'), now: acts.r, goal: 3, reward: 10, icon: <span className="q-emoji">🔁</span> },
   ]
 
   return (
@@ -48,7 +49,7 @@ export function Rail() {
 
       <div className="card streak-card">
         <div className="streak-card-top">
-          <div><h4>{s.current} din ka streak</h4><p className="muted small">{s.todayDone ? 'Aaj ka streak safe ✓' : 'Aaj ek lesson karo — streak bachao!'}</p></div>
+          <div><h4>{tr('{n} din ka streak', { n: s.current })}</h4><p className="muted small">{s.todayDone ? tr('Aaj ka streak safe ✓') : tr('Aaj ek lesson karo — streak bachao!')}</p></div>
           <Flame size={44} dim={!s.todayDone} />
         </div>
         <div className="week-mini">
@@ -81,7 +82,7 @@ export function Rail() {
         <div className="review-ico">{due ? '⏰' : '✅'}</div>
         <div>
           <h4>{due ? `${due} revision due` : 'Revision clear'}</h4>
-          <p className="muted small">{due ? 'Spaced repetition — abhi karo, yaad rahega' : 'Jo seekha wo apne time pe wapas aayega'}</p>
+          <p className="muted small">{due ? tr('Spaced repetition — abhi karo, yaad rahega') : tr('Jo seekha wo apne time pe wapas aayega')}</p>
         </div>
       </a>
     </aside>

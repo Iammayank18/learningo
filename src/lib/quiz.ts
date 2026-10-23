@@ -1,4 +1,5 @@
 import type { Course, Lesson } from '../types'
+import { tr } from './i18n'
 
 export type Exercise =
   | { kind: 'mcq'; tag: string; prompt: string; sub?: string; options: string[]; answer: number; explain: string }
@@ -59,52 +60,52 @@ const gTerm: Gen = ({ lesson, others, r }) => {
   const [t, d] = pick(lesson.terms, r)
   const pool = others.flatMap((o) => o.terms.map((x) => x[1]))
   const m = buildMcq(clip(d), pool.map(clip), r)
-  return m && { kind: 'mcq', tag: 'Term', prompt: `“${t}” ka matlab kya hai?`, sub: lesson.name, ...m, explain: `${t} → ${d}` }
+  return m && { kind: 'mcq', tag: 'Term', prompt: tr('“{t}” ka matlab kya hai?', { t }), sub: lesson.name, ...m, explain: `${t} → ${d}` }
 }
 const gAnalogy: Gen = ({ lesson, unitMates, others, r }) => {
   if (!lesson.analogy) return null
   const m = buildMcq(clip(lesson.name), [...unitMates, ...others].map((o) => o.name), r)
-  return m && { kind: 'mcq', tag: 'Analogy', prompt: 'Ye analogy kis concept ke baare mein hai?', sub: plain(lesson.analogy), ...m, explain: lesson.name }
+  return m && { kind: 'mcq', tag: 'Analogy', prompt: tr('Ye analogy kis concept ke baare mein hai?'), sub: plain(lesson.analogy), ...m, explain: lesson.name }
 }
 const gDesc: Gen = ({ lesson, unitMates, others, r }) => {
   if (!lesson.desc) return null
   const m = buildMcq(clip(lesson.name), [...unitMates, ...others].map((o) => o.name), r)
-  return m && { kind: 'mcq', tag: 'Concept', prompt: 'Ye description kis topic ka hai?', sub: firstSentences(lesson.desc), ...m, explain: lesson.name }
+  return m && { kind: 'mcq', tag: 'Concept', prompt: tr('Ye description kis topic ka hai?'), sub: firstSentences(lesson.desc), ...m, explain: lesson.name }
 }
 const gCon: Gen = ({ lesson, others, r }) => {
   if (!lesson.cons.length) return null
   const c = pick(lesson.cons, r)
   const m = buildMcq(clip(c), others.flatMap((o) => o.pros), r, lesson.pros)
-  return m && { kind: 'mcq', tag: 'Trade-off', prompt: `Kaunsa point “${clip(lesson.name, 60)}” ki LIMITATION / nuksaan hai?`, ...m, explain: c }
+  return m && { kind: 'mcq', tag: 'Trade-off', prompt: tr('Kaunsa point “{n}” ki LIMITATION / nuksaan hai?', { n: clip(lesson.name, 60) }), ...m, explain: c }
 }
 const gPro: Gen = ({ lesson, others, r }) => {
   if (!lesson.pros.length) return null
   const c = pick(lesson.pros, r)
   const m = buildMcq(clip(c), others.flatMap((o) => o.cons), r, lesson.cons)
-  return m && { kind: 'mcq', tag: 'Trade-off', prompt: `Kaunsa point “${clip(lesson.name, 60)}” ka FAYDA hai?`, ...m, explain: c }
+  return m && { kind: 'mcq', tag: 'Trade-off', prompt: tr('Kaunsa point “{n}” ka FAYDA hai?', { n: clip(lesson.name, 60) }), ...m, explain: c }
 }
 const gGotcha: Gen = ({ lesson, others, r }) => {
   if (!lesson.gotchas.length) return null
   const c = pick(lesson.gotchas, r)
   const m = buildMcq(clip(c), others.flatMap((o) => o.gotchas), r)
-  return m && { kind: 'mcq', tag: 'Gotcha', prompt: `Interview trap: “${clip(lesson.name, 60)}” ke baare mein kaunsi baat SAHI hai?`, ...m, explain: c }
+  return m && { kind: 'mcq', tag: 'Gotcha', prompt: tr('Interview trap: “{n}” ke baare mein kaunsi baat SAHI hai?', { n: clip(lesson.name, 60) }), ...m, explain: c }
 }
 const gWhere: Gen = ({ lesson, others, r }) => {
   if (!lesson.where.length) return null
   const [t, d] = pick(lesson.where, r)
   const m = buildMcq(clip(`${t} — ${d}`), others.flatMap((o) => o.where.map((w) => `${w[0]} — ${w[1]}`)), r)
-  return m && { kind: 'mcq', tag: 'Real world', prompt: `“${clip(lesson.name, 60)}” real project mein kahan kaam aata hai?`, ...m, explain: `${t} — ${d}` }
+  return m && { kind: 'mcq', tag: 'Real world', prompt: tr('“{n}” real project mein kahan kaam aata hai?', { n: clip(lesson.name, 60) }), ...m, explain: `${t} — ${d}` }
 }
 const gMatchTerms: Gen = ({ lesson, r }) => {
   if (lesson.terms.length < 3) return null
   const pairs = shuffle(lesson.terms, r).slice(0, 4).map(([a, b]) => [clip(a, 40), clip(b, 90)] as [string, string])
-  return { kind: 'match', tag: 'Match', prompt: 'Term ko uske matlab se jodo', pairs, explain: pairs.map((p) => `${p[0]} → ${p[1]}`).join('\n') }
+  return { kind: 'match', tag: 'Match', prompt: tr('Term ko uske matlab se jodo'), pairs, explain: pairs.map((p) => `${p[0]} → ${p[1]}`).join('\n') }
 }
 const gMatchUnit: Gen = ({ unitMates, lesson, r }) => {
   const pool = [lesson, ...unitMates].filter((l) => l.desc)
   if (pool.length < 3) return null
   const pairs = shuffle(pool, r).slice(0, 4).map((l) => [clip(l.name, 60), firstSentences(l.desc, 90)] as [string, string])
-  return { kind: 'match', tag: 'Match', prompt: 'Topic ko uske description se jodo', pairs, explain: pairs.map((p) => `${p[0]} → ${p[1]}`).join('\n') }
+  return { kind: 'match', tag: 'Match', prompt: tr('Topic ko uske description se jodo'), pairs, explain: pairs.map((p) => `${p[0]} → ${p[1]}`).join('\n') }
 }
 const gRecall: Gen = ({ lesson, r }) => {
   const clipAns = (t: string) => clip(plain(t), 900)
@@ -114,7 +115,7 @@ const gRecall: Gen = ({ lesson, r }) => {
   }
   const answer = lesson.answer || lesson.what || lesson.desc || lesson.why
   if (!answer) return null
-  const prompt = lesson.q || (lesson.kind === 'problem' ? `Is problem ko kaise solve karoge? ${lesson.name}` : `“${lesson.name}” ko apne words mein samjhao.`)
+  const prompt = lesson.q || (lesson.kind === 'problem' ? tr('Is problem ko kaise solve karoge? {n}', { n: lesson.name }) : tr('“{n}” ko apne words mein samjhao.', { n: lesson.name }))
   return { kind: 'recall', tag: lesson.kind === 'problem' ? 'Problem' : 'Interview Q', prompt, sub: lesson.qsub || undefined, answer: clipAns(answer) }
 }
 

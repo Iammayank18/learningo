@@ -2,6 +2,7 @@ import { courseIndex } from '../data/load'
 import { HUES } from '../lib/sections'
 import { setActiveCourse, useProgress } from '../lib/store'
 import { go } from '../lib/router'
+import { tr } from '../lib/i18n'
 
 export function Courses() {
   const p = useProgress()
@@ -10,7 +11,7 @@ export function Courses() {
   return (
     <div className="page">
       <h1>Courses</h1>
-      <p className="muted">Ek course chuno — path usi se chalega. Progress har course ki alag save hoti hai.</p>
+      <p className="muted">{tr('Ek course chuno — path usi se chalega. Progress har course ki alag save hoti hai.')}</p>
       {groups.map((g) => (
         <section key={g}>
           <h3 className="group-title">{g}</h3>

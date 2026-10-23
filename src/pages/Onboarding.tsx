@@ -13,39 +13,11 @@ import { sfx } from '../lib/sound'
 import { HUES } from '../lib/sections'
 import { importState, lid, placeLessons, setActiveCourse, setGoal, setProfile, setTrack, getProgress } from '../lib/store'
 import type { Course } from '../types'
+import { getLang, setLang, tr } from '../lib/i18n'
+import { WHY, LEVELS, WHEN, GOALS, REMIND } from '../lib/options'
+import { downloadReminder } from '../lib/ics'
 
 type StepId = 'welcome' | 'name' | 'why' | 'track' | 'level' | 'placement' | 'when' | 'goal' | 'plan' | 'ready'
-
-const WHY = [
-  ['💼', 'Job switch', 'Nayi job ke liye interviews crack karne hain'],
-  ['🚀', 'Next level / promotion', 'Senior ya staff role ki taraf badhna hai'],
-  ['🎓', 'Fresher / campus', 'Pehli job ya placements ki taiyari'],
-  ['🧠', 'Skills sharpen karna', 'Concepts pakke karne hain, jaldi nahi'],
-  ['🎯', 'Specific interview aa raha hai', 'Time kam hai, focus chahiye'],
-] as const
-
-const LEVELS = [
-  ['Bilkul naya hoon', 'Basics se shuru karna hai', 1],
-  ['Thoda-bahut aata hai', 'Kuch concepts pata hain', 2],
-  ['Kaafi aata hai', 'Interview-level revise karna hai', 3],
-  ['Expert', 'Sirf gaps dhoondhne hain', 4],
-] as const
-
-const WHEN = [
-  ['🔥', 'Is hafte mein', 'week'],
-  ['📅', '1 mahine ke andar', 'month'],
-  ['🗓️', '2-3 mahine mein', 'quarter'],
-  ['🤷', 'Abhi pata nahi', 'none'],
-] as const
-
-const GOALS = [
-  [20, 'Casual', '~3 min / din'],
-  [30, 'Regular', '~5 min / din'],
-  [50, 'Serious', '~8 min / din'],
-  [100, 'Intense', '~15 min / din'],
-] as const
-
-const REMIND = [['🌅', 'Subah', 8], ['☀️', 'Dopahar', 13], ['🌆', 'Shaam', 19], ['🌙', 'Raat', 22]] as const
 
 const SAY: Record<StepId, [string, Mood]> = {
   welcome: ['Hi! Main Prep hoon — tumhara interview-prep buddy!', 'cheer'],
@@ -83,7 +55,7 @@ export function Onboarding() {
   const recGoal = when === 'week' ? 100 : when === 'month' ? 50 : 30
 
   const next = () => { sfx.tap(); setStep(steps[idx + 1]) }
-  const back = () => { sfx.tap(); if (idx > 0) setStep(steps[idx - 1]) }
+  const back = () => { sfx.back(); if (idx > 0) setStep(steps[idx - 1]) }
 
   // plan "loading" screen auto-advances
   const [tick, setTick] = useState(0)
@@ -154,7 +126,7 @@ export function Onboarding() {
     (step === 'why' && !!why) || (step === 'track' && !!track) || (step === 'level' && level >= 0) ||
     step === 'placement' || (step === 'when' && !!when) || (step === 'goal' && goal > 0) || step === 'ready'
 
-  const [say, mood] = step === 'placement' && testDone ? [placed.length ? `Zabardast! ${placed.length} lessons skip kar diye 🎉` : 'Koi baat nahi — shuru se hi pakka karenge!', placed.length ? 'cheer' as Mood : 'happy' as Mood] : SAY[step]
+  const [say, mood] = step === 'placement' && testDone ? [placed.length ? tr('Zabardast! {n} lessons skip kar diye 🎉', { n: placed.length }) : tr('Koi baat nahi — shuru se hi pakka karenge!'), placed.length ? 'cheer' as Mood : 'happy' as Mood] : [tr(SAY[step][0]), SAY[step][1]]
 
   const totalLessons = rm ? [...new Set(rm.stages.flatMap((s) => s.courses))].reduce((n, c) => n + (metaOf(c)?.lessons ?? 0), 0) : 0
   const perDay = Math.max(0.5, (goal || recGoal) / 45)
@@ -163,20 +135,10 @@ export function Onboarding() {
   const stage1 = rm ? rm.stages[0].courses.reduce((n, c) => n + (metaOf(c)?.lessons ?? 0), 0) : 0
   const stage1Weeks = Math.max(1, Math.ceil(Math.max(0, stage1 - placed.length) / perDay / 7))
 
-  const downloadIcs = (hour: number) => {
-    const d = new Date(); d.setHours(hour, 0, 0, 0)
-    const p = (n: number) => String(n).padStart(2, '0')
-    const stamp = `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}T${p(hour)}0000`
-    const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Prep//EN', 'BEGIN:VEVENT', `UID:prep-daily-${Date.now()}@prep`, `DTSTAMP:${stamp}`, `DTSTART:${stamp}`, 'DURATION:PT15M', 'RRULE:FREQ=DAILY',
-      'SUMMARY:Prep — aaj ka lesson 🔥', 'DESCRIPTION:Streak mat todna!', 'END:VEVENT', 'END:VCALENDAR'].join('\r\n')
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' }))
-    a.download = 'prep-daily-reminder.ics'; a.click(); URL.revokeObjectURL(a.href)
-  }
 
   const welcome = step === 'welcome'
   const showFoot = step !== 'plan' && !(step === 'placement' && !testDone) && !welcome
-  const cta = step === 'ready' ? (busy ? 'Loading…' : 'Pehla lesson shuru karo') : step === 'name' && !name.trim() ? 'Skip' : 'Continue'
+  const cta = step === 'ready' ? (busy ? 'Loading…' : tr('Pehla lesson shuru karo')) : step === 'name' && !name.trim() ? 'Skip' : 'Continue'
   const onCta = () => {
     if (step === 'goal' && !goal) setG(recGoal)
     if (step === 'ready') void finish()
@@ -188,6 +150,14 @@ export function Onboarding() {
       <div className="flex min-h-screen flex-col bg-(--bg)">
         <header className="mx-auto flex w-full max-w-[1000px] items-center gap-2 px-5 pt-5">
           <Owl size={34} /><span className="font-display text-[26px] font-semibold text-(--green)" style={{ fontFamily: 'var(--font-display)' }}>Prep</span>
+          <div className="ml-auto flex gap-1 rounded-2xl border-2 border-(--line) bg-(--card) p-1" role="group" aria-label="Language">
+            {(['hi', 'en'] as const).map((l) => (
+              <button key={l} onClick={() => { if (getLang() !== l) { sfx.tap(); setLang(l) } }}
+                className={'cursor-pointer rounded-xl border-0 px-3 py-1.5 text-[13px] font-extrabold ' + (getLang() === l ? 'bg-(--blue) text-white' : 'bg-transparent text-(--muted) hover:bg-(--bg2)')}>
+                {l === 'hi' ? 'Hinglish' : 'English'}
+              </button>
+            ))}
+          </div>
         </header>
         <main className="mx-auto grid w-full max-w-[1000px] flex-1 items-center gap-8 px-5 py-8 md:grid-cols-2 md:gap-14">
           <div className="relative mx-auto grid aspect-square w-full max-w-[380px] place-items-center">
@@ -205,11 +175,11 @@ export function Onboarding() {
             <div className="relative animate-[pop_.5s_ease-out]"><Mascot mood="cheer" size={190} /></div>
           </div>
           <div className="text-center md:text-left">
-            <h1 className="m-0! text-[32px]! leading-[1.15]! sm:text-[44px]!" style={{ fontFamily: 'var(--font-display)' }}>Interview prep ka sabse <span className="text-(--green)">mazedaar</span> tareeka.</h1>
-            <p className="mt-3! mb-7! text-[17px] text-(--muted)">Chhote lessons, roz ki streak, aur revision jo yaad rakhwata hai — Duolingo style.</p>
+            <h1 className="m-0! text-[32px]! leading-[1.15]! sm:text-[44px]!" style={{ fontFamily: 'var(--font-display)' }}>{tr('Interview prep ka sabse')} <span className="text-(--green)">{tr('mazedaar')}</span> {tr('tareeka.')}</h1>
+            <p className="mt-3! mb-7! text-[17px] text-(--muted)">{tr('Chhote lessons, roz ki streak, aur revision jo yaad rakhwata hai — Duolingo style.')}</p>
             <div className="mx-auto flex max-w-[360px] flex-col gap-3 md:mx-0">
-              <button className="btn btn-green w-full py-4" onClick={next}>Shuru karo</button>
-              <label className="btn btn-outline w-full py-4">Mera progress import karo<input type="file" accept="application/json" hidden onChange={(e) => importFile(e.target.files?.[0])} /></label>
+              <button className="btn btn-green w-full py-4" onClick={next}>{tr('Shuru karo')}</button>
+              <label className="btn btn-outline w-full py-4">{tr('Mera progress import karo')}<input type="file" accept="application/json" hidden onChange={(e) => importFile(e.target.files?.[0])} /></label>
             </div>
           </div>
         </main>
@@ -238,7 +208,7 @@ export function Onboarding() {
         </div>
 
         {step === 'name' && (
-          <input className="w-full rounded-2xl border-2 border-(--line) bg-(--bg2) px-5 py-4 text-xl font-bold text-(--head) outline-none focus:border-(--blue)" autoFocus placeholder="Tumhara naam (optional)" value={name} maxLength={24}
+          <input className="w-full rounded-2xl border-2 border-(--line) bg-(--bg2) px-5 py-4 text-xl font-bold text-(--head) outline-none focus:border-(--blue)" autoFocus placeholder={tr('Tumhara naam (optional)')} value={name} maxLength={24}
             onChange={(e) => setName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') next() }} />
         )}
 
@@ -250,7 +220,7 @@ export function Onboarding() {
 
         {step === 'track' && (
           <div className="grid gap-3 sm:grid-cols-2">
-            {roadmaps.map((r) => <Opt key={r.id} sel={track === r.id} ico={r.icon} title={r.title} desc={r.tagline} hue={HUES[r.hue]} onClick={() => setTr(r.id)} />)}
+            {roadmaps.map((r) => <Opt key={r.id} sel={track === r.id} ico={r.icon} title={r.title} desc={tr(r.tagline)} hue={HUES[r.hue]} onClick={() => setTr(r.id)} />)}
           </div>
         )}
 
@@ -272,8 +242,8 @@ export function Onboarding() {
         {step === 'placement' && testDone && (
           <div className="rounded-3xl border-2 border-(--line) bg-(--card) p-6 text-center shadow-[0_4px_0_var(--line)]">
             <div className="text-[44px] font-semibold text-(--green)" style={{ fontFamily: 'var(--font-display)' }}>{testDone.passed}/{testDone.total}</div>
-            <div className="mb-1 text-sm font-extrabold tracking-widest text-(--muted) uppercase">sahi jawab</div>
-            <p className="m-0! text-(--text)">{placed.length ? `Tumhare pehle ${placed.length} lessons skip ho gaye — direct aage se shuru hoge.` : 'Shuru se hi chalenge — jaldi aage badh jaoge.'}</p>
+            <div className="mb-1 text-sm font-extrabold tracking-widest text-(--muted) uppercase">{tr('sahi jawab')}</div>
+            <p className="m-0! text-(--text)">{placed.length ? tr('Tumhare pehle {n} lessons skip ho gaye — direct aage se shuru hoge.', { n: placed.length }) : tr('Shuru se hi chalenge — jaldi aage badh jaoge.')}</p>
           </div>
         )}
 
@@ -294,7 +264,7 @@ export function Onboarding() {
                   <span className={'flex-1 text-[17px] font-extrabold ' + (on ? 'text-(--blue-d)' : 'text-(--head)')}>{t}
                     {xp === recGoal && <span className="mt-1 block w-fit rounded-full sm:ml-2 sm:mt-0 sm:inline bg-(--green) px-2 py-0.5 align-middle text-[10px] font-extrabold tracking-wider text-white uppercase">Recommended</span>}
                   </span>
-                  <span className="shrink-0 whitespace-nowrap text-xs font-bold text-(--muted) sm:text-sm">{d}</span>
+                  <span className="shrink-0 whitespace-nowrap text-xs font-bold text-(--muted) sm:text-sm">{tr(d)}</span>
                 </button>
               )
             })}
@@ -303,7 +273,7 @@ export function Onboarding() {
 
         {step === 'plan' && (
           <ul className="m-0 grid list-none gap-4 rounded-3xl border-2 border-(--line) bg-(--card) p-5">
-            {[`${rm?.title ?? 'Track'} roadmap chuna`, `${rm?.stages.length ?? 0} stages · ${totalLessons} lessons arrange kiye`, `Daily goal ${goal || recGoal} XP set kiya`].map((t, i) => (
+            {[tr('{t} roadmap chuna', { t: rm?.title ?? 'Track' }), tr('{s} stages · {l} lessons arrange kiye', { s: rm?.stages.length ?? 0, l: totalLessons }), tr('Daily goal {g} XP set kiya', { g: goal || recGoal })].map((t, i) => (
               <li key={t} className={'flex items-center gap-3 text-[17px] font-bold transition-all duration-500 ' + (tick > i ? 'text-(--head) opacity-100' : 'text-(--muted) opacity-40')}>
                 <span className={'grid size-8 shrink-0 place-items-center rounded-full border-[3px] text-sm font-black text-white transition-all ' + (tick > i ? 'scale-110 border-(--green) bg-(--green)' : 'border-(--line)')}>{tick > i ? '✓' : ''}</span>{t}
               </li>
@@ -318,7 +288,7 @@ export function Onboarding() {
               <div className="relative flex items-center gap-3.5">
                 <div className="grid size-14 shrink-0 -rotate-6 place-items-center rounded-2xl bg-white text-[30px] shadow-[0_4px_0_rgba(0,0,0,.18)]">{rm.icon}</div>
                 <div className="min-w-0">
-                  <div className="text-[10px] font-extrabold tracking-[.16em] text-white/75 uppercase">Tumhari track</div>
+                  <div className="text-[10px] font-extrabold tracking-[.16em] text-white/75 uppercase">{tr('Tumhari track')}</div>
                   <div className="text-[21px] leading-tight font-semibold" style={{ fontFamily: 'var(--font-display)' }}>{rm.title}</div>
                   <div className="text-[13px] font-bold text-white/85">{rm.stages.length} stages · {totalLessons - placed.length} lessons</div>
                 </div>
@@ -326,9 +296,9 @@ export function Onboarding() {
             </div>
             <div className="grid grid-cols-3 gap-3">
               {[
-                [<Flame size={30} key="f" />, `${goal || recGoal} XP`, 'roz ka goal'],
-                ['🏁', `~${stage1Weeks} hafte`, 'pehla stage'],
-                ['🏆', weeks >= 8 ? `~${Math.round(weeks / 4.3)} mahine` : `~${weeks} hafte`, 'poora roadmap'],
+                [<Flame size={30} key="f" />, `${goal || recGoal} XP`, tr('roz ka goal')],
+                ['🏁', tr('~{n} hafte', { n: stage1Weeks }), tr('pehla stage')],
+                ['🏆', weeks >= 8 ? tr('~{n} mahine', { n: Math.round(weeks / 4.3) }) : tr('~{n} hafte', { n: weeks }), tr('poora roadmap')],
               ].map(([ic, v, l], i) => (
                 <div key={i} className="grid justify-items-center gap-1 rounded-2xl border-2 border-(--line) bg-(--card) px-2 py-3 text-center shadow-[0_3px_0_var(--line)]">
                   <span className="grid h-8 place-items-center text-[26px] leading-none">{ic}</span>
@@ -338,19 +308,19 @@ export function Onboarding() {
               ))}
             </div>
             <div className="rounded-2xl border-2 border-(--line) bg-(--card) p-4">
-              <div className="mb-3 text-[15px] font-extrabold text-(--head)">📅 Daily reminder <span className="font-bold text-(--muted)">— calendar mein repeat hoga</span></div>
+              <div className="mb-3 text-[15px] font-extrabold text-(--head)">{tr('📅 Daily reminder')} <span className="font-bold text-(--muted)">{tr('— calendar mein repeat hoga')}</span></div>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {REMIND.map(([ico, t, h]) => {
                   const on = remind === h
                   return (
                     <button key={h} onClick={() => { sfx.select(); setRemind(on ? null : h) }}
                       className={'cursor-pointer rounded-xl border-2 border-b-4 px-2 py-2.5 text-sm font-extrabold transition-colors ' + (on ? 'border-(--blue) bg-(--sel-bg) text-(--blue-d)' : 'border-(--line) bg-(--card) text-(--text) hover:bg-(--bg2)')}>
-                      <span className="mr-1">{ico}</span>{t} · {h > 12 ? h - 12 : h}{h >= 12 ? 'pm' : 'am'}
+                      <span className="mr-1">{ico}</span>{tr(t)} · {h > 12 ? h - 12 : h}{h >= 12 ? 'pm' : 'am'}
                     </button>
                   )
                 })}
               </div>
-              {remind !== null && <button className="btn btn-outline mt-3 w-full" onClick={() => downloadIcs(remind)}>📥 Calendar file (.ics) download</button>}
+              {remind !== null && <button className="btn btn-outline mt-3 w-full" onClick={() => downloadReminder(remind)}>📥 Calendar file (.ics) download</button>}
             </div>
           </div>
         )}
@@ -377,8 +347,8 @@ function Opt({ sel, ico, title, desc, hue, onClick }: { sel: boolean; ico?: Reac
         <span className={'grid size-12 shrink-0 place-items-center rounded-xl text-[28px] ' + (hue ? 'bg-[color-mix(in_srgb,var(--hue)_16%,transparent)]' : 'bg-(--bg2)')}>{ico}</span>
       )}
       <span className="min-w-0 flex-1">
-        <b className={'block text-[17px] leading-tight ' + (sel ? 'text-(--blue-d)' : 'text-(--head)')}>{title}</b>
-        {desc && <span className="mt-0.5 block text-[13.5px] leading-snug text-(--muted)">{desc}</span>}
+        <b className={'block text-[17px] leading-tight ' + (sel ? 'text-(--blue-d)' : 'text-(--head)')}>{tr(title)}</b>
+        {desc && <span className="mt-0.5 block text-[13.5px] leading-snug text-(--muted)">{tr(desc)}</span>}
       </span>
       {sel && <span className="absolute -top-2 -right-2 grid size-6 place-items-center rounded-full bg-(--blue) text-xs font-black text-white shadow-[0_2px_0_var(--blue-d)]">✓</span>}
     </button>

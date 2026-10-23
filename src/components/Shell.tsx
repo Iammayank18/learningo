@@ -1,13 +1,13 @@
 import { dueCards, levelOf, streakOf, useProgress } from '../lib/store'
 import { href } from '../lib/router'
-import { currentTheme, toggleTheme } from '../lib/theme'
+import { toggleTheme, useTheme } from '../lib/theme'
 import { Rail } from './Rail'
 import { Owl } from './Owl'
 import { setPref, usePrefs } from '../lib/prefs'
 import { sfx } from '../lib/sound'
-import { useState } from 'react'
-import { BooksIcon, BrainIcon, ChartIcon, HomeIcon, MapIcon, MoonIcon, SearchIcon, SpeakerIcon, SunIcon } from './NavIcons'
+import { BooksIcon, BrainIcon, ChartIcon, HomeIcon, GearIcon, MapIcon, MoonIcon, SearchIcon, SpeakerIcon, SunIcon } from './NavIcons'
 import { Flame } from './Flame'
+import { tr } from '../lib/i18n'
 import { BoltIcon } from './Icons'
 
 const NAV = [
@@ -23,7 +23,7 @@ export function Shell({ route, onSearch, children }: { route: string; onSearch: 
   const prefs = usePrefs()
   const due = dueCards(p).length
   const s = streakOf(p)
-  const [, force] = useState(0)
+  const { theme } = useTheme()
   const mac = /Mac|iPhone|iPad/.test(navigator.platform)
   return (
     <div className="shell">
@@ -40,11 +40,14 @@ export function Shell({ route, onSearch, children }: { route: string; onSearch: 
           <kbd>{mac ? '⌘' : 'Ctrl'} K</kbd>
         </button>
         <div className="side-spacer" />
+        <a href={href('settings')} className={'nav-item' + (route === 'settings' ? ' active' : '')}>
+          <span className="nav-ico"><GearIcon /></span><span className="nav-label">{tr('Settings')}</span>
+        </a>
         <button className="nav-item" onClick={() => { setPref('sound', !prefs.sound); if (!prefs.sound) setTimeout(sfx.correct, 30) }}>
           <span className="nav-ico"><SpeakerIcon on={prefs.sound} /></span><span className="nav-label">Sound {prefs.sound ? 'on' : 'off'}</span>
         </button>
-        <button className="nav-item" onClick={() => { toggleTheme(); force((n) => n + 1) }}>
-          <span className="nav-ico">{currentTheme() === 'dark' ? <SunIcon /> : <MoonIcon />}</span><span className="nav-label">Theme</span>
+        <button className="nav-item" onClick={() => { sfx.tap(); toggleTheme() }}>
+          <span className="nav-ico">{theme === 'dark' ? <SunIcon /> : <MoonIcon />}</span><span className="nav-label">{theme === 'dark' ? tr('Light mode') : tr('Dark mode')}</span>
         </button>
       </nav>
       <div className="mobile-top">
@@ -52,6 +55,7 @@ export function Shell({ route, onSearch, children }: { route: string; onSearch: 
         <span className="chip xp"><BoltIcon size={18} /> {p.xp}</span>
         <span className="chip lvl">Lv {levelOf(p.xp).level}</span>
         <button className="icon-btn" aria-label={prefs.sound ? 'Mute' : 'Unmute'} onClick={() => setPref('sound', !prefs.sound)}><SpeakerIcon size={28} on={prefs.sound} /></button>
+        <a className="icon-btn" aria-label={tr('Settings')} href={href('settings')}><GearIcon size={28} /></a>
         <button className="icon-btn" aria-label="Search" onClick={onSearch}><SearchIcon size={28} /></button>
       </div>
       <main className="main">{children}</main>

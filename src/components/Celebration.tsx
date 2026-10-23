@@ -5,6 +5,7 @@ import { Ring } from './Rail'
 import { MILESTONES, type Snap, type Step } from '../lib/celebrate'
 import { sfx } from '../lib/sound'
 import { DAY, dayKey, levelOf, useProgress } from '../lib/store'
+import { tr } from '../lib/i18n'
 
 export interface CelebrationData {
   title: string
@@ -65,7 +66,7 @@ export function Celebration({ data, actions }: { data: CelebrationData; actions:
 function Summary({ d }: { d: CelebrationData }) {
   const xp = useCountUp(0, d.xp, 900, 250)
   const acc = useCountUp(0, d.accuracy, 900, 450)
-  const say = d.perfect ? 'Flawless! Ek bhi galti nahi 🔥' : d.accuracy >= 70 ? 'Badhiya kaam!' : 'Dohrane se pakka ho jayega'
+  const say = d.perfect ? tr('Flawless! Ek bhi galti nahi 🔥') : d.accuracy >= 70 ? tr('Badhiya kaam!') : tr('Dohrane se pakka ho jayega')
   return (
     <>
       <Confetti count={d.perfect ? 100 : 55} />
@@ -86,7 +87,8 @@ function StreakScreen({ d }: { d: CelebrationData }) {
   const p = useProgress()
   const [now] = useState(() => Date.now())
   const n = useCountUp(Math.max(0, d.next.streak - 1), d.next.streak, 700, 600)
-  const milestone = MILESTONES[d.next.streak]
+  const milestoneRaw = MILESTONES[d.next.streak]
+  const milestone = milestoneRaw ? tr(milestoneRaw) : undefined
   const dow = (new Date(now).getDay() + 6) % 7 // Mon=0
   const week = Array.from({ length: 7 }, (_, k) => {
     const t = now + (k - dow) * DAY
@@ -102,7 +104,7 @@ function StreakScreen({ d }: { d: CelebrationData }) {
         {milestone && <div className="streak-owl"><Mascot mood="cheer" size={92} /></div>}
       </div>
       <div className="streak-num"><span>{n}</span></div>
-      <h2 className="streak-title">din ka streak!</h2>
+      <h2 className="streak-title">{tr('din ka streak!')}</h2>
       {milestone && <p className="milestone-line">{milestone}</p>}
       <div className="week-card">
         {week.map((w, k) => (
@@ -112,7 +114,7 @@ function StreakScreen({ d }: { d: CelebrationData }) {
           </div>
         ))}
       </div>
-      <p className="muted small">{milestone ? 'Kal bhi aana — streak bachaye rakho!' : 'Roz thoda — aise hi streak badhti hai.'}</p>
+      <p className="muted small">{milestone ? tr('Kal bhi aana — streak bachaye rakho!') : tr('Roz thoda — aise hi streak badhti hai.')}</p>
       {milestone && <ShareBtn text={`🔥 ${d.next.streak}-day streak on my interview prep! ${milestone}`} />}
     </>
   )
@@ -122,7 +124,7 @@ function ShareBtn({ text }: { text: string }) {
   const [ok, setOk] = useState(false)
   return (
     <button className="btn btn-outline share-btn" onClick={() => { void navigator.clipboard?.writeText(text).then(() => { setOk(true); setTimeout(() => setOk(false), 1800) }) }}>
-      {ok ? '✓ Copied' : '📤 Share text copy karo'}
+      {ok ? '✓ Copied' : tr('📤 Share text copy karo')}
     </button>
   )
 }
@@ -136,7 +138,7 @@ function GoalScreen() {
       <Confetti count={50} />
       <div className="goal-big"><Ring value={v} size={150}><span className="goal-check">🎯</span></Ring></div>
       <h2>Daily goal complete!</h2>
-      <p className="muted">{p.goal} XP aaj ke liye poore — shabaash!</p>
+      <p className="muted">{tr('{p} XP aaj ke liye poore — shabaash!', { p: p.goal })}</p>
     </>
   )
 }
@@ -149,7 +151,7 @@ function LevelScreen({ level }: { level: number }) {
       <Confetti count={80} />
       <div className="level-badge"><span>{level}</span></div>
       <h2>Level up!</h2>
-      <p className="muted">Ab tum Level {level} par ho · agle level tak {lv.need - lv.into} XP</p>
+      <p className="muted">{tr('Ab tum Level {l} par ho · agle level tak {x} XP', { l: level, x: lv.need - lv.into })}</p>
     </>
   )
 }

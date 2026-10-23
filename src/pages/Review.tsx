@@ -10,6 +10,7 @@ import { QuizRunner, type QuizItem, type QuizResult } from '../components/QuizRu
 import { Mascot } from '../components/Mascot'
 import { Celebration, type CelebrationData } from '../components/Celebration'
 import { snap, stepsBetween } from '../lib/celebrate'
+import { tr } from '../lib/i18n'
 
 const SIZES = [[4, 'Quick · 4'], [8, 'Standard · 8'], [15, 'Deep · 15']] as const
 
@@ -71,7 +72,7 @@ export function Review() {
     const next = snap()
     setRunning(false)
     setSummary({
-      title: free ? 'Practice done!' : 'Revision done!', subtitle: `${ok}/${groups.length} topics yaad the${free ? ' · free practice, schedule same rahi' : ''}`,
+      title: free ? 'Practice done!' : 'Revision done!', subtitle: tr(free ? '{ok}/{n} topics yaad the · free practice, schedule same rahi' : '{ok}/{n} topics yaad the', { ok, n: groups.length }),
       xp, perfect: ok === groups.length && groups.length > 0, prev, next, steps: stepsBetween(prev, next),
       accuracy: Math.round((ok / Math.max(1, groups.length)) * 100), seconds: (Date.now() - startedAt) / 1000, free,
     })
@@ -103,17 +104,17 @@ export function Review() {
   return (
     <div className="page">
       <h1>🔁 Revision</h1>
-      <p className="muted">Spaced repetition: lesson ke baad woh {INTERVALS.join(' → ')} din pe wapas aata hai. Sahi jawab = crown badhta hai, galat = peeche.</p>
+      <p className="muted">{tr('Spaced repetition: lesson ke baad woh {i} din pe wapas aata hai. Sahi jawab = crown badhta hai, galat = peeche.', { i: INTERVALS.join(' → ') })}</p>
 
       <div className={'card rev-hero' + (hasDue ? ' due' : '')}>
         <Mascot mood={hasDue ? 'idle' : 'happy'} size={84} />
         <div className="rev-hero-text">
           {total === 0 ? (
-            <><h3>Abhi koi revision nahi</h3><p className="muted small">Pehla lesson complete karo — phir wo yahan schedule ho jayega.</p></>
+            <><h3>{tr('Abhi koi revision nahi')}</h3><p className="muted small">{tr('Pehla lesson complete karo — phir wo yahan schedule ho jayega.')}</p></>
           ) : hasDue ? (
-            <><h3>{snapshotDue.length} lesson{snapshotDue.length > 1 ? 's' : ''} due</h3><p className="muted small">Abhi karo — yahi time sabse zyada yaad rakhwata hai. ~{Math.max(2, Math.round(Math.min(size, snapshotDue.length) * 1.5))} min</p></>
+            <><h3>{snapshotDue.length} lesson{snapshotDue.length > 1 ? 's' : ''} due</h3><p className="muted small">{tr('Abhi karo — yahi time sabse zyada yaad rakhwata hai. ~{m} min', { m: Math.max(2, Math.round(Math.min(size, snapshotDue.length) * 1.5)) })}</p></>
           ) : (
-            <><h3>Aaj ki revision clear! 🎉</h3><p className="muted small">Chaho to sabse kamzor topics par free practice kar lo (schedule nahi badlega).</p></>
+            <><h3>{tr('Aaj ki revision clear! 🎉')}</h3><p className="muted small">{tr('Chaho to sabse kamzor topics par free practice kar lo (schedule nahi badlega).')}</p></>
           )}
         </div>
         {total > 0 && (
@@ -122,29 +123,29 @@ export function Review() {
               {SIZES.map(([n, l]) => <button key={n} className={'seg-btn' + (size === n ? ' on' : '')} onClick={() => { sfx.tap(); setSize(n) }}>{l}</button>)}
             </div>
             {hasDue && (
-              <button className="btn btn-green" disabled={!items?.length || free} onClick={begin}>{items && !free ? 'Revision shuru karo' : 'Loading…'}</button>
+              <button className="btn btn-green" disabled={!items?.length || free} onClick={begin}>{items && !free ? tr('Revision shuru karo') : 'Loading…'}</button>
             )}
             <button className={'btn ' + (hasDue ? 'btn-outline' : 'btn-blue')} disabled={free && !items?.length} onClick={() => { if (free) begin(); else { sfx.tap(); setFree(true) } }}>
-              {free ? (items ? 'Free practice shuru →' : 'Loading…') : '💪 Free practice (kamzor topics)'}
+              {free ? (items ? tr('Free practice shuru →') : 'Loading…') : tr('💪 Free practice (kamzor topics)')}
             </button>
-            {free && <button className="btn btn-outline" onClick={() => setFree(false)}>← Wapas</button>}
+            {free && <button className="btn btn-outline" onClick={() => setFree(false)}>{tr('← Wapas')}</button>}
           </div>
         )}
-        {total === 0 && <a className="btn btn-green" href={href()}>Lesson shuru karo</a>}
+        {total === 0 && <a className="btn btn-green" href={href()}>{tr('Lesson shuru karo')}</a>}
       </div>
 
       {total > 0 && (
         <>
           <div className="tiles">
-            <div className="tile"><small>DUE</small><b>⏰ {snapshotDue.length}</b><span className="muted small">abhi</span></div>
-            <div className="tile"><small>SEEKHE</small><b>📘 {total}</b><span className="muted small">lessons tracked</span></div>
+            <div className="tile"><small>DUE</small><b>⏰ {snapshotDue.length}</b><span className="muted small">{tr('abhi')}</span></div>
+            <div className="tile"><small>{tr('SEEKHE')}</small><b>📘 {total}</b><span className="muted small">lessons tracked</span></div>
             <div className="tile"><small>STRONG</small><b>👑 {strong}</b><span className="muted small">crown 4+</span></div>
-            <div className="tile"><small>LAST OK</small><b>🎯 {acc}%</b><span className="muted small">pichle review mein</span></div>
+            <div className="tile"><small>LAST OK</small><b>🎯 {acc}%</b><span className="muted small">{tr('pichle review mein')}</span></div>
           </div>
 
           <div className="rev-cols">
             <section className="card">
-              <h3>Agle 7 din</h3>
+              <h3>{tr('Agle 7 din')}</h3>
               <div className="bars" role="img" aria-label="Reviews due per day">
                 {forecast.map((f, i) => (
                   <div key={i} className="bar-col" title={`${f.n} reviews`}>
@@ -164,7 +165,7 @@ export function Review() {
                   <span className="muted small">{n}</span>
                 </div>
               ))}
-              <p className="muted small">Crown 5 = lesson 56-din interval tak pahunch gaya.</p>
+              <p className="muted small">{tr('Crown 5 = lesson 56-din interval tak pahunch gaya.')}</p>
             </section>
           </div>
         </>
@@ -172,7 +173,7 @@ export function Review() {
 
       {hasDue && (
         <section>
-          <h3 className="group-title">Abhi due</h3>
+          <h3 className="group-title">{tr('Abhi due')}</h3>
           {[...byCourse.entries()].map(([cid, ids]) => {
             const m = metaOf(cid)
             return (
@@ -193,13 +194,13 @@ export function Review() {
               </div>
             )
           })}
-          {snapshotDue.length > size && <p className="muted small">Ek session mein {size} lessons — baaki agle round mein.</p>}
+          {snapshotDue.length > size && <p className="muted small">{tr('Ek session mein {n} lessons — baaki agle round mein.', { n: size })}</p>}
         </section>
       )}
 
       {weak.length > 0 && (
         <section>
-          <h3 className="group-title">⚠️ Kamzor topics</h3>
+          <h3 className="group-title">{tr('⚠️ Kamzor topics')}</h3>
           <div className="card"><ul className="rev-list">
             {weak.slice(0, 8).map((id) => <li key={id}><a href={href('read', ...split(id))}>{nameOf(id)}</a><span className="muted small">{metaOf(split(id)[0])?.title}</span></li>)}
           </ul></div>
@@ -208,7 +209,7 @@ export function Review() {
 
       {upcoming.length > 0 && (
         <section>
-          <h3 className="group-title">Aane wale reviews</h3>
+          <h3 className="group-title">{tr('Aane wale reviews')}</h3>
           <div className="card"><ul className="rev-list">
             {upcoming.map(([id, c]) => (
               <li key={id}>

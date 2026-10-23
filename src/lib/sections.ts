@@ -1,4 +1,5 @@
 import type { Lesson } from '../types'
+import { tr } from './i18n'
 
 export type SectionKind = 'concept' | 'analogy' | 'why' | 'code' | 'use' | 'answer' | 'gotchas' | 'interview'
 
@@ -18,7 +19,10 @@ const PROBLEM_META: Partial<Record<SectionKind, { title: string; icon: string }>
   why: { title: 'Hints', icon: '💡' },
   code: { title: 'Starter / code', icon: '👨‍💻' },
 }
-export const sectionMeta = (k: SectionKind, l: Lesson) => (l.kind === 'problem' && PROBLEM_META[k]) || SECTION_META[k]
+export const sectionMeta = (k: SectionKind, l: Lesson) => {
+  const m = (l.kind === 'problem' && PROBLEM_META[k]) || SECTION_META[k]
+  return { ...m, title: tr(m.title) }
+}
 
 export function sectionKinds(l: Lesson, withInterview = false): SectionKind[] {
   const k: SectionKind[] = ['concept']

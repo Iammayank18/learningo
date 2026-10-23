@@ -5,6 +5,7 @@ import { doneCount, setActiveCourse, setTrack, useProgress, type Progress } from
 import { go, href } from '../lib/router'
 import { sfx } from '../lib/sound'
 import { Ring } from '../components/Rail'
+import { tr } from '../lib/i18n'
 
 const MIN_PER_LESSON = 8
 
@@ -27,7 +28,7 @@ function Index() {
   return (
     <div className="page">
       <h1>🗺️ Roadmaps</h1>
-      <p className="muted">Apna goal chuno — kaunsa course kab karna hai, ye roadmap tay kar dega. Har roadmap mein stages hain; ek ke baad ek.</p>
+      <p className="muted">{tr('Apna goal chuno — kaunsa course kab karna hai, ye roadmap tay kar dega. Har roadmap mein stages hain; ek ke baad ek.')}</p>
       <div className="road-grid">
         {roadmaps.map((r) => {
           const s = stats(r, p)
@@ -36,10 +37,10 @@ function Index() {
             <a key={r.id} href={href('roadmaps', r.id)} className={'road-card' + (mine ? ' mine' : '')} style={{ ['--hue' as string]: HUES[r.hue] }} onClick={() => sfx.tap()}>
               <div className="road-top">
                 <div className="road-ico">{r.icon}</div>
-                {mine && <span className="tag">Meri track</span>}
+                {mine && <span className="tag">{tr('Meri track')}</span>}
               </div>
               <h3>{r.title}</h3>
-              <p className="muted small">{r.tagline}</p>
+              <p className="muted small">{tr(r.tagline)}</p>
               <div className="pbar slim"><div className="pbar-fill" style={{ width: `${s.pct * 100}%` }} /></div>
               <div className="road-meta small">
                 <span>{r.stages.length} stages · {s.courses} courses</span>
@@ -76,7 +77,7 @@ function Detail({ r }: { r: Roadmap }) {
 
   return (
     <div className="page road-detail" style={{ ['--hue' as string]: HUES[r.hue] }}>
-      <a className="muted small" href={href('roadmaps')}>← Saare roadmaps</a>
+      <a className="muted small" href={href('roadmaps')}>{tr('← Saare roadmaps')}</a>
       <section className="relative mt-2 mb-5 overflow-hidden rounded-3xl bg-(--hue) px-4 py-4 text-white shadow-[0_5px_0_color-mix(in_srgb,var(--hue)_68%,#000)] sm:px-5">
         <span aria-hidden className="pointer-events-none absolute -top-14 -right-10 size-40 rounded-full bg-white/10" />
         <span aria-hidden className="pointer-events-none absolute -bottom-16 left-20 size-32 rounded-full bg-black/10" />
@@ -88,7 +89,7 @@ function Detail({ r }: { r: Roadmap }) {
           <div className="min-w-0 flex-1">
             <div className="text-[10px] font-extrabold uppercase tracking-[.16em] text-white/75">Roadmap · {r.stages.length} stages</div>
             <h1 className="mt-0.5 mb-0.5! text-[21px] leading-tight text-white!">{r.title}</h1>
-            <p className="m-0! line-clamp-2 text-[13px] font-bold leading-snug text-white/90">{r.tagline}</p>
+            <p className="m-0! line-clamp-2 text-[13px] font-bold leading-snug text-white/90">{tr(r.tagline)}</p>
           </div>
           <div className="hidden shrink-0 sm:block">
             <Ring value={s.pct} size={64} light><b className="text-sm text-white">{Math.round(s.pct * 100)}%</b></Ring>
@@ -97,9 +98,9 @@ function Detail({ r }: { r: Roadmap }) {
 
         <div className="relative mt-3 flex flex-wrap gap-1.5">
           {[
-            ['👥', r.audience],
+            ['👥', tr(r.audience)],
             ['📚', `${s.done}/${s.total} lessons`],
-            ['⏱️', `~${hours(s.total)} ghante`],
+            ['⏱️', tr('~{h} ghante', { h: hours(s.total) })],
           ].map(([ic, t]) => (
             <span key={t} className="inline-flex items-center gap-1 rounded-full bg-black/15 px-2.5 py-1 text-[11.5px] font-bold text-white">
               <span className="text-[13px] leading-none">{ic}</span>{t}
@@ -115,16 +116,16 @@ function Detail({ r }: { r: Roadmap }) {
         <div className="relative mt-3.5 flex flex-wrap gap-2">
           {nextCourse && (
             <button onClick={() => start(nextCourse)} className="cursor-pointer rounded-xl border-0 bg-white px-4 py-2.5 text-xs font-extrabold uppercase tracking-wide text-(--hue) shadow-[0_3px_0_rgba(0,0,0,.22)] transition-[translate,box-shadow] duration-100 hover:translate-y-[1.5px] hover:shadow-[0_1.5px_0_rgba(0,0,0,.22)] active:translate-y-[3px] active:shadow-none">
-              {s.done ? 'Continue' : 'Shuru karo'} · {metaOf(nextCourse)!.title}
+              {s.done ? 'Continue' : tr('Shuru karo')} · {metaOf(nextCourse)!.title}
             </button>
           )}
           <button onClick={() => { sfx.tap(); setTrack(mine ? '' : r.id) }} className={'cursor-pointer rounded-xl border-2 px-4 py-2 text-xs font-extrabold uppercase tracking-wide shadow-[0_3px_0_rgba(0,0,0,.18)] transition-[translate,box-shadow] duration-100 hover:translate-y-[1.5px] hover:shadow-[0_1.5px_0_rgba(0,0,0,.18)] active:translate-y-[3px] active:shadow-none ' + (mine ? 'border-white/0 bg-black/20 text-white' : 'border-white/70 bg-white/10 text-white')}>
-            {mine ? '✓ Meri track' : 'Ise meri track banao'}
+            {mine ? tr('✓ Meri track') : tr('Ise meri track banao')}
           </button>
         </div>
       </section>
 
-      {!nextCourse && <div className="card empty-card"><div className="big">🏆</div><h3>Roadmap complete!</h3><p className="muted">Review tab mein revision karte raho.</p></div>}
+      {!nextCourse && <div className="card empty-card"><div className="big">🏆</div><h3>Roadmap complete!</h3><p className="muted">{tr('Review tab mein revision karte raho.')}</p></div>}
 
       <ol className="timeline">
         {stageInfo.map(({ st, cs, total, done, complete }, i) => {
@@ -134,10 +135,10 @@ function Detail({ r }: { r: Roadmap }) {
               <div className="stage-dot">{complete ? '✓' : i + 1}</div>
               <div className="stage-body">
                 <div className="stage-head">
-                  <h3>{st.title}</h3>
+                  <h3>{tr(st.title)}</h3>
                   <span className="muted small">{done}/{total} lessons</span>
                 </div>
-                <p className="muted small">{st.blurb}</p>
+                <p className="muted small">{tr(st.blurb)}</p>
                 <div className="stage-courses">
                   {cs.map((cid) => {
                     const m = metaOf(cid)!

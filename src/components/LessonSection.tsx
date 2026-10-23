@@ -1,5 +1,6 @@
 import type { Lesson } from '../types'
 import { sectionMeta, type SectionKind } from '../lib/sections'
+import { tr } from '../lib/i18n'
 
 const Rich = ({ html }: { html: string }) => <div className="rich" dangerouslySetInnerHTML={{ __html: html }} />
 
@@ -44,14 +45,14 @@ export function LessonSection({ lesson, kind, bare = false }: { lesson: Lesson; 
       body = (
         <div className="use">
           {lesson.where.length > 0 && (
-            <div className="use-block"><h4>📍 Kahan use hota hai</h4>
+            <div className="use-block"><h4>{tr('📍 Kahan use hota hai')}</h4>
               <ul>{lesson.where.map(([t, d]) => <li key={t}><b dangerouslySetInnerHTML={{ __html: t }} /> — <span dangerouslySetInnerHTML={{ __html: d }} /></li>)}</ul></div>
           )}
           {lesson.pros.length > 0 && (
-            <div className="use-block pro"><h4>✅ Fayde</h4><ul>{lesson.pros.map((p) => <li key={p} dangerouslySetInnerHTML={{ __html: p }} />)}</ul></div>
+            <div className="use-block pro"><h4>{tr('✅ Fayde')}</h4><ul>{lesson.pros.map((p) => <li key={p} dangerouslySetInnerHTML={{ __html: p }} />)}</ul></div>
           )}
           {lesson.cons.length > 0 && (
-            <div className="use-block con"><h4>⛔ Nuksaan / limits</h4><ul>{lesson.cons.map((p) => <li key={p} dangerouslySetInnerHTML={{ __html: p }} />)}</ul></div>
+            <div className="use-block con"><h4>{tr('⛔ Nuksaan / limits')}</h4><ul>{lesson.cons.map((p) => <li key={p} dangerouslySetInnerHTML={{ __html: p }} />)}</ul></div>
           )}
         </div>
       )

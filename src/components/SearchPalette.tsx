@@ -4,6 +4,7 @@ import { ensureSearch, highlightParts, search, snippet } from '../lib/search'
 import { go } from '../lib/router'
 import { dueCards, getProgress, setActiveCourse } from '../lib/store'
 import { toggleTheme } from '../lib/theme'
+import { tr } from '../lib/i18n'
 
 interface Item { key: string; icon: string; title: string; sub?: string; group: string; run: (practice?: boolean) => void; q?: string }
 
@@ -81,7 +82,7 @@ function Palette({ onClose, courseId }: { onClose: () => void; courseId: string 
           </button>
         </div>
         <div className="palette-list" ref={list} role="listbox">
-          {items.length === 0 && <div className="palette-empty">{ready ? `“${q}” ke liye kuch nahi mila. Chhota ya alag keyword try karo.` : 'Index load ho raha hai…'}</div>}
+          {items.length === 0 && <div className="palette-empty">{ready ? tr('“{q}” ke liye kuch nahi mila. Chhota ya alag keyword try karo.', { q }) : tr('Index load ho raha hai…')}</div>}
           {items.map((it, i) => {
             const head = it.group !== lastGroup ? it.group : null
             lastGroup = it.group

@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { courseIndex } from '../data/load'
-import { setPref, usePrefs } from '../lib/prefs'
-import { DAY, dayKey, levelOf, resetAll, setGoal, setProfile, streakOf, importState, useProgress, getProgress } from '../lib/store'
+import { DAY, dayKey, levelOf, setGoal, streakOf, useProgress } from '../lib/store'
+import { href } from '../lib/router'
+import { tr } from '../lib/i18n'
 
 export function Stats() {
   const p = useProgress()
-  const prefs = usePrefs()
   const [now] = useState(() => Date.now())
   const s = streakOf(p)
   const lv = levelOf(p.xp)
@@ -17,13 +17,6 @@ export function Stats() {
   const total = Object.keys(p.done).length
   const mastered = Object.values(p.cards).filter((c) => c.stage >= 4).length
 
-  const exportJson = () => {
-    const blob = new Blob([JSON.stringify(getProgress(), null, 2)], { type: 'application/json' })
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob); a.download = 'interview-prep-progress.json'; a.click()
-    URL.revokeObjectURL(a.href)
-  }
-  const importJson = (f: File | undefined) => f?.text().then((t) => { try { importState(t) } catch { alert('Invalid file') } })
 
   return (
     <div className="page">
@@ -57,13 +50,6 @@ export function Stats() {
       </section>
 
       <section className="card">
-        <h3>Settings</h3>
-        <label className="toggle"><input type="checkbox" checked={prefs.sound} onChange={(e) => setPref('sound', e.target.checked)} /> <span>🔊 Sound effects</span></label>
-        <div className="row-btns" style={{ margin: '8px 0' }}><button className="btn btn-outline" onClick={() => { if (confirm('Onboarding dobara shuru hoga (progress safe rahegi).')) setProfile({ onboarded: false }) }}>🔄 Track / goal dobara chuno</button></div>
-        <label className="toggle"><input type="checkbox" checked={prefs.unlockAll} onChange={(e) => setPref('unlockAll', e.target.checked)} /> <span>🔓 Saare lessons unlock rakho (lock band)</span></label>
-      </section>
-
-      <section className="card">
         <h3>Courses</h3>
         {courseIndex.map((c) => {
           const d = Object.keys(p.done).filter((k) => k.startsWith(c.id + '/')).length
@@ -77,15 +63,7 @@ export function Stats() {
         })}
       </section>
 
-      <section className="card">
-        <h3>Data</h3>
-        <p className="muted small">Progress is browser mein save hoti hai. Backup/restore ke liye export-import karo.</p>
-        <div className="row-btns">
-          <button className="btn btn-outline" onClick={exportJson}>Export</button>
-          <label className="btn btn-outline">Import<input type="file" accept="application/json" hidden onChange={(e) => importJson(e.target.files?.[0])} /></label>
-          <button className="btn btn-outline danger" onClick={() => { if (confirm('Saari progress delete ho jaayegi. Pakka?')) resetAll() }}>Reset</button>
-        </div>
-      </section>
+      <a className="btn btn-outline" href={href('settings')}>⚙️ {tr('Settings')}</a>
     </div>
   )
 }

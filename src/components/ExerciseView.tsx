@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { Exercise } from '../lib/quiz'
 import { sfx } from '../lib/sound'
 import { Mascot } from './Mascot'
+import { tr } from '../lib/i18n'
 
 const PRAISE = ['Sahi jawab!', 'Bilkul sahi!', 'Zabardast!', 'Ekdum correct!', 'Shabaash!', 'Mast!']
 const OOPS = ['Galat — sahi jawab:', 'Koi baat nahi — sahi jawab:', 'Almost! Sahi jawab:']
@@ -34,8 +35,8 @@ function Footer({ state, explain, onPrimary, primary, disabled, children, combo 
       <div className="qfooter-in">
         {state !== 'idle' && <Mascot mood={state === 'ok' ? 'happy' : 'sad'} size={52} />}
         <div className="qfeedback">
-          {state === 'ok' && <strong>🎉 {combo >= 2 ? `${combo + 1} in a row! ${line.ok}` : line.ok}</strong>}
-          {state === 'bad' && <strong>{line.bad}</strong>}
+          {state === 'ok' && <strong>🎉 {combo >= 2 ? `${combo + 1} in a row! ${tr(line.ok)}` : tr(line.ok)}</strong>}
+          {state === 'bad' && <strong>{tr(line.bad)}</strong>}
           {state !== 'idle' && explain && <div className="qexplain">{explain}</div>}
           {children}
         </div>
@@ -130,9 +131,9 @@ function Match({ ex, onNext, combo }: { ex: Extract<Exercise, { kind: 'match' }>
         </div>
       </div>
       {finished ? (
-        <Footer combo={combo} state={mistakes === 0 ? 'ok' : 'bad'} explain={mistakes ? 'Kuch pairs galat try hue — ek baar upar dekh lo.' : undefined} primary="Continue" onPrimary={() => onNext(mistakes === 0)} />
+        <Footer combo={combo} state={mistakes === 0 ? 'ok' : 'bad'} explain={mistakes ? tr('Kuch pairs galat try hue — ek baar upar dekh lo.') : undefined} primary="Continue" onPrimary={() => onNext(mistakes === 0)} />
       ) : (
-        <Footer state="idle" primary="Pehle sab jodo" disabled onPrimary={() => {}} />
+        <Footer state="idle" primary={tr('Pehle sab jodo')} disabled onPrimary={() => {}} />
       )}
     </>
   )
@@ -143,24 +144,24 @@ function Recall({ ex, onNext, combo }: { ex: Extract<Exercise, { kind: 'recall' 
   return (
     <>
       <div className="qbody">
-        <div className="qtag">{ex.tag} · bolke bolo, phir check karo</div>
+        <div className="qtag">{ex.tag} · {tr('bolke bolo, phir check karo')}</div>
         <h2 className="qprompt">{ex.prompt}</h2>
         {ex.sub && <p className="muted">Follow-up: {ex.sub}</p>}
         {shown ? (
           <div className="recall-answer"><div className="qtag">Reference answer</div><p>{ex.answer}</p></div>
         ) : (
-          <p className="muted">Pehle apne words mein jawab socho (ya zor se bolo!). Fir answer dekho aur khud ko honestly grade karo.</p>
+          <p className="muted">{tr('Pehle apne words mein jawab socho (ya zor se bolo!). Fir answer dekho aur khud ko honestly grade karo.')}</p>
         )}
       </div>
       <footer className="qfooter idle">
         <div className="qfooter-in">
           {shown ? (
             <div className="recall-btns">
-              <button className="btn btn-red" onClick={() => { sfx.wrong(); onNext(false) }}>Dobara padhna padega</button>
-              <button className="btn btn-green" onClick={() => { sfx.correct(combo + 1); onNext(true) }}>Yaad tha ✓</button>
+              <button className="btn btn-red" onClick={() => { sfx.wrong(); onNext(false) }}>{tr('Dobara padhna padega')}</button>
+              <button className="btn btn-green" onClick={() => { sfx.correct(combo + 1); onNext(true) }}>{tr('Yaad tha ✓')}</button>
             </div>
           ) : (
-            <button className="btn btn-blue" onClick={() => { sfx.tap(); setShown(true) }}>Answer dikhao</button>
+            <button className="btn btn-blue" onClick={() => { sfx.tap(); setShown(true) }}>{tr('Answer dikhao')}</button>
           )}
         </div>
       </footer>
