@@ -97,8 +97,6 @@ mark { background: color-mix(in srgb, var(--yellow) 55%, transparent); color: in
 
 /* ---------- path ---------- */
 .path { max-width: 560px; margin: 0 auto; --hue: var(--green); }
-.course-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; }
-.course-head .btn { padding: 9px 14px; font-size: .75rem; }
 .eyebrow { text-transform: uppercase; letter-spacing: .08em; font-size: .72rem; font-weight: 800; color: var(--muted); }
 .pbar { flex: 1; height: 16px; background: var(--line); border-radius: 99px; overflow: hidden; }
 .pbar.slim { height: 10px; margin: 6px 0; }
@@ -112,7 +110,6 @@ mark { background: color-mix(in srgb, var(--yellow) 55%, transparent); color: in
 .nodes { display: flex; flex-direction: column; align-items: center; gap: 36px; padding: 40px 0 16px; }
 .node-wrap.open { z-index: 20; }
 .node-wrap { position: relative; display: flex; flex-direction: column; align-items: center; }
-.crowns { position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); font-size: .5rem; letter-spacing: 2px; color: var(--yellow-d); white-space: nowrap; }
 .start-bubble { position: absolute; top: -34px; background: var(--card); color: var(--hue); border: 2px solid var(--line); border-radius: 12px; padding: 3px 12px; font-weight: 900; font-size: .8rem; letter-spacing: .08em; animation: bob 1.2s ease-in-out infinite; }
 .start-bubble::after { content: ''; position: absolute; left: 50%; bottom: -8px; width: 12px; height: 12px; background: var(--card); border-right: 2px solid var(--line); border-bottom: 2px solid var(--line); transform: translateX(-50%) rotate(45deg); }
 @keyframes pulse { 50% { box-shadow: 0 7px 0 color-mix(in srgb, var(--hue) 65%, #000), 0 0 0 10px color-mix(in srgb, var(--hue) 25%, transparent); } }
@@ -344,13 +341,11 @@ mark { background: color-mix(in srgb, var(--yellow) 55%, transparent); color: in
 .notes-btn { flex: none; color: #fff; font-weight: 900; font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; padding: 10px 14px; border-radius: 14px; border: 2px solid rgba(255,255,255,.55); background: rgba(255,255,255,.14); box-shadow: 0 3px 0 rgba(0,0,0,.18); }
 .notes-btn:hover { background: rgba(255,255,255,.26); }
 .nodes { gap: 22px; padding: 44px 0 30px; position: relative; }
-.unit::before { content: ''; position: absolute; inset: 60px 0 0; z-index: -1; border-radius: 28px; background: radial-gradient(circle at 20% 15%, color-mix(in srgb, var(--hue) 10%, transparent), transparent 55%), radial-gradient(circle at 85% 70%, color-mix(in srgb, var(--hue) 8%, transparent), transparent 50%); }
-.crowns { bottom: -24px; font-size: .55rem; }
 .start-bubble { top: -40px; font-size: .82rem; padding: 4px 14px; border-radius: 14px; border-width: 2px; box-shadow: 0 3px 0 var(--line); z-index: 2; }
 .node-wrap { margin: 0; }
 .side-mascot { position: absolute; top: 50%; translate: 0 -55%; z-index: 0; pointer-events: none; }
 .side-mascot.right { left: calc(100% + 28px); } .side-mascot.left { right: calc(100% + 28px); }
-.side-mascot .mascot-say { font-size: .8rem; padding: 5px 10px; max-width: 150px; margin-bottom: 8px; }
+.side-mascot .mascot-say { font-size: .85rem; padding: 6px 12px; max-width: none; white-space: nowrap; margin-bottom: 8px; }
 .unit.locked .side-mascot .owl { filter: grayscale(.5) brightness(.85); }
 .zzz { animation: zzz 2.2s ease-in-out infinite; } .zzz.z2 { animation-delay: .6s; } @keyframes zzz { 0%, 100% { opacity: .2; transform: translateY(4px); } 50% { opacity: 1; transform: translateY(-4px); } }
 .chest, .trophy { position: relative; border: 0; background: none; cursor: pointer; padding: 0; transition: transform .12s; } .chest:hover, .trophy:hover { transform: scale(1.06); }
@@ -398,7 +393,6 @@ mark { background: color-mix(in srgb, var(--yellow) 55%, transparent); color: in
 .path-node { --n: var(--lock); --n-d: var(--lock-d); --n-ic: var(--lock-ic); }
 .path-node.on { --n: var(--hue); --n-d: color-mix(in srgb, var(--hue) 72%, #000); --n-ic: #fff; }
 .path-node.due { --n: var(--orange); --n-d: #cc7a00; --n-ic: #fff; }
-.path-node .crowns { bottom: -26px; }
 .unit-banner { background: var(--hue); box-shadow: 0 4px 0 color-mix(in srgb, var(--hue) 72%, #000); }
 
 /* illustrated nav icons */

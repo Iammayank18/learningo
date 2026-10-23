@@ -3,7 +3,6 @@ import { useCourse } from '../lib/useCourse'
 import { lid, useProgress, passedMap, openChest, placeLessons, DAY } from '../lib/store'
 import { href } from '../lib/router'
 import { HUES } from '../lib/sections'
-import { metaOf } from '../data/load'
 import { usePrefs } from '../lib/prefs'
 import { lockedIds } from '../lib/unlock'
 import { sfx } from '../lib/sound'
@@ -46,7 +45,6 @@ export function Learn({ courseId }: { courseId: string }) {
   if (error) return <div className="empty">Course load nahi hua.</div>
   if (loading || !course) return <div className="empty">Loading…</div>
 
-  const meta = metaOf(course.id)
   const hue = HUES[course.hue] ?? '#58cc02'
   const pass = passedMap(p)
   const current = firstIncomplete(course, pass)
@@ -61,15 +59,22 @@ export function Learn({ courseId }: { courseId: string }) {
 
   return (
     <div className="path" style={{ ['--hue' as string]: hue }}>
-      <div className="course-head">
-        <div>
-          <div className="eyebrow">{p.profile?.name ? `Hi ${p.profile.name} 👋 · ` : ''}{course.group}</div>
-          <h1>{course.icon} {course.title}</h1>
-          <div className="muted small">{done}/{total} lessons · {meta?.hasDeep ? 'full lessons + quizzes' : 'concept cards + recall'}</div>
+      <header className="mb-2 flex items-center gap-4 rounded-3xl border-2 border-(--line) bg-(--card) p-4 shadow-[0_4px_0_var(--line)]">
+        <div className="grid size-14 shrink-0 -rotate-3 place-items-center rounded-2xl bg-[color-mix(in_srgb,var(--hue)_18%,transparent)] text-[32px]">{course.icon}</div>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-[11px] font-extrabold tracking-[.14em] text-(--muted) uppercase">{p.profile?.name ? `Hi ${p.profile.name} 👋 · ` : ''}{course.group}</div>
+          <h1 className="m-0! truncate text-[24px]! leading-tight">{course.title}</h1>
+          <div className="mt-2 flex items-center gap-3">
+            <div className="h-3 flex-1 overflow-hidden rounded-full bg-(--line)">
+              <div className="h-full rounded-full bg-(--hue) transition-[width] duration-500" style={{ width: `${Math.max(done ? 3 : 0, (done / total) * 100)}%` }} />
+            </div>
+            <span className="shrink-0 text-[13px] font-extrabold text-(--muted)">{done}/{total} · {Math.round((done / total) * 100)}%</span>
+          </div>
         </div>
-        <a className="btn btn-outline" href={href('courses')}>Switch</a>
-      </div>
-      <div className="pbar slim"><div className="pbar-fill" style={{ width: `${(done / total) * 100}%` }} /></div>
+        <a href={href('courses')} title="Course badlo" className="grid size-11 shrink-0 place-items-center gap-0.5 rounded-2xl border-2 border-(--line) text-[11px] sm:size-auto sm:self-stretch sm:px-3 font-extrabold tracking-wider text-(--blue-d) uppercase no-underline shadow-[0_3px_0_var(--line)] transition-[translate,box-shadow] duration-100 hover:translate-y-[1.5px] hover:shadow-[0_1.5px_0_var(--line)] active:translate-y-[3px] active:shadow-none">
+          <span className="text-xl leading-none">⇄</span><span className="hidden sm:inline">Switch</span>
+        </a>
+      </header>
 
       {course.units.map((u, ui) => {
         const ud = u.lessons.filter((l) => pass[lid(course.id, l.id)]).length
@@ -91,9 +96,13 @@ export function Learn({ courseId }: { courseId: string }) {
         return (
           <section key={u.id} className={'unit' + (unitLocked ? ' locked' : '') + (unitDone ? ' complete' : '')}>
             <div className="unit-banner">
-              <div>
-                <div className="eyebrow">Unit {ui + 1}{u.week ? ` · ${u.week}` : ''} · {ud}/{u.lessons.length}</div>
-                <h2>{u.title}</h2>
+              <div className="min-w-0 flex-1">
+                <div className="eyebrow">Unit {ui + 1}{u.week ? ` · ${u.week}` : ''}</div>
+                <h2 className="truncate">{u.title}</h2>
+                <div className="mt-2 flex max-w-[260px] items-center gap-2">
+                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-black/20"><div className="h-full rounded-full bg-white/90" style={{ width: `${(ud / u.lessons.length) * 100}%` }} /></div>
+                  <span className="text-[11px] font-extrabold text-white/85">{ud}/{u.lessons.length}</span>
+                </div>
               </div>
               <a className="notes-btn" href={href('read', course.id, u.lessons[0].id)}>📖 Notes</a>
             </div>
@@ -125,7 +134,7 @@ export function Learn({ courseId }: { courseId: string }) {
                           onClick={() => { if (isLocked) sfx.lock(); else sfx.tap(); setOpen(sel ? null : id) }}
                         >
                           {isLocked ? <LockIcon /> : isPlaced || isDone ? <CheckIcon /> : <StarIcon />}
-                          {isDone && card && <span className="crowns">{'●'.repeat(card.stage)}{'○'.repeat(5 - card.stage)}</span>}
+                          {isDone && card && <span title={`Crown level ${card.stage}/5`} className="absolute -top-2.5 -right-3 flex items-center gap-0.5 rounded-full border-2 border-(--bg) bg-(--yellow) px-2 py-0.5 text-[12px] leading-none font-black text-[#7a5300]"><span className="text-[13px]">👑</span>{card.stage}</span>}
                         </button>
                         {isCur && (
                           <div className="pointer-events-none absolute -top-8 left-1/2 z-10 -translate-x-1/2">
