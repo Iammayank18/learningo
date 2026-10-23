@@ -5,14 +5,14 @@ import { sfx } from '../lib/sound'
 import { Flame } from './Flame'
 import { BoltIcon, ChestIcon } from './Icons'
 
-export function Ring({ value, size = 64, children }: { value: number; size?: number; children?: React.ReactNode }) {
+export function Ring({ value, size = 64, light = false, children }: { value: number; size?: number; light?: boolean; children?: React.ReactNode }) {
   const r = (size - 10) / 2
   const c = 2 * Math.PI * r
   return (
-    <div className="ring" style={{ width: size, height: size }}>
+    <div className={'prog-ring' + (light ? ' light' : '')} style={{ width: size, height: size }}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         <circle cx={size / 2} cy={size / 2} r={r} className="ring-bg" />
-        <circle cx={size / 2} cy={size / 2} r={r} className="ring-fg" strokeDasharray={c} strokeDashoffset={c * (1 - Math.min(1, value))} transform={`rotate(-90 ${size / 2} ${size / 2})`} />
+        {value > 0 && <circle cx={size / 2} cy={size / 2} r={r} className="ring-fg" strokeDasharray={c} strokeDashoffset={c * (1 - Math.min(1, value))} transform={`rotate(-90 ${size / 2} ${size / 2})`} />}
       </svg>
       <div className="ring-in">{children}</div>
     </div>

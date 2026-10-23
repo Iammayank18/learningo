@@ -6,13 +6,16 @@ import { Owl } from './Owl'
 import { setPref, usePrefs } from '../lib/prefs'
 import { sfx } from '../lib/sound'
 import { useState } from 'react'
+import { BooksIcon, BrainIcon, ChartIcon, HomeIcon, MapIcon, MoonIcon, SearchIcon, SpeakerIcon, SunIcon } from './NavIcons'
+import { Flame } from './Flame'
+import { BoltIcon } from './Icons'
 
 const NAV = [
-  { id: '', icon: '🏠', label: 'Learn' },
-  { id: 'review', icon: '🔁', label: 'Review' },
-  { id: 'roadmaps', icon: '🗺️', label: 'Roadmaps' },
-  { id: 'courses', icon: '📚', label: 'Courses' },
-  { id: 'stats', icon: '📈', label: 'Progress' },
+  { id: '', Icon: HomeIcon, label: 'Learn' },
+  { id: 'review', Icon: BrainIcon, label: 'Review' },
+  { id: 'roadmaps', Icon: MapIcon, label: 'Roadmaps' },
+  { id: 'courses', Icon: BooksIcon, label: 'Courses' },
+  { id: 'stats', Icon: ChartIcon, label: 'Progress' },
 ]
 
 export function Shell({ route, onSearch, children }: { route: string; onSearch: () => void; children: React.ReactNode }) {
@@ -28,35 +31,35 @@ export function Shell({ route, onSearch, children }: { route: string; onSearch: 
         <a className="brand" href={href()}><Owl size={36} /><span>Prep</span></a>
         {NAV.map((n) => (
           <a key={n.id} href={n.id ? href(n.id) : href()} className={'nav-item' + (route === n.id ? ' active' : '')}>
-            <span className="nav-ico">{n.icon}</span><span className="nav-label">{n.label}</span>
+            <span className="nav-ico"><n.Icon /></span><span className="nav-label">{n.label}</span>
             {n.id === 'review' && due > 0 && <span className="badge">{due}</span>}
           </a>
         ))}
         <button className="nav-item search-btn" onClick={onSearch}>
-          <span className="nav-ico">🔍</span><span className="nav-label">Search</span>
+          <span className="nav-ico"><SearchIcon /></span><span className="nav-label">Search</span>
           <kbd>{mac ? '⌘' : 'Ctrl'} K</kbd>
         </button>
         <div className="side-spacer" />
         <button className="nav-item" onClick={() => { setPref('sound', !prefs.sound); if (!prefs.sound) setTimeout(sfx.correct, 30) }}>
-          <span className="nav-ico">{prefs.sound ? '🔊' : '🔇'}</span><span className="nav-label">Sound {prefs.sound ? 'on' : 'off'}</span>
+          <span className="nav-ico"><SpeakerIcon on={prefs.sound} /></span><span className="nav-label">Sound {prefs.sound ? 'on' : 'off'}</span>
         </button>
         <button className="nav-item" onClick={() => { toggleTheme(); force((n) => n + 1) }}>
-          <span className="nav-ico">{currentTheme() === 'dark' ? '☀️' : '🌙'}</span><span className="nav-label">Theme</span>
+          <span className="nav-ico">{currentTheme() === 'dark' ? <SunIcon /> : <MoonIcon />}</span><span className="nav-label">Theme</span>
         </button>
       </nav>
       <div className="mobile-top">
-        <span className="chip fire on">🔥 {s.current}</span>
-        <span className="chip xp">⚡ {p.xp}</span>
+        <span className={'chip fire' + (s.current ? ' on' : '')}><Flame size={20} dim={!s.current} /> {s.current}</span>
+        <span className="chip xp"><BoltIcon size={18} /> {p.xp}</span>
         <span className="chip lvl">Lv {levelOf(p.xp).level}</span>
-        <button className="icon-btn" aria-label={prefs.sound ? 'Mute' : 'Unmute'} onClick={() => setPref('sound', !prefs.sound)}>{prefs.sound ? '🔊' : '🔇'}</button>
-        <button className="icon-btn" aria-label="Search" onClick={onSearch}>🔍</button>
+        <button className="icon-btn" aria-label={prefs.sound ? 'Mute' : 'Unmute'} onClick={() => setPref('sound', !prefs.sound)}><SpeakerIcon size={28} on={prefs.sound} /></button>
+        <button className="icon-btn" aria-label="Search" onClick={onSearch}><SearchIcon size={28} /></button>
       </div>
       <main className="main">{children}</main>
       <Rail />
       <nav className="bottom">
         {NAV.map((n) => (
           <a key={n.id} href={n.id ? href(n.id) : href()} className={'bnav' + (route === n.id ? ' active' : '')} aria-label={n.label}>
-            {n.icon}{n.id === 'review' && due > 0 && <span className="badge">{due}</span>}
+            <n.Icon size={34} />{n.id === 'review' && due > 0 && <span className="badge">{due}</span>}
           </a>
         ))}
       </nav>

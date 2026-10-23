@@ -77,20 +77,53 @@ function Detail({ r }: { r: Roadmap }) {
   return (
     <div className="page road-detail" style={{ ['--hue' as string]: HUES[r.hue] }}>
       <a className="muted small" href={href('roadmaps')}>← Saare roadmaps</a>
-      <div className="road-hero">
-        <div className="road-ico big">{r.icon}</div>
-        <div className="road-hero-text">
-          <h1>{r.title}</h1>
-          <p className="muted">{r.tagline}</p>
-          <div className="muted small">{r.audience} · {r.stages.length} stages · ~{hours(s.total)} ghante</div>
-        </div>
-        <Ring value={s.pct} size={84}><b>{Math.round(s.pct * 100)}%</b></Ring>
-      </div>
+      <section className="relative mt-2 mb-5 overflow-hidden rounded-3xl bg-(--hue) px-4 py-4 text-white shadow-[0_5px_0_color-mix(in_srgb,var(--hue)_68%,#000)] sm:px-5">
+        <span aria-hidden className="pointer-events-none absolute -top-14 -right-10 size-40 rounded-full bg-white/10" />
+        <span aria-hidden className="pointer-events-none absolute -bottom-16 left-20 size-32 rounded-full bg-black/10" />
+        <span aria-hidden className="pointer-events-none absolute top-6 right-40 hidden size-3 sm:block rounded-full bg-white/40" />
+        <span aria-hidden className="pointer-events-none absolute bottom-10 right-24 hidden size-2 sm:block rounded-full bg-white/50" />
 
-      <div className="row-btns">
-        {nextCourse && <button className="btn btn-green" onClick={() => start(nextCourse)}>{s.done ? 'Continue' : 'Shuru karo'} · {metaOf(nextCourse)!.title}</button>}
-        <button className={'btn ' + (mine ? 'btn-outline' : 'btn-blue')} onClick={() => { sfx.tap(); setTrack(mine ? '' : r.id) }}>{mine ? '✓ Meri track' : 'Ise meri track banao'}</button>
-      </div>
+        <div className="relative flex items-center gap-3.5">
+          <div className="grid size-14 shrink-0 -rotate-6 place-items-center rounded-2xl bg-white text-[30px] shadow-[0_4px_0_rgba(0,0,0,.18)] transition-transform hover:rotate-3">{r.icon}</div>
+          <div className="min-w-0 flex-1">
+            <div className="text-[10px] font-extrabold uppercase tracking-[.16em] text-white/75">Roadmap · {r.stages.length} stages</div>
+            <h1 className="mt-0.5 mb-0.5! text-[21px] leading-tight text-white!">{r.title}</h1>
+            <p className="m-0! line-clamp-2 text-[13px] font-bold leading-snug text-white/90">{r.tagline}</p>
+          </div>
+          <div className="hidden shrink-0 sm:block">
+            <Ring value={s.pct} size={64} light><b className="text-sm text-white">{Math.round(s.pct * 100)}%</b></Ring>
+          </div>
+        </div>
+
+        <div className="relative mt-3 flex flex-wrap gap-1.5">
+          {[
+            ['👥', r.audience],
+            ['📚', `${s.done}/${s.total} lessons`],
+            ['⏱️', `~${hours(s.total)} ghante`],
+          ].map(([ic, t]) => (
+            <span key={t} className="inline-flex items-center gap-1 rounded-full bg-black/15 px-2.5 py-1 text-[11.5px] font-bold text-white">
+              <span className="text-[13px] leading-none">{ic}</span>{t}
+            </span>
+          ))}
+          <span className="inline-flex items-center rounded-full bg-white/20 px-2.5 py-1 text-[11.5px] font-extrabold sm:hidden">{Math.round(s.pct * 100)}% done</span>
+        </div>
+
+        <div className="relative mt-2.5 h-2 overflow-hidden rounded-full bg-black/15 sm:hidden">
+          <div className="h-full rounded-full bg-white transition-[width] duration-700" style={{ width: `${Math.max(s.pct * 100, s.pct ? 4 : 0)}%` }} />
+        </div>
+
+        <div className="relative mt-3.5 flex flex-wrap gap-2">
+          {nextCourse && (
+            <button onClick={() => start(nextCourse)} className="cursor-pointer rounded-xl border-0 bg-white px-4 py-2.5 text-xs font-extrabold uppercase tracking-wide text-(--hue) shadow-[0_3px_0_rgba(0,0,0,.22)] transition-[translate,box-shadow] duration-100 hover:translate-y-[1.5px] hover:shadow-[0_1.5px_0_rgba(0,0,0,.22)] active:translate-y-[3px] active:shadow-none">
+              {s.done ? 'Continue' : 'Shuru karo'} · {metaOf(nextCourse)!.title}
+            </button>
+          )}
+          <button onClick={() => { sfx.tap(); setTrack(mine ? '' : r.id) }} className={'cursor-pointer rounded-xl border-2 px-4 py-2 text-xs font-extrabold uppercase tracking-wide shadow-[0_3px_0_rgba(0,0,0,.18)] transition-[translate,box-shadow] duration-100 hover:translate-y-[1.5px] hover:shadow-[0_1.5px_0_rgba(0,0,0,.18)] active:translate-y-[3px] active:shadow-none ' + (mine ? 'border-white/0 bg-black/20 text-white' : 'border-white/70 bg-white/10 text-white')}>
+            {mine ? '✓ Meri track' : 'Ise meri track banao'}
+          </button>
+        </div>
+      </section>
+
       {!nextCourse && <div className="card empty-card"><div className="big">🏆</div><h3>Roadmap complete!</h3><p className="muted">Review tab mein revision karte raho.</p></div>}
 
       <ol className="timeline">

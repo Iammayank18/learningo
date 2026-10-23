@@ -108,16 +108,24 @@ export function Learn({ courseId }: { courseId: string }) {
                   return (
                     <div key={l.id} className={'node-wrap' + (sel ? ' open' : '')} style={{ transform: `translateX(${off}px)` }}>
                       {mascot}
-                      {isCur && <div className="start-bubble">START</div>}
-                      <div className={'node-ring' + (isCur ? ' cur' : '')}>
+                      <div className="relative -my-1 size-[108px] shrink-0">
+                        {isCur && <span aria-hidden className="pointer-events-none absolute inset-0 rounded-full border-[9px] border-(--ring)" />}
                         <button
-                          className={'node' + (isDone ? ' done' : '') + (isCur ? ' cur' : '') + (isDue ? ' due' : '') + (isLocked ? ' locked' : '') + (isPlaced ? ' placed' : '')}
+                          className={'path-node absolute left-[18px] top-[20px] grid h-[60px] w-[72px] cursor-pointer place-items-center rounded-[50%] border-0 bg-(--n) text-(--n-ic) shadow-[0_8px_0_var(--n-d)] transition-[transform,box-shadow,filter] duration-100 hover:brightness-105 active:translate-y-[6px] active:shadow-[0_2px_0_var(--n-d)]' + (isLocked ? ' locked cursor-not-allowed active:translate-y-0 active:shadow-[0_8px_0_var(--n-d)]' : isDue ? ' due' : isDone || isPlaced || isCur ? ' on' : '')}
                           aria-label={l.name} aria-expanded={sel}
                           onClick={() => { if (isLocked) sfx.lock(); else sfx.tap(); setOpen(sel ? null : id) }}
                         >
-                          {isLocked ? <LockIcon /> : isPlaced ? <CheckIcon /> : <StarIcon />}
+                          {isLocked ? <LockIcon /> : isPlaced || isDone ? <CheckIcon /> : <StarIcon />}
                           {isDone && card && <span className="crowns">{'●'.repeat(card.stage)}{'○'.repeat(5 - card.stage)}</span>}
                         </button>
+                        {isCur && (
+                          <div className="pointer-events-none absolute -top-8 left-1/2 z-10 -translate-x-1/2">
+                            <div className="relative animate-[bob_1.4s_ease-in-out_infinite] rounded-xl border-2 border-(--ring) bg-(--card) px-3.5 py-1.5 text-[15px] font-extrabold uppercase leading-none tracking-wider text-(--hue)">
+                              Start
+                              <span className="absolute -bottom-[7px] left-1/2 size-3 -translate-x-1/2 rotate-45 border-r-2 border-b-2 border-(--ring) bg-(--card)" />
+                            </div>
+                          </div>
+                        )}
                       </div>
                       {sel && (
                         <div className="popover" role="dialog">

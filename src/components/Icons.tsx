@@ -1,12 +1,12 @@
 /** Small original SVG icon set used on the learning path and in the rail. */
 export const StarIcon = ({ size = 38 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden="true">
-    <path d="M20 4 L24.6 14.2 L35.6 15.4 L27.4 22.8 L29.8 33.6 L20 28 L10.2 33.6 L12.6 22.8 L4.4 15.4 L15.4 14.2Z" fill="#fff" stroke="rgba(0,0,0,.12)" strokeWidth="2" strokeLinejoin="round" />
+    <path d="M20 6.5 L24 14.9 L33.2 16.1 L26.5 22.5 L28.2 31.6 L20 27.2 L11.8 31.6 L13.5 22.5 L6.8 16.1 L16 14.9Z" fill="#fff" stroke="#fff" strokeWidth="4.5" strokeLinejoin="round" />
   </svg>
 )
 export const LockIcon = ({ size = 30 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
-    <rect x="6" y="14" width="20" height="14" rx="4" fill="#9aa6ab" /><path d="M10 14 V10 a6 6 0 0 1 12 0 V14" fill="none" stroke="#9aa6ab" strokeWidth="3.5" /><circle cx="16" cy="21" r="2.4" fill="#5a6870" />
+    <path d="M10.5 14 V10.5 a5.5 5.5 0 0 1 11 0 V14" fill="none" stroke="currentColor" strokeWidth="3.6" /><rect x="6.5" y="13" width="19" height="15" rx="4.5" fill="currentColor" />
   </svg>
 )
 export const CheckIcon = ({ size = 34 }: { size?: number }) => (
