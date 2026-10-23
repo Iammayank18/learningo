@@ -1,4 +1,4 @@
-// Extracts structured course data from the legacy HTML journals into src/data/courses/*.json
+// Extracts structured course data from the HTML journals in content/journal into src/data/courses/*.json
 import fs from 'fs'
 import path from 'path'
 import vm from 'vm'
@@ -154,7 +154,7 @@ const FIELDS = ['terms', 'what', 'analogy', 'why', 'visual', 'code', 'where', 'p
 const index = []
 const search = []
 for (const [key, [title, icon, group, hue]] of Object.entries(META)) {
-  const file = path.join(ROOT, 'journal', key + '-journal.html')
+  const file = path.join(ROOT, 'content/journal', key + '-journal.html')
   if (!fs.existsSync(file)) { console.log('missing', key); continue }
   const html = fs.readFileSync(file, 'utf8')
   const s = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]).sort((a, b) => b.length - a.length)[0] || ''

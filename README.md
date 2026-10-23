@@ -1,6 +1,6 @@
 # Interview Prep — Duolingo-style React app
 
-Vite + React 19 + TypeScript. Content comes from the existing HTML journals (`journal/**`), extracted into JSON.
+Vite + React 19 + TypeScript. Content comes from the existing HTML journals (`content/journal/**`), extracted into JSON.
 
 ## Run
 
@@ -21,7 +21,7 @@ yarn build          # type-check + production build
 ## Content pipeline
 
 ```bash
-node scripts/extract.mjs   # journal/*.html  ->  src/data/courses/*.json, index.json, search.json
+node scripts/extract.mjs   # content/journal/**/*.html  ->  src/data/courses/*.json, index.json, search.json
 ```
 
 Re-run after editing a journal. Courses are listed in `scripts/extract.mjs` (`META`); a journal needs a `chapters` array
