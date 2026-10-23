@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useCourse } from '../lib/useCourse'
 import { lid, useProgress, passedMap, openChest, placeLessons, DAY } from '../lib/store'
 import { href } from '../lib/router'
@@ -31,6 +31,15 @@ export function Learn({ courseId }: { courseId: string }) {
   const p = useProgress()
   const { unlockAll } = usePrefs()
   const [open, setOpen] = useState<string | null>(null)
+  // close the lesson card on outside click / Esc
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e: PointerEvent) => { if (!(e.target as Element | null)?.closest?.('.node-wrap.open')) setOpen(null) }
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(null) }
+    document.addEventListener('pointerdown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => { document.removeEventListener('pointerdown', onDown); document.removeEventListener('keydown', onKey) }
+  }, [open])
   const [now] = useState(() => Date.now())
   const [burst, setBurst] = useState<string | null>(null)
   const [jump, setJump] = useState<number | null>(null) // unit index being tested
@@ -111,7 +120,7 @@ export function Learn({ courseId }: { courseId: string }) {
                       <div className="relative -my-1 size-[108px] shrink-0">
                         {isCur && <span aria-hidden className="pointer-events-none absolute inset-0 rounded-full border-[9px] border-(--ring)" />}
                         <button
-                          className={'path-node absolute left-[18px] top-[20px] grid h-[60px] w-[72px] cursor-pointer place-items-center rounded-[50%] border-0 bg-(--n) text-(--n-ic) shadow-[0_8px_0_var(--n-d)] transition-[transform,box-shadow,filter] duration-100 hover:brightness-105 active:translate-y-[6px] active:shadow-[0_2px_0_var(--n-d)]' + (isLocked ? ' locked cursor-not-allowed active:translate-y-0 active:shadow-[0_8px_0_var(--n-d)]' : isDue ? ' due' : isDone || isPlaced || isCur ? ' on' : '')}
+                          className={'path-node absolute left-[18px] top-[20px] grid h-[60px] w-[72px] cursor-pointer place-items-center rounded-[50%] border-0 bg-(--n) text-(--n-ic) shadow-[0_8px_0_var(--n-d)] transition-[transform,box-shadow] duration-100 ease-out' + (isLocked ? ' locked cursor-not-allowed' : ' hover:translate-y-[4px] hover:shadow-[0_4px_0_var(--n-d)] active:translate-y-[8px] active:shadow-[0_0_0_var(--n-d)]') + (isLocked ? '' : isDue ? ' due' : isDone || isPlaced || isCur ? ' on' : '')}
                           aria-label={l.name} aria-expanded={sel}
                           onClick={() => { if (isLocked) sfx.lock(); else sfx.tap(); setOpen(sel ? null : id) }}
                         >
@@ -128,17 +137,24 @@ export function Learn({ courseId }: { courseId: string }) {
                         )}
                       </div>
                       {sel && (
-                        <div className="popover" role="dialog">
-                          <h4>{l.name}</h4>
-                          <p className="muted small">
-                            {isLocked ? 'Pichla lesson complete hone par ye khulega.' : isPlaced ? 'Placement test se skip — chaho to practice kar lo.' : isDone && card ? (isDue ? 'Revision due!' : `Next revision ${fmtIn(card.due - now)}`) : l.desc ? l.desc.slice(0, 110) + '…' : ''}
+                        <div role="dialog" aria-label={l.name}
+                          className={'absolute top-[118px] left-1/2 z-30 w-[min(300px,84vw)] -translate-x-1/2 animate-[pop_.15s_ease-out] rounded-2xl border-2 p-4 ' +
+                            (isLocked ? 'border-(--ring) bg-(--card)' : 'border-transparent bg-(--hue) text-white shadow-[0_8px_24px_rgba(0,0,0,.22)]')}>
+                          <span aria-hidden className={'absolute -top-[9px] left-1/2 size-4 -translate-x-1/2 rotate-45 rounded-tl-[3px] border-t-2 border-l-2 ' + (isLocked ? 'border-(--ring) bg-(--card)' : 'border-transparent bg-(--hue)')} />
+                          <h4 className={'m-0! text-[18px] leading-tight ' + (isLocked ? 'text-(--lock-ic)!' : 'text-white!')}>{l.name}</h4>
+                          <p className={'mt-2! mb-4! text-[15px] leading-snug ' + (isLocked ? 'text-(--lock-ic)' : 'text-white/90')}>
+                            {isLocked ? `Upar wale lessons complete karo, tab ye khulega! Agla: “${blocker[l.id].name}”.` : isPlaced ? 'Placement test se skip — chaho to practice kar lo.' : isDone && card ? (isDue ? 'Revision due hai — chalo pakka kar lein!' : `Next revision ${fmtIn(card.due - now)}`) : l.desc ? l.desc.slice(0, 110) + '…' : 'Chalo shuru karte hain!'}
                           </p>
                           {isLocked ? (
-                            <a className="btn btn-green" href={href('lesson', course.id, blocker[l.id].id)}>🔒 Pehle: {blocker[l.id].name.slice(0, 32)}</a>
+                            <button disabled className="w-full cursor-not-allowed rounded-xl border-0 bg-(--ring) py-3 text-sm font-extrabold tracking-widest text-(--lock-ic) uppercase">Locked</button>
                           ) : (
-                            <a className="btn btn-green" href={href('lesson', course.id, l.id)}>{isDone ? 'Practice again' : 'Start'} · +{25} XP</a>
+                            <div className="grid gap-2.5">
+                              <a href={href('lesson', course.id, l.id)} className="block rounded-xl bg-white py-3 text-center text-sm font-extrabold tracking-wide text-[color-mix(in_srgb,var(--hue)_80%,#000)] uppercase no-underline shadow-[0_4px_0_rgba(0,0,0,.2)] transition-[translate,box-shadow] duration-100 hover:translate-y-[2px] hover:shadow-[0_2px_0_rgba(0,0,0,.2)] active:translate-y-[4px] active:shadow-none">
+                                {isDone ? 'Practice' : 'Start'} +25 XP
+                              </a>
+                              <a href={href('read', course.id, l.id)} className="block rounded-xl border-2 border-white/45 py-2.5 text-center text-sm font-extrabold tracking-wide text-white uppercase no-underline hover:bg-white/10">Read notes</a>
+                            </div>
                           )}
-                          <a className="btn btn-outline" href={href('read', course.id, l.id)}>Read notes</a>
                         </div>
                       )}
                     </div>

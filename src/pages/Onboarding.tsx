@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Mascot, type Mood } from '../components/Mascot'
 import { Flame } from '../components/Flame'
+import { Owl } from '../components/Owl'
+import { ChestIcon } from '../components/Icons'
+import { BooksIcon, BrainIcon, MapIcon } from '../components/NavIcons'
 import { QuizRunner, type QuizItem, type QuizResult } from '../components/QuizRunner'
 import { roadmaps, roadmapOf } from '../data/roadmaps'
 import { loadCourse, metaOf } from '../data/load'
@@ -171,142 +174,213 @@ export function Onboarding() {
     a.download = 'prep-daily-reminder.ics'; a.click(); URL.revokeObjectURL(a.href)
   }
 
-  return (
-    <div className="onboard">
-      {step !== 'welcome' && (
-        <header className="ob-top">
-          {step !== 'plan' && step !== 'ready' ? <button className="icon-btn" aria-label="Back" onClick={back}>←</button> : <span style={{ width: 40 }} />}
-          <div className="pbar"><div className="pbar-fill" style={{ width: `${Math.max(6, (idx / (steps.length - 1)) * 100)}%` }} /></div>
-        </header>
-      )}
+  const welcome = step === 'welcome'
+  const showFoot = step !== 'plan' && !(step === 'placement' && !testDone) && !welcome
+  const cta = step === 'ready' ? (busy ? 'Loading…' : 'Pehla lesson shuru karo') : step === 'name' && !name.trim() ? 'Skip' : 'Continue'
+  const onCta = () => {
+    if (step === 'goal' && !goal) setG(recGoal)
+    if (step === 'ready') void finish()
+    else next()
+  }
 
-      <main className="ob-main" key={step}>
-        <div className={'ob-say' + (step === 'welcome' ? ' center' : '')}>
-          <Mascot mood={mood} size={step === 'welcome' ? 150 : 86} />
-          <div className="ob-bubble">{say}</div>
+  if (welcome) {
+    return (
+      <div className="flex min-h-screen flex-col bg-(--bg)">
+        <header className="mx-auto flex w-full max-w-[1000px] items-center gap-2 px-5 pt-5">
+          <Owl size={34} /><span className="font-display text-[26px] font-semibold text-(--green)" style={{ fontFamily: 'var(--font-display)' }}>Prep</span>
+        </header>
+        <main className="mx-auto grid w-full max-w-[1000px] flex-1 items-center gap-8 px-5 py-8 md:grid-cols-2 md:gap-14">
+          <div className="relative mx-auto grid aspect-square w-full max-w-[380px] place-items-center">
+            <span aria-hidden className="absolute inset-[12%] rounded-full bg-[radial-gradient(circle,color-mix(in_srgb,var(--green)_22%,transparent),transparent_70%)]" />
+            {[
+              ['left-[2%] top-[14%]', <BooksIcon size={44} />, '0s'],
+              ['right-[4%] top-[8%]', <Flame size={50} />, '.4s'],
+              ['left-[0%] bottom-[22%]', <BrainIcon size={44} />, '.8s'],
+              ['right-[2%] bottom-[18%]', <ChestIcon size={50} />, '1.2s'],
+              ['left-[40%] top-[0%]', <span className="text-[34px] leading-none">⭐</span>, '1.6s'],
+              ['right-[30%] bottom-[2%]', <MapIcon size={40} />, '2s'],
+            ].map(([pos, el, delay], i) => (
+              <span key={i} className={`absolute ${pos as string} grid size-[70px] animate-[bob_3.2s_ease-in-out_infinite] place-items-center rounded-[22px] border-2 border-(--line) bg-(--card) shadow-[0_4px_0_var(--line)]`} style={{ animationDelay: delay as string }}>{el}</span>
+            ))}
+            <div className="relative animate-[pop_.5s_ease-out]"><Mascot mood="cheer" size={190} /></div>
+          </div>
+          <div className="text-center md:text-left">
+            <h1 className="m-0! text-[32px]! leading-[1.15]! sm:text-[44px]!" style={{ fontFamily: 'var(--font-display)' }}>Interview prep ka sabse <span className="text-(--green)">mazedaar</span> tareeka.</h1>
+            <p className="mt-3! mb-7! text-[17px] text-(--muted)">Chhote lessons, roz ki streak, aur revision jo yaad rakhwata hai — Duolingo style.</p>
+            <div className="mx-auto flex max-w-[360px] flex-col gap-3 md:mx-0">
+              <button className="btn btn-green w-full py-4" onClick={next}>Shuru karo</button>
+              <label className="btn btn-outline w-full py-4">Mera progress import karo<input type="file" accept="application/json" hidden onChange={(e) => importFile(e.target.files?.[0])} /></label>
+            </div>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex min-h-screen flex-col bg-(--bg)">
+      <header className="sticky top-0 z-10 bg-(--bg)">
+        <div className="mx-auto flex w-full max-w-[640px] items-center gap-4 px-5 pt-5 pb-2">
+          {step !== 'plan' && step !== 'ready'
+            ? <button className="grid size-9 cursor-pointer place-items-center rounded-xl border-0 bg-transparent text-2xl text-(--muted) hover:bg-(--bg2)" aria-label="Back" onClick={back}>←</button>
+            : <span className="size-9" />}
+          <div className="pbar"><div className="pbar-fill" style={{ width: `${Math.max(6, (idx / (steps.length - 1)) * 100)}%` }} /></div>
+        </div>
+      </header>
+
+      <main className="mx-auto w-full max-w-[640px] flex-1 animate-[slide_.3s_ease-out] px-5 pt-4 pb-36" key={step}>
+        <div className="mb-6 flex items-end gap-3">
+          <div className="shrink-0"><Mascot mood={mood} size={step === 'plan' || step === 'ready' ? 120 : 100} /></div>
+          <div className="relative mb-6 rounded-2xl border-2 border-(--line) bg-(--card) px-4 py-3 text-[19px] leading-snug font-semibold text-(--head) sm:text-[21px]" style={{ fontFamily: 'var(--font-display)' }}>
+            <span aria-hidden className="absolute top-1/2 -left-[9px] size-4 -translate-y-1/2 rotate-45 border-b-2 border-l-2 border-(--line) bg-(--card)" />
+            {say}
+          </div>
         </div>
 
-        {step === 'welcome' && (
-          <div className="ob-welcome">
-            <h1>Prep</h1>
-            <p className="muted">Interview prep — Duolingo jaisa. Chhote lessons, roz ki streak, aur revision jo yaad rakhwata hai.</p>
-          </div>
-        )}
-
         {step === 'name' && (
-          <input className="ob-input" autoFocus placeholder="Tumhara naam (optional)" value={name} maxLength={24}
+          <input className="w-full rounded-2xl border-2 border-(--line) bg-(--bg2) px-5 py-4 text-xl font-bold text-(--head) outline-none focus:border-(--blue)" autoFocus placeholder="Tumhara naam (optional)" value={name} maxLength={24}
             onChange={(e) => setName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') next() }} />
         )}
 
         {step === 'why' && (
-          <div className="ob-opts">
-            {WHY.map(([ico, t, d]) => (
-              <button key={t} className={'ob-opt' + (why === t ? ' sel' : '')} onClick={() => { sfx.select(); setWhy(t) }}>
-                <span className="ob-ico">{ico}</span><span><b>{t}</b><small>{d}</small></span>
-              </button>
-            ))}
+          <div className="grid gap-3">
+            {WHY.map(([ico, t, d]) => <Opt key={t} sel={why === t} ico={ico} title={t} desc={d} onClick={() => setWhy(t)} />)}
           </div>
         )}
 
         {step === 'track' && (
-          <div className="ob-opts grid">
-            {roadmaps.map((r) => (
-              <button key={r.id} className={'ob-opt' + (track === r.id ? ' sel' : '')} style={{ ['--hue' as string]: HUES[r.hue] }} onClick={() => { sfx.select(); setTr(r.id) }}>
-                <span className="ob-ico">{r.icon}</span><span><b>{r.title}</b><small>{r.tagline}</small></span>
-              </button>
-            ))}
+          <div className="grid gap-3 sm:grid-cols-2">
+            {roadmaps.map((r) => <Opt key={r.id} sel={track === r.id} ico={r.icon} title={r.title} desc={r.tagline} hue={HUES[r.hue]} onClick={() => setTr(r.id)} />)}
           </div>
         )}
 
         {step === 'level' && (
-          <div className="ob-opts">
+          <div className="grid gap-3">
             {LEVELS.map(([t, d, bars], i) => (
-              <button key={t} className={'ob-opt' + (level === i ? ' sel' : '')} onClick={() => { sfx.select(); setLevel(i) }}>
-                <span className="lvl-bars" aria-hidden="true">{[1, 2, 3, 4].map((b) => <i key={b} className={b <= bars ? 'on' : ''} style={{ height: 6 + b * 6 }} />)}</span>
-                <span><b>{t}</b><small>{d}</small></span>
-              </button>
+              <Opt key={t} sel={level === i} title={t} desc={d} onClick={() => setLevel(i)}
+                ico={<span className="flex h-8 items-end gap-[3px]" aria-hidden>{[1, 2, 3, 4].map((b) => <i key={b} className={'w-[7px] rounded-[3px] ' + (b <= bars ? 'bg-(--blue)' : 'bg-(--line)')} style={{ height: 6 + b * 6 }} />)}</span>} />
             ))}
           </div>
         )}
 
         {step === 'placement' && !testDone && (
-          <div className="ob-opts">
-            <button className="ob-opt sel" disabled={busy} onClick={() => { sfx.tap(); void startPlacement() }}>
-              <span className="ob-ico">📝</span><span><b>{busy ? 'Loading…' : 'Placement test lo (2 min)'}</b><small>6 sawal — jo aata hai wo lessons skip ho jayenge</small></span>
-            </button>
-            <button className="ob-opt" onClick={() => { sfx.tap(); setPlaced([]); setStep('when') }}>
-              <span className="ob-ico">🌱</span><span><b>Shuru se hi karunga</b><small>Pehle lesson se, bina skip ke</small></span>
-            </button>
+          <div className="grid gap-3">
+            <Opt sel ico="📝" title={busy ? 'Loading…' : 'Placement test lo (2 min)'} desc="6 sawal — jo aata hai wo lessons skip ho jayenge" onClick={() => { if (!busy) void startPlacement() }} />
+            <Opt sel={false} ico="🌱" title="Shuru se hi karunga" desc="Pehle lesson se, bina skip ke" onClick={() => { setPlaced([]); setStep('when') }} />
           </div>
         )}
         {step === 'placement' && testDone && (
-          <div className="card ob-result">
-            <h3>{testDone.passed}/{testDone.total} sahi</h3>
-            <p className="muted">{placed.length ? `Tumhare pehle ${placed.length} lessons skip ho gaye — direct aage se shuru hoge.` : 'Shuru se hi chalenge — jaldi aage badh jaoge.'}</p>
+          <div className="rounded-3xl border-2 border-(--line) bg-(--card) p-6 text-center shadow-[0_4px_0_var(--line)]">
+            <div className="text-[44px] font-semibold text-(--green)" style={{ fontFamily: 'var(--font-display)' }}>{testDone.passed}/{testDone.total}</div>
+            <div className="mb-1 text-sm font-extrabold tracking-widest text-(--muted) uppercase">sahi jawab</div>
+            <p className="m-0! text-(--text)">{placed.length ? `Tumhare pehle ${placed.length} lessons skip ho gaye — direct aage se shuru hoge.` : 'Shuru se hi chalenge — jaldi aage badh jaoge.'}</p>
           </div>
         )}
 
         {step === 'when' && (
-          <div className="ob-opts">
-            {WHEN.map(([ico, t, v]) => (
-              <button key={v} className={'ob-opt' + (when === v ? ' sel' : '')} onClick={() => { sfx.select(); setWhen(v); setG(0) }}>
-                <span className="ob-ico">{ico}</span><span><b>{t}</b></span>
-              </button>
-            ))}
+          <div className="grid gap-3 sm:grid-cols-2">
+            {WHEN.map(([ico, t, v]) => <Opt key={v} sel={when === v} ico={ico} title={t} onClick={() => { setWhen(v); setG(0) }} />)}
           </div>
         )}
 
         {step === 'goal' && (
-          <div className="ob-opts">
-            {GOALS.map(([xp, t, d]) => (
-              <button key={xp} className={'ob-opt' + (goal === xp ? ' sel' : '')} onClick={() => { sfx.select(); setG(xp) }}>
-                <span className="goal-xp">⚡ {xp}</span><span><b>{t}</b><small>{d}</small></span>
-                {xp === recGoal && <span className="rec-tag">Recommended</span>}
-              </button>
-            ))}
+          <div className="overflow-hidden rounded-2xl border-2 border-(--line) bg-(--card)">
+            {GOALS.map(([xp, t, d], i) => {
+              const on = goal === xp
+              return (
+                <button key={xp} onClick={() => { sfx.select(); setG(xp) }}
+                  className={'flex w-full cursor-pointer items-center gap-4 border-0 px-5 py-4 text-left transition-colors ' + (i ? 'border-t-2 border-(--line) ' : '') + (on ? 'bg-(--sel-bg)' : 'bg-transparent hover:bg-(--bg2)')}>
+                  <span className={'w-16 shrink-0 whitespace-nowrap text-lg font-extrabold sm:w-20 ' + (on ? 'text-(--blue-d)' : 'text-(--yellow-d)')}>⚡ {xp}</span>
+                  <span className={'flex-1 text-[17px] font-extrabold ' + (on ? 'text-(--blue-d)' : 'text-(--head)')}>{t}
+                    {xp === recGoal && <span className="mt-1 block w-fit rounded-full sm:ml-2 sm:mt-0 sm:inline bg-(--green) px-2 py-0.5 align-middle text-[10px] font-extrabold tracking-wider text-white uppercase">Recommended</span>}
+                  </span>
+                  <span className="shrink-0 whitespace-nowrap text-xs font-bold text-(--muted) sm:text-sm">{d}</span>
+                </button>
+              )
+            })}
           </div>
         )}
 
         {step === 'plan' && (
-          <ul className="ob-plan">
+          <ul className="m-0 grid list-none gap-4 rounded-3xl border-2 border-(--line) bg-(--card) p-5">
             {[`${rm?.title ?? 'Track'} roadmap chuna`, `${rm?.stages.length ?? 0} stages · ${totalLessons} lessons arrange kiye`, `Daily goal ${goal || recGoal} XP set kiya`].map((t, i) => (
-              <li key={t} className={tick > i ? 'on' : ''}><span>{tick > i ? '✓' : ''}</span>{t}</li>
+              <li key={t} className={'flex items-center gap-3 text-[17px] font-bold transition-all duration-500 ' + (tick > i ? 'text-(--head) opacity-100' : 'text-(--muted) opacity-40')}>
+                <span className={'grid size-8 shrink-0 place-items-center rounded-full border-[3px] text-sm font-black text-white transition-all ' + (tick > i ? 'scale-110 border-(--green) bg-(--green)' : 'border-(--line)')}>{tick > i ? '✓' : ''}</span>{t}
+              </li>
             ))}
           </ul>
         )}
 
-        {step === 'ready' && (
-          <div className="ob-ready">
-            <div className="card ob-summary" style={{ ['--hue' as string]: HUES[rm?.hue ?? 'green'] }}>
-              <div className="ob-sum-row"><span className="ob-ico">{rm?.icon}</span><div><b>{rm?.title}</b><div className="muted small">{rm?.stages.length} stages · {totalLessons - placed.length} lessons</div></div></div>
-              <div className="ob-sum-row"><Flame size={34} /><div><b>{goal || recGoal} XP / din</b><div className="muted small">Pehla stage ~{stage1Weeks} hafte mein · poora roadmap ~{weeks >= 8 ? `${Math.round(weeks / 4.3)} mahine` : `${weeks} hafte`}</div></div></div>
+        {step === 'ready' && rm && (
+          <div className="grid gap-4">
+            <div className="relative overflow-hidden rounded-3xl bg-(--hue) p-4 text-white shadow-[0_5px_0_color-mix(in_srgb,var(--hue)_68%,#000)]" style={{ ['--hue' as string]: HUES[rm.hue] }}>
+              <span aria-hidden className="absolute -top-12 -right-10 size-36 rounded-full bg-white/10" />
+              <div className="relative flex items-center gap-3.5">
+                <div className="grid size-14 shrink-0 -rotate-6 place-items-center rounded-2xl bg-white text-[30px] shadow-[0_4px_0_rgba(0,0,0,.18)]">{rm.icon}</div>
+                <div className="min-w-0">
+                  <div className="text-[10px] font-extrabold tracking-[.16em] text-white/75 uppercase">Tumhari track</div>
+                  <div className="text-[21px] leading-tight font-semibold" style={{ fontFamily: 'var(--font-display)' }}>{rm.title}</div>
+                  <div className="text-[13px] font-bold text-white/85">{rm.stages.length} stages · {totalLessons - placed.length} lessons</div>
+                </div>
+              </div>
             </div>
-            <p className="small muted">📅 Daily reminder (calendar mein repeat hoga):</p>
-            <div className="seg">
-              {REMIND.map(([ico, t, h]) => <button key={h} className={'seg-btn' + (remind === h ? ' on' : '')} onClick={() => { sfx.select(); setRemind(remind === h ? null : h) }}>{ico} {t} · {h > 12 ? h - 12 : h}{h >= 12 ? 'pm' : 'am'}</button>)}
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                [<Flame size={30} key="f" />, `${goal || recGoal} XP`, 'roz ka goal'],
+                ['🏁', `~${stage1Weeks} hafte`, 'pehla stage'],
+                ['🏆', weeks >= 8 ? `~${Math.round(weeks / 4.3)} mahine` : `~${weeks} hafte`, 'poora roadmap'],
+              ].map(([ic, v, l], i) => (
+                <div key={i} className="grid justify-items-center gap-1 rounded-2xl border-2 border-(--line) bg-(--card) px-2 py-3 text-center shadow-[0_3px_0_var(--line)]">
+                  <span className="grid h-8 place-items-center text-[26px] leading-none">{ic}</span>
+                  <b className="text-[15px] text-(--head)">{v}</b>
+                  <span className="text-[11px] font-bold tracking-wide text-(--muted) uppercase">{l}</span>
+                </div>
+              ))}
             </div>
-            {remind !== null && <button className="btn btn-outline" onClick={() => downloadIcs(remind)}>📥 Calendar file (.ics) download</button>}
+            <div className="rounded-2xl border-2 border-(--line) bg-(--card) p-4">
+              <div className="mb-3 text-[15px] font-extrabold text-(--head)">📅 Daily reminder <span className="font-bold text-(--muted)">— calendar mein repeat hoga</span></div>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {REMIND.map(([ico, t, h]) => {
+                  const on = remind === h
+                  return (
+                    <button key={h} onClick={() => { sfx.select(); setRemind(on ? null : h) }}
+                      className={'cursor-pointer rounded-xl border-2 border-b-4 px-2 py-2.5 text-sm font-extrabold transition-colors ' + (on ? 'border-(--blue) bg-(--sel-bg) text-(--blue-d)' : 'border-(--line) bg-(--card) text-(--text) hover:bg-(--bg2)')}>
+                      <span className="mr-1">{ico}</span>{t} · {h > 12 ? h - 12 : h}{h >= 12 ? 'pm' : 'am'}
+                    </button>
+                  )
+                })}
+              </div>
+              {remind !== null && <button className="btn btn-outline mt-3 w-full" onClick={() => downloadIcs(remind)}>📥 Calendar file (.ics) download</button>}
+            </div>
           </div>
         )}
       </main>
 
-      {step !== 'plan' && !(step === 'placement' && !testDone) && (
-        <footer className="ob-foot">
-          <div className="ob-foot-in">
-            {step === 'welcome' && (
-              <label className="ob-link">Pehle se progress hai? Import karo<input type="file" accept="application/json" hidden onChange={(e) => importFile(e.target.files?.[0])} /></label>
-            )}
-            <button className="btn btn-green" disabled={!canContinue || busy}
-              onClick={() => {
-                if (step === 'goal' && !goal) setG(recGoal)
-                if (step === 'ready') void finish()
-                else next()
-              }}>
-              {step === 'welcome' ? 'Shuru karo' : step === 'ready' ? (busy ? 'Loading…' : 'Pehla lesson shuru karo') : step === 'name' && !name.trim() ? 'Skip' : 'Continue'}
-            </button>
+      {showFoot && (
+        <footer className="fixed inset-x-0 bottom-0 z-10 border-t-2 border-(--line) bg-(--bg)">
+          <div className="mx-auto flex w-full max-w-[640px] items-center justify-end gap-3 px-5 py-4 sm:py-5">
+            <button className="btn btn-green w-full py-3.5 sm:w-auto sm:min-w-[200px]" disabled={!canContinue || busy} onClick={onCta}>{cta}</button>
           </div>
         </footer>
       )}
     </div>
+  )
+}
+
+/** Duolingo-style choice card: chunky border + lip, blue when selected. */
+function Opt({ sel, ico, title, desc, hue, onClick }: { sel: boolean; ico?: React.ReactNode; title: string; desc?: string; hue?: string; onClick: () => void }) {
+  return (
+    <button onClick={() => { sfx.select(); onClick() }} style={hue ? { ['--hue' as string]: hue } : undefined}
+      className={'relative flex w-full cursor-pointer items-center gap-4 rounded-2xl border-2 border-b-4 px-4 py-3.5 text-left transition-[translate,border-color,background-color] duration-100 active:translate-y-[2px] active:border-b-2 ' +
+        (sel ? 'border-(--blue) bg-(--sel-bg)' : 'border-(--line) bg-(--card) hover:bg-(--bg2)')}>
+      {ico !== undefined && (
+        <span className={'grid size-12 shrink-0 place-items-center rounded-xl text-[28px] ' + (hue ? 'bg-[color-mix(in_srgb,var(--hue)_16%,transparent)]' : 'bg-(--bg2)')}>{ico}</span>
+      )}
+      <span className="min-w-0 flex-1">
+        <b className={'block text-[17px] leading-tight ' + (sel ? 'text-(--blue-d)' : 'text-(--head)')}>{title}</b>
+        {desc && <span className="mt-0.5 block text-[13.5px] leading-snug text-(--muted)">{desc}</span>}
+      </span>
+      {sel && <span className="absolute -top-2 -right-2 grid size-6 place-items-center rounded-full bg-(--blue) text-xs font-black text-white shadow-[0_2px_0_var(--blue-d)]">✓</span>}
+    </button>
   )
 }
