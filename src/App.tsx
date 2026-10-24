@@ -12,6 +12,7 @@ import { Roadmaps } from './pages/Roadmaps'
 import { Onboarding } from './pages/Onboarding'
 import { Stats } from './pages/Stats'
 import { Settings } from './pages/Settings'
+import { CodeIndex, CodeProblem } from './pages/Code'
 import { useLang } from './lib/i18n'
 import { applySeo } from './lib/seo'
 
@@ -48,6 +49,7 @@ function AppInner() {
     case 'lesson': view = a && b ? <LessonPage courseId={a} lessonId={b} /> : null; fullscreen = true; break
     case 'read': view = a && b ? <Read courseId={a} lessonId={b} /> : null; break
     case 'review': view = <Review />; break
+    case 'code': if (a) { view = <CodeProblem id={a} />; fullscreen = true } else view = <CodeIndex />; break
     case 'roadmaps': view = <Roadmaps id={a} />; break
     case 'courses': view = <Courses />; break
     case 'stats': view = <Stats />; break

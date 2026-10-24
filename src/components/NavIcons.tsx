@@ -107,3 +107,15 @@ export const GearIcon = ({ size }: P) => (
     <circle cx="20" cy="18" r="3" fill="#1cb0f6" />
   </S>
 )
+
+export const CodeIcon = ({ size }: P) => (
+  <S size={size}>
+    <rect x="4.5" y="8" width="31" height="24" rx="5" fill="#3c4f58" />
+    <rect x="4.5" y="8" width="31" height="7" rx="3.5" fill="#1cb0f6" />
+    <circle cx="9.5" cy="11.5" r="1.3" fill="#fff" />
+    <circle cx="13.5" cy="11.5" r="1.3" fill="#fff" />
+    <path d="M14.5 21 L10.5 24.5 L14.5 28" fill="none" stroke="#58cc02" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M25.5 21 L29.5 24.5 L25.5 28" fill="none" stroke="#58cc02" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M22 20 L18 29" fill="none" stroke="#ffc800" strokeWidth="2.6" strokeLinecap="round" />
+  </S>
+)

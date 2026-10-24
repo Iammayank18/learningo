@@ -5,6 +5,7 @@ import { href } from '../lib/router'
 import { lid, useProgress } from '../lib/store'
 import { LessonSection } from '../components/LessonSection'
 import { t } from '../lib/i18n'
+import { problemsForLesson } from '../data/practice/dsa'
 
 export function Read({ courseId, lessonId }: { courseId: string; lessonId: string }) {
   const { course, loading, error } = useCourse(courseId)
@@ -18,6 +19,7 @@ export function Read({ courseId, lessonId }: { courseId: string; lessonId: strin
   const prev = unit.lessons[li - 1] ?? course.units[ui - 1]?.lessons.at(-1)
   const next = unit.lessons[li + 1] ?? course.units[ui + 1]?.lessons[0]
   const card = p.cards[lid(course.id, lesson.id)]
+  const problems = course.id === 'dsa' ? problemsForLesson(lesson.id) : []
   return (
     <article className="page read">
       <div className="crumbs"><a href={href()}>{course.icon} {course.title}</a> › {unit.title}</div>
@@ -27,6 +29,20 @@ export function Read({ courseId, lessonId }: { courseId: string; lessonId: strin
         {card && <span className="chip">{t('read.crown', { n: card.stage })}</span>}
       </div>
       {sectionKinds(lesson, true).map((k) => <LessonSection key={k} lesson={lesson} kind={k} />)}
+      {problems.length > 0 && (
+        <section className="lsec">
+          <h3 className="lsec-title"><span>{'</>'}</span> {t('code.practiceCode')}</h3>
+          <p className="muted">{t('code.practiceCodeHint')}</p>
+          {problems.map((pr) => (
+            <a key={pr.id} className="code-row" href={href('code', pr.id)}>
+              <span className={'code-dot ' + pr.diff} />
+              <b>{pr.title}</b>
+              <span className="muted small">{t(`code.${pr.diff}`)}</span>
+              {p.solved[pr.id] ? <span className="chip">✓ {t('code.solved')}</span> : <span className="btn btn-green btn-sm">{t('code.openProblem')}</span>}
+            </a>
+          ))}
+        </section>
+      )}
       <nav className="pager">
         {prev ? <a className="btn btn-outline" href={href('read', course.id, prev.id)}>← {prev.name.slice(0, 40)}</a> : <span />}
         {next ? <a className="btn btn-outline" href={href('read', course.id, next.id)}>{next.name.slice(0, 40)} →</a> : <span />}

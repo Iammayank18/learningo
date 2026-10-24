@@ -1,7 +1,8 @@
 import { courseIndex } from '../data/load'
 import { HUES } from '../lib/sections'
 import { setActiveCourse, useProgress } from '../lib/store'
-import { go } from '../lib/router'
+import { go, href } from '../lib/router'
+import { DSA_PROBLEMS } from '../data/practice/dsa'
 import { t } from '../lib/i18n'
 
 export function Courses() {
@@ -12,6 +13,10 @@ export function Courses() {
     <div className="page">
       <h1>{t('courses.title')}</h1>
       <p className="muted">{t('courses.intro')}</p>
+      <a className="card code-promo" href={href('code')}>
+        <span className="code-promo-ico">{'</>'}</span>
+        <span><b>{t('code.coursesCard')}</b><br /><span className="muted small">{t('code.coursesCardDesc', { n: DSA_PROBLEMS.length })}</span></span>
+      </a>
       {groups.map((g) => (
         <section key={g}>
           <h3 className="group-title">{g}</h3>

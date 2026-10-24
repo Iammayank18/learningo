@@ -5,7 +5,7 @@ import { Rail } from './Rail'
 import { Owl } from './Owl'
 import { setPref, usePrefs } from '../lib/prefs'
 import { sfx } from '../lib/sound'
-import { BooksIcon, BrainIcon, ChartIcon, HomeIcon, GearIcon, MapIcon, MoonIcon, SearchIcon, SpeakerIcon, SunIcon } from './NavIcons'
+import { BooksIcon, BrainIcon, ChartIcon, CodeIcon, HomeIcon, GearIcon, MapIcon, MoonIcon, SearchIcon, SpeakerIcon, SunIcon } from './NavIcons'
 import { Flame } from './Flame'
 import { t, type MessageKey } from '../lib/i18n'
 import { BoltIcon } from './Icons'
@@ -15,6 +15,7 @@ const NAV: { id: string; Icon: typeof HomeIcon; labelKey: MessageKey }[] = [
   { id: 'review', Icon: BrainIcon, labelKey: 'nav.review' },
   { id: 'roadmaps', Icon: MapIcon, labelKey: 'nav.roadmaps' },
   { id: 'courses', Icon: BooksIcon, labelKey: 'nav.courses' },
+  { id: 'code', Icon: CodeIcon, labelKey: 'nav.code' },
   { id: 'stats', Icon: ChartIcon, labelKey: 'nav.progress' },
 ]
 

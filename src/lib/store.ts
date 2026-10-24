@@ -19,11 +19,12 @@ export interface Progress {
   chests: Record<string, number> // opened path chests
   acts: Record<string, { l: number; r: number }> // per-day lessons completed / topics reviewed (for daily quests)
   claimed: Record<string, number> // claimed daily-quest rewards ("day:quest")
+  solved: Record<string, number> // code-practice problems solved (id -> epoch ms)
   profile?: Profile
 }
 
 const KEY = 'interview-prep:v1'
-const empty = (): Progress => ({ xp: 0, goal: 30, activeCourse: 'react-mastery', track: '', days: {}, done: {}, cards: {}, placed: {}, chests: {}, acts: {}, claimed: {} })
+const empty = (): Progress => ({ xp: 0, goal: 30, activeCourse: 'react-mastery', track: '', days: {}, done: {}, cards: {}, placed: {}, chests: {}, acts: {}, claimed: {}, solved: {} })
 
 function read(): Progress {
   try {
@@ -84,6 +85,14 @@ export function claimQuest(quest: string, xp: number) {
   if (state.claimed[k]) return
   const s = withXp(state, xp)
   commit({ ...s, claimed: { ...s.claimed, [k]: 1 } })
+}
+
+/** Mark a code-practice problem solved. Returns false (and awards nothing) if it was already solved. */
+export function solveProblem(id: string, xp: number): boolean {
+  if (state.solved[id]) return false
+  const s = withXp(state, xp)
+  commit({ ...s, solved: { ...s.solved, [id]: Date.now() } })
+  return true
 }
 
 /** Called when a lesson (learn + practice) is finished. */

@@ -16,6 +16,10 @@ yarn build          # type-check + production build
 - **Lessons** — story cards (concept → analogy → why + diagram → code → trade-offs → gotchas), then a quiz (MCQ, match-the-pairs, interview-question recall). Wrong answers are re-queued once.
 - **XP, levels, streak, daily goal** — stored in `localStorage` (Progress tab can export / import / reset).
 - **Spaced-repetition revision** — a completed lesson comes back after 1 → 3 → 7 → 21 → 56 days; correct = crown up, wrong = crown down.
+- **Code practice (DSA)** — `#/code`. 15 runnable problems linked to DSA lessons: write JS in the browser, run it against tests in a Web Worker
+  (infinite loops are killed after 2.5 s, large inputs expose O(n²) solutions), progressive hints, solution + complexity after your first run,
+  XP for the first solve (half XP if you looked at the solution first). Problems live in `src/data/practice/dsa.ts` (`Problem` type in `types.ts`);
+  the runner is `src/lib/runner.ts` + `runner.worker.js`. `{ $list: [...] }` and `{ $tree: [...] }` args become `ListNode` / `TreeNode`.
 - **Global search** — `Cmd/Ctrl + K` or `/`. Searches every topic, term and description across all courses. `Enter` = read notes, `Shift+Enter` = practice, `Tab` = scope to current course.
 
 ## Content pipeline
