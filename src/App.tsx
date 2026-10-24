@@ -13,8 +13,9 @@ import { Onboarding } from './pages/Onboarding'
 import { Stats } from './pages/Stats'
 import { Settings } from './pages/Settings'
 import { useLang } from './lib/i18n'
+import { applySeo } from './lib/seo'
 
-/** Remount everything when the UI language changes, so plain tr() calls re-evaluate. */
+/** Remount everything when the UI language changes, so plain t() calls re-evaluate. */
 export default function App() {
   const lang = useLang()
   return <AppInner key={lang} />
@@ -24,6 +25,8 @@ function AppInner() {
   const route = useRoute()
   const p = useProgress()
   const [open, setOpen] = useState(false)
+
+  useEffect(applySeo, [])
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => {

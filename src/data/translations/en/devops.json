@@ -1,0 +1,932 @@
+{
+  "lessons": {
+    "def4": {
+      "what": "<p><b>Definition:</b> Developers often merge into main during the day; incomplete features are hidden behind feature flags. Release = flag on, deploy = code shipping — they are separate.</p>",
+      "why": "<p>Integration problems are caught early; essential for CI/CD.</p>",
+      "cons": [
+        "Flag debt, need strong tests"
+      ],
+      "gotchas": [
+        "Remove old flags",
+        "Testing flag combinations is difficult",
+        "Branch should not be longer than 1–2 days"
+      ],
+      "terms": [
+        [
+          "Trunk-based",
+          "Short-lived branches, frequent merges into main."
+        ],
+        [
+          "Feature flag",
+          "Code is deployed, feature hidden."
+        ],
+        [
+          "Long-lived branch",
+          "Merge hell."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// flag cleanup: kaam hone par code hata do",
+          "// flag cleanup: remove the code once the job is done"
+        ]
+      ]
+    },
+    "def3": {
+      "desc": "The software delivery lifecycle: plan → code → build → test → release → deploy → operate → monitor. Automation at every stage reduces lead time and errors.",
+      "q": "Walk through the SDLC pipeline from commit to production. What metrics define elite performance?",
+      "what": "<p><b>Definition:</b> Plan → code → build → test → release → deploy → operate. Automate every stage; fast tests first, slow tests later.</p>",
+      "why": "<p>Manual steps cause errors and delays.</p>",
+      "gotchas": [
+        "Flaky tests break the pipeline's trust",
+        "If the pipeline exceeds 10 minutes, developers bypass it",
+        "Pipeline as code (versioned)"
+      ],
+      "terms": [
+        [
+          "Pipeline",
+          "Automated build→test→release stages."
+        ],
+        [
+          "Shift left",
+          "Testing/security first."
+        ],
+        [
+          "Fast feedback",
+          "Fail early."
+        ]
+      ],
+      "codeSwap": [
+        [
+          " fast checks pehle: lint/unit < 5 min",
+          " fast checks first: lint/unit < 5 min"
+        ]
+      ]
+    },
+    "def2": {
+      "desc": "DevOps is the philosophy. SRE applies software engineering to operations. Platform Engineering builds internal developer platforms (IDPs) for self-service.",
+      "q": "What is the difference between DevOps, SRE, and Platform Engineering?",
+      "what": "<p><b>Definition:</b> DevOps 'what and why', SRE 'how to make reliability measurable' (SLI/SLO/error budget), Platform Engineering 'golden paths/portal for developers'.</p>",
+      "why": "<p>In an interview, it is essential to clearly explain the differences and overlap among all three.</p>",
+      "cons": [
+        "Overlap and confusion"
+      ],
+      "gotchas": [
+        "SRE is not just a new name for the ops team",
+        "Error budget policy works only when management agrees",
+        "Treat the platform like a product"
+      ],
+      "terms": [
+        [
+          "DevOps",
+          "Philosophy/culture."
+        ],
+        [
+          "SRE",
+          "Ops using software engineering; SLOs, error budgets."
+        ],
+        [
+          "Platform Engineering",
+          "Internal developer platform (self-service)."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "Budget khatam -> feature releases roko, reliability work",
+          "Budget exhausted -> stop feature releases, do reliability work"
+        ]
+      ]
+    },
+    "def1": {
+      "q": "Explain the CALMS framework and how it applies to DevOps adoption.",
+      "qsub": "How does DevOps eliminate the \"throw over the wall\" mentality? What does \"you build it, you run it\" mean in practice?",
+      "what": "<p><b>Definition:</b> DevOps is a set of culture and practices that connects development and operations so that software is delivered quickly, safely, and repeatedly. The CALMS framework is a way to assess adoption.</p><p>In the old model, developers would “throw the code over the wall” and operations had to handle it.</p>",
+      "why": "<p>Small, frequent releases reduce risk and provide feedback quickly.</p>",
+      "cons": [
+        "Culture change is difficult",
+        "Tools alone are not enough"
+      ],
+      "gotchas": [
+        "DevOps is not a job title or tool, it's a culture",
+        "Automation without measurement is blind",
+        "Creating a \"DevOps team\" can become a new silo"
+      ],
+      "terms": [
+        [
+          "CALMS",
+          "Culture, Automation, Lean, Measurement, Sharing."
+        ],
+        [
+          "You build it, you run it",
+          "The dev team takes ownership of production."
+        ],
+        [
+          "Silo",
+          "A wall between Dev and Ops."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "# Example: har merge par",
+          "# Example: on every merge"
+        ]
+      ]
+    },
+    "def5": {
+      "q": "What are the four DORA metrics and what benchmarks define elite performance?",
+      "qsub": "How do DORA metrics relate to the SPACE framework for developer productivity?",
+      "what": "<p><b>Definition:</b> The four DORA metrics: deployment frequency, lead time for changes, change failure rate, time to restore. Elite teams perform well in both speed and stability.</p>",
+      "why": "<p>To objectively see whether delivery is improving or not.</p>",
+      "cons": [
+        "Wrong for judging individuals"
+      ],
+      "gotchas": [
+        "Goodhart's law: as soon as a target is set, gaming occurs",
+        "Team-level metrics, not individual",
+        "Speed and stability are not a trade-off; they improve together"
+      ],
+      "terms": [
+        [
+          "Deployment Frequency",
+          "How often production is deployed."
+        ],
+        [
+          "Lead Time",
+          "Time from commit to production."
+        ],
+        [
+          "Change Failure Rate / MTTR",
+          "How many deployments fail; how long recovery takes."
+        ]
+      ]
+    },
+    "cic1": {
+      "q": "Design a CI/CD pipeline from scratch. What are the key stages and gates?",
+      "qsub": "What is the difference between Continuous Delivery and Continuous Deployment?",
+      "why": "<p>'It runs in staging but not in production' happens when there is a separate build for each environment.</p>",
+      "gotchas": [
+        "Don't rebuild per environment",
+        "Separate config from the artifact",
+        "Rollback = deploy the previous artifact"
+      ],
+      "terms": [
+        [
+          "CI",
+          "Frequent merge + automated build/test."
+        ],
+        [
+          "Continuous Delivery",
+          "Always deployable; manual approval."
+        ],
+        [
+          "Continuous Deployment",
+          "Auto prod deploy."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "build -> image:sha-abc123 (ek baar)",
+          "build -> image:sha-abc123 (once)"
+        ]
+      ]
+    },
+    "cic2": {
+      "what": "<p><b>Definition:</b> Jobs/steps run on events (push, PR). Matrix builds, caching, secrets, reusable workflows, environments with approvals.</p>",
+      "why": "<p>Tight integration with GitHub, less setup.</p>",
+      "gotchas": [
+        "Pin the SHA of third-party actions",
+        "Secrets are not exposed to forks",
+        "Keep GITHUB_TOKEN permissions minimal"
+      ],
+      "terms": [
+        [
+          "Workflow",
+          "YAML in .github/workflows."
+        ],
+        [
+          "Runner",
+          "Machine that runs the job."
+        ],
+        [
+          "Matrix",
+          "Multiple versions/OS parallel."
+        ]
+      ]
+    },
+    "cic3": {
+      "what": "<p><b>Definition:</b> Blue/green provides instant rollback but requires double capacity. Canary reduces risk on real traffic. Rolling is the default K8s strategy. For A/B experiments.</p>",
+      "why": "<p>To reduce release risk and downtime.</p>",
+      "terms": [
+        [
+          "Blue/Green",
+          "Two environments, traffic switch."
+        ],
+        [
+          "Canary",
+          "Small percentage first."
+        ],
+        [
+          "Rolling",
+          "Instances replace gradually."
+        ]
+      ],
+      "gotchas": [
+        "Keep the DB schema backward-compatible (expand/contract)",
+        "Canary metrics automatic rollback",
+        "Sessions/sticky issues"
+      ]
+    },
+    "cic4": {
+      "what": "<p><b>Definition:</b> Each build is a versioned artifact (image digest/SHA). Immutable tags, signed, retention policy, vulnerability scan in the registry.</p>",
+      "why": "<p>The tested code should go to production — traceability.</p>",
+      "gotchas": [
+        "Do not use the latest tag in production",
+        "Without a retention policy, storage costs increase",
+        "Attach the SBOM to the artifact"
+      ],
+      "terms": [
+        [
+          "Registry",
+          "Artifacts store (ECR, Nexus, npm)."
+        ],
+        [
+          "Immutability",
+          "Tag cannot be overwritten."
+        ],
+        [
+          "Semver / SHA",
+          "Version identifier."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "# k8s: image digest se pin",
+          "# k8s: pin the image by digest"
+        ]
+      ]
+    },
+    "cic5": {
+      "qsub": "What is the SLSA framework and how does it improve supply chain security?",
+      "what": "<p><b>Definition:</b> In the pipeline, secrets scan, SAST, SCA, container scan, DAST, signing and provenance (SLSA). The pipeline itself is also an attack target — least privilege tokens.</p>",
+      "why": "<p>Supply chain attacks come from the build system.</p>",
+      "gotchas": [
+        "There should be no way to ignore a gate failure",
+        "CI runners should have minimal permissions",
+        "PRs from forks should not have secrets"
+      ],
+      "codeSwap": [
+        [
+          "# OIDC se short-lived cloud creds (long-lived keys nahi)",
+          "# Short-lived cloud creds via OIDC (not long-lived keys)"
+        ]
+      ]
+    },
+    "doc1": {
+      "q": "Explain Docker image layers and how the overlay2 filesystem works.",
+      "what": "<p><b>Definition:</b> Image layers are a stack, container = image + writable layer. Layers are cached and shared. Containers use namespaces (isolation) and cgroups (resource limits).</p>",
+      "why": "<p>Understanding layers is the root of improving build speed and optimizing image size.</p>",
+      "cons": [
+        "Shared kernel — not as isolated as a VM"
+      ],
+      "gotchas": [
+        "A container is not a VM",
+        "Even after deletion, data from previous layers remains in the image",
+        "Writable layer is ephemeral — use volumes"
+      ],
+      "terms": [
+        [
+          "Image",
+          "Read-only layered template."
+        ],
+        [
+          "Layer",
+          "Each Dockerfile instruction creates a layer."
+        ],
+        [
+          "Overlay2",
+          "Union filesystem — layers stack + writable top layer."
+        ]
+      ],
+      "codeSwap": [
+        [
+          " layers dekho",
+          " see the layers"
+        ]
+      ]
+    },
+    "doc2": {
+      "what": "<p><b>Definition:</b> Dependencies first copy+install, then source — more cache hits. Multi-stage means compilers are not in the final image. .dockerignore, non-root user, pinned versions.</p>",
+      "gotchas": [
+        "Writing COPY . . first breaks the cache",
+        "Do not put secrets in build args",
+        "Alpine musl native module issues"
+      ],
+      "terms": [
+        [
+          "Multi-stage",
+          "Separate build stage, smaller runtime stage."
+        ],
+        [
+          "Layer cache",
+          "Things that change less are on top."
+        ],
+        [
+          "Minimal base",
+          "alpine/distroless."
+        ]
+      ],
+      "why": "<p>Small image = fast pull, smaller attack surface.</p>"
+    },
+    "doc3": {
+      "what": "<p><b>Definition:</b> On a bridge network, containers communicate with each other by name (user-defined bridge). Ports are published to the outside. In K8s, CNI plugins provide pod networking.</p>",
+      "why": "<p>Debugging connectivity issues and designing isolation.</p>",
+      "gotchas": [
+        "localhost refers to the container itself",
+        "The default bridge has no DNS names",
+        "-p without publishing, cannot be accessed from outside"
+      ],
+      "terms": [
+        [
+          "Bridge",
+          "Default private network on host."
+        ],
+        [
+          "Host",
+          "Shares the host network with the container."
+        ],
+        [
+          "Overlay",
+          "Multi-host networking."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "# port mapping nahi",
+          "# no port mapping"
+        ]
+      ]
+    },
+    "doc4": {
+      "q": "List the key container security hardening techniques and why each matters.",
+      "why": "<p>A container escape can lead to host compromise.</p>",
+      "cons": [
+        "Apps need tmpfs/writable directories"
+      ],
+      "gotchas": [
+        "--privileged = almost root on host",
+        "Shared kernel vulnerabilities",
+        "Image scan + runtime monitoring, both"
+      ]
+    },
+    "doc5": {
+      "qsub": "What is Docker Compose watch and how does it improve the dev loop?",
+      "what": "<p><b>Definition:</b> In docker-compose.yml, you can run the app, DB, and cache with a single command. Perfect for local development and integration tests; not for production orchestration.</p>",
+      "why": "<p>The easiest way to eliminate “It works on my machine.”</p>",
+      "gotchas": [
+        "depends_on does not wait for readiness — use healthcheck",
+        "If you delete a volume, the data will be lost",
+        "Compose is not for production"
+      ],
+      "terms": [
+        [
+          "Service",
+          "Container definition."
+        ],
+        [
+          "depends_on",
+          "Start order (no readiness)."
+        ],
+        [
+          "Volumes",
+          "Persistent data."
+        ]
+      ]
+    },
+    "k8s1": {
+      "q": "Explain the Kubernetes control plane components and their responsibilities.",
+      "what": "<p><b>Definition:</b> Control plane: API server, etcd, scheduler, controller manager. Nodes: kubelet, container runtime, kube-proxy. Declarative model: write the desired state, and controllers match the actual state.</p>",
+      "why": "<p>Failures (pod pending, node not ready) require understanding the architecture for debugging.</p>",
+      "terms": [
+        [
+          "API server",
+          "Cluster's front door."
+        ],
+        [
+          "etcd",
+          "Cluster state store."
+        ],
+        [
+          "Scheduler/Controllers",
+          "Pod placement / desired state reconcile."
+        ]
+      ],
+      "gotchas": [
+        "etcd backup is a must",
+        "Control plane HA (3 nodes)",
+        "Pending pod: resources/taints/affinity check"
+      ]
+    },
+    "k8s2": {
+      "q": "Explain the relationship between Pods, Deployments, and Services in Kubernetes.",
+      "what": "<p><b>Definition:</b> Deployment manages pods through a ReplicaSet. Service load-balances pods using a label selector. ConfigMap provides configuration, Secret holds sensitive data (base64, not encrypted by default).</p>",
+      "why": "<p>Core objects for daily work.</p>",
+      "gotchas": [
+        "Secret base64 is not encrypted",
+        "Difference between readiness and liveness probes",
+        "Set requests/limits"
+      ]
+    },
+    "k8s3": {
+      "what": "<p><b>Definition:</b> Service types: ClusterIP, NodePort, LoadBalancer. Ingress controller (nginx) provides HTTP routing. Each pod has its own IP; CNI provides pod-to-pod connectivity.</p>",
+      "why": "<p>To understand traffic flow and external exposure.</p>",
+      "gotchas": [
+        "A controller must be installed for the Ingress resource",
+        "Pod IPs are ephemeral — use a Service",
+        "DNS: svc.namespace.svc.cluster.local"
+      ]
+    },
+    "k8s4": {
+      "qsub": "Name popular Kubernetes operators and explain the operator pattern in detail.",
+      "what": "<p><b>Definition:</b> Helm templating creates the same manifests for different environments; Operators (e.g., Postgres operator) use domain knowledge (backup, failover) to automate.</p>",
+      "why": "<p>Managing large manifests and running stateful apps.</p>",
+      "gotchas": [
+        "Values and secrets should not be in git",
+        "Helm release state is stored in the cluster",
+        "Check the operator's maturity"
+      ]
+    },
+    "k8s5": {
+      "why": "<p>In default K8s, all pods can talk to each other.</p>",
+      "gotchas": [
+        "Do not give cluster-admin to everyone",
+        "CNI support is required for NetworkPolicy",
+        "Disable ServiceAccount token auto-mount where it is not needed"
+      ],
+      "codeSwap": [
+        [
+          " phir specific allow rules",
+          " then specific allow rules"
+        ]
+      ]
+    },
+    "iac1": {
+      "what": "<p><b>Definition:</b> Terraform HCL declares the desired infrastructure. <code>plan</code> shows the diff, <code>apply</code> makes the change, and the state file tracks it.</p>",
+      "why": "<p>Infrastructure becomes versioned, reviewable, and reproducible.</p>",
+      "gotchas": [
+        "The state file may contain secrets.",
+        "Manual changes from the console cause drift.",
+        "Do not apply without reviewing the plan."
+      ],
+      "terms": [
+        [
+          "State",
+          "Mapping of configuration to real resources."
+        ],
+        [
+          "Module",
+          "Reusable infra block."
+        ],
+        [
+          "Provider",
+          "AWS/GCP plugin."
+        ]
+      ]
+    },
+    "iac2": {
+      "what": "<p><b>Definition:</b> Remote, locked, and encrypted state for the team. Drift detection scheduled from <code>terraform plan</code>. State split per environment/component.</p>",
+      "why": "<p>Teams overwrite each other's work on local state.</p>",
+      "gotchas": [
+        "State bucket versioning on",
+        "Very large state is slow — split it",
+        "Use terraform state commands carefully"
+      ],
+      "terms": [
+        [
+          "Remote state",
+          "S3/GCS backend."
+        ],
+        [
+          "Locking",
+          "DynamoDB lock — prevents concurrent apply."
+        ],
+        [
+          "Drift",
+          "Different from the real infrastructure configuration."
+        ]
+      ]
+    },
+    "iac3": {
+      "what": "<p><b>Definition:</b> Config management servers manage software/configuration inside them. Ansible via SSH; for provisioning with Terraform, for configuration with Ansible.</p>",
+      "why": "<p>Manually configuring servers is error-prone.</p>",
+      "cons": [
+        "Less used in the container era"
+      ],
+      "gotchas": [
+        "Use modules for idempotency, limit shell usage",
+        "Configuration drift",
+        "Secrets with Ansible Vault"
+      ],
+      "terms": [
+        [
+          "Ansible",
+          "Agentless, push, YAML."
+        ],
+        [
+          "Chef/Puppet",
+          "Agent-based, pull."
+        ],
+        [
+          "Idempotent",
+          "Same result when run repeatedly."
+        ]
+      ]
+    },
+    "iac4": {
+      "what": "<p><b>Definition:</b> Change = new image build → new instances launch → old terminate. Snowflake servers and drift eliminated.</p>",
+      "gotchas": [
+        "Do not bake secrets into the image",
+        "Old AMIs cleanup",
+        "Keep stateful data on separate volumes"
+      ],
+      "terms": [
+        [
+          "Immutable",
+          "Server replace, no patch."
+        ],
+        [
+          "Packer",
+          "Machine images build."
+        ],
+        [
+          "Golden AMI",
+          "Pre-baked image."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "# ASG launch template ko nayi AMI par point karo",
+          "# Point the ASG launch template to the new AMI"
+        ]
+      ]
+    },
+    "iac5": {
+      "desc": "GitOps: Git repo is the single source of truth. ArgoCD/Flux reconciles cluster state with what's in the Git repo. Syncs automatically on commit.",
+      "what": "<p><b>Definition:</b> Deploy = Git commit/PR. Controller continuously compares the desired state with the live state and syncs. Audit trail, rollback = git revert.</p>",
+      "why": "<p>CI does not need cluster credentials; drift auto-corrects.</p>",
+      "gotchas": [
+        "Keep the app repo and config repo separate",
+        "Secrets: Sealed Secrets / External Secrets",
+        "A manual kubectl edit will be reverted"
+      ],
+      "terms": [
+        [
+          "GitOps",
+          "Git = source of truth."
+        ],
+        [
+          "ArgoCD/Flux",
+          "Cluster reconciles with Git."
+        ],
+        [
+          "Pull-based",
+          "Cluster pulls from Git."
+        ]
+      ],
+      "cons": [
+        "Secrets handling is separate"
+      ]
+    },
+    "pro1": {
+      "qsub": "How does Karpenter differ from the standard cluster autoscaler on AWS?",
+      "what": "<p><b>Definition:</b> HPA scales pods based on CPU/custom metrics (RPS, queue depth). For nodes, use Cluster Autoscaler/Karpenter. Set the baseline using a load test.</p>",
+      "why": "<p>Availability during traffic spikes and off-peak cost savings.</p>",
+      "gotchas": [
+        "If requests are not set, HPA does not work",
+        "HPA and VPA conflict on the same metric",
+        "Use a minimum replicas buffer for scale-up delay"
+      ],
+      "terms": [
+        [
+          "HPA",
+          "Increase/decrease the pod count."
+        ],
+        [
+          "VPA",
+          "Pod resources adjust."
+        ],
+        [
+          "Cluster Autoscaler",
+          "Nodes add/remove."
+        ]
+      ]
+    },
+    "pro2": {
+      "qsub": "What is the 3-2-1 backup rule and how does it apply to cloud infrastructure?",
+      "what": "<p><b>Definition:</b> RPO/RTO define the business; strategy follows that (cost increases). Testing the restore of backups is essential.</p>",
+      "why": "<p>Untested backup = not a backup.</p>",
+      "gotchas": [
+        "Backups must not be in the same region/account",
+        "Schedule DR drills",
+        "Keep runbooks updated"
+      ],
+      "codeSwap": [
+        [
+          "# drill karo",
+          "# drill it"
+        ]
+      ]
+    },
+    "pro3": {
+      "what": "<p><b>Definition:</b> Find weaknesses in production-like conditions using controlled failures (pod kill, latency inject, AZ outage). Hypothesis → experiment → learn → fix.</p>",
+      "why": "<p>Prove resilience before a failure actually occurs.</p>",
+      "pros": [
+        "Hidden dependencies are discovered"
+      ],
+      "cons": [
+        "Risk if badly planned"
+      ],
+      "gotchas": [
+        "Start with a small blast radius",
+        "Observability first",
+        "Keep an abort switch"
+      ],
+      "terms": [
+        [
+          "Steady state",
+          "Normal behaviour hypothesis."
+        ],
+        [
+          "Blast radius",
+          "Scope of the experiment."
+        ],
+        [
+          "GameDay",
+          "Planned failure drill."
+        ]
+      ]
+    },
+    "pro4": {
+      "qsub": "What is the difference between OPA Gatekeeper and Kyverno for K8s admission control?",
+      "what": "<p><b>Definition:</b> Policies in code: 'no privileged pod', 'images only from trusted registry', 'S3 not public'. Enforced on both CI and admission controller; audit evidence automatically.</p>",
+      "why": "<p>Manual compliance does not scale.</p>",
+      "gotchas": [
+        "Start in audit mode, then enforce",
+        "Process for exceptions",
+        "Compliance ≠ security"
+      ],
+      "terms": [
+        [
+          "Policy as code",
+          "OPA/Kyverno rules."
+        ],
+        [
+          "SOC2",
+          "Controls audit."
+        ],
+        [
+          "Admission control",
+          "Check before entering the cluster."
+        ]
+      ]
+    },
+    "aws2": {
+      "qsub": "How do presigned URLs work? What is the difference between S3 Standard and S3 IA?",
+      "what": "<p><b>Definition:</b> S3 11 9's durability. Versioning, lifecycle (IA/Glacier), SSE-KMS, Block Public Access, presigned URLs for direct upload/download.</p>",
+      "why": "<p>Breaches from misconfigured S3 buckets are well known.</p>",
+      "codeSwap": [
+        [
+          "// client seedha S3 par upload karta hai",
+          "// the client uploads straight to S3"
+        ]
+      ]
+    },
+    "aws3": {
+      "what": "<p><b>Definition:</b> RDS managed backups, patching, failover. For Multi-AZ availability, for read replica performance — both are separate things.</p>",
+      "why": "<p>Database ops offload, but design decisions are still yours.</p>",
+      "gotchas": [
+        "Multi-AZ does not scale reads",
+        "Replica lag",
+        "Keep it in a private subnet"
+      ],
+      "codeSwap": [
+        [
+          "# app connection pooling (RDS Proxy) lambda ke liye",
+          "# app-side connection pooling (RDS Proxy) for lambda"
+        ]
+      ]
+    },
+    "aws4": {
+      "qsub": "What is the difference between synchronous and asynchronous Lambda invocations? How does Lambda handle retries?",
+      "what": "<p><b>Definition:</b> When a Lambda event arrives, it runs the code, with per-invocation billing. Limits: 15 minutes, 10 GB memory. Provisioned concurrency reduces cold starts.</p>",
+      "why": "<p>In spiky or event-driven workloads, operations and cost are saved.</p>",
+      "gotchas": [
+        "DB connections explode — RDS Proxy",
+        "SQS retries cause duplicates — make it idempotent",
+        "Timeout < upstream timeout"
+      ],
+      "terms": [
+        [
+          "Cold start",
+          "Startup delay of a new execution environment."
+        ],
+        [
+          "Event source",
+          "API GW, S3, SQS, EventBridge."
+        ],
+        [
+          "Concurrency",
+          "Parallel executions limit."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// init code handler ke bahar (reuse hota hai)",
+          "// init code outside the handler (it gets reused)"
+        ]
+      ]
+    },
+    "aws5": {
+      "what": "<p><b>Definition:</b> In a VPC, CIDR, subnets (multi-AZ), route tables, IGW (internet), NAT GW (outbound from private), VPC endpoints (AWS services without internet).</p>",
+      "gotchas": [
+        "CIDR overlap blocks peering",
+        "NAT per AZ for HA",
+        "Database should not be in a public subnet"
+      ],
+      "terms": [
+        [
+          "Public subnet",
+          "IGW route."
+        ],
+        [
+          "Private subnet",
+          "Egress via NAT."
+        ],
+        [
+          "Route table",
+          "Traffic rules."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "s3 gateway endpoint: private subnet -> S3 (NAT cost bachti hai)",
+          "s3 gateway endpoint: private subnet -> S3 (saves NAT cost)"
+        ]
+      ]
+    },
+    "aws6": {
+      "q": "What is IAM? What is the difference between an IAM user and an IAM role?",
+      "what": "<p><b>Definition:</b> SSO/MFA for users, roles for workloads (instance profile, IRSA), avoid long-lived access keys. Explicit Deny > Allow. Access Analyzer shows unused permissions.</p>",
+      "why": "<p>Cloud security's #1 control.</p>",
+      "gotchas": [
+        "Do not use Action: * Resource: *",
+        "Root user MFA and do not use it",
+        "Cross-account role trust policy check"
+      ],
+      "terms": [
+        [
+          "Role",
+          "Assume temporary credentials."
+        ],
+        [
+          "Policy",
+          "JSON permissions."
+        ],
+        [
+          "Least privilege",
+          "Only necessary actions."
+        ]
+      ]
+    },
+    "aws7": {
+      "qsub": "What is the difference between CloudWatch Logs Insights and CloudWatch Metrics?",
+      "what": "<p><b>Definition:</b> CloudWatch metrics, logs, alarms, dashboards. Custom metrics, composite alarms. Memory/disk requires an agent.</p>",
+      "why": "<p>Without observability, incidents are not detected.</p>",
+      "gotchas": [
+        "Set log retention.",
+        "Make the alarm actionable.",
+        "Look at percentiles (p99) instead of average."
+      ]
+    },
+    "serverless": {
+      "q": "What are the limitations of serverless? When should you NOT use serverless?",
+      "what": "<p><b>Definition:</b> In serverless, the provider handles infrastructure management; auto-scale, per-ms billing. Patterns: API GW+Lambda, S3→Lambda, queue workers, step functions.</p>",
+      "why": "<p>Fast delivery for small teams.</p>",
+      "gotchas": [
+        "Steady high traffic can make containers cheap",
+        "Idempotency + DLQ",
+        "Do not make function chaining synchronous"
+      ],
+      "terms": [
+        [
+          "FaaS",
+          "Function as a service."
+        ],
+        [
+          "Event-driven",
+          "Execution on triggers."
+        ],
+        [
+          "Pay-per-use",
+          "Zero cost when idle."
+        ]
+      ]
+    },
+    "cloud-networking": {
+      "q": "What is the difference between a security group and a NACL?",
+      "qsub": "How do you design a VPC for a multi-tier application? What is the difference between ALB and NLB?",
+      "why": "<p>Architecture interviews have this as a standard topic.</p>",
+      "gotchas": [
+        "Use SG referencing SG, not IP",
+        "Cross-AZ traffic cost",
+        "DNS TTL makes failover slow"
+      ]
+    },
+    "cost-optimization": {
+      "q": "How do you reduce AWS costs by 50%? What is the difference between Reserved Instances and Savings Plans?",
+      "what": "<p><b>Definition:</b> First get visibility (tags, Cost Explorer), then right-size, delete idle resources, apply commitment discounts for steady load, use Spot for fault-tolerant workloads, tier storage, and reduce data transfer.</p>",
+      "why": "<p>The cloud bill increases silently.</p>",
+      "gotchas": [
+        "Don't over-commit.",
+        "Turn off dev/test environments during off-hours.",
+        "Hidden costs from NAT and data transfer."
+      ],
+      "terms": [
+        [
+          "Right-sizing",
+          "Based on instance size usage."
+        ],
+        [
+          "Savings Plans/RI",
+          "Commitment discount."
+        ],
+        [
+          "Spot",
+          "Interruptible cheap capacity."
+        ]
+      ]
+    },
+    "aws1": {
+      "desc": "EC2 (Elastic Compute Cloud) provides virtual servers in the cloud. An AMI is a template for an instance (OS + software). Security groups act as virtual firewalls controlling inbound/outbound traffic. Key pairs provide SSH access.",
+      "qsub": "What is the difference between an instance store and an EBS volume? When would you use each?",
+      "what": "<p><b>Definition:</b> EC2 virtual servers. Purchasing: On-Demand, Reserved/Savings Plans, Spot. Key pair for SSH (or SSM Session Manager is better). ASG scaling.</p>",
+      "why": "<p>AWS compute is the foundation; basic for interviews.</p>",
+      "cons": [
+        "You handle patching"
+      ],
+      "gotchas": [
+        "Public IP + SG 0.0.0.0/0 on 22 avoid",
+        "Instance store is ephemeral",
+        "Attach a role, not keys"
+      ],
+      "codeSwap": [
+        [
+          "# SSH ke bajaye: aws ssm start-session --target i-abc",
+          "# Instead of SSH: aws ssm start-session --target i-abc"
+        ]
+      ]
+    },
+    "feature-flags": {
+      "q": "How do feature flags enable progressive delivery? What is the difference between release flags and experiment flags?",
+      "qsub": "How do you implement feature flags without adding technical debt? What is the risk of too many flags?",
+      "what": "<p><b>Definition:</b> Flags change behavior at runtime without deployment. Use: gradual rollout, A/B, kill switch, ops toggles. Flag lifecycle: create → rollout → cleanup.</p>",
+      "why": "<p>Deploy and release are decoupled; risk is lower.</p>",
+      "gotchas": [
+        "Remove stale flags",
+        "Sticky bucketing (same user same variant)",
+        "Fallback when the flag service is down"
+      ],
+      "codeSwap": [
+        [
+          "// default (false) safe value rakho agar flag service down ho",
+          "// keep a safe default value (false) if the flag service is down"
+        ]
+      ],
+      "terms": [
+        [
+          "Progressive delivery",
+          "Percentage rollout."
+        ],
+        [
+          "Kill switch",
+          "Turn a feature off instantly."
+        ],
+        [
+          "Targeting",
+          "User/segment rules."
+        ]
+      ]
+    },
+    "aws8": {
+      "desc": "ALB (Application Load Balancer) routes HTTP/HTTPS traffic to targets (EC2, Lambda, IP). ELB is the umbrella name. Health checks ensure traffic only goes to healthy targets. Target groups define which instances receive traffic.",
+      "q": "What is the difference between ALB and NLB? When would you use each?",
+      "qsub": "How do sticky sessions work with ALB? What is the difference between path-based and host-based routing?",
+      "what": "<p><b>Definition:</b> ALB path/host routing, WebSocket, WAF integration. Health checks remove unhealthy targets. Connection draining during deployments.</p>",
+      "why": "<p>High availability and zero-downtime deployments.</p>",
+      "gotchas": [
+        "Health check endpoint should not be DB-heavy",
+        "Idle timeout vs app keep-alive",
+        "Sticky sessions hurt scaling"
+      ]
+    }
+  }
+}

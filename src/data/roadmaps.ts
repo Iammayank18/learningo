@@ -1,103 +1,102 @@
-export interface Stage { title: string; blurb: string; courses: string[] }
+import type { MessageKey } from '../lib/i18n'
+
+export interface Stage {
+  titleKey: MessageKey
+  blurbKey: MessageKey
+  courses: string[]
+}
 export interface Roadmap {
   id: string
-  title: string
+  titleKey: MessageKey
   icon: string
   hue: string
-  tagline: string
-  audience: string
+  taglineKey: MessageKey
+  audienceKey: MessageKey
   stages: Stage[]
 }
 
 /** Hand-curated learning tracks. Each stage points at courses that already exist in the app. */
 export const roadmaps: Roadmap[] = [
   {
-    id: 'frontend', title: 'Frontend Engineer', icon: '🎨', hue: 'blue',
-    tagline: 'HTML/CSS se React, Next.js aur frontend system design tak.',
-    audience: 'Web UI banane wale, FE interviews ki taiyari',
+    id: 'frontend', titleKey: 'roadmap.frontend.title', icon: '🎨', hue: 'blue',
+    taglineKey: 'roadmap.frontend.tagline', audienceKey: 'roadmap.frontend.audience',
     stages: [
-      { title: 'Web ki neev', blurb: 'Browser kaise kaam karta hai, CSS layout aur JavaScript ki gehraai.', courses: ['css-mastery', 'js-mastery', 'web-protocols'] },
-      { title: 'Type-safe code', blurb: 'TypeScript se bugs compile time par pakdo.', courses: ['typescript-mastery'] },
-      { title: 'React', blurb: 'Hooks, rendering, state — aur andar se kaise chalta hai.', courses: ['react-mastery', 'build-mini-react'] },
-      { title: 'Framework & rendering', blurb: 'SSR, SSG, routing, data fetching.', courses: ['nextjs'] },
-      { title: 'Quality & speed', blurb: 'Fast aur reliable UI: performance aur testing.', courses: ['performance', 'testing'] },
-      { title: 'Design karna seekho', blurb: 'Frontend system design rounds ke liye.', courses: ['frontend-system-design'] },
-      { title: 'Interview practice', blurb: 'Machine coding aur DSA drills.', courses: ['machine-coding', 'dsa'] },
+      { titleKey: 'roadmap.frontend.stage.web.title', blurbKey: 'roadmap.frontend.stage.web.blurb', courses: ['css-mastery', 'js-mastery', 'web-protocols'] },
+      { titleKey: 'roadmap.frontend.stage.types.title', blurbKey: 'roadmap.frontend.stage.types.blurb', courses: ['typescript-mastery'] },
+      { titleKey: 'roadmap.frontend.stage.react.title', blurbKey: 'roadmap.frontend.stage.react.blurb', courses: ['react-mastery', 'build-mini-react'] },
+      { titleKey: 'roadmap.frontend.stage.framework.title', blurbKey: 'roadmap.frontend.stage.framework.blurb', courses: ['nextjs'] },
+      { titleKey: 'roadmap.frontend.stage.quality.title', blurbKey: 'roadmap.frontend.stage.quality.blurb', courses: ['performance', 'testing'] },
+      { titleKey: 'roadmap.frontend.stage.design.title', blurbKey: 'roadmap.frontend.stage.design.blurb', courses: ['frontend-system-design'] },
+      { titleKey: 'roadmap.frontend.stage.practice.title', blurbKey: 'roadmap.frontend.stage.practice.blurb', courses: ['machine-coding', 'dsa'] },
     ],
   },
   {
-    id: 'backend', title: 'Backend Engineer', icon: '🛠️', hue: 'green',
-    tagline: 'APIs, databases, concurrency aur production-grade services.',
-    audience: 'Server-side devs, backend SDE interviews',
+    id: 'backend', titleKey: 'roadmap.backend.title', icon: '🛠️', hue: 'green',
+    taglineKey: 'roadmap.backend.tagline', audienceKey: 'roadmap.backend.audience',
     stages: [
-      { title: 'CS ki neev', blurb: 'OS, networking aur DSA — har backend ka base.', courses: ['os-fundamentals', 'web-protocols', 'dsa'] },
-      { title: 'Node.js', blurb: 'Event loop, streams, internals.', courses: ['js-mastery', 'nodejs-internals'] },
-      { title: 'APIs & data', blurb: 'API design aur databases deeply.', courses: ['api-design', 'database'] },
-      { title: 'Concurrency & OOP', blurb: 'Threads, locks, races; clean OOP design.', courses: ['concurrency', 'oop', 'design-patterns'] },
-      { title: 'Secure & observable', blurb: 'Security, logging, metrics, tracing.', courses: ['security', 'observability', 'testing'] },
-      { title: 'Scale karna', blurb: 'System design aur microservices.', courses: ['system-design', 'microservices'] },
-      { title: 'Ship & practice', blurb: 'Deploy karna aur machine coding.', courses: ['devops', 'backend-machine-coding'] },
+      { titleKey: 'roadmap.backend.stage.cs.title', blurbKey: 'roadmap.backend.stage.cs.blurb', courses: ['os-fundamentals', 'web-protocols', 'dsa'] },
+      { titleKey: 'roadmap.backend.stage.node.title', blurbKey: 'roadmap.backend.stage.node.blurb', courses: ['js-mastery', 'nodejs-internals'] },
+      { titleKey: 'roadmap.backend.stage.data.title', blurbKey: 'roadmap.backend.stage.data.blurb', courses: ['api-design', 'database'] },
+      { titleKey: 'roadmap.backend.stage.concurrency.title', blurbKey: 'roadmap.backend.stage.concurrency.blurb', courses: ['concurrency', 'oop', 'design-patterns'] },
+      { titleKey: 'roadmap.backend.stage.secure.title', blurbKey: 'roadmap.backend.stage.secure.blurb', courses: ['security', 'observability', 'testing'] },
+      { titleKey: 'roadmap.backend.stage.scale.title', blurbKey: 'roadmap.backend.stage.scale.blurb', courses: ['system-design', 'microservices'] },
+      { titleKey: 'roadmap.backend.stage.ship.title', blurbKey: 'roadmap.backend.stage.ship.blurb', courses: ['devops', 'backend-machine-coding'] },
     ],
   },
   {
-    id: 'ai-native', title: 'AI-native Engineer', icon: '🤖', hue: 'violet',
-    tagline: 'Agents, RAG aur LLM apps — ground-up banao aur production mein chalao.',
-    audience: 'AI products banane wale, AI engineer roles',
+    id: 'ai-native', titleKey: 'roadmap.ai.title', icon: '🤖', hue: 'violet',
+    taglineKey: 'roadmap.ai.tagline', audienceKey: 'roadmap.ai.audience',
     stages: [
-      { title: 'Base skills', blurb: 'JS/TS aur API sense — AI apps ki zaroorat.', courses: ['js-mastery', 'typescript-mastery', 'api-design'] },
-      { title: 'Agents', blurb: 'Tool calling, loops, memory, evals.', courses: ['ai-agents'] },
-      { title: 'AI system design', blurb: 'RAG, caching, cost, latency, guardrails.', courses: ['ai-system-design'] },
-      { title: 'Build: RAG projects', blurb: 'Hands-on: codebase RAG, voice RAG, git RAG.', courses: ['build-rag', 'build-voice-rag', 'build-git-rag'] },
-      { title: 'Build: coding agent', blurb: 'Mini-opencode jaisa agent khud banao.', courses: ['build-opencode'] },
-      { title: 'Production ready', blurb: 'AI apps ko secure, observable aur deployable banao.', courses: ['security', 'observability', 'devops'] },
+      { titleKey: 'roadmap.ai.stage.base.title', blurbKey: 'roadmap.ai.stage.base.blurb', courses: ['js-mastery', 'typescript-mastery', 'api-design'] },
+      { titleKey: 'roadmap.ai.stage.agents.title', blurbKey: 'roadmap.ai.stage.agents.blurb', courses: ['ai-agents'] },
+      { titleKey: 'roadmap.ai.stage.design.title', blurbKey: 'roadmap.ai.stage.design.blurb', courses: ['ai-system-design'] },
+      { titleKey: 'roadmap.ai.stage.rag.title', blurbKey: 'roadmap.ai.stage.rag.blurb', courses: ['build-rag', 'build-voice-rag', 'build-git-rag'] },
+      { titleKey: 'roadmap.ai.stage.agent.title', blurbKey: 'roadmap.ai.stage.agent.blurb', courses: ['build-opencode'] },
+      { titleKey: 'roadmap.ai.stage.prod.title', blurbKey: 'roadmap.ai.stage.prod.blurb', courses: ['security', 'observability', 'devops'] },
     ],
   },
   {
-    id: 'fullstack', title: 'Full-stack Engineer', icon: '🧩', hue: 'orange',
-    tagline: 'UI se database tak — poora product khud ship karo.',
-    audience: 'Product-minded devs, startups, freelancers',
+    id: 'fullstack', titleKey: 'roadmap.fullstack.title', icon: '🧩', hue: 'orange',
+    taglineKey: 'roadmap.fullstack.tagline', audienceKey: 'roadmap.fullstack.audience',
     stages: [
-      { title: 'Frontend base', blurb: 'CSS, JS aur TypeScript.', courses: ['css-mastery', 'js-mastery', 'typescript-mastery'] },
-      { title: 'React & Next.js', blurb: 'Modern UI + server rendering.', courses: ['react-mastery', 'nextjs'] },
-      { title: 'Backend & data', blurb: 'Node, APIs aur databases.', courses: ['nodejs-internals', 'api-design', 'database'] },
-      { title: 'Real projects', blurb: 'End-to-end fullstack builds.', courses: ['fullstack', 'real-world-scenarios'] },
-      { title: 'Security & deploy', blurb: 'Safe aur live.', courses: ['security', 'testing', 'devops'] },
-      { title: 'Interview mode', blurb: 'Machine coding aur system design.', courses: ['machine-coding', 'system-design'] },
+      { titleKey: 'roadmap.fullstack.stage.base.title', blurbKey: 'roadmap.fullstack.stage.base.blurb', courses: ['css-mastery', 'js-mastery', 'typescript-mastery'] },
+      { titleKey: 'roadmap.fullstack.stage.react.title', blurbKey: 'roadmap.fullstack.stage.react.blurb', courses: ['react-mastery', 'nextjs'] },
+      { titleKey: 'roadmap.fullstack.stage.backend.title', blurbKey: 'roadmap.fullstack.stage.backend.blurb', courses: ['nodejs-internals', 'api-design', 'database'] },
+      { titleKey: 'roadmap.fullstack.stage.projects.title', blurbKey: 'roadmap.fullstack.stage.projects.blurb', courses: ['fullstack', 'real-world-scenarios'] },
+      { titleKey: 'roadmap.fullstack.stage.deploy.title', blurbKey: 'roadmap.fullstack.stage.deploy.blurb', courses: ['security', 'testing', 'devops'] },
+      { titleKey: 'roadmap.fullstack.stage.interview.title', blurbKey: 'roadmap.fullstack.stage.interview.blurb', courses: ['machine-coding', 'system-design'] },
     ],
   },
   {
-    id: 'devops', title: 'DevOps / SRE', icon: '☁️', hue: 'teal',
-    tagline: 'Containers, CI/CD, cloud, reliability aur observability.',
-    audience: 'DevOps, SRE, platform engineers',
+    id: 'devops', titleKey: 'roadmap.devops.title', icon: '☁️', hue: 'teal',
+    taglineKey: 'roadmap.devops.tagline', audienceKey: 'roadmap.devops.audience',
     stages: [
-      { title: 'Systems base', blurb: 'OS aur networking ki samajh.', courses: ['os-fundamentals', 'web-protocols'] },
-      { title: 'DevOps core', blurb: 'CI/CD, Docker, Kubernetes, IaC, AWS.', courses: ['devops'] },
-      { title: 'Security', blurb: 'Secure pipelines, containers, cloud.', courses: ['security'] },
-      { title: 'Observe & perform', blurb: 'Metrics, logs, traces, performance.', courses: ['observability', 'performance'] },
-      { title: 'Distributed systems', blurb: 'Concurrency aur microservices.', courses: ['concurrency', 'microservices'] },
-      { title: 'Design reviews', blurb: 'System design rounds.', courses: ['system-design'] },
+      { titleKey: 'roadmap.devops.stage.systems.title', blurbKey: 'roadmap.devops.stage.systems.blurb', courses: ['os-fundamentals', 'web-protocols'] },
+      { titleKey: 'roadmap.devops.stage.core.title', blurbKey: 'roadmap.devops.stage.core.blurb', courses: ['devops'] },
+      { titleKey: 'roadmap.devops.stage.security.title', blurbKey: 'roadmap.devops.stage.security.blurb', courses: ['security'] },
+      { titleKey: 'roadmap.devops.stage.observe.title', blurbKey: 'roadmap.devops.stage.observe.blurb', courses: ['observability', 'performance'] },
+      { titleKey: 'roadmap.devops.stage.distributed.title', blurbKey: 'roadmap.devops.stage.distributed.blurb', courses: ['concurrency', 'microservices'] },
+      { titleKey: 'roadmap.devops.stage.design.title', blurbKey: 'roadmap.devops.stage.design.blurb', courses: ['system-design'] },
     ],
   },
   {
-    id: 'architect', title: 'Software Architect', icon: '🏛️', hue: 'red',
-    tagline: 'Trade-offs, patterns aur large-scale system design.',
-    audience: 'Senior / staff engineers, design interviews',
+    id: 'architect', titleKey: 'roadmap.architect.title', icon: '🏛️', hue: 'red',
+    taglineKey: 'roadmap.architect.tagline', audienceKey: 'roadmap.architect.audience',
     stages: [
-      { title: 'Design fundamentals', blurb: 'OOP aur design patterns.', courses: ['oop', 'design-patterns'] },
-      { title: 'Data & concurrency', blurb: 'Databases aur concurrent systems.', courses: ['database', 'concurrency'] },
-      { title: 'Distributed design', blurb: 'System design problems aur microservices.', courses: ['system-design', 'microservices'] },
-      { title: 'Frontend & AI design', blurb: 'FE system design aur AI system design.', courses: ['frontend-system-design', 'ai-system-design'] },
-      { title: 'Operate it', blurb: 'Observability, security aur DevOps.', courses: ['observability', 'security', 'devops'] },
+      { titleKey: 'roadmap.architect.stage.design.title', blurbKey: 'roadmap.architect.stage.design.blurb', courses: ['oop', 'design-patterns'] },
+      { titleKey: 'roadmap.architect.stage.data.title', blurbKey: 'roadmap.architect.stage.data.blurb', courses: ['database', 'concurrency'] },
+      { titleKey: 'roadmap.architect.stage.distributed.title', blurbKey: 'roadmap.architect.stage.distributed.blurb', courses: ['system-design', 'microservices'] },
+      { titleKey: 'roadmap.architect.stage.feai.title', blurbKey: 'roadmap.architect.stage.feai.blurb', courses: ['frontend-system-design', 'ai-system-design'] },
+      { titleKey: 'roadmap.architect.stage.operate.title', blurbKey: 'roadmap.architect.stage.operate.blurb', courses: ['observability', 'security', 'devops'] },
     ],
   },
   {
-    id: 'interview-sprint', title: 'Interview Sprint', icon: '⚡', hue: 'amber',
-    tagline: 'Interview ke 2-3 hafte pehle — sirf high-yield practice.',
-    audience: 'Jinke interviews paas hain',
+    id: 'interview-sprint', titleKey: 'roadmap.sprint.title', icon: '⚡', hue: 'amber',
+    taglineKey: 'roadmap.sprint.tagline', audienceKey: 'roadmap.sprint.audience',
     stages: [
-      { title: 'DSA warm-up', blurb: 'Patterns aur problem solving.', courses: ['dsa'] },
-      { title: 'Machine coding', blurb: 'Time-boxed builds.', courses: ['machine-coding', 'backend-machine-coding'] },
-      { title: 'Design rounds', blurb: 'System design + real-world scenarios.', courses: ['system-design', 'real-world-scenarios'] },
+      { titleKey: 'roadmap.sprint.stage.dsa.title', blurbKey: 'roadmap.sprint.stage.dsa.blurb', courses: ['dsa'] },
+      { titleKey: 'roadmap.sprint.stage.machine.title', blurbKey: 'roadmap.sprint.stage.machine.blurb', courses: ['machine-coding', 'backend-machine-coding'] },
+      { titleKey: 'roadmap.sprint.stage.design.title', blurbKey: 'roadmap.sprint.stage.design.blurb', courses: ['system-design', 'real-world-scenarios'] },
     ],
   },
 ]

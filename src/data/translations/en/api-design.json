@@ -1,0 +1,1985 @@
+{
+  "lessons": {
+    "api-what": {
+      "name": "What is an API?",
+      "desc": "An API (Application Programming Interface) is a way for one program to talk to another. When you open a weather app and it shows today's forecast, that app is calling a weather API — asking a remote server \"what is the temperature in Mumbai right now?\"",
+      "q": "What is an API and how does it enable communication between programs?",
+      "qsub": "How does your frontend talk to your backend via an API? Give real-world examples like weather apps, Google Login, and Stripe payments.",
+      "what": "<p><b>API</b> is a <b>contract for communication</b> between software. Your weather app queries the weather server every few minutes — \"What is the temperature in Mumbai right now?\" — and the server responds in JSON format. You don’t need to know what is happening inside the server — just send a request, get a response.</p>\n<p>Think of the API as the developer’s <b>user interface</b>: just as an app has buttons and gestures, an API has URLs and methods that your code calls. The frontend and backend also communicate with each other using this.</p>",
+      "analogy": "<b>Restaurant</b> analogy: you (client) give an order to the waiter (API), the waiter takes it to the kitchen (server) and brings back the food (response). Without the waiter you don’t go into the kitchen — the API is that boundary.",
+      "why": "<p>All web communication — app to server, service to service, integrations with companies like Stripe and Google — happens through APIs. The interview question \"what is an API\" starts here, and the remaining 37 topics are built on this foundation.</p>",
+      "pros": [
+        "A contract — software can connect easily.",
+        "Implementation details remain hidden.",
+        "Same API, many clients (web/mobile)."
+      ],
+      "cons": [
+        "If the contract breaks, all clients break.",
+        "If versioning is not managed, it becomes problematic."
+      ],
+      "gotchas": [
+        "Interview: Don’t say API is \"data\" — call it a contract/interface, and give examples (weather app, Google Login).",
+        "Just remember: <b>API = the middle contract; client asks, server answers.</b>"
+      ],
+      "terms": [
+        [
+          "API",
+          "Application Programming Interface — a contract for communication between two programs."
+        ],
+        [
+          "Client",
+          "The entity that sends a request — browser, mobile app, or another service."
+        ],
+        [
+          "Server",
+          "The entity that provides data or functionality and sends a response."
+        ],
+        [
+          "Endpoint",
+          "A specific URL where a request is sent — e.g., /api/users."
+        ]
+      ],
+      "where": [
+        [
+          "Web apps",
+          "REST calls between frontend and backend."
+        ],
+        [
+          "Third-party",
+          "Integrations with Stripe, Google, Twilio."
+        ],
+        [
+          "Interview",
+          "The first answer to \"What is an API?\""
+        ]
+      ],
+      "visualCap": "Client → API → Server. API = the middle contract — you don’t need to go inside the server. The client sends a request, which goes through the API contract to the server, and the response returns.",
+      "codeSwap": [
+        [
+          "// Public API — bina key ke bhi kaam karta hai",
+          "// Public API — works even without a key"
+        ],
+        [
+          "// JavaScript mein (browser ya Node 18+)",
+          "// In JavaScript (browser or Node 18+)"
+        ]
+      ]
+    },
+    "api-http": {
+      "name": "What is HTTP?",
+      "desc": "HTTP (HyperText Transfer Protocol) is the language that web clients and servers use to communicate. Every time you type a URL and press Enter, your browser sends an HTTP request. The server responds with an HTTP response.",
+      "q": "What is HTTP and how does it enable communication between web clients and servers?",
+      "qsub": "Why must you understand HTTP before learning about REST APIs, JWT, auth, and rate limiting?",
+      "what": "<p><b>HTTP</b> is the language in which browsers and servers communicate. You type a URL, the browser sends a <b>request</b> (verb + URL + headers), and the server returns a <b>response</b> (status code + headers + body).</p>\n<p>HTTP is <b>stateless</b> — each request is complete in itself. The server does not remember what you previously requested; therefore authentication state is carried via tokens (Cookie/JWT).</p>",
+      "analogy": "<b>Letter system</b> analogy: request = a letter (address, date, sender), response = a reply letter. Each letter is new — the server does not remember what you wrote yesterday.",
+      "why": "<p>Every API interview progresses from API basics to HTTP. Status codes, methods, headers — all are HTTP concepts. This topic focuses on how the request/response flow looks.</p>",
+      "pros": [
+        "Universal — every device/server understands it.",
+        "Simple request/response model."
+      ],
+      "cons": [
+        "Stateless — you must manage session yourself.",
+        "Extra layers are needed for raw data handling."
+      ],
+      "gotchas": [
+        "Interview: Why is HTTP called stateless? — the response does not rely on previous results, context is not remembered.",
+        "Just remember: <b>HTTP = request party + response partner, new each time.</b>"
+      ],
+      "terms": [
+        [
+          "HTTP",
+          "HyperText Transfer Protocol — the language of web request/response."
+        ],
+        [
+          "Request/Response",
+          "Client sends a request, server provides a response."
+        ],
+        [
+          "Stateless",
+          "Each request is independent — the server does not remember the previous one."
+        ]
+      ],
+      "where": [
+        [
+          "Browser",
+          "Every page load is an HTTP exchange."
+        ],
+        [
+          "APIs",
+          "All REST/GraphQL APIs run over HTTP."
+        ]
+      ],
+      "visualCap": "Request: method + URL + headers (+ body). Response: status + headers + body."
+    },
+    "api-methods": {
+      "name": "HTTP Methods — GET, POST, PUT, DELETE",
+      "desc": "HTTP methods define what action you want to perform. GET = read/fetch data (never changes anything). POST = create something new. PUT = replace/update a resource. DELETE = remove a resource.",
+      "q": "What are the four basic HTTP methods and when do you use each? Give a to-do list analogy.",
+      "qsub": "Why is POST not idempotent while GET, PUT, and DELETE are? What does this mean for retry logic?",
+      "what": "<p><b>HTTP methods</b> indicate what action the request is intended to perform. <b>GET</b> reads, <b>POST</b> creates, <b>PUT</b> replaces, <b>PATCH</b> partially updates, <b>DELETE</b> removes.</p>\n<p><b>Idempotent</b> means sending the same request repeatedly yields the same result. GET/PUT/DELETE are idempotent, POST is not (each POST creates a new resource). Safe methods (GET) do not modify data.</p>",
+      "analogy": "<b>Library</b> analogy: GET = look at a book (nothing changes), POST = register a new book (each time a new entry), PUT = replace a book with another, DELETE = remove a book.",
+      "why": "<p>Interview classic — \"What is the difference between GET/POST/PUT/DELETE?\" and proof of idempotency. Using the wrong method can trigger the first test of API design.</p>",
+      "pros": [
+        "Clear semantics — the reader understands easily.",
+        "Caching/proxies can optimize GET."
+      ],
+      "cons": [
+        "Method abuse (e.g., DELETE in GET) is a security risk.",
+        "POST’s “create” vs “action” can be fuzzy."
+      ],
+      "gotchas": [
+        "Interview: Emphasize \"PUT = full replace, PATCH = partial\"; \"POST can create a new resource or perform an action\".",
+        "Just remember: <b>GET reads, POST creates, PUT replaces, DELETE removes.</b>"
+      ],
+      "terms": [
+        [
+          "GET",
+          "Fetch data — no side-effect, safe and idempotent."
+        ],
+        [
+          "POST",
+          "Create a new resource — side-effect, not idempotent."
+        ],
+        [
+          "PUT",
+          "Replace the entire resource — idempotent."
+        ],
+        [
+          "DELETE",
+          "Delete a resource — idempotent."
+        ]
+      ],
+      "where": [
+        [
+          "REST",
+          "Methods map directly to CRUD."
+        ],
+        [
+          "Design review",
+          "Using the wrong method is an interview red flag."
+        ]
+      ],
+      "visualCap": "Method → purpose → idempotent? GET safe, PUT/DELETE repeat-safe, POST creates a new one each time."
+    },
+    "api-status": {
+      "name": "HTTP Status Codes",
+      "desc": "After you send an HTTP request, the server responds with a 3-digit number called a status code. 2xx = success. 3xx = redirect. 4xx = you made a mistake. 5xx = the server made a mistake.",
+      "q": "What are the categories of HTTP status codes and what does each signify?",
+      "qsub": "What is the difference between 401 Unauthorized and 403 Forbidden? Give concrete examples of when each would be returned.",
+      "what": "<p><b>HTTP status codes</b> are the first line of a response — they tell in a few words what happened. <b>2xx</b> = success, <b>3xx</b> = redirect/cache, <b>4xx</b> = client error (you messed up), <b>5xx</b> = server error.</p>\n<p>Interviewers ask, \"Which codes do you return in your API?\" Design decision: always using 200 versus precise codes — precise is better because the client gets the exact reason.</p>",
+      "analogy": "<b>Traffic lights</b> analogy: 2xx = green (go), 3xx = yellow (change mode), 4xx = red-1 (you are wrong), 5xx = red-2 (the path is broken). The number itself gives the prediction.",
+      "why": "<p>Understand client errors with proper status — debugging, monitoring, and SDKs all rely on this. Using \"200 + error body\" is an anti-pattern that loses interview points.</p>",
+      "pros": [
+        "The client receives the exact reason directly.",
+        "Standard — every language understands it."
+      ],
+      "cons": [
+        "Wrong codes (e.g., 200 for error) cause confusion.",
+        "Over-engineering specificity of codes can also be an issue."
+      ],
+      "gotchas": [
+        "Interview trap: distinguish 404 vs 403 (resource exists but no permission vs no access). Remember Unauthorized vs Forbidden.",
+        "Just remember: <b>2xx good, 4xx client, 5xx server.</b>"
+      ],
+      "terms": [
+        [
+          "2xx",
+          "Success — everything is fine. 200 OK, 201 Created, 204 No Content."
+        ],
+        [
+          "4xx",
+          "Client error — 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found."
+        ],
+        [
+          "5xx",
+          "Server error — 500 Internal Server Error, 502 Bad Gateway, 503 Service Unavailable."
+        ],
+        [
+          "304",
+          "Not Modified — for caching, the client’s cache is still valid."
+        ]
+      ],
+      "where": [
+        [
+          "APIs",
+          "Status of every response."
+        ],
+        [
+          "Monitoring",
+          "5xx spikes trigger alerts."
+        ]
+      ],
+      "visualCap": "1xx info, 2xx success, 3xx redirect, 4xx client error, 5xx server error.",
+      "codeSwap": [
+        [
+          "204 No Content      ->  kaam ho gaya, body nahi",
+          "204 No Content      ->  done, no body"
+        ],
+        [
+          "400 Bad Request     ->  request hi galat",
+          "400 Bad Request     ->  the request itself is wrong"
+        ],
+        [
+          "404 Not Found       ->  exists hi nahi",
+          "404 Not Found       ->  doesn't exist"
+        ],
+        [
+          "201 Created         ->  create ho gaya",
+          "201 Created         ->  created"
+        ],
+        [
+          "200 OK              ->  sab theek",
+          "200 OK              ->  all good"
+        ]
+      ]
+    },
+    "api-first-call": {
+      "name": "Make Your First API Call",
+      "desc": "The fastest way to understand an API is to call one. Use curl (a command-line tool) to make an HTTP request and see the raw response. Try: curl https://api.github.com/users/torvalds — you'll get a JSON response.",
+      "q": "How do you make an API call using curl, Postman, or fetch()? What does the raw response look like?",
+      "qsub": "Why is making a real API call important before studying REST conventions and authentication?",
+      "what": "<p>Your first API call: <code>curl https://api.github.com/users/torvalds</code>. cURL sends the request and prints the response. In the web, <code>fetch()</code> does the same work.</p>\n<p>Flow: URL (endpoint) → request (method+headers) → server processes → response (status+headers+body). Debug queue: <code>curl -i</code> view headers, <code>curl -v</code> full conversation.</p>",
+      "analogy": "<b>First phone call on a landline</b> think of it: dial the number (URL), ringing (server processing), line returns (response). Just give the correct address and the conversation happens.",
+      "why": "<p>In interviews, \"provide an example of how you made an API call\" — practical proof. cURL/fetch comfort makes interviewers instantly confident.</p>",
+      "pros": [
+        "Zero setup — the terminal is enough.",
+        "Headers/status are all visible."
+      ],
+      "cons": [
+        "Auth setup (tokens) is somewhat manual.",
+        "Code is better for complex flows."
+      ],
+      "gotchas": [
+        "Just remember: <b>URL + method + headers + body = request; status + headers + body = response.</b>"
+      ],
+      "terms": [
+        [
+          "cURL",
+          "Terminal-based HTTP client."
+        ],
+        [
+          "Endpoint",
+          "URL where the request is sent."
+        ],
+        [
+          "Response body",
+          "JSON data that the server returns."
+        ]
+      ],
+      "where": [
+        [
+          "Learning",
+          "The first API call happens right here."
+        ],
+        [
+          "Debugging",
+          "You can see every issue with cURL -v."
+        ]
+      ],
+      "visualCap": "END TO END: curl → DNS → server → response JSON."
+    },
+    "api-rest": {
+      "name": "What is REST?",
+      "desc": "REST (Representational State Transfer) is a set of conventions for building APIs on top of HTTP. A RESTful API uses URLs to identify resources, HTTP methods for actions, and returns data as JSON.",
+      "q": "What is REST and what are its key principles?",
+      "qsub": "Why is REST the default style of API design? How do GraphQL and gRPC differ from REST?",
+      "what": "<p><b>REST</b> is an architectural style — design the API as <b>resources</b>, each resource has a URL, and HTTP methods perform operations (CRUD) on it.</p>\n<p>Principles: <b>stateless</b> (client does not carry state), <b>cacheable</b>, <b>uniform interface</b> (same verbs), <b>layered system</b> (proxies/gateways between client ↔ server), <b>client-server</b> separation. REST ≠ \"a running REST API\" — real REST requires these constraints plus HATEOAS.</p>",
+      "analogy": "<b>Library catalog</b> think of it: each book = resource (URL), lookup in catalog (GET), add a book (POST), replace (PUT). You don't need to know the librarian's internal system — just follow the catalog style (uniform interface).",
+      "why": "<p>Every backend interview asks \"what is REST and its principles\" — resources, statelessness, methods. This forms the entire basis of API design.</p>",
+      "pros": [
+        "Predictable — resources + methods = easy learn.",
+        "Cacheable, scalable (stateless)."
+      ],
+      "cons": [
+        "HATEOAS is rarely fully implemented.",
+        "Over/under-fetching (the counterpoint to GraphQL)."
+      ],
+      "gotchas": [
+        "Interview trap: \"REST = just CRUD over HTTP\" is a weak answer — explain the principles (stateless, uniform interface, layers, cache).",
+        "Just remember: <b>Resource = noun, Method = verb, Server stateless.</b>"
+      ],
+      "terms": [
+        [
+          "REST",
+          "Representational State Transfer — the style of API design on HTTP."
+        ],
+        [
+          "Resource",
+          "An entity — user, order, product — addressable via a URL."
+        ],
+        [
+          "Stateless",
+          "The server does not keep client state — every request contains all needed context."
+        ],
+        [
+          "HATEOAS",
+          "Include links in the response — explore like a website."
+        ],
+        [
+          "Uniform interface",
+          "Same methods/resources — designed predictably."
+        ]
+      ],
+      "where": [
+        [
+          "Public APIs",
+          "GitHub, Stripe, Twilio are all REST-ish."
+        ],
+        [
+          "Interview",
+          "REST principles = standard question."
+        ]
+      ],
+      "visualCap": "Resources + methods = REST. Uniform interface + stateless + cacheable + layered.",
+      "codeSwap": [
+        [
+          "# state yahan hai, server pe nahi",
+          "# state is here, not on the server"
+        ]
+      ]
+    },
+    "ap1": {
+      "name": "Resource Naming Conventions",
+      "desc": "REST APIs model resources as nouns (not verbs) with hierarchical paths (/users/:id/orders). Collections are always plural. Kebab-case for multi-word resources.",
+      "q": "What are REST resource naming conventions and why is consistency important?",
+      "qsub": "Should URLs use nouns or verbs? How do you handle hierarchy, filtering, and multi-word resources in REST?",
+      "what": "<p>REST URLs are designed by giving resources <b>nouns</b> as names: <code>/users</code>, <code>/orders/123</code>. Action verbs (getUser) do not appear in the URL — actions are performed via HTTP methods (GET).</p>\n<p>Rules: keep plurals consistent (<code>/users</code>, not mixed), hierarchy reflects actual structure (<code>/users/7/orders</code>), use lowercase + kebab-case, IDs in the path. Filters or actions use query parameters or a POST endpoint.</p>",
+      "analogy": "<b>Address system</b> think of it: the hierarchy of house/street/city is like the hierarchy of URLs (resources → sub-resources). You don't write an action like \"stand here\" in the address — you stand at the house address (noun).",
+      "why": "<p>Naming any API is its first impression — inconsistent naming is instantly spotted in interviews. Things like \"Design /employees salary increment\" are decided by this convention.</p>",
+      "pros": [
+        "Consistent — URLs serve as their own documentation.",
+        "Hierarchy shows real relationships."
+      ],
+      "cons": [
+        "Deep nesting becomes ugly.",
+        "Some actions (search) are not pure resources."
+      ],
+      "gotchas": [
+        "Just remember: <b>URLs = nouns, methods = verbs, plural + lowercase + kebab.</b>"
+      ],
+      "terms": [
+        [
+          "Resource naming",
+          "URLs contain nouns (resources), not verbs."
+        ],
+        [
+          "Plural",
+          "/users not /getUser — consistent plural."
+        ],
+        [
+          "Hierarchy",
+          "Nested — /users/7/orders = user's orders."
+        ],
+        [
+          "Kebab-case",
+          "LowerCase + hyphens: /user-profiles."
+        ]
+      ],
+      "where": [
+        [
+          "REST design",
+          "URL structure is also judged in interviews."
+        ],
+        [
+          "Internal APIs",
+          "Consistency speeds up team onboarding."
+        ]
+      ],
+      "visualCap": "Nouns, plural, hierarchical, lowercase — no verbs."
+    },
+    "ap2": {
+      "name": "HTTP Method Semantics",
+      "desc": "Each HTTP method has specific semantics: GET is safe/idempotent, PUT is idempotent, POST is non-idempotent, DELETE is idempotent. Wrong method choice breaks caching and retry logic.",
+      "q": "Explain the semantics of GET, POST, PUT, PATCH, and DELETE. What does idempotency mean for each?",
+      "qsub": "How does choosing the wrong HTTP method break caching, retry logic, and client expectations?",
+      "what": "<p>Each HTTP method has a <b>contract</b>: <b>GET</b> read (safe), <b>POST</b> create (unsafe, non-idempotent), <b>PUT</b> full replace (idempotent), <b>PATCH</b> partial update (not safe, not purely idempotent), <b>DELETE</b> remove (idempotent).</p>\n<p>Why standards matter: the client can confidently retry (on network issues), cache/proxy can optimize GET, and API consumers behave predictably.</p>",
+      "analogy": "<b>TV remote</b> think of it: volume up (POST — each press creates a new effect), channel 5 set (PUT — repeat press yields the same result = idempotent), power check (GET — just view).",
+      "why": "<p>\"Idempotency\" is a touchstone in every REST interview — retry design, POST/PUT choice, and financial APIs rely on it.</p>",
+      "pros": [
+        "You get confidence to retry.",
+        "Proxy/cache is safe for GET."
+      ],
+      "cons": [
+        "PATCH partial semantics fuzzy.",
+        "POST actions (search) break idempotency."
+      ],
+      "gotchas": [
+        "Interview trap: \"Is PATCH idempotent?\" — mostly considered acceptable, see RFC; safest: PUT is idempotent, POST is not.",
+        "Just remember: <b>Safe = GET family; Idempotent = repeat gives same result.</b>"
+      ],
+      "terms": [
+        [
+          "Safe method",
+          "GET/HEAD/OPTIONS — do not change data, no side-effects."
+        ],
+        [
+          "Idempotent",
+          "Same request repeated -> result same."
+        ],
+        [
+          "Semantics",
+          "The meaning of each method is known to both server and client."
+        ]
+      ],
+      "where": [
+        [
+          "Payments",
+          "Prevents duplicate charges."
+        ],
+        [
+          "Webhooks/retries",
+          "The same event can be safely retried."
+        ]
+      ],
+      "visualCap": "Safe = does not change data; Idempotent = repeat-safe.",
+      "codeSwap": [
+        [
+          "// VS POST — har baar naya",
+          "// VS POST — new every time"
+        ]
+      ]
+    },
+    "ap3": {
+      "name": "HTTP Status Codes Guide",
+      "desc": "Status codes communicate operation result at a glance: 200 OK, 201 Created, 204 No Content, 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 409 Conflict, 500 Server Error.",
+      "q": "What are the most important HTTP status codes and when should each be returned?",
+      "qsub": "What is the difference between 401 and 403? Between 404 and 410? When would you return 409 Conflict?",
+      "what": "<p><b>Status codes guide</b> — choose the one that actually happened. Success: 200 (read), 201 (created + Location), 202 (queued/async accepted), 204 (delete/no body). Client errors: 400 (malformed), 401 (no auth), 403 (authentication present but no permission), 404 (not found), 409 (conflict), 422 (validation), 429 (rate limited). Server: 500 (generic), 502/503/504 (gateway/overload/timeout).</p>\n<p>Anti-pattern: <b>200 + \"error\": true</b> — the client has to parse the body. With the correct status, the machine also understands.</p>",
+      "analogy": "<b>Hospital reception</b> imagine: 200 = everything fine (bandage in hand), 401 = without a ticket (cannot admit), 403 = no access to the ward, 404 = such a patient does not exist, 500 = the doctor does not understand what happened.",
+      "why": "<p>Both SDK developers and operators write code patterns based on this. The interviewer asks \"do you design codes consciously?\" — precision = quality signal.</p>",
+      "pros": [
+        "Automatable — you can build monitoring/retry SDKs.",
+        "Clients get clear information."
+      ],
+      "cons": [
+        "Many edge codes = tricky consistency.",
+        "Custom branded errors are needed."
+      ],
+      "gotchas": [
+        "Interview: 404 for wrong resource type (unauthorized vs not-found deliberate information hiding).",
+        "Just remember: <b>2xx green, 4xx your fault, 5xx server's.</b>"
+      ],
+      "terms": [
+        [
+          "2xx",
+          "Success. 200 OK, 201 Created, 202 Accepted, 204 No Content."
+        ],
+        [
+          "4xx",
+          "Client fail. 400, 401, 403, 404, 409, 422, 429."
+        ],
+        [
+          "5xx",
+          "Server fail. 500, 502, 503, 504."
+        ],
+        [
+          "Retry-After",
+          "With 429, indicate how long to wait before retrying."
+        ]
+      ],
+      "where": [
+        [
+          "Design",
+          "All endpoint codes should be in the spec."
+        ],
+        [
+          "Ops",
+          "4xx count vs 5xx count monitor."
+        ]
+      ],
+      "visualCap": "Family tree: 2xx success, 3xx redirect, 4xx client, 5xx server.",
+      "codeSwap": [
+        [
+          "404 Not Found (resource nahi)",
+          "404 Not Found (no such resource)"
+        ]
+      ]
+    },
+    "ap4": {
+      "name": "Idempotency & Safe Methods",
+      "desc": "Idempotent operations produce the same result regardless of how many times applied. POST is NOT idempotent — use Idempotency-Key header for safe retry in payment and order APIs.",
+      "q": "What is idempotency and why does POST need idempotency keys for safe retry?",
+      "qsub": "How do payment APIs like Stripe implement Idempotency-Key headers and what happens on duplicate requests?",
+      "what": "<p><b>Safe methods</b> do not change state (read-only) — the browser can pre-fetch, cache. <b>Idempotent methods</b> produce the same result on repeat — network retry safe. GET/PUT/DELETE are idempotent; POST is not.</p>\n<p>To make POST idempotent, the client sends an <b>Idempotency-Key</b> — the server stores the key in memory and on a duplicate key returns the original result. This is standard in payment systems like Stripe.</p>",
+      "analogy": "<b>ATM withdraw vs balance check</b>: balance check (GET) can be performed any number of times with the same result — safe. \"Print a new 40-rupee statement\" (POST) creates a new slip each time — risky. \"Print statement number 5\" (PUT) is repeat-safe.",
+      "why": "<p>Network/Double-Submit bugs are the most common production issues. \"How do you prevent duplicate POST?\" — the idempotency-key answer gives you standing in an interview.</p>",
+      "pros": [
+        "Retry safely — zero duplicate states.",
+        "SDK simplicity (auto retries)."
+      ],
+      "cons": [
+        "Key storage + expiry management.",
+        "Some teams forget the full-replace semantics of PUT."
+      ],
+      "gotchas": [
+        "Interview: Safe != Idempotent — GET safe & idempotent, PUT/DELETE idempotent but NOT safe.",
+        "Just remember: <b>Guard POST with an Idempotency-Key; safe = read-only.</b>"
+      ],
+      "terms": [
+        [
+          "Safe",
+          "Data/data-structure does not change — GET, HEAD, OPTIONS."
+        ],
+        [
+          "Idempotent",
+          "First and subsequent are the same — PUT, DELETE."
+        ],
+        [
+          "POST",
+          "Neither safe nor idempotent (default)."
+        ],
+        [
+          "Idempotency-Key",
+          "Client header — makes POST repeat-safe."
+        ]
+      ],
+      "where": [
+        [
+          "Payments/orders",
+          "Double order risk."
+        ],
+        [
+          "Message queues",
+          "Exactly-once delivery."
+        ]
+      ],
+      "visualCap": "POST guarded by Idempotency-Key: same key => same response."
+    },
+    "ap5": {
+      "name": "Richardson Maturity Model",
+      "desc": "Richardson Maturity Model measures REST maturity across 4 levels: Level 0 (RPC), Level 1 (Resources), Level 2 (HTTP Verbs), Level 3 (HATEOAS with hypermedia controls).",
+      "q": "Explain the Richardson Maturity Model. What level do most production APIs target and why?",
+      "qsub": "What is HATEOAS and why is Level 3 (\"true REST\") rare in practice despite being the ideal?",
+      "what": "<p><b>Richardson Maturity Model</b> measures how RESTful an API is on a scale of 0-4 (0 to 3): <b>L0</b> a generic endpoint for everything, <b>L1</b> resources are separated, <b>L2</b> proper use of methods and status codes, <b>L3</b> HATEOAS (hypermedia links) — tells the client what it can do next.</p>\n<p>In practical interviews, L2 is a key milestone — you can claim \"it's RESTful\". L3 rarely ships fully, but demonstrating understanding adds a plus.</p>",
+      "analogy": "<b>Restaurant evolution</b>: L0 = a single window where everything is ordered (phone order with no menu); L1 = separate stalls (chaat, paratha); L2 = menu + proper ordering etiquette (verbs + statuses); L3 = menu with \"you will get these combos\" recommendations (links).",
+      "why": "<p>Interviewer: \"How RESTful is it?\" — this model proves mature design. Naming the levels and examples provides a solid answer.</p>",
+      "pros": [
+        "Clear rubric — agree where you are.",
+        "L2 baseline practical."
+      ],
+      "cons": [
+        "L3/HATEOAS operational complexity.",
+        "Some argue it isn’t worth the effort (discoverability)."
+      ],
+      "gotchas": [
+        "Just remember: <b>L2 = verbs + status codes; L3 = links (HATEOAS).</b>"
+      ],
+      "terms": [
+        [
+          "Level 0",
+          "HTTP tunnel — POX (Plain Old XML), just one endpoint."
+        ],
+        [
+          "Level 1",
+          "Resources — separate URLs for each thing."
+        ],
+        [
+          "Level 2",
+          "HTTP verbs — full use of GET/POST/PUT/DELETE + status codes."
+        ],
+        [
+          "Level 3",
+          "HATEOAS — links in the response, discoverability."
+        ]
+      ],
+      "where": [
+        [
+          "REST assessment",
+          "Framework-agnostic design quality."
+        ],
+        [
+          "Architecture discussions",
+          "Evolutionary (outline)."
+        ]
+      ],
+      "visualCap": "L0 → L3: tunnel → resources → verbs+codes → hypermedia."
+    },
+    "ap6": {
+      "name": "Pagination: Cursor vs Offset",
+      "desc": "Offset pagination (?offset=0&limit=20) is simple but breaks under concurrent data changes. Cursor pagination (?cursor=abc123) is stable and uses index-based lookups for speed.",
+      "q": "Compare cursor-based vs offset-based pagination. What are the tradeoffs and when should you use each?",
+      "qsub": "Why does offset pagination cause duplicate records under concurrent writes? How do Stripe and Twitter handle pagination?",
+      "what": "<p><b>Offset</b> pagination: page + limit. Simple but <b>deep offset slow</b> (DB scans last rows), and on live data pages shift (new rows cause duplicates). <b>Cursor</b>: an opaque token = \"from this point the next batch\", DB-index-friendly, stable with inserts.</p>\n<p>Best for large/stable datasets: cursor. Best for small/admin UIs: offset. Returning next cursor + has_more in the response is standard.</p>",
+      "analogy": "<b>Books on a shelf</b>: offset = \"need books 21-40\" — each time count all and skip; cursor = a book-band bookmark — \"from this band onward\" — quick. Constant search, sparse rows, no scan.",
+      "why": "<p>Scalability interview regular: \"Table with 1 M rows — which pagination?\" Cursor = performance relationship. Plus the design of responses (next token) matters.</p>",
+      "pros": [
+        "Cursor: O(1) index seek, no skip.",
+        "Offset: simple, page-number UI."
+      ],
+      "cons": [
+        "Cursor opaque & total-count hard.",
+        "Offset slow deep + shifting pages."
+      ],
+      "gotchas": [
+        "Interview: sort must be stable for cursor (created_at + id ties) else duplicates.",
+        "Just remember: <b>Timeline/interview-size: cursor. Admin: offset.</b>"
+      ],
+      "terms": [
+        [
+          "Offset pagination",
+          "?page=2&limit=20 — skip N rows."
+        ],
+        [
+          "Cursor pagination",
+          "?cursor=abc — \"from this point onward\"."
+        ],
+        [
+          "Cursors",
+          "Tokens on a stable keyspace — inserts do not shift."
+        ],
+        [
+          "Total count",
+          "Aggregate info — can be costly."
+        ]
+      ],
+      "where": [
+        [
+          "Feeds/timelines",
+          "Cursor best (live inserts)."
+        ],
+        [
+          "Admin tables",
+          "Offset fine + page numbers."
+        ]
+      ],
+      "visualCap": "Offset: page jumps (shift risk). Cursor: token-based stable walk.",
+      "codeSwap": [
+        [
+          " total count kabhi kabhi bada: /users?page=1&includeTotal=true",
+          " total count is sometimes big: /users?page=1&includeTotal=true"
+        ]
+      ]
+    },
+    "ap7": {
+      "name": "Filtering, Sorting & Field Selection",
+      "desc": "Standardize query parameters for data shaping: ?status=active (filter), ?sort=-created_at (sort), ?fields=id,name,email (sparse fieldsets). Consistent naming makes APIs predictable.",
+      "q": "How do you design filtering, sorting, and field selection in REST APIs?",
+      "qsub": "What are sparse fieldsets and why are they critical for mobile API clients with limited bandwidth?",
+      "what": "<p><b>Query params</b> for data shaping: <b>filter</b> (select rows), <b>sort</b> (order), <b>fields</b> (subset of columns — save bandwidth on mobile). This is called a \"query language\", but keep it simple.</p>\n<p>Patterns: filter keys should match resource fields, operator syntax (eq, gt, in, contains) if filters are complex, sort with +/- for asc/desc, fields as comma list. Specify defaults and max limit.</p>",
+      "analogy": "<b>Supermarket aisle</b> imagine: filter = only the dairy section, sort = arrange by price, fields = need the brand name, not the ingredients. And the app (consumer) picks only the products that match its use case.",
+      "why": "<p>APIs that need scalable clients (mobile, reports) use field/sparse selection. In an interview \"how would you build search/filter\" — a structured answer showcases design skills.</p>",
+      "pros": [
+        "Client control — fetches only needed.",
+        "Performance — DB query mapping direct."
+      ],
+      "cons": [
+        "Too-many-options = spec overkill.",
+        "Custom operator syntax consistency."
+      ],
+      "gotchas": [
+        "Interview: sorting on an unindexed column is slow — indexed values are fast.",
+        "Just remember: <b>filter rows, sort order, fields columns — via query params.</b>"
+      ],
+      "terms": [
+        [
+          "Filtering",
+          "?status=paid — narrow rows."
+        ],
+        [
+          "Sorting",
+          "?sort=-created_at — order."
+        ],
+        [
+          "Field selection",
+          "?fields=id,name — lean responses."
+        ],
+        [
+          "Nested filters",
+          "?age=gte:18 — operators in values."
+        ]
+      ],
+      "where": [
+        [
+          "List endpoints",
+          "Almost universal."
+        ],
+        [
+          "Mobile APIs",
+          "Bandwidth is limited — fields selection."
+        ]
+      ],
+      "visualCap": "GET /orders?status=paid&sort=-total&fields=id,total,created"
+    },
+    "ap8": {
+      "name": "Error Response Standardization (RFC 7807)",
+      "desc": "RFC 7807 standardizes error responses as { type, title, status, detail, instance }. Enables machine-readable error handling so clients write one handler for all errors.",
+      "q": "What is RFC 7807 (Problem Details) and how does it standardize API error responses?",
+      "qsub": "Why is standardizing error responses important for client developers? Show a before/after comparison.",
+      "what": "<p>Standardize error responses so that <b>SDKs can parse errors from any API in the same way</b>. The format consists of: <code>type</code> (error category URI), <code>status</code>, <code>title</code>, <code>detail</code>, <code>instance</code>, and extra fields (errors array for validation).</p>\n<p>Benefits: documentation auto-generation, reusable error-handling code, caching by type. Response: <code>application/problem+json</code> — the media type defined by RFC 7807.</p>",
+      "analogy": "<b>Hospital prescription</b> imagine: diagnosis code (type: \"P-102\"), severity (status), description (title/detail), patient name (instance) — doctors (clients) know exactly what to do without reading instructions each time.",
+      "why": "<p>Production APIs format errors in many different ways — using RFC 7807 as a common standard is recognized by interviewers.</p>",
+      "pros": [
+        "Consistent parsing — SDK eazy.",
+        "Documentation +++."
+      ],
+      "cons": [
+        "Custom extras allowed but limited.",
+        "Migrating legacy errors can be messy."
+      ],
+      "gotchas": [
+        "Just remember: <b>type/status/title/detail/instance — problem+json.</b>"
+      ],
+      "terms": [
+        [
+          "RFC 7807",
+          "Problem Details — standardized error format."
+        ],
+        [
+          "type/status",
+          "Machine-readable type + HTTP status."
+        ],
+        [
+          "title/detail",
+          "Human readable message."
+        ],
+        [
+          "instance",
+          "Which request/URI it occurred on (debugging)."
+        ]
+      ],
+      "where": [
+        [
+          "Public APIs",
+          "Spec-first platforms (Stripe-ish)."
+        ],
+        [
+          "SDK teams",
+          "Error handling one code path."
+        ]
+      ],
+      "visualCap": "One error shape across the whole API = client happy."
+    },
+    "ap9": {
+      "name": "Request Validation & Schema Checking",
+      "desc": "Validate all inputs against a schema (JSON Schema, Zod, Joi) before processing. Reject early with clear error messages. Never trust client input — validate at the controller boundary.",
+      "q": "Why is request validation critical for API security? What tools exist for schema validation?",
+      "qsub": "What security vulnerabilities arise from missing input validation? How do Zod and Joi infer types from schemas?",
+      "what": "<p><b>Request validation</b> = protecting the server from incorrect input. Layers: size limit (body), type (string/number), enum (status field), format (email/date), structure (required fields). Tools: schema validators (JSON Schema/OpenAPI, or Zod in JS, Pydantic in Python).</p>\n<p>The parser is your first line of defense — <b>defense in depth</b>: validate on entry, don’t trust. Keep the error format consistent (field + reason).</p>",
+      "analogy": "<b>Airport security</b>: boarding pass (schema shape), ID check (format/type), bag X-ray (contents valid). Verify at every checkpoint — a single weak point puts the whole plane at risk.",
+      "why": "<p>Both security and developer experience: a validated API is safe and gives clients clear errors. In an interview \"how would you handle invalid JSON\" — answer with schema validation.</p>",
+      "pros": [
+        "Avoids garbage in, garbage out.",
+        "Clear 422 errors = good DX."
+      ],
+      "cons": [
+        "Over-validation = brittle changes.",
+        "Unexpected schema changes cause problems."
+      ],
+      "gotchas": [
+        "Just remember: <b>Validate at the gate, not inside; use 422 for field errors.</b>"
+      ],
+      "terms": [
+        [
+          "Validation",
+          "Request data check — type, range, enum, shape."
+        ],
+        [
+          "Schema",
+          "Blueprint of fields and rules."
+        ],
+        [
+          "Sanitize",
+          "Normalize input into a safe form."
+        ],
+        [
+          "422 vs 400",
+          "422 = structure valid, values fail; 400 = structure itself is invalid."
+        ]
+      ],
+      "where": [
+        [
+          "Every POST/PUT body",
+          "Create/update endpoints."
+        ],
+        [
+          "OpenAPI validators",
+          "Fastify/Zod/Pydantic etc."
+        ]
+      ],
+      "visualCap": "Input → validate → sanitate → process; bad input rejected early."
+    },
+    "ap10": {
+      "name": "Content Negotiation",
+      "desc": "Clients specify desired format via Accept header (application/json, application/protobuf). Servers respond with matching Content-Type. Enables supporting multiple formats from one endpoint.",
+      "q": "What is content negotiation and how does the Accept/Content-Type header mechanism work?",
+      "qsub": "How does content negotiation enable API evolution alongside breaking format changes?",
+      "what": "<p><b>Content negotiation</b> — the client indicates what it accepts (<code>Accept: application/json</code>), and the server specifies the actual body format with <code>Content-Type</code>. Multiple formats: JSON, XML, plain text.</p>\n<p>Best practice: JSON default, other formats via headers, response <code>Content-Type</code> must be precise. When variants exist, include <code>Vary: Accept</code> for caching.</p>",
+      "analogy": "<b>Ordering from a waiter</b> imagine: \"I want North Indian\" (Accept), the waiter says \"here is the 7-spice dish\" (Content-Type) and serves. If you only say Jain, the chef adjusts (negotiate).",
+      "why": "<p>Interview: \"When to use JSON, XML, or something else?\" plus caching variants. Knowing these headers signals a mature API developer.</p>",
+      "pros": [
+        "One endpoint, many formats.",
+        "Client control precise."
+      ],
+      "cons": [
+        "More formats = more test matrix.",
+        "Vary header caching complexity."
+      ],
+      "gotchas": [
+        "Just remember: <b>Accept = request header, Content-Type = response header.</b>"
+      ],
+      "terms": [
+        [
+          "Content negotiation",
+          "Client/server decide how to choose content type."
+        ],
+        [
+          "Accept",
+          "Client: \"send this format\"."
+        ],
+        [
+          "Content-Type",
+          "Server: \"this is the format in the body\"."
+        ],
+        [
+          "Vary: Accept",
+          "Directive to include the Accept header in the cache key."
+        ]
+      ],
+      "where": [
+        [
+          "Formats",
+          "JSON/XML/CSV endpoints."
+        ],
+        [
+          "Caching",
+          "Vary: Accept with caches."
+        ]
+      ],
+      "visualCap": "Accept (request) → Content-Type (response) = format contract."
+    },
+    "ap11": {
+      "name": "JWT Structure & Stateless Auth",
+      "desc": "JWT is a self-contained token: base64(header).base64(payload).signature. No server-side session needed for verification — stateless auth verified in under 1ms with no DB query.",
+      "q": "What is a JWT and how does it enable stateless authentication?",
+      "qsub": "How does a server verify a JWT without a database lookup? What are the tradeoffs of JWT vs opaque tokens for session management?",
+      "what": "<p><b>JWT</b> = encoded JSON claims that the server signs. Parts: <code>header</code> (alg), <code>payload</code> (claims: sub, exp, role), <code>signature</code> (secret/public key). The client holds the token and sends <code>Authorization: Bearer &lt;token&gt;</code> with each request.</p>\n<p><b>Stateless advantages</b>: the server does not need a session store, distributed scaling is easy. Therefore: token expires (short-lived access + refresh), signature algorithm pinned (RS256), secrets are secure.</p>",
+      "analogy": "<b>Waterpark wristband</b>: the band (token) has name and expiry printed, and the guard at entry verifies it without a database (using the signature). If the band is damaged or expired, it must be returned or replaced. The server does not need to maintain a list.",
+      "why": "<p>JWT is the most common authentication topic in interviews: structure, stateless pros/cons, expiry, refresh flow. Senior roles focus on claims versus session and the revocation dilemma.</p>",
+      "pros": [
+        "Stateless — no server session store.",
+        "Structures — claims self-contained."
+      ],
+      "cons": [
+        "Revocation hard (must wait expiry).",
+        "Payload readable (no secrets in claims)."
+      ],
+      "gotchas": [
+        "Interview: token blacklist is not ideal (loss of statelessness); short expiration plus refresh solves it.",
+        "Just remember: <b>header.payload.signature; verify signature, check exp.</b>"
+      ],
+      "terms": [
+        [
+          "JWT",
+          "JSON Web Token — signed token (header, payload, signature)."
+        ],
+        [
+          "Stateless",
+          "Server verifies the token, does not keep state."
+        ],
+        [
+          "Signature",
+          "Signed with a secret — digitally tamper-proof."
+        ],
+        [
+          "Exp",
+          "Expiry — the token's \"expiry date\"."
+        ],
+        [
+          "Payload",
+          "Claims — sub, exp, role, etc."
+        ]
+      ],
+      "where": [
+        [
+          "SPA auth",
+          "Bearer tokens stateless scale."
+        ],
+        [
+          "Service-to-service",
+          "Machine identity (mTLS/JWT)."
+        ]
+      ],
+      "visualCap": "header.payload.signature — verify, parse, trust claims."
+    },
+    "ap12": {
+      "name": "OAuth 2.0 Flows",
+      "desc": "OAuth2 defines authorization flows: Authorization Code (server-side apps), PKCE (mobile/SPA with no client_secret), Client Credentials (service-to-service with no user context).",
+      "q": "Explain the OAuth 2.0 Authorization Code flow. What problem does PKCE solve?",
+      "qsub": "What is the difference between Authorization Code and Client Credentials grants? When would you use each?",
+      "what": "<p><b>OAuth 2.0</b>: the user does not give a password, the app receives <b>scoped tokens</b>. Flow (Authorization Code + PKCE): 1) the app redirects the user to the auth server, 2) the user logs in and consents, 3) the auth server gives the app a code (via redirect URI), 4) the app exchanges the code for a token. The token carries scopes.</p>\n<p>Flows: <b>Auth Code</b> (web/native), <b>Auth Code + PKCE</b> (public clients — SPA/mobile), <b>Client Credentials</b> (machine), <b>Implicit</b> (legacy, avoid). Token types: access (short), refresh (long, rotation).</p>",
+      "analogy": "<b>Hotel room card</b>: you (resource owner) give the app (client) a card — the card provides scoped access (room + gym, but not the spa). OAuth is the card-issuing system with scopes.",
+      "why": "<p>Any \"login with Google\" system uses OAuth. Interview: flows, when to use which, CSRF protection in OAuth, token refresh.</p>",
+      "pros": [
+        "User password na do.",
+        "Scoped tokens — least privilege."
+      ],
+      "cons": [
+        "Complex flows (redirects).",
+        "Token expiry/refresh dance."
+      ],
+      "gotchas": [
+        "Just remember: <b>Auth Code + PKCE main flow; Client Credentials machine.</b>"
+      ],
+      "terms": [
+        [
+          "OAuth 2.0",
+          "Delegated authorization framework — give your data to another app (scoped)."
+        ],
+        [
+          "Authorization Code",
+          "Main flow — redirect + code + token exchange."
+        ],
+        [
+          "PKCE",
+          "Code challenge for public clients — makes the code theft-proof."
+        ],
+        [
+          "Scopes",
+          "Subset of permissions — \"os.read\" \"os.upload\"."
+        ],
+        [
+          "Client Credentials",
+          "Server-to-server — app itself identity."
+        ]
+      ],
+      "where": [
+        [
+          "Third-party login",
+          "Google/GitHub Login."
+        ],
+        [
+          "Enterprise (SSO)",
+          "OIDC on top of OAuth."
+        ]
+      ],
+      "visualCap": "User ─ grant → App ─ code → Auth Server ─ tokens → App → Resource Server."
+    },
+    "ap13": {
+      "name": "API Keys vs Bearer Tokens",
+      "desc": "API keys identify the calling application (long-lived, static). Bearer tokens (JWT) authenticate a specific user session (short-lived, 15-60 min). Choosing wrong causes security holes.",
+      "q": "When should you use API keys vs bearer tokens for API authentication?",
+      "qsub": "Why should API keys never be placed in URLs? How do you manage API key rotation without downtime?",
+      "what": "<p><b>API keys</b>: long-lived opaque keys — project identity (per-key limit, tracking). Simple, public analytics etc. <b>Bearer tokens</b>: short-lived signed tokens per user/session, scoped, revocable, expiring.</p>\n<p>Choice: server-to-server internal = API keys; user-context auth = bearer/JWT. Keys should always be sent in the <code>Authorization</code>/<code>X-API-Key</code> header, never in the URL (leaks via logs).</p>",
+      "analogy": "<b>Gym membership vs day pass</b>: API key = membership card (long term, project), bearer token = day pass (short, revocable anytime). The stadium needs to check the pass and its expiry.",
+      "why": "<p>Interview \"what's the difference between API key and token\" — authentication decisions are everyday. Scope + expiry + rotation indicate security maturity.</p>",
+      "pros": [
+        "Keys: simple + stable identity.",
+        "Tokens: scoped + revocable."
+      ],
+      "cons": [
+        "Keys: expiry hard, leak impact high.",
+        "Tokens: refresh dance needs infra."
+      ],
+      "gotchas": [
+        "Just remember: <b>keys = long project identity; tokens = short revocable sessions.</b>"
+      ],
+      "terms": [
+        [
+          "API Key",
+          "Opaque identifier — \"who you are\" (project)."
+        ],
+        [
+          "Bearer Token",
+          "Short-lived, revocable — \"who is acting + session\"."
+        ],
+        [
+          "Scopes",
+          "Limits on the token — least privilege."
+        ],
+        [
+          "Rotation",
+          "Periodic replacement of keys/tokens."
+        ],
+        [
+          "Secrets",
+          "Where keys are stored — environment side, vault/secret manager."
+        ]
+      ],
+      "where": [
+        [
+          "Server-to-server",
+          "API keys (partner integrations)."
+        ],
+        [
+          "User actions",
+          "Bearer/JWT per user."
+        ]
+      ],
+      "visualCap": "API Key = long-lived project; Bearer = expiring user session."
+    },
+    "ap14": {
+      "name": "RBAC, ABAC & Permission Scoping",
+      "desc": "RBAC assigns permissions to roles, roles to users. ABAC uses attribute-based policies evaluating user, resource, and environment attributes for fine-grained control.",
+      "q": "Compare RBAC and ABAC. When would you choose one over the other?",
+      "qsub": "What is role explosion in RBAC and how does ABAC solve it? What complexity tradeoffs does ABAC introduce?",
+      "what": "<p><b>RBAC</b>: user → role → permissions. Simple, predictable, admin-assigned. <b>ABAC</b>: policies (PDP) evaluate attributes (user department, resource owner, IP, time) — flexible for fine-grained control (resource owner write only, manager department).</p>\n<p>API level: <b>scopes</b> (during OAuth/token) get appropriate permissions; middleware checks. Map roles to scopes, or ABAC policies.</p>",
+      "analogy": "<b>Office badges</b>: RBAC = floor access by designation (badge L1/L2/L3), ABAC = dynamic (meeting room booked + timing + team), scopes = \"can read finances\" tags on the badge itself.",
+      "why": "<p>Interview: multi-user APIs — authorization design (roles, tenants, resource-owner). \"Which user gets which access\" = layering.</p>",
+      "pros": [
+        "RBAC: simple, auditable.",
+        "ABAC: expressive fine-grain."
+      ],
+      "cons": [
+        "RBAC: coarse, role explosion.",
+        "ABAC: policy complexity + tooling."
+      ],
+      "gotchas": [
+        "Just remember: <b>RBAC roles; ABAC attributes; always check resource-owner + tenant.</b>"
+      ],
+      "terms": [
+        [
+          "RBAC",
+          "Role-Based Access Control — role = permission bundle (admin, editor)."
+        ],
+        [
+          "ABAC",
+          "Attribute-Based — policies on user/resource/context attributes."
+        ],
+        [
+          "Scopes",
+          "Fine-grained API permissions."
+        ],
+        [
+          "Permission scoping",
+          "Least privilege — minimum required access."
+        ]
+      ],
+      "where": [
+        [
+          "Multi-tenant apps",
+          "Scopes + tenant isolation."
+        ],
+        [
+          "Enterprise",
+          "SAML/AD to roles."
+        ]
+      ],
+      "visualCap": "User → Role → Permissions (RBAC) | ABAC = attribute policies."
+    },
+    "ap15": {
+      "name": "Rate Limiting Strategies",
+      "desc": "Rate limits prevent abuse. Token Bucket allows bursts, Leaky Bucket smooths traffic, Sliding Window gives precise per-window counts. Always return X-RateLimit-* headers to clients.",
+      "q": "Explain Token Bucket, Leaky Bucket, and Sliding Window rate limiting algorithms. What are the tradeoffs?",
+      "qsub": "What rate limit headers should your API return? How does the Retry-After header help clients avoid thundering herd?",
+      "what": "<p><b>Rate limiting</b> prevents API abuse/overload: per key/user, per second/minute. Algorithms: <b>token bucket</b> (burst allowed, steady refill), <b>fixed window</b> (simple, boundary spike), <b>sliding window</b> (fairer).</p>\n<p>Response headers: <code>X-RateLimit-Limit/Remaining/Reset</code>, errors <code>429 + Retry-After</code>. Distributed: Redis + Lua atomic ops. Give quota per tier (free/premium).</p>",
+      "analogy": "<b>Buffet counter</b> think of it: token bucket = each person gets a plate but at a fixed rate (chef serves a small breakfast); 429 = \"wait 30 seconds to fill the plate\". Distributed = kitchen counters synchronized via ledger.",
+      "why": "<p>In interviews, production APIs need burst protection, per-client enforcement, quotas. Distributed rate limiting is a system design talking point.</p>",
+      "pros": [
+        "Stops abuse, keeps SLO stable.",
+        "Revenue control (tiers)."
+      ],
+      "cons": [
+        "Distributed limits consistency.",
+        "Legitimate bursts blocked."
+      ],
+      "gotchas": [
+        "Just remember: <b>429 + Retry-After + X-RateLimit headers; token bucket classic.</b>"
+      ],
+      "terms": [
+        [
+          "Rate limit",
+          "Per user/key requests/time window."
+        ],
+        [
+          "429",
+          "Too Many Requests — status + Retry-After."
+        ],
+        [
+          "Token bucket",
+          "Algorithm — bucket capacity + refill rate."
+        ],
+        [
+          "Sliding window",
+          "Better fairness than fixed window."
+        ]
+      ],
+      "where": [
+        [
+          "Public APIs",
+          "Abuse protection standard."
+        ],
+        [
+          "Tiered plans",
+          "Free/Premium quotas."
+        ]
+      ],
+      "visualCap": "Token bucket: capacity C, refill r/s. Over limit → 429."
+    },
+    "ap16": {
+      "name": "URI vs Header Versioning",
+      "desc": "URI versioning (/v1/users) is explicit and easy to route but pollutes URLs. Accept header versioning keeps URLs clean but is invisible to browsers and harder to debug.",
+      "q": "Compare URI versioning, Accept header versioning, and query param versioning. Which is most common?",
+      "qsub": "Why should you never version by subdomain (v1.api.com)? How does Stripe handle API versioning at scale?",
+      "what": "<p><b>URI versioning</b>: <code>/v1/users</code>, <code>/v2/users</code> — explicit, cache-friendly, most popular. <b>Header versioning</b>: content-negotiation style (<code>Accept: application/vnd.api.v2+json</code>) — cleaner URL but invisible in logs/docs.</p>\n<p>Practical: URI /v1 major breaking changes; additive changes (new fields/endpoints) don't need version bump. Keep old versions alive with deprecation schedule.</p>",
+      "analogy": "<b>Flagship vs legacy store</b>: /v1 = old shop, /v2 = new building — customers (clients) decide which branch to visit (URL). Header variant = same signboard with menu change (Accept header).",
+      "why": "<p>Interview: what contract breaking is, which version strategy to use, deprecation process. \"Happy clients, safer evolution\" decision matrix.</p>",
+      "pros": [
+        "URI: explicit, cache/log friendly.",
+        "Header: cleaner URLs."
+      ],
+      "cons": [
+        "Multi-version code cost.",
+        "Header: invisible hardening."
+      ],
+      "gotchas": [
+        "Just remember: <b>URI /vN major; additive never bumps.</b>"
+      ],
+      "terms": [
+        [
+          "URI versioning",
+          "/v1/users — major version in URL."
+        ],
+        [
+          "Header versioning",
+          "Accept: application/vnd.api.v2+json / X-API-Version."
+        ],
+        [
+          "SemVer-ish",
+          "Major = breaking, minor = additive."
+        ],
+        [
+          "Deprecation",
+          "Old version announce + migration window."
+        ]
+      ],
+      "where": [
+        [
+          "Public APIs",
+          "Versioning almost mandatory."
+        ],
+        [
+          "Internal monoliths",
+          "Can afford header/internal routes."
+        ]
+      ],
+      "visualCap": "URI: /v1 → /v2 (breaking). Additive = no bump."
+    },
+    "ap17": {
+      "name": "Backward Compatibility",
+      "desc": "APIs should be additive-first: new optional fields, new endpoints, new params. Never rename, remove, or change types of existing fields. Deprecate before removing with Sunset headers.",
+      "q": "What makes an API change backward compatible? What changes are always breaking?",
+      "qsub": "How do you deprecate a field without breaking existing clients? What is the Sunset header (RFC 8594)?",
+      "what": "<p><b>Backward compatibility</b> means changing the API so that old clients do not break. <b>Additive</b> (safe): new optional fields, new endpoints, expanded enums. <b>Breaking</b>: removing/renaming/retyping a field, changing status codes, changing behavior.</p>\n<p>Rules: new fields optional unless defaulted; don't change types/order; pagination cursors stable; eviction headers not removed. Breaking change = new version + deprecation.</p>",
+      "analogy": "<b>Building renovation</b>: adding new elevators (additive) works for the whole building; but changing the elevator shaft width (breaking) breaks existing residents. Therefore first announce, then migrate, then dismantle.",
+      "why": "<p>Interview: \"how would you change an API without breaking clients\" — additive-first mindset is senior-level. Handling unknown client contracts.</p>",
+      "pros": [
+        "Clients upgrade at their pace.",
+        "Trust in API provider."
+      ],
+      "cons": [
+        "Code burden maintaining old path.",
+        "Additive-first discipline hard."
+      ],
+      "gotchas": [
+        "Interview: defaulted new optional fields ARE additive; changing behavior of existing call is breaking.",
+        "Just remember: <b>additive safe, breaking = version + sunset.</b>"
+      ],
+      "terms": [
+        [
+          "Additive change",
+          "New fields/endpoints — old clients safe."
+        ],
+        [
+          "Breaking change",
+          "Field rename/removal, type change, behavior change."
+        ],
+        [
+          "Contract",
+          "Client solid expectation — fields/types/semantics."
+        ],
+        [
+          "Compatibility",
+          "New version does not break old clients."
+        ]
+      ],
+      "where": [
+        [
+          "Evolution",
+          "API lifecycle core."
+        ],
+        [
+          "Public SDKs",
+          "Versioned SDKs are released."
+        ]
+      ],
+      "visualCap": "Additive = safe; Breaking = version bump + sunset."
+    },
+    "ap18": {
+      "name": "Webhook Versioning & Delivery",
+      "desc": "Webhooks deliver event notifications to client-registered URLs with at-least-once delivery. Include api_version in payload, HMAC signature for authenticity, and unique event IDs for deduplication.",
+      "q": "How do you design a reliable webhook system with versioning, retries, and delivery guarantees?",
+      "qsub": "How do clients verify webhook authenticity using HMAC signatures? What is the retry schedule for failed deliveries?",
+      "what": "<p><b>Webhooks</b>: server pushes events to the client’s URL (reverse of polling). Client registers a URL; on an event the server <code>POST /url</code> with payload + signature. <b>Versioning</b>: event name (v1), payload shape (additive only), delivery semantics (at-least-once).</p>\n<p>Best practices: signature (HMAC-SHA256 header), idempotency (delivery-id), retries with backoff, dead-letter, subscriber verifies signature.</p>",
+      "analogy": "<b>News ticker</b> think of it: you (subscriber) don’t buy a newspaper every day — a paper boy (webhook) delivers to your home when a new issue arrives. Payload version = newspaper edition format; at-least-once = duplicates can occur, so dedupe with delivery-id.",
+      "why": "<p>Interview: \"searching API polling vs webhook vs SSE\" — webhook delivery design (retries, signatures, ordering) is common senior question.</p>",
+      "pros": [
+        "Realtime push — no polling.",
+        "Client scales by its own infra."
+      ],
+      "cons": [
+        "Retry/delivery infra complex.",
+        "Ordering not guaranteed."
+      ],
+      "gotchas": [
+        "Just remember: <b>signed + idempotent + retry/backoff; event.version additive.</b>"
+      ],
+      "terms": [
+        [
+          "Webhook",
+          "Reverse API — server pushes callback to URL."
+        ],
+        [
+          "Delivery",
+          "event → POST to subscriber URL."
+        ],
+        [
+          "Retries",
+          "Non-2xx → retry with backoff."
+        ],
+        [
+          "Signature",
+          "Verify authenticity (HMAC + payload)."
+        ],
+        [
+          "Event vs payload version",
+          "Event type vs shape versions."
+        ]
+      ],
+      "where": [
+        [
+          "Stripe, GitHub",
+          "Event-driven integrations."
+        ],
+        [
+          "Microservices",
+          "Async notifications."
+        ]
+      ],
+      "visualCap": "Event → HTTP POST to subscriber URL, signed, with delivery-id."
+    },
+    "ap19": {
+      "name": "API Deprecation Lifecycle",
+      "desc": "API deprecation follows: announce (blog/docs/email) → Deprecation + Sunset headers → read-only mode → 410 Gone. Minimum 12-month notice for breaking changes.",
+      "q": "What is the proper API deprecation lifecycle? How do you communicate breaking changes to developers?",
+      "qsub": "Why should you return 410 Gone instead of 404 for deprecated endpoints? What tools auto-warn about Deprecation headers?",
+      "what": "<p><b>API deprecation lifecycle</b>: announce (release notes, email, headers) → keep working with warnings → sunset after deadline → remove/redirect. Headers: <code>Deprecation: true</code>, <code>Sunset: date</code> on old endpoints so clients/monitoring detect.</p>\n<p>Think: version contract (v1 is dead), migration guide, per-client outreach (top consumers), stats (usage dropped?). Remove only when safe.</p>",
+      "analogy": "<b>Bus route closure</b>: first notice (deprecation), then a temporary diverted route (migration), after the deadline remove the route. Give passengers (clients) time to learn the new route.",
+      "why": "<p>Interview: \"you introduced a new API version, what happens to the old one\" — lifecycle QC = production responsibility signal.</p>",
+      "pros": [
+        "Clients prepared, no surprise break.",
+        "Trust + adoption of new versions."
+      ],
+      "cons": [
+        "Dead code lingering.",
+        "Active usage monitoring required."
+      ],
+      "gotchas": [
+        "Just remember: <b>Deprecation:true + Sunset header + successor link.</b>"
+      ],
+      "terms": [
+        [
+          "Deprecation",
+          "Announce — old behavior sunset schedule."
+        ],
+        [
+          "Sunset header",
+          "Deprecation / Sunset HTTP headers."
+        ],
+        [
+          "Migration window",
+          "Time to update clients."
+        ],
+        [
+          "Breaking removal",
+          "Phase out after N months with notices."
+        ]
+      ],
+      "where": [
+        [
+          "Public APIs",
+          "Deprecation policy standard."
+        ],
+        [
+          "SDK lifecycle",
+          "Versioned package sunset."
+        ]
+      ],
+      "visualCap": "Announce → warn (Sunset header) → sunset → remove."
+    },
+    "ap20": {
+      "name": "HTTP Caching (ETag, Cache-Control)",
+      "desc": "ETag (hash-based) and Last-Modified (timestamp-based) enable conditional requests returning 304 Not Modified. Cache-Control sets client/CDN caching policy — can cut server load by 90%.",
+      "q": "How do ETags and Cache-Control headers enable HTTP caching? What happens during a conditional request?",
+      "qsub": "What is the difference between public, private, no-cache, and no-store Cache-Control directives?",
+      "what": "<p><b>HTTP caching</b> saves both client + server. <code>Cache-Control: public, max-age=3600</code> — browsers/CDNs cache TTL. <code>ETag</code> — weak validator; client sends <code>If-None-Match</code> and gets <code>304</code> if unchanged (payload skip).</p>\n<p>Auth responses — <code>private</code> + <code>no-store</code>. Variants: <code>Vary: Accept</code>. REVALIDATION (ETag) > TTL (max-age) for stale consistency.</p>\n<p>Analogy: cache = your notebook where the first copy is stored; max-age = \"check again after 24 hours\"; ETag = book edition number — \"if you say this edition is good\" the library replies 304 \"yes, it's the same, copy it\".</p>",
+      "analogy": "<b>Library book catalog</b>: cache = your notebook where the first copy is stored; max-age = \"check again after 24 hours\"; ETag = book edition number — \"if you say this edition is good\" the library replies 304 \"yes, it's the same, copy it\".",
+      "why": "<p>Interview: \"How would you make the API faster?\" cache + ETag. Correct cache headers = performance with explicit control.</p>",
+      "pros": [
+        "Huge latency/bandwidth savings.",
+        "Server load down."
+      ],
+      "cons": [
+        "Stale data risk — policy decisions.",
+        "Vary/Purge complexity."
+      ],
+      "gotchas": [
+        "Just remember: <b>ETag + 304 = revalidate; max-age = TTL; no-store for private.</b>"
+      ],
+      "terms": [
+        [
+          "ETag",
+          "Resource version hash — If-None-Match."
+        ],
+        [
+          "Cache-Control",
+          "max-age, no-store, private — caching policy."
+        ],
+        [
+          "304 Not Modified",
+          "Cache valid — server hash match."
+        ],
+        [
+          "Vary",
+          "Response variant by header (e.g. Accept)."
+        ]
+      ],
+      "where": [
+        [
+          "Read-heavy APIs",
+          "GET optimization."
+        ],
+        [
+          "CDN edge",
+          "Cache-Control on public assets."
+        ]
+      ],
+      "visualCap": "ETag validator + Cache-Control policy = fewer round trips."
+    },
+    "ap21": {
+      "name": "Bulk Operations & Async Processing",
+      "desc": "Bulk endpoints accept arrays of operations (/users/batch) to avoid N+1 request overhead. For slow operations, return 202 Accepted with a status URL the client polls for completion.",
+      "q": "How do you design batch endpoints and async processing patterns? When would you use 202 Accepted?",
+      "qsub": "How do you communicate progress for async operations? What is the 207 Multi-Status response for batch results?",
+      "what": "<p><b>Bulk</b>: multiple resources in a single request (POST /orders/batch with array, or 2000 rows upload). Saves round-trips; response per-item results. <b>Async</b>: slow work (video transcode, report gen) — accept quickly (<code>202 Accepted</code> + <code>Location: /jobs/123</code>), process background, client polls status.</p>\n<p>Patterns: bulk step-limit (e.g. max 1000), partial success (per-item status), async = job queue + status + callback/webhook on done.</p>",
+      "analogy": "<b>Laundry service</b>: bulk = put 20 items in one bag (single request queue), async = large order \"ready by 2 PM\" — you receive a tracking number (job ID) and don’t have to wait at the machine.",
+      "why": "<p>Interview: \"video upload processing\" — 202 + job queue + status + webhook is the canonical system design answer.</p>",
+      "pros": [
+        "Bulk: fewer round trips, throughput.",
+        "Async: instant ack, decoupled."
+      ],
+      "cons": [
+        "Batch limits & partial failures.",
+        "Job storage + cleanup."
+      ],
+      "gotchas": [
+        "Just remember: <b>202 + jobId + poll/webhook; batch = per-item results.</b>"
+      ],
+      "terms": [
+        [
+          "Bulk operations",
+          "Batch of items in one request — POST /batch, arrays."
+        ],
+        [
+          "Async processing",
+          "Long tasks: 202 Accepted + job status endpoint."
+        ],
+        [
+          "Idempotency keys",
+          "Bulk/async retry-safe."
+        ],
+        [
+          "Polling",
+          "Client GET /jobs/{id} to track."
+        ]
+      ],
+      "where": [
+        [
+          "Data imports/exports",
+          "Reports, ETL."
+        ],
+        [
+          "Media processing",
+          "Transcode, thumbnails."
+        ]
+      ],
+      "visualCap": "POST /jobs → 202 + jobId → client polls → result."
+    },
+    "ap22": {
+      "name": "Retry & Backoff Strategies",
+      "desc": "Clients retry on 429/5xx with exponential backoff (delay = base * 2^n + jitter). Circuit breakers stop calling failing services after N failures and probe periodically for recovery.",
+      "q": "What is exponential backoff with jitter? How does a circuit breaker differ from simple retries?",
+      "qsub": "Why is it dangerous to retry POST requests without idempotency keys? What is the thundering herd problem?",
+      "what": "<p><b>Retry with exponential backoff + jitter</b> is the reliability pattern: on transient errors (429, 503, timeout) retry, increase wait (1 s → 2 s → 4 s), add <b>jitter</b> random ± so all clients don’t hit at once (thundering herd).</p>\n<p>Must-have: retry only idempotent requests (or Idempotency-Key), respect Retry-After, max attempts (3-5), circuit breaker for long outages.</p>",
+      "analogy": "<b>Zoo with a cracker and a phone booth</b>: \"try again after 1 s, then 2 s, then 4 s...\" — but if everyone queues, random jitter prevents them from arriving together. Until the circuit breaker says \"closed for 2 min\".",
+      "why": "<p>Interview: \"service down, how should clients behave\" — backoff + jitter + circuit breaker pattern answer. \"Rate limit retry\" specific.</p>",
+      "pros": [
+        "Self-healing — no manual alerts.",
+        "Jitter distributes load."
+      ],
+      "cons": [
+        "Worsens overload if wrong.",
+        "Non-idempotent retries risky."
+      ],
+      "gotchas": [
+        "Just remember: <b>backoff + jitter + max retries; retry only idempotent/429/503.</b>"
+      ],
+      "terms": [
+        [
+          "Retry",
+          "Transient failure pe request repeat."
+        ],
+        [
+          "Backoff",
+          "Wait time increase between retries."
+        ],
+        [
+          "Jitter",
+          "Random add — avoids thundering herd."
+        ],
+        [
+          "Max retries",
+          "3-5 typically — only on idempotent."
+        ],
+        [
+          "Exponential",
+          "2x wait each attempt: 1 s, 2 s, 4 s..."
+        ]
+      ],
+      "where": [
+        [
+          "Networks",
+          "Transient failures standard."
+        ],
+        [
+          "Rate limits",
+          "429 respected."
+        ]
+      ],
+      "visualCap": "Wait: 1 s → 2 s → 4 s → 8 s (+ jitter), then give up."
+    },
+    "ap27": {
+      "name": "Input Sanitization & Injection Prevention",
+      "desc": "Sanitize and parameterize all inputs. Use parameterized queries (prepared statements) for DB access — never concatenate SQL strings. Escape HTML entities to prevent XSS on user-displayed content.",
+      "q": "How do SQL injection, NoSQL injection, and XSS attacks work? How do you prevent each?",
+      "qsub": "Why do parameterized queries prevent SQL injection while escaping does not? What is the OWASP Top 10 guidance?",
+      "what": "<p><b>Injection prevention</b> the simple rule: <b>never trust input, never concatenate</b>. SQL: parameterized queries/prepared statements (never string concat). Shell/OS/HTML injection: escape per context or avoid. <strong>Validation</strong> (shape) separate from <strong>sanitization</strong> (content clean).</p>\n<p>Layers: allowlist validation, parameterized DB calls, ORM abstractions, output encoding (HTML entity for React etc.), least privilege DB user, scan with OS tools (SQLMap-ish).</p>",
+      "analogy": "<b>Kitchen guest</b>: the guest says they created a recipe book... SQL injection = the guest's extra recipe line (OR 1=1) in the book of your dish — then you use a prepared recipe (parameterized) that treats the guest's text as an ingredient, not \"cook me\" instruction.",
+      "why": "<p>OWASP #1 SQL injection — interview security basics. \"How to validate/sanitize input\" — parameterization is non-negotiable answer.</p>",
+      "pros": [
+        "OWASP top risk closed.",
+        "Safe by construction."
+      ],
+      "cons": [
+        "Legacy string queries migration.",
+        "Some ORM magic can hide issues."
+      ],
+      "gotchas": [
+        "Interview: entity-encoding is output-only; parameterization for storage. Both needed.",
+        "Just remember: <b>parameterize queries; escape outputs by context.</b>"
+      ],
+      "terms": [
+        [
+          "Injection",
+          "User input executed as a query or code."
+        ],
+        [
+          "SQL injection",
+          "input containing \" OR 1=1 -- which creates usable SQL."
+        ],
+        [
+          "Sanitization",
+          "Input clean/normalize — whitelist chars."
+        ],
+        [
+          "Parameterized queries",
+          "without building SQL strings — prepared statements."
+        ],
+        [
+          "Escaping",
+          "encode according to the output context."
+        ]
+      ],
+      "where": [
+        [
+          "Any database query",
+          "Non-negotiable."
+        ],
+        [
+          "Public input surfaces",
+          "Search, import, webhooks."
+        ]
+      ],
+      "visualCap": "Never concatenate user input into queries/code — parameterize + escape by context.",
+      "svgSwap": [
+        [
+          "input = data, kabhi code nahi",
+          "input = data, never code"
+        ]
+      ]
+    },
+    "ap28": {
+      "name": "API Gateways",
+      "desc": "An API Gateway sits in front of backend services handling cross-cutting concerns: auth, rate limiting, logging, routing, and request transformation. Kong and AWS API Gateway are common options.",
+      "q": "What is an API Gateway and what cross-cutting concerns does it handle?",
+      "qsub": "What is the difference between an API Gateway (north-south traffic) and a Service Mesh (east-west traffic)?",
+      "what": "<p><b>API Gateway</b>: API's front entry point that handles cross-cutting concerns: authentication/API keys, rate limiting, request routing, response caching, logging/metrics, transformations, WAF/security.</p>\n<p>Benefits: backend microservices stay clean (no repeated auth logic), abuse protection first, client contract stable. Trade-off: extra hop latency, gateway can become a bottleneck if not scaled, vendor/FaaS coupling.</p>",
+      "analogy": "<b>Airport security + check-in counter</b>: gateway = a building that handles every traveller (request) — ID check (auth), baggage limit (rate limit), route gate (routing), x-ray (WAF) — and then sends them to the correct aircraft (backend), without each service having its own guard.",
+      "why": "<p>Interview: every microservice architecture has gateway — auth/rate limit routing centralized. \"Why gateway, not direct to services\" — functional answer.</p>",
+      "pros": [
+        "Central policy — one place.",
+        "Backend stays lean."
+      ],
+      "cons": [
+        "Extra hop + config complexity.",
+        "Becomes bottleneck/power if fat."
+      ],
+      "gotchas": [
+        "Just remember: <b>gateway = auth + limits + routing + cache all in one place.</b>"
+      ],
+      "terms": [
+        [
+          "API Gateway",
+          "Single entry — auth, rate limit, routing, caching, WAF."
+        ],
+        [
+          "Edge",
+          "CDN-level — latency low, scale high."
+        ],
+        [
+          "Backend split",
+          "Gateway → services."
+        ],
+        [
+          "Policy",
+          "Authentication, quotas, API keys, transformations."
+        ]
+      ],
+      "where": [
+        [
+          "Microservices",
+          "Almost standard."
+        ],
+        [
+          "Partner APIs",
+          "Per-partner keys/quotas."
+        ]
+      ],
+      "visualCap": "Clients → Gateway (auth, limits, cache, route) → Services."
+    },
+    "ap29": {
+      "name": "OpenAPI/Swagger & Spec-First Design",
+      "desc": "OpenAPI is a standard, language-agnostic interface for REST APIs. Spec-first design: write openapi.yaml first, then generate docs (Swagger UI), client SDKs, and contract tests automatically.",
+      "q": "What is OpenAPI and how does spec-first API design work?",
+      "qsub": "What tools can generate interactive docs, client SDKs, and contract tests from an OpenAPI spec?",
+      "what": "<p><b>OpenAPI/Swagger</b>: API's blueprint — endpoints, parameters, schemas, security, examples. Spec-first: develop contract first (docs/mock/server), then implement — <b>contract = single source of truth</b>.</p>\n<p>Benefits: auto-docs (Swagger UI), codegen servers/clients (typed stubs), validation (request against spec), versioning visibility, mock servers for parallel development.</p>",
+      "analogy": "<b>Blueprint vs building</b>: OpenAPI = architect's blueprint (rooms, wiring, doors) — contractor (code) builds from the blueprint. Spec-first = first finalize the blueprint, then construct — any tool (docs, mocks, SDKs) can autogenerate from the blueprint.",
+      "why": "<p>Interview: \"how you document\" — spec-first answer with names (OpenAPI, Swagger). Contract testing + codegen improves developer experience. Tools: Stoplight, Prism mock.</p>",
+      "pros": [
+        "Documents itself — zero drift (if enforced).",
+        "Mock/codegen = fast dev."
+      ],
+      "cons": [
+        "Spec drift if code-first.",
+        "Spec quality = maintenance cost."
+      ],
+      "gotchas": [
+        "Just remember: <b>spec = contract; docs/mocks/clients all come from it.</b>"
+      ],
+      "terms": [
+        [
+          "OpenAPI",
+          "3.0/3.1 — machine-readable API spec (YAML/JSON)."
+        ],
+        [
+          "Swagger UI",
+          "Generated interactive docs."
+        ],
+        [
+          "Spec-first",
+          "First spec, then code — contract-aligned."
+        ],
+        [
+          "Codegen",
+          "SDKs/clients/stubs automate."
+        ],
+        [
+          "Client generation",
+          "OpenAPI Generator → typed clients."
+        ]
+      ],
+      "where": [
+        [
+          "Public APIs",
+          "Spec mandatory."
+        ],
+        [
+          "SDK teams",
+          "Codegen typed clients."
+        ]
+      ],
+      "visualCap": "OpenAPI spec → docs + mocks + clients + validation."
+    },
+    "websocket-api": {
+      "name": "WebSocket API Design — protocols, rooms, reconnection, scaling",
+      "desc": "WebSocket provides full-duplex communication over a single TCP connection. Design: authenticate on HTTP upgrade, use rooms/channels for pub-sub, handle reconnection with exponential backoff. Scale with Redis pub-sub or NATS. Socket.IO adds abstraction (fallback, rooms, namespaces).",
+      "q": "How do you design a WebSocket API for a real-time chat application? How do you handle authentication?",
+      "qsub": "What is the difference between WebSocket and Socket.IO? How do you scale WebSockets across multiple server instances?",
+      "what": "<p><b>WebSocket</b>: HTTP upgrade — permanent connection, <b>both client and server can push</b> (full-duplex), low latency — chat, games, live collaboration, trading. Init: <code>GET ... Upgrade: websocket</code> → <code>101</code> → binary/text frames.</p>\n<p>Design: rooms/channels (publish-subscribe pattern), <b>heartbeats</b> (ping-pong) to detect dead connections, reconnect with backoff + resubscribe rooms, message schema (type + payload) versioned, scaling: sticky sessions / all nodes broadcast (Redis pub-sub / gateway).</p>",
+      "analogy": "<b>Walkie-talkie vs letter courier</b>: WebSocket = live walkie-talkie conversation (both sides instantly), REST polling = sending a letter each time and waiting for a reply. Room = your walkie channel (all crew members on the same frequency).",
+      "why": "<p>Interview: realtime systems — choices (WS vs polling vs SSE), rooms, reconnection strategy, scaling with multiple nodes.</p>",
+      "pros": [
+        "Low latency bidirectional.",
+        "Efficient — one connection."
+      ],
+      "cons": [
+        "Stateful — scaling tricky.",
+        "Proxies/timeouts, NAT, ops complexity."
+      ],
+      "gotchas": [
+        "Just remember: <b>101 upgrade, rooms, heartbeat, backoff reconnect.</b>"
+      ],
+      "terms": [
+        [
+          "WebSocket",
+          "Persistent full-duplex TCP connection — HTTP upgrade."
+        ],
+        [
+          "Upgrade",
+          "101 Switching Protocols."
+        ],
+        [
+          "Channels/Rooms",
+          "Grouped sockets (room = topic)."
+        ],
+        [
+          "Heartbeat",
+          "Ping/Pong — detect dead connections."
+        ],
+        [
+          "Reconnection",
+          "Exponential backoff + resubscribe."
+        ]
+      ],
+      "where": [
+        [
+          "Chat / notifications",
+          "Classic use."
+        ],
+        [
+          "Games / live collab",
+          "Trading, editors, dashboards."
+        ]
+      ],
+      "visualCap": "Client ↔ server persistent full-duplex; rooms group sockets."
+    },
+    "file-upload": {
+      "name": "File Upload API — multipart/form-data, presigned URLs, chunked upload",
+      "desc": "multipart/form-data for small files. Presigned URLs (S3/GCS) for large files — client uploads directly to storage. Chunked upload for very large files — resume on failure. Use Content-Disposition for filename, Content-Type for MIME type validation.",
+      "q": "How do you design a file upload API for large files (100MB+)? What is the presigned URL pattern?",
+      "qsub": "What is the difference between multipart/form-data and presigned URL upload? How do you handle chunked upload resumption?",
+      "what": "<p><b>File upload</b> options: 1) <b>multipart/form-data</b> — server receives file (small, fine). 2) <b>Presigned URL</b> — client directly uploads to S3/GCS (large, server load 0, per-file signature + expiry). 3) <b>Chunked/resumable</b> — big files in parts, resume on network drop (tus protocol).</p>\n<p>Must: size + type limits on both sides, virus scan asynchronously, filename sanitization (no path traversal), store metadata (bucket key in DB), serve via signed URL/CDN with caching.</p>",
+      "analogy": "<b>Courier vs warehouse</b>: multipart = you give the package to a courier (office mail desk — small is fine), presigned = a warehouse temporary dock voucher that you hand directly to the delivery person (server workaround) — all traffic goes directly from the customer, chunked = a large crate is split into parts, sent, then assembled (resume).",
+      "why": "<p>Interview: \"how to upload a profile picture / video\" — presigned URLs + chunking + scanning; avoid overtaxed app server.</p>",
+      "pros": [
+        "Presigned: server offloaded.",
+        "Chunked: resume broken uploads."
+      ],
+      "cons": [
+        "Scanning/size policy needed.",
+        "Multiple storages ordering."
+      ],
+      "gotchas": [
+        "Just remember: <b>small=multipart, large=presigned, huge=chunks + scan server-side.</b>"
+      ],
+      "terms": [
+        [
+          "multipart/form-data",
+          "File + fields in a single request."
+        ],
+        [
+          "Presigned URL",
+          "Server-signed temporary direct-to-S3/OSS upload URL."
+        ],
+        [
+          "Chunked upload",
+          "Large files — parts can be resumed."
+        ],
+        [
+          "MIME validation",
+          "Type check (but never trust client-only)."
+        ]
+      ],
+      "where": [
+        [
+          "Avatars/attachments",
+          "multipart or presigned."
+        ],
+        [
+          "Video/backups",
+          "Chunked + resume."
+        ]
+      ],
+      "visualCap": "multipart → app (small) | presigned → storage direct (large/bulk)."
+    },
+    "streaming-api": {
+      "name": "Streaming APIs — SSE, chunked transfer, streaming responses",
+      "desc": "Server-Sent Events (SSE) for server-to-client streaming over HTTP. Chunked Transfer-Encoding for streaming response bodies. Streaming APIs for LLM responses, large dataset exports, real-time logs. Use cases: AI chat, live feeds, progress updates.",
+      "q": "How do you implement Server-Sent Events in a REST API? When would you use SSE vs WebSocket?",
+      "qsub": "What is chunked transfer encoding? How do you handle streaming responses in a load balancer setup?",
+      "what": "<p><b>Streaming APIs</b>: response body keeps flowing — low TTFB. <b>SSE</b>: server→client push (event stream, auto-reconnect by EventSource). <b>Chunked transfer</b>: overall length unknown, pieces (HTTP/1.1). <b>Streaming LLM responses</b>: token by token as generated.</p>\n<p>Formats: SSE lines (<code>id/event/data</code>), JSONL (each line one JSON), NDJSON. Design: process cursor + keep-alive comments, reconnect semantics, backpressure.</p>",
+      "analogy": "<b>Fruit shop delivery vs CRT berry</b>: normal = whole crate at once (wait for full response); streaming = as food is ready, each plate is sent (first fruit early). SSE = food from the kitchen is pushed by the waiter to your table (one-way), no need to call the waiter repeatedly.",
+      "why": "<p>Interview: LLM APIs, dashboards, notifications — streaming choices (SSE/WS/polling) & chunked transport. Show choice logic.</p>",
+      "pros": [
+        "Low latency TTFB.",
+        "SSE: simple HTTP retry."
+      ],
+      "cons": [
+        "One-way only (SSE).",
+        "Proxies/timeouts careful."
+      ],
+      "gotchas": [
+        "Just remember: <b>SSE = one-way HTTP stream; chunked = no-length stream; keep-alive + reconnect.</b>"
+      ],
+      "terms": [
+        [
+          "SSE",
+          "Server-Sent Events — server → client one-way over HTTP."
+        ],
+        [
+          "text/event-stream",
+          "Content-Type — format of the events stream."
+        ],
+        [
+          "Chunked transfer",
+          "Transfer-Encoding: chunked — body length unknown, pieces."
+        ],
+        [
+          "Streaming responses",
+          "LLM-style token-by-token generation."
+        ]
+      ],
+      "where": [
+        [
+          "LLM chat",
+          "Token streaming."
+        ],
+        [
+          "Live dashboards",
+          "Server push metrics."
+        ]
+      ],
+      "visualCap": "HTTP response chunks: server pushes events → client consumes progressively."
+    },
+    "ap23": {
+      "name": "CQRS & Event Sourcing",
+      "desc": "CQRS separates read and write models into different databases — optimized for each workload. Event Sourcing stores every state change as an append-only event log, enabling audit and time travel.",
+      "q": "What is CQRS and how does Event Sourcing differ? When are these patterns justified?",
+      "qsub": "How does CQRS solve the problem of read queries competing with write queries? What is eventual consistency?",
+      "what": "<p><b>CQRS</b>: writes use one model (commands), reads use another (queries) — optimized independently (read replica, projections). <b>Event Sourcing</b>: do not store system state directly — <b>append events</b> (OrderPlaced, PaymentCaptured). Current state = events replay/snapshot.</p>\n<p>Why: commands and reads have separate load/scale; events provide audit, rebuild (new projection), and time travel. Cost: eventual consistency gap, event complexity.</p>",
+      "analogy": "<b>Bank statement</b>: you treat transactions (events) as the true record, not the balance (state). Balance = snapshot computed from transactions. CQRS = \"account balance read\" and \"deposit write\" on separate systems.",
+      "why": "<p>Interview senior/distributed: rebuilding projections, audit trails, complex reads scalable design. High marks when you mention trade-offs.</p>",
+      "pros": [
+        "Audit + rebuild + time travel.",
+        "Read/write scale separately."
+      ],
+      "cons": [
+        "Eventual consistency gap.",
+        "Complexity high for simple apps."
+      ],
+      "gotchas": [
+        "Interview: don't bolt CQRS/ES on CRUD apps — say when justified.",
+        "Just remember: <b>events = truth, projections = reads; CQRS splits models.</b>"
+      ],
+      "terms": [
+        [
+          "CQRS",
+          "Command Query Responsibility Segregation — reads/writes separate models."
+        ],
+        [
+          "Read model",
+          "Optimized for queries (denormalized, cache)."
+        ],
+        [
+          "Event Sourcing",
+          "State = append-only event log; current state = replay."
+        ],
+        [
+          "Snapshot",
+          "Periodic capture to avoid repeated replay."
+        ]
+      ],
+      "where": [
+        [
+          "High-read systems",
+          "Separate query models."
+        ],
+        [
+          "Audit/regulatory",
+          "Event log as source of truth."
+        ]
+      ],
+      "visualCap": "Commands + Events → projections (read model / snapshots)."
+    },
+    "ap24": {
+      "name": "REST vs GraphQL vs gRPC",
+      "desc": "REST is resource-oriented (separate URLs per resource). GraphQL is query-oriented (one endpoint, client specifies fields). gRPC is contract-oriented (protobuf binary, streaming, fast).",
+      "q": "Compare REST, GraphQL, and gRPC. When would you choose each?",
+      "qsub": "Why is GraphQL better for complex UIs while gRPC is better for internal microservices? What are the downsides of each?",
+      "what": "<p><b>REST</b>: simple, cacheable, layered, resource-oriented — standard web/HTTP. <b>GraphQL</b>: nested data in a single query, eliminates over-fetching, single /graphql endpoint; cons: caching is hard, N+1 problem, complexity. <b>gRPC</b>: protobuf schema, HTTP/2, typed, streaming, efficient — best for internal services.</p>\n<p>Choice: public web API = REST; complex client data shapes = GraphQL; internal microservices/streaming = gRPC. Hybrid layers (BFF) are common.</p>",
+      "analogy": "<b>Meal:</b> REST = a-la-carte restaurant (fixed menu dishes — all dishes listed on the menu), GraphQL = \"I want tomorrow’s mango, juice size\" custom thali (only what I want), gRPC = factory cafeteria binary meal packs (standardized, fast, precise portions).",
+      "why": "<p>Interview classic: \"Which API style to use when\" — decide by client type, caching, streaming, type-safety. Show trade-off awareness.</p>",
+      "pros": [
+        "REST: simple + cache. GraphQL: no over-fetch. gRPC: fast + typed."
+      ],
+      "cons": [
+        "REST: N+1 no. GraphQL: cache/security. gRPC: tooling + HTTP no."
+      ],
+      "gotchas": [
+        "Interview: don't say \"always GraphQL\" — say when cache/simplicity wins, use REST.",
+        "Just remember: <b>REST for web, GraphQL for shapes, gRPC for internal streaming.</b>"
+      ],
+      "terms": [
+        [
+          "REST",
+          "Resources + HTTP — simple, cacheable, standard."
+        ],
+        [
+          "GraphQL",
+          "Single endpoint, client-defined shape queries."
+        ],
+        [
+          "gRPC",
+          "Binary protocol (protobuf), typed, bidirectional streaming, low latency."
+        ],
+        [
+          "BFF",
+          "Backend-for-Frontend — per-client aggregation."
+        ]
+      ],
+      "where": [
+        [
+          "Web public",
+          "REST."
+        ],
+        [
+          "Complex clients",
+          "GraphQL (mobile/frontend shapes)."
+        ],
+        [
+          "Internal services",
+          "gRPC (low latency, typed)."
+        ]
+      ],
+      "visualCap": "REST: many endpoints. GraphQL: ONE endpoint (shape by client). gRPC: binary + streaming."
+    },
+    "ap25": {
+      "name": "CORS Configuration",
+      "desc": "CORS (Cross-Origin Resource Sharing) controls browser-based cross-origin requests. Preflight OPTIONS asks server for permission. Never reflect origin blindly — validate against an allowlist.",
+      "q": "What is CORS and how does the preflight OPTIONS request work?",
+      "qsub": "Why is Access-Control-Allow-Origin: * incompatible with credentials: true? How do you properly configure CORS?",
+      "what": "<p><b>Same-origin policy</b> is the browser default. <b>CORS</b> lets the server say \"the origin has access\". Simple requests (GET/basic headers) go directly; others <b>preflight</b> OPTIONS first, then the main request.</p>\n<p>Config: <code>Access-Control-Allow-Origin</code> (specific origin, not * with credentials), <code>Allow-Methods</code>, <code>Allow-Headers</code>, <code>Allow-Credentials: true</code> (cookies), handle <code>Vary: Origin</code>. Wildcard * = no credentials.</p>",
+      "analogy": "<b>Office main gate</b> imagine: browser (security guard) lets you in only if the visitor list (CORS) mentions your badge ID (origin). Cross-origin request without a pass = blocked; preflight = \"show the pass first, I will check\".",
+      "why": "<p>Interview: \"why the frontend's API call is blocked\" — the debugging answer. CORS is a server-side header, not a frontend fix.</p>",
+      "pros": [
+        "Enable browser clients safely.",
+        "Serve under token with headers."
+      ],
+      "cons": [
+        "Preflight cost (2 requests).",
+        "Wildcard tempting but unsafe."
+      ],
+      "gotchas": [
+        "Just remember: <b>specific origin + credentials; preflight = OPTIONS; Vary: Origin.</b>"
+      ],
+      "terms": [
+        [
+          "CORS",
+          "Cross-Origin Resource Sharing — the browser's door guard."
+        ],
+        [
+          "Origin",
+          "Protocol + domain + port."
+        ],
+        [
+          "Preflight",
+          "OPTIONS request before real request (non-simple)."
+        ],
+        [
+          "Access-Control-*",
+          "Allow-Origin/Allow-Methods/Allow-Headers/Allow-Credentials."
+        ]
+      ],
+      "where": [
+        [
+          "SPA + API separate domains",
+          "Almost every web app."
+        ],
+        [
+          "API gateways",
+          "Central CORS policy."
+        ]
+      ],
+      "visualCap": "Browser asks server CORS → server Allow-Origin → response."
+    },
+    "ap26": {
+      "name": "CSP, CSRF & API Hardening",
+      "desc": "CSP (Content Security Policy) prevents XSS by restricting resource origins. CSRF tokens prevent unauthorized state-changing requests. SameSite cookie attribute is the modern CSRF protection.",
+      "q": "What are CSRF and CSP? How do they protect APIs from web attacks?",
+      "qsub": "How does the SameSite cookie attribute prevent CSRF? What is the double-submit cookie pattern?",
+      "what": "<p><b>Hardening headers</b>: CSP (script-src/source whitelist, block inline eval), <code>X-Frame-Options</code> (framing block), <code>Strict-Transport-Security</code>, <code>Referrer-Policy</code>, <code>X-Content-Type-Options: nosniff</code>. <b>CSRF</b>: symmetric cookie-session APIs — protect with <code>SameSite=Lax/Strict</code>, CSRF tokens, double-submit cookie.</p>\n<p>CSP for APIs is mostly N/A (headers matter for browsers); for SPAs + APIs: set CSP, HSTS, secure cookies, SameSite.</p>",
+      "analogy": "<b>School security</b>: CSP = authorized supplier list (which scripts are allowed), CSRF = exam-time fake form \"wish Caesar\" that performs actions without the user knowing — SameSite cookie = \"block forms from foreign sites\", frame = \"only within the school building\".",
+      "why": "<p>Interview security bucket: CORS+CSP+CSRF — which layer for which attack. Know header names + default protections by browser flags.</p>",
+      "pros": [
+        "Multiple layers blocking attacks.",
+        "Configurable without code rewrite."
+      ],
+      "cons": [
+        "CSP strict break inline scripts.",
+        "Headers hard to test perfectly."
+      ],
+      "gotchas": [
+        "Interview: don't mix CSRF tokens with pure token auth (Bearer) — cookies are the vulnerable path.",
+        "Just remember: <b>CSP whitelists; SameSite+token stops CSRF; HSTS forces https.</b>"
+      ],
+      "terms": [
+        [
+          "CSP",
+          "Content Security Policy — tells the browser what is allowed to load."
+        ],
+        [
+          "CSRF",
+          "Cross-Site Request Forgery — invisible action on the user's session."
+        ],
+        [
+          "SameSite",
+          "Cookie attribute — cross-site requests block."
+        ],
+        [
+          "Clickjacking",
+          "X-Frame-Options / frame-ancestors."
+        ],
+        [
+          "Headers",
+          "X-Frame-Options, HSTS, Referrer-Policy."
+        ]
+      ],
+      "where": [
+        [
+          "Browser-facing APIs",
+          "Security headers."
+        ],
+        [
+          "Banking flows",
+          "CSRF tokens + verification."
+        ]
+      ],
+      "visualCap": "Headers: CSP, HSTS, X-Frame-Options, SameSite cookies.",
+      "svgSwap": [
+        [
+          "HSTS + nosniff + Referrer-Policy yaad rakho",
+          "remember HSTS + nosniff + Referrer-Policy"
+        ]
+      ]
+    }
+  }
+}

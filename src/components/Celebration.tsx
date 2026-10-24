@@ -5,7 +5,7 @@ import { Ring } from './Rail'
 import { MILESTONES, type Snap, type Step } from '../lib/celebrate'
 import { sfx } from '../lib/sound'
 import { DAY, dayKey, levelOf, useProgress } from '../lib/store'
-import { tr } from '../lib/i18n'
+import { t } from '../lib/i18n'
 
 export interface CelebrationData {
   title: string
@@ -57,7 +57,7 @@ export function Celebration({ data, actions }: { data: CelebrationData; actions:
       {step === 'goal' && <GoalScreen />}
       {step === 'level' && <LevelScreen level={data.next.level} />}
       <div className="done-actions celebrate-actions">
-        {last ? actions : <button className="btn btn-green" autoFocus onClick={() => { sfx.tap(); setI(i + 1) }}>Continue</button>}
+        {last ? actions : <button className="btn btn-green" autoFocus onClick={() => { sfx.tap(); setI(i + 1) }}>{t('common.continue')}</button>}
       </div>
     </div>
   )
@@ -66,18 +66,18 @@ export function Celebration({ data, actions }: { data: CelebrationData; actions:
 function Summary({ d }: { d: CelebrationData }) {
   const xp = useCountUp(0, d.xp, 900, 250)
   const acc = useCountUp(0, d.accuracy, 900, 450)
-  const say = d.perfect ? tr('Flawless! Ek bhi galti nahi 🔥') : d.accuracy >= 70 ? tr('Badhiya kaam!') : tr('Dohrane se pakka ho jayega')
+  const say = d.perfect ? t('celebration.flawless') : d.accuracy >= 70 ? t('celebration.niceWork') : t('celebration.repeat')
   return (
     <>
       <Confetti count={d.perfect ? 100 : 55} />
       <Mascot mood="cheer" size={130} say={say} />
       <h1 className="pop-in">{d.title}</h1>
       {d.subtitle && <p className="muted">{d.subtitle}</p>}
-      {d.perfect && <span className="perfect-badge">⭐ PERFECT LESSON</span>}
+      {d.perfect && <span className="perfect-badge">{t('celebration.perfectBadge')}</span>}
       <div className="done-stats">
-        <div className="dstat xp stat-in" style={{ animationDelay: '.15s' }}><small>TOTAL XP</small><b>⚡ {xp}</b></div>
-        <div className="dstat acc stat-in" style={{ animationDelay: '.35s' }}><small>{d.accuracy >= 90 ? 'AMAZING' : 'ACCURACY'}</small><b>🎯 {acc}%</b></div>
-        <div className="dstat time stat-in" style={{ animationDelay: '.55s' }}><small>SPEED</small><b>⏱️ {mmss(d.seconds)}</b></div>
+        <div className="dstat xp stat-in" style={{ animationDelay: '.15s' }}><small>{t('celebration.totalXp')}</small><b>⚡ {xp}</b></div>
+        <div className="dstat acc stat-in" style={{ animationDelay: '.35s' }}><small>{d.accuracy >= 90 ? t('celebration.amazing') : t('celebration.accuracy')}</small><b>🎯 {acc}%</b></div>
+        <div className="dstat time stat-in" style={{ animationDelay: '.55s' }}><small>{t('celebration.speed')}</small><b>⏱️ {mmss(d.seconds)}</b></div>
       </div>
     </>
   )
@@ -88,7 +88,7 @@ function StreakScreen({ d }: { d: CelebrationData }) {
   const [now] = useState(() => Date.now())
   const n = useCountUp(Math.max(0, d.next.streak - 1), d.next.streak, 700, 600)
   const milestoneRaw = MILESTONES[d.next.streak]
-  const milestone = milestoneRaw ? tr(milestoneRaw) : undefined
+  const milestone = milestoneRaw ? t(milestoneRaw) : undefined
   const dow = (new Date(now).getDay() + 6) % 7 // Mon=0
   const week = Array.from({ length: 7 }, (_, k) => {
     const t = now + (k - dow) * DAY
@@ -104,7 +104,7 @@ function StreakScreen({ d }: { d: CelebrationData }) {
         {milestone && <div className="streak-owl"><Mascot mood="cheer" size={92} /></div>}
       </div>
       <div className="streak-num"><span>{n}</span></div>
-      <h2 className="streak-title">{tr('din ka streak!')}</h2>
+      <h2 className="streak-title">{t('celebration.dayStreakSuffix')}</h2>
       {milestone && <p className="milestone-line">{milestone}</p>}
       <div className="week-card">
         {week.map((w, k) => (
@@ -114,8 +114,8 @@ function StreakScreen({ d }: { d: CelebrationData }) {
           </div>
         ))}
       </div>
-      <p className="muted small">{milestone ? tr('Kal bhi aana — streak bachaye rakho!') : tr('Roz thoda — aise hi streak badhti hai.')}</p>
-      {milestone && <ShareBtn text={`🔥 ${d.next.streak}-day streak on my interview prep! ${milestone}`} />}
+      <p className="muted small">{milestone ? t('celebration.comeBack') : t('celebration.littleDaily')}</p>
+      {milestone && <ShareBtn text={t('celebration.shareText', { n: d.next.streak, milestone })} />}
     </>
   )
 }
@@ -124,7 +124,7 @@ function ShareBtn({ text }: { text: string }) {
   const [ok, setOk] = useState(false)
   return (
     <button className="btn btn-outline share-btn" onClick={() => { void navigator.clipboard?.writeText(text).then(() => { setOk(true); setTimeout(() => setOk(false), 1800) }) }}>
-      {ok ? '✓ Copied' : tr('📤 Share text copy karo')}
+      {ok ? t('celebration.copied') : t('celebration.share')}
     </button>
   )
 }
@@ -137,8 +137,8 @@ function GoalScreen() {
     <>
       <Confetti count={50} />
       <div className="goal-big"><Ring value={v} size={150}><span className="goal-check">🎯</span></Ring></div>
-      <h2>Daily goal complete!</h2>
-      <p className="muted">{tr('{p} XP aaj ke liye poore — shabaash!', { p: p.goal })}</p>
+      <h2>{t('celebration.dailyGoalDone')}</h2>
+      <p className="muted">{t('celebration.goalXpDone', { p: p.goal })}</p>
     </>
   )
 }
@@ -150,8 +150,8 @@ function LevelScreen({ level }: { level: number }) {
     <>
       <Confetti count={80} />
       <div className="level-badge"><span>{level}</span></div>
-      <h2>Level up!</h2>
-      <p className="muted">{tr('Ab tum Level {l} par ho · agle level tak {x} XP', { l: level, x: lv.need - lv.into })}</p>
+      <h2>{t('celebration.levelUp')}</h2>
+      <p className="muted">{t('celebration.levelProgress', { l: level, x: lv.need - lv.into })}</p>
     </>
   )
 }

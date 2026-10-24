@@ -1,0 +1,1101 @@
+{
+  "lessons": {
+    "t2_0": {},
+    "t2_2": {},
+    "t2_3": {},
+    "t2_4": {},
+    "t3_0": {},
+    "t3_1": {},
+    "t3_2": {},
+    "t3_3": {},
+    "t3_4": {},
+    "t3_5": {},
+    "t4_0": {},
+    "t4_1": {},
+    "t4_2": {},
+    "t4_3": {},
+    "t4_4": {},
+    "t4_5": {},
+    "t0_3": {
+      "what": "<p>These three special files handle a route's <b>error/loading states</b> — without a single line of state management.</p>\n<p><code>loading.tsx</code> added shows a skeleton until the data arrives; <code>error.tsx</code> added shows a graceful message + retry when a crash occurs.</p>",
+      "analogy": "Restaurant — as soon as you place an order, the starter arrives (loading.tsx). If the dish goes wrong, the manager comes with an apology and serves a fresh order (error.tsx). Items not on the menu get a “not available” card (not-found.tsx).",
+      "why": "<p>Server components are async — data takes time to arrive, and it can fail somewhere. Without these files, each page would need its own loading/error state. Next has created a <b>convention</b> for this.</p>",
+      "pros": [
+        "Zero boilerplate — add the file, no state management needed.",
+        "Error isolation — a single widget fails, not the whole page.",
+        "Retry with <code>reset()</code> without a reload."
+      ],
+      "cons": [
+        "<code>error.tsx</code> must be a client component.",
+        "In production, <code>error.message</code> is redacted — debugging requires a separate approach.",
+        "In nested routes, you have to track which boundary will catch it."
+      ],
+      "gotchas": [
+        "In <code>error.tsx</code> you must include <code>'use client'</code> — otherwise you get a build error.",
+        "Error bubbles <b>upward</b> — the nearest parent <code>error.tsx</code> catches it, not the one that threw it.",
+        "<code>global-error.tsx</code> replaces the root layout — you have to write <code>&lt;html&gt;&lt;body&gt;</code> yourself."
+      ],
+      "terms": [
+        [
+          "loading.tsx",
+          "The <b>immediate fallback</b> for a route until its data arrives — a Suspense boundary is created automatically."
+        ],
+        [
+          "error.tsx",
+          "Fallback when rendering fails — ErrorBoundary + <code>reset()</code> retry button."
+        ],
+        [
+          "not-found.tsx",
+          "The 404 UI shown when <code>notFound()</code> is called or the URL is invalid."
+        ]
+      ],
+      "where": [
+        [
+          "Dashboards",
+          "Skeletons for slow queries — the page doesn’t appear white."
+        ],
+        [
+          "Forms/API failures",
+          "Retry UX via <code>error.tsx</code> without an extra library."
+        ],
+        [
+          "Dynamic pages",
+          "Invalid ID triggers <code>notFound()</code> — proper 404 with SEO."
+        ]
+      ],
+      "visualCap": "As soon as the request arrives, the fallback streams immediately; when the data arrives, it replaces it with the actual content.",
+      "codeSwap": [
+        [
+          "// Kisi bhi server component se:",
+          "// From any server component:"
+        ],
+        [
+          " app/dashboard/error.tsx — CLIENT component hona zaroori",
+          " app/dashboard/error.tsx — MUST be a CLIENT component"
+        ],
+        [
+          " app/dashboard/loading.tsx — server component chalega",
+          " app/dashboard/loading.tsx — a server component is fine"
+        ],
+        [
+          " nearest not-found.tsx render hoga",
+          " the nearest not-found.tsx will render"
+        ],
+        [
+          " data aate tak yahi dikhega",
+          " this shows until the data arrives"
+        ],
+        [
+          "<button onClick={() => reset()}>Dobara try karo</button>",
+          "<button onClick={() => reset()}>Try again</button>"
+        ],
+        [
+          "<h2>Kuch galat ho gaya 😕</h2>",
+          "<h2>Something went wrong 😕</h2>"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "poora page nahi gira — sirf ye section",
+          "the whole page didn't fail — only this section"
+        ],
+        [
+          "AGAR FAIL HO JAAYE → error.tsx",
+          "IF IT FAILS → error.tsx"
+        ],
+        [
+          "nearest error.tsx pakadta hai",
+          "catches the nearest error.tsx"
+        ],
+        [
+          "\"Kuch galat ho gaya\"",
+          "\"Something went wrong\""
+        ],
+        [
+          "turant",
+          "instantly"
+        ],
+        [
+          "data aa gaya",
+          "data arrived"
+        ],
+        [
+          "asli content",
+          "real content"
+        ]
+      ]
+    },
+    "t0_1": {
+      "what": "<p><code>layout.tsx</code> wraps all its child pages and <b>stays alive during navigation</b> — the sidebar does not re-render, its state remains.</p>\n<p><code>template.tsx</code> does exactly the same work, but a <b>new instance</b> is created on each navigation.</p>",
+      "analogy": "Office building — walls, elevator, lobby (layout) never change; the furniture inside the rooms (template) changes with each tenant.",
+      "why": "<p>Earlier the entire page re-rendered on every navigation — the sidebar flickered, scroll position was lost. Layouts provided a <b>persistent shell</b>: only the inner part changes.</p>",
+      "pros": [
+        "State preserved — filled inputs, scroll position, video playback all remain.",
+        "Complex shells can be built with nested layouts without prop drilling.",
+        "You can fetch data in a layout and pass it to children."
+      ],
+      "cons": [
+        "A layout never unloads — if it holds incorrect state, the entire app is affected.",
+        "The difference between template and layout is confusing at first.",
+        "If the root layout lacks <code>html/body</code>, the build fails."
+      ],
+      "gotchas": [
+        "<b>Writing <code>&lt;html&gt;</code> and <code>&lt;body&gt;</code> tags in the root layout is ESSENTIAL</b> — otherwise you get a hydration error.",
+        "<code>useState</code> inside a layout does NOT reset on navigation — this is a feature, not a bug.",
+        "<code>useEffect</code> in templates runs again on every navigation — sometimes this is exactly what you need."
+      ],
+      "terms": [
+        [
+          "Layout",
+          "The surrounding framework that stays the same across navigation — state is preserved, no re-render."
+        ],
+        [
+          "Template",
+          "Similar to a layout, but a <b>new mount</b> occurs on each navigation — previous state is discarded."
+        ],
+        [
+          "Root layout",
+          "<code>app/layout.tsx</code> — essential; this is where the <code>&lt;html&gt;</code> and <code>&lt;body&gt;</code> tags are written."
+        ]
+      ],
+      "where": [
+        [
+          "Nav/Sidebar",
+          "Auth state, cart count — these reside in layouts so they don’t disappear on navigation."
+        ],
+        [
+          "Nested shells",
+          "Dashboard’s own sidebar, blog’s own header — from nested layouts."
+        ],
+        [
+          "Animations",
+          "Need a page-enter animation on every navigation? Not a layout, <code>template.tsx</code>."
+        ]
+      ],
+      "visualCap": "On navigation, the layout stays in place while only the children change. If it were a template, the whole thing would remount.",
+      "codeSwap": [
+        [
+          "// sirf /dashboard/* ke liye, root ke ANDAR render hota hai",
+          "// only for /dashboard/*, rendered INSIDE the root"
+        ],
+        [
+          "// (enter animations dobara chalti hain, useState reset)",
+          "// (enter animations replay, useState resets)"
+        ],
+        [
+          "// template.tsx — same shape, har nav par remount",
+          "// template.tsx — same shape, remounts on every navigation"
+        ],
+        [
+          "/* har page par dikhega */}</nav>",
+          "/* will show on every page */}</nav>"
+        ],
+        [
+          " persist — state bani rahegi */}</aside>",
+          " persist — state will remain */}</aside>"
+        ],
+        [
+          " app/layout.tsx — ROOT layout (zaroori)",
+          " app/layout.tsx — ROOT layout (required)"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "Sidebar · Nav (zinda rehta hai)",
+          "Sidebar · Nav (stays alive)"
+        ],
+        [
+          "LAYOUT — persist hota hai",
+          "LAYOUT — persists"
+        ],
+        [
+          "TEMPLATE — har baar naya",
+          "TEMPLATE — new every time"
+        ],
+        [
+          "(animation phir chalegi)",
+          "(the animation will play again)"
+        ]
+      ]
+    },
+    "t0_2": {
+      "what": "<p>The <code>[slug]</code> folder name is replaced in the URL by <b>any value</b>. <code>app/blog/[slug]/page.tsx</code> — <code>/blog/react</code>, <code>/blog/css</code> both work this way.</p>\n<p>The page receives that value in the <code>params</code> prop.</p>",
+      "analogy": "A speed-post address label — the pattern stays the same, only the name-street (slug) is written differently on each envelope. One label format, hundreds of thousands of addresses.",
+      "why": "<p>1000 blog posts, 1000 folders? No. One dynamic route + a database = <b>all posts from a single file</b>. Think of it like REST’s <code>:id</code>, but in folders.</p>",
+      "pros": [
+        "Unlimited pages from a single file.",
+        "Very fast when combined with static generation.",
+        "Catch-all provides flexible URL structures."
+      ],
+      "cons": [
+        "You have to write handling for incorrect slugs yourself (<code>notFound()</code>).",
+        "Params being a Promise (Next 15) breaks older tutorials.",
+        "A large number of dynamic params can make the build slow."
+      ],
+      "gotchas": [
+        "<b>In Next.js 15, <code>params</code> is a Promise</b> — you must <code>await params</code>. The old <code>params.slug</code> may silently behave incorrectly.",
+        "<code>[...slug]</code> does not match an empty URL (<code>/docs</code>) — you need <code>[[...slug]]</code> for that.",
+        "If you forget to call <code>notFound()</code> on an invalid slug, the user gets a blank page."
+      ],
+      "terms": [
+        [
+          "[slug]",
+          "Dynamic segment — the part of the URL that can change."
+        ],
+        [
+          "Catch-all [...slug]",
+          "Catch-all [...slug] — captures multiple segments — <code>/docs/a/b/c</code>."
+        ],
+        [
+          "generateStaticParams",
+          "generateStaticParams — tells at build time which slug pages should be pre-generated (SSG)."
+        ]
+      ],
+      "where": [
+        [
+          "Blog/e-commerce",
+          "Each post/product has its own URL — from a single file."
+        ],
+        [
+          "Docs sites",
+          "Nested docs paths with <code>[...slug]</code> — <code>/docs/api/auth</code>."
+        ],
+        [
+          "SSG blogs",
+          "All posts are static at build time using <code>generateStaticParams</code>."
+        ]
+      ],
+      "visualCap": "Three types of dynamic segments — the number of URL parts they capture matters.",
+      "codeSwap": [
+        [
+          "// SSG — build time par kaunse pages ban jaayein:",
+          "// SSG — which pages get built at build time:"
+        ],
+        [
+          "// Next 15+: params PROMISE hai",
+          "// Next 15+: params is a PROMISE"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "bina bhi chal jaata hai",
+          "works even without it"
+        ],
+        [
+          "sirf ek segment match",
+          "only one segment matches"
+        ],
+        [
+          "kam se kam ek chahiye",
+          "at least one is needed"
+        ],
+        [
+          "[slug] — EK part",
+          "[slug] — ONE part"
+        ],
+        [
+          "[...slug] — 1 ya ZYADA",
+          "[...slug] — 1 or MORE"
+        ],
+        [
+          "/docs ✗ (khaali)",
+          "/docs ✗ (empty)"
+        ]
+      ]
+    },
+    "t0_0": {
+      "what": "<p>In Next.js routing is created from <b>folders</b>. When you write <code>app/users/page.tsx</code>, the <code>/users</code> URL is generated automatically.</p>\n<p>No route config, no react-router — <b>the folder name is the URL</b>.</p>",
+      "analogy": "House rooms — a nameplate is placed on the door. Plate = folder name (URL), room contents = page.tsx. Seeing the nameplate, a guest goes directly to the room.",
+      "why": "<p>Earlier each project had its own routing config — each with a different style. File-based routing introduced a convention: <b>all projects have the same structure</b>, so a new developer instantly understands where each page is.</p>",
+      "pros": [
+        "Zero config — create a folder, route ready.",
+        "The structure alone reveals the entire site.",
+        "Private files (<code>_folder</code>) and tools like groups are built-in."
+      ],
+      "cons": [
+        "The folder name is the URL — renaming means changing URLs.",
+        "Deep nesting makes paths long.",
+        "New developers get stuck on “why doesn’t the components folder create a route?”"
+      ],
+      "gotchas": [
+        "<code>page.tsx</code> without it the folder <b>does not become a route</b> — the most common beginner confusion.",
+        "Files inside folders like <code>components/</code> or <code>lib/</code> do not become routes — only special files (page, layout…) matter.",
+        "A folder cannot contain both <code>page.tsx</code> and <code>route.ts</code> together — build error."
+      ],
+      "terms": [
+        [
+          "Route",
+          "The URL pattern that determines which page will open — <code>/about</code>, <code>/blog/meri-post</code>."
+        ],
+        [
+          "App Router",
+          "Folders inside the <code>app/</code> directory become routes — no separate routing config is needed."
+        ],
+        [
+          "page.tsx",
+          "What will be displayed at that URL — without this file the folder does not become a route."
+        ]
+      ],
+      "where": [
+        [
+          "Every Next.js app",
+          "Pages, blogs, dashboards — everything is built with this."
+        ],
+        [
+          "Colocation",
+          "You can keep component files inside a route folder — they do not become routes."
+        ],
+        [
+          "Interview",
+          "The first difference between \"App Router vs Pages Router\" is this — config vs convention."
+        ]
+      ],
+      "visualCap": "The folder tree maps directly to URLs — a nested folder equals a nested path.",
+      "codeSwap": [
+        [
+          "// page.tsx ke bina folder sirf folder hai:",
+          "// a folder without page.tsx is just a folder:"
+        ],
+        [
+          "// aas-paas ka dancha (persist hota hai)",
+          "// surrounding structure (persists)"
+        ],
+        [
+          "// chalte waqt ka fallback",
+          "// fallback at runtime"
+        ],
+        [
+          "// Special files ka kaam:",
+          "// What the special files do:"
+        ],
+        [
+          "// girne par ka fallback",
+          "// fallback on failure"
+        ],
+        [
+          "// route NAHI bana",
+          "// the route was NOT created"
+        ],
+        [
+          " ab /users ban gaya",
+          " now /users has been created"
+        ],
+        [
+          "│   └── [slug]/page.tsx   → /blog/kuch-bhi (detail)",
+          "│   └── [slug]/page.tsx   → /blog/anything (detail)"
+        ],
+        [
+          "└── components/Header.tsx → KOI ROUTE NAHI ✓",
+          "└── components/Header.tsx → NOT A ROUTE ✓"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "[slug] = dynamic hissa, koi bhi value chalegi",
+          "[slug] = dynamic part, any value works"
+        ],
+        [
+          "/blog/meri-pehli-post",
+          "/blog/my-first-post"
+        ]
+      ]
+    },
+    "t0_4": {
+      "what": "<p>In Next.js, to write SEO tags just export a <code>metadata</code> object — the framework puts it into the <code>&lt;head&gt;</code>.</p>\n<p>For dynamic pages, use a <code>generateMetadata()</code> function — fetch the required data and return the title/description based on it.</p>",
+      "analogy": "A book’s cover page — it doesn’t contain the interior content, but it’s the first thing you see before picking it up from the shelf. Metadata = the cover of your page, in search results and chat previews.",
+      "why": "<p>Earlier you had to write <code>&lt;Head&gt;</code> components manually on every page — tags were duplicated or missed. The Metadata API turned this into <b>a single export statement</b>, and duplicate tags merged automatically.</p>",
+      "pros": [
+        "Declarative — no chance of forgetting to write tags.",
+        "Parent-child metadata merges automatically.",
+        "<code>ImageResponse</code> generates OG images from code."
+      ],
+      "cons": [
+        "Works only in Server Components.",
+        "Running <code>generateMetadata</code> on every request adds database load.",
+        "OG image generation can take build time."
+      ],
+      "gotchas": [
+        "You cannot <b>export metadata</b> from a client component (<code>'use client'</code>) — results in a build error.",
+        "If both <code>generateMetadata</code> and the page fetch the same data, Request Memoization deduplicates it — avoid double fetching.",
+        "A child page’s <code>title</code> passes through the parent’s template — if you forget to apply the template, titles appear flat."
+      ],
+      "terms": [
+        [
+          "Metadata",
+          "Information that goes into the page’s <code>&lt;head&gt;</code> — title, description, OG image."
+        ],
+        [
+          "generateMetadata()",
+          "Dynamic metadata — each page’s own title based on its URL/data."
+        ],
+        [
+          "OG image",
+          "Preview card shown when the link is shared on WhatsApp/Twitter."
+        ]
+      ],
+      "where": [
+        [
+          "SEO",
+          "Title/description — the basic building block of Google ranking."
+        ],
+        [
+          "Social sharing",
+          "<code>openGraph</code> creates a nice preview card on WhatsApp/Twitter."
+        ],
+        [
+          "Favicon/sitemap",
+          "<code>icon.tsx</code>, <code>sitemap.ts</code>, <code>robots.ts</code> — all part of the metadata API."
+        ]
+      ],
+      "visualCap": "Export object → rendered head tags. Dynamic function gives each product/post its own card.",
+      "codeSwap": [
+        [
+          "// Title template — sections mein \"%s | Mera Blog\"",
+          "// Title template — \"%s | My Blog\" across sections"
+        ],
+        [
+          "// Static — poore section ka default",
+          "// Static — the default for the whole section"
+        ],
+        [
+          "// Dynamic — har post ka apna title",
+          "// Dynamic — each post has its own title"
+        ],
+        [
+          "description: 'Web dev seekhne ki jagah',",
+          "description: 'A place to learn web dev',"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "&lt;head&gt; mein apne aap",
+          "&lt;head&gt; automatically"
+        ],
+        [
+          "page.tsx mein export",
+          "export in page.tsx"
+        ]
+      ]
+    },
+    "t0_5": {
+      "what": "<p><code>(marketing)/about/page.tsx</code> and <code>(shop)/cart/page.tsx</code> — both different teams/different layouts, but the parentheses disappear in the URL: <code>/about</code>, <code>/cart</code>.</p>\n<p><code>@modal</code>, <code>@stats</code> like slots render <b>multiple independent pages</b> on the same screen.</p>",
+      "analogy": "Flats in a society — same building, but the A-wing/B-wing (groups) sign isn’t visible at the gate. Parallel routes = two windows on one TV split-screen — both running different channels.",
+      "why": "<p>In large apps there were two problems: (1) organizing pages with different layouts, (2) keeping something like a modal in sync with the URL. Groups provided organization, parallel routes gave a clean way for <b>URL-driven modals</b>.</p>",
+      "pros": [
+        "Different layouts on the same URL path — without URL hacks.",
+        "Slots can load or error independently (their own loading.tsx).",
+        "Modal state is in the URL — shareable links."
+      ],
+      "cons": [
+        "The number of concepts increases — new developers get confused.",
+        "Same path in two groups = build error, you have to hunt it down.",
+        "You forget to write the <code>default.tsx</code> for slots."
+      ],
+      "gotchas": [
+        "<b>Do not give the same page path in two route groups</b> — <code>(a)/about</code> and <code>(b)/about</code> conflict = build fail.",
+        "Rendering the @slot in the layout is <b>required</b> — it will appear in props, otherwise it won’t show.",
+        "After soft navigation, if a direct refresh doesn’t match the slot, a <code>default.tsx</code> is needed — otherwise 404."
+      ],
+      "terms": [
+        [
+          "Route group (name)",
+          "Folder with parentheses — for organization, <b>does not appear in the URL</b>."
+        ],
+        [
+          "Parallel route @slot",
+          "Render <b>two pages together</b> in one layout — named slots."
+        ],
+        [
+          "default.tsx",
+          "Fallback for the slot — when a refresh doesn’t match the slot."
+        ]
+      ],
+      "where": [
+        [
+          "Large teams",
+          "Separate layout for marketing and app sections, same repo."
+        ],
+        [
+          "Modals",
+          "<code>@modal</code> slot + catch-all — modal opens/closes from the URL and stays stable on refresh."
+        ],
+        [
+          "Dashboards",
+          "Independent widgets that load/stream separately."
+        ]
+      ],
+      "visualCap": "(group) disappears from the URL; @slot comes from a separate prop in the layout.",
+      "codeSwap": [
+        [
+          "// dashboard/layout.tsx — slots props se milte hain",
+          "// dashboard/layout.tsx — slots come in as props"
+        ],
+        [
+          "# marketing ka header/footer",
+          "# marketing's header/footer"
+        ],
+        [
+          "# URL mein nahi aata",
+          "# Doesn't go in the URL"
+        ],
+        [
+          "# shop ka sidebar",
+          "# the shop's sidebar"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "( ) URL mein nahi aata — sirf organization",
+          "( ) doesn't go in the URL — only organization"
+        ],
+        [
+          "Dono ka URL: /about — par ALAG layout!",
+          "Both have the URL: /about — but a DIFFERENT layout!"
+        ],
+        [
+          "layout.tsx dono ko props se leta hai:",
+          "layout.tsx takes both as props:"
+        ],
+        [
+          "{analytics} {team} — SAATH render",
+          "{analytics} {team} — render TOGETHER"
+        ]
+      ]
+    },
+    "t1_0": {
+      "what": "<p>Server Components <b>can be async</b>. Inside the component do a direct <code>await</code> — the data arrives before the HTML is generated.</p>\n<p>The client-side cycle of <code>useEffect</code> + <code>useState</code> + loading spinner is eliminated.</p>",
+      "analogy": "The kitchen chef goes to the market, brings the vegetables, then cooks the meal — the plate (HTML) is served only when the food is ready. The waiter (useEffect) doesn’t run back and forth in between.",
+      "why": "<p>The client-side fetching flow was: empty page → JS load → effect runs → spinner → data arrives → render. The user saw a <b>blank screen again</b>. In RSC the data comes on the server — the first HTML is complete.</p>",
+      "pros": [
+        "Data is in the initial HTML — the spinner phase is gone.",
+        "Secrets stay safe on the server.",
+        "Running close to the database reduces latency."
+      ],
+      "cons": [
+        "The component can block entirely until data arrives — Suspense is required.",
+        "For interactivity you still need a Client Component.",
+        "Libraries other than fetch (e.g., axios) don’t get caching options."
+      ],
+      "gotchas": [
+        "<b>Sequential awaits = waterfall</b> — independent calls should always be in <code>Promise.all</code>. A favorite interview question.",
+        "This only extends to <code>fetch</code> — Prisma/axios don’t get memoization or cache options (React <code>cache()</code> is separate).",
+        "Browser APIs (<code>window</code>, <code>localStorage</code>) don’t work in a server component — they are client-only."
+      ],
+      "terms": [
+        [
+          "RSC fetch",
+          "Direct <code>await fetch(...)</code> inside a server component — no need for useEffect."
+        ],
+        [
+          "Extended fetch",
+          "Next.js patches the native fetch — provides cache/revalidate options."
+        ],
+        [
+          "Waterfall",
+          "One fetch finishes, then the next starts — total time accumulates."
+        ]
+      ],
+      "where": [
+        [
+          "Every data page",
+          "Product detail, blog post, profile — all use RSC fetch."
+        ],
+        [
+          "API keys",
+          "Secret keys stay on the server — they don’t go into the client bundle."
+        ],
+        [
+          "ORM calls",
+          "Prisma/Drisko direct await — fetch isn’t required either."
+        ]
+      ],
+      "visualCap": "Sequential await = waterfall (adds up). Give independent fetches to Promise.all — they run together.",
+      "codeSwap": [
+        [
+          "// user fetch karke posts ko Suspense mein daal do",
+          "// fetch the user and put posts in Suspense"
+        ],
+        [
+          "// Agar posts ko user CHAHIYE: unWrap approach —",
+          "// If posts NEEDS the user: unWrap approach —"
+        ],
+        [
+          "// agar posts ko user ki zarurat nahi",
+          "// if posts doesn't need the user"
+        ],
+        [
+          "// Data HTML ke andar hi aata hai.",
+          "// The data arrives inside the HTML itself."
+        ],
+        [
+          " ✗ GALAT — waterfall (700ms)",
+          " ✗ WRONG — waterfall (700ms)"
+        ],
+        [
+          " Server Component — itna hi:",
+          " Server Component — this much only:"
+        ],
+        [
+          " ✓ SAHI — parallel (300ms)",
+          " ✓ CORRECT — parallel (300ms)"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "sab saath shuru, sabse dheere wala jeet-ta hai",
+          "all start together, the slowest one wins"
+        ],
+        [
+          "✗ WATERFALL — ek ke baad ek",
+          "✗ WATERFALL — one after another"
+        ],
+        [
+          "await user → phir await posts → phir ads",
+          "await user → then await posts → then ads"
+        ]
+      ]
+    },
+    "t1_1": {
+      "what": "<p>Layout, page, and 3 components — all calling <code>getUser()</code>? Only one request will go over the network. The rest will receive the same response.</p>\n<p>This is React's <code>cache()</code> API that Next automatically applied to fetch.</p>",
+      "analogy": "In a family, 5 people ordered the same pizza — the restaurant made ONE pizza and gave slices to everyone. Order (network call) once, food (data) for all.",
+      "why": "<p>Nested layouts need the same data at multiple levels. Sending props down everywhere isn’t possible. Memoization eliminated the \"props drilling or duplicate fetch\" dilemma — fetch directly everywhere, the framework will dedupe.</p>",
+      "pros": [
+        "Code simple — fetch directly everywhere, optimization handled by the framework.",
+        "Props drilling eliminated.",
+        "Per-request scope — data does not leak between users."
+      ],
+      "cons": [
+        "Only GET fetches are auto-deduped — POST or POST-like calls are not.",
+        "Memoization clears as soon as the request finishes — there is no persistent cache.",
+        "Different URLs/headers produce different cache keys, so deduplication won’t occur."
+      ],
+      "gotchas": [
+        "Memoization <b>is limited to a single request</b> — the next visitor will fetch again. For persistence, look at Data Cache.",
+        "<code>cache()</code> works only on the server — not in client components.",
+        "Fetches that read cookies/headers are not deduped — each call is unique."
+      ],
+      "terms": [
+        [
+          "Request Memoization",
+          "During a single render, the same URL fetch occurs <b>only once</b> — the rest comes from cache."
+        ],
+        [
+          "React cache()",
+          "React API to memoize functions per request — for calls outside fetch."
+        ],
+        [
+          "Request lifecycle",
+          "The entire render tree for an HTTP request — memoization lives only during this period."
+        ]
+      ],
+      "where": [
+        [
+          "Nested layouts",
+          "Header + page + sidebar all need the user — three fetches, one network call."
+        ],
+        [
+          "ORM queries",
+          "Wrap <code>cache()</code> around Prisma calls to dedupe them as well."
+        ],
+        [
+          "Interview",
+          "\"How to share the same data across multiple components?\" – a modern interview answer."
+        ]
+      ],
+      "visualCap": "A render tree, the same fetch in four places — only one request went over the network.",
+      "codeSwap": [
+        [
+          "// Fetch ke BAHAR wali calls ke liye khud cache() lagao:",
+          "// For calls OUTSIDE fetch, add cache() yourself:"
+        ],
+        [
+          "// Ab ye bhi per-request dedupe ho jaayega",
+          "// Now this will be deduped per-request too"
+        ],
+        [
+          "// CACHE hit — network nahi gaya",
+          "// CACHE hit — the network wasn't touched"
+        ],
+        [
+          "// CACHE hit phir se",
+          "// CACHE hit again"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "Network: SIRF 1 fetch — baaki memoized ✓",
+          "Network: ONLY 1 fetch — the rest memoized ✓"
+        ],
+        [
+          "Request shuru hui",
+          "Request started"
+        ]
+      ]
+    },
+    "t1_2": {
+      "what": "<p>Data Cache is a cache that lives longer than a build/deploy. Data fetched for one user will be <b>served to subsequent visitors</b> as cached (until it is revalidated).</p>\n<p>Control: <code>fetch(url, { next: { revalidate: 60 } })</code> — cached for 60 seconds.</p>",
+      "analogy": "Fridge — you don’t go to the market (origin server) every time. Bring groceries once, use the fridge. Set an alarm every hour (revalidate) to check for fresh milk.",
+      "why": "<p>Hitting the origin server + DB for every visitor is expensive and slow. With Data Cache, <b>1,000 visitors = 1 DB query</b> (until you refresh). It also provides CDN-level speed for data.</p>",
+      "pros": [
+        "DB/API load dramatically reduced.",
+        "Response times near-instant.",
+        "Surgical invalidation with tags."
+      ],
+      "cons": [
+        "Stale data may appear — plan your strategy carefully.",
+        "Caching the wrong thing gives all users incorrect data.",
+        "Debugging is tough — the answer to \"where did the data come from?\" is buried in layers."
+      ],
+      "gotchas": [
+        "<b>In Next.js 15 the default is <code>no-store</code></b> — the \"fetch is cached by default\" shown in 14 tutorials is now incorrect.",
+        "Fetches that read cookies/headers are not cached — this is correct for personalized data.",
+        "<code>revalidate: 60</code> does not mean \"refresh every 60 seconds\" — it means \"after 60 seconds, the first request triggers a background refresh\"."
+      ],
+      "terms": [
+        [
+          "Data Cache",
+          "Server-side persistent cache — stays alive between requests and deployments."
+        ],
+        [
+          "force-cache",
+          "Cache the data (the old default behavior)."
+        ],
+        [
+          "no-store",
+          "Fresh data on every request — do not cache."
+        ]
+      ],
+      "where": [
+        [
+          "Public content",
+          "Blog posts, products, prices — all cache-worthy."
+        ],
+        [
+          "Third-party APIs",
+          "Save calls to rate-limited APIs."
+        ],
+        [
+          "Personal data",
+          "Cart, profile — <code>no-store</code> or cookies-based dynamic rendering."
+        ]
+      ],
+      "visualCap": "First request: miss → origin → saved in cache. All subsequent: hit → instant response.",
+      "codeSwap": [
+        [
+          "// Default (Next 15): no-store — har baar fresh",
+          "// Default (Next 15): no-store — fresh every time"
+        ],
+        [
+          "// Tag lagao — baad mein on-demand invalidate",
+          "// Add a tag — invalidate on demand later"
+        ],
+        [
+          "// Kabhi cache mat karo (personalized data!)",
+          "// Never cache this (personalized data!)"
+        ],
+        [
+          "// Cache karo — 60 sec tak",
+          "// Cache it — for 60 sec"
+        ],
+        [
+          "// kisi action mein:",
+          "// in some action:"
+        ],
+        [
+          " Hamesha cache (purani default)",
+          " Always cache (the old default)"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "Jab tak revalidate na ho, origin ko koi nahi chhoota",
+          "Nobody touches the origin until it revalidates"
+        ],
+        [
+          "MISS → origin se laao",
+          "MISS → fetch from the origin"
+        ],
+        [
+          "HIT → turant ✓",
+          "HIT → instant ✓"
+        ],
+        [
+          "agle sab",
+          "all the following"
+        ],
+        [
+          "pehla",
+          "first"
+        ]
+      ]
+    },
+    "t1_3": {
+      "what": "<p>If a route has no dynamic element, Next builds the full HTML at <b>build time</b> and keeps it. Every visitor gets that ready-made HTML from CDNs — the server doesn’t even run.</p>\n<p>If any <code>cookies()</code>/<code>headers()</code>/<code>searchParams</code> is used → route becomes dynamic → renders on every request.</p>",
+      "analogy": "Pre-printed pamphlet — printed once at the printing press (build), now distribute 100,000 copies directly. If you need a customized letter (dynamic), you have to write it each time.",
+      "why": "<p>Serving static HTML is the fastest and cheapest — server CPU zero, TTFB near-zero. The goal of Full Route Cache: <b>as many routes as possible stay static</b>, only the necessary parts are dynamic.</p>",
+      "pros": [
+        "Fastest possible delivery — pre-built HTML.",
+        "Server cost almost zero for static routes.",
+        "SEO perfect — full HTML in the first response."
+      ],
+      "cons": [
+        "Build time increases — thousands of routes = longer builds.",
+        "Accidentally using a dynamic API makes the route dynamic.",
+        "Content updates require revalidation."
+      ],
+      "gotchas": [
+        "<code>searchParams</code> usage makes the route <b>dynamic</b> — check the tick/cross symbols in the build output.",
+        "Router Cache (client) is a different thing — Full Route Cache is server-side; don’t mix them.",
+        "<code>revalidatePath('/blog')</code> invalidates only that route’s cache — the Data Cache is also invalidated if it’s linked."
+      ],
+      "terms": [
+        [
+          "Full Route Cache",
+          "Static routes’ <b>rendered HTML + RSC payload</b> generated at build time and ready."
+        ],
+        [
+          "Static vs Dynamic",
+          "If any dynamic API (cookies, searchParams) is used, the route becomes dynamic — it isn’t cached."
+        ],
+        [
+          "Invalidation",
+          "<code>revalidatePath/Tag</code> deletes the cached route, so the next request is fresh."
+        ]
+      ],
+      "where": [
+        [
+          "Marketing pages",
+          "Landing, pricing, about — all static, lightning fast."
+        ],
+        [
+          "Blogs",
+          "Posts are static at build, refreshed with <code>revalidate</code>."
+        ],
+        [
+          "Dashboards",
+          "Personalized data = dynamic — don’t expect caching here."
+        ]
+      ],
+      "visualCap": "HTML for static routes is prepared at build. Using a dynamic API makes the route dynamic.",
+      "codeSwap": [
+        [
+          "// ↑ is route ka Full Route Cache AB NAHI banega",
+          "// ↑ this route's Full Route Cache will NOT be built now"
+        ],
+        [
+          "// STATIC — build par ban gaya, CDN se serve",
+          "// STATIC — built at build time, served from the CDN"
+        ],
+        [
+          "// DYNAMIC — bas cookies padh liye",
+          "// DYNAMIC — it just read the cookies"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "Full Route Cache is route par lagu hi nahi",
+          "The Full Route Cache doesn't apply to this route at all"
+        ],
+        [
+          "server render NAHI hota, TTFB ~0ms",
+          "NOT server-rendered, TTFB ~0ms"
+        ],
+        [
+          "DYNAMIC route — inme se kuch bhi?",
+          "DYNAMIC route — any of these?"
+        ],
+        [
+          "→ har REQUEST par render hota hai",
+          "→ renders on every REQUEST"
+        ],
+        [
+          "Har visitor ko wahi HTML — CDN se",
+          "The same HTML to every visitor — from the CDN"
+        ],
+        [
+          "HTML tayyar ✓",
+          "HTML ready ✓"
+        ]
+      ]
+    },
+    "t1_4": {
+      "what": "<p>When you navigate to a route, its RSC payload is saved in the browser memory. If you go back to the same route, there will be <b>no network call</b> — instant navigation.</p>\n<p><code>&lt;Link&gt;</code> prefetches: static routes get the full payload, dynamic routes only the loading skeleton.</p>",
+      "analogy": "Everyday route — you need GPS the first time, then you remember it. Going home to office (back navigation) now reaches without thinking. Prefetch = checking tomorrow’s meeting venue today.",
+      "why": "<p>If a server round-trip occurred on every click, the SPA feel would be lost. Router Cache provides <b>client-side instant navigation</b> — without loading the entire app client bundle.</p>",
+      "cons": [
+        "Stale data can be displayed for up to 30 seconds/5 minutes.",
+        "Cache is not visible in DevTools — debugging becomes difficult.",
+        "Many Links = many prefetch requests."
+      ],
+      "gotchas": [
+        "Router Cache is <b>memory-only</b> — it clears on page refresh.",
+        "Prefetch for dynamic routes is only partial (up to the shared layout) — not the full payload.",
+        "If a list doesn’t update after a mutation, you probably forgot <code>router.refresh()</code> — a classic bug."
+      ],
+      "terms": [
+        [
+          "Router Cache",
+          "Memory in the browser (client) that stores RSC payloads of visited routes."
+        ],
+        [
+          "Prefetch",
+          "The <code>&lt;Link&gt;</code> fetches the route’s payload in advance on viewport/hover."
+        ],
+        [
+          "router.refresh()",
+          "Requests fresh data for the current route from the server — refreshes the cache."
+        ]
+      ],
+      "where": [
+        [
+          "Navigation feel",
+          "SPA-like smoothness — without the SPA bundle."
+        ],
+        [
+          "Back button",
+          "Instant — the payload is in the cache."
+        ],
+        [
+          "Logout/login flows",
+          "Sync the UI with server state using <code>router.refresh()</code>."
+        ]
+      ],
+      "visualCap": "Prefetch on hover/viewport → instant on click. Completely free from back/forward cache.",
+      "codeSwap": [
+        [
+          "// Server par data badla? Client se refresh:",
+          "// Data changed on the server? Refresh from the client:"
+        ],
+        [
+          "Fresh data laao",
+          "Fetch fresh data"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "router.refresh() se manual fresh kar sakte ho",
+          "you can refresh manually with router.refresh()"
+        ],
+        [
+          "CLICK → 0ms wait, seedha render ✓",
+          "CLICK → 0ms wait, render straight away ✓"
+        ],
+        [
+          "PREFETCH — Link ka kamaal",
+          "PREFETCH — the magic of Link"
+        ],
+        [
+          "static: poora payload · dynamic: sirf skeleton",
+          "static: the full payload · dynamic: only the skeleton"
+        ],
+        [
+          "payload aa gaya",
+          "payload arrived"
+        ]
+      ]
+    },
+    "t1_5": {
+      "what": "<p>There are two ways to refresh cached data: <b>time-based</b> (\"consider it stale after 60 seconds\") and <b>on-demand</b> (\"post published? revalidate now\").</p>\n<p>On-demand is precise — it doesn’t invalidate the entire site, only the related cache.</p>",
+      "analogy": "Milk packet with an expiry date (time-based) — when the date passes, get a new one. And when the shopkeeper says \"today’s fresh has arrived\" (on-demand) — throw away the old one and take a new one. Both have their own place.",
+      "why": "<p>The problem with only time-based revalidation: if you need to update content immediately, you have to wait up to 60 seconds. With only on-demand: you’d have to write a webhook for every tiny change. Real apps use both.</p>",
+      "pros": [
+        "Fresh when needed, cached when possible — best of both.",
+        "Tag-based grouped invalidation — all related items in one shot.",
+        "User-facing updates are instant."
+      ],
+      "cons": [
+        "You have to remember which tag/path to revalidate.",
+        "Wrong tag = cache never invalidates or invalidates the wrong thing.",
+        "Can only be called in server context (actions/handlers)."
+      ],
+      "gotchas": [
+        "<code>revalidateTag</code> invalidates the data cache, but <b>does not invalidate the client’s router cache</b> — you also need <code>router.refresh()</code> for that.",
+        "<code>revalidatePath('/')</code> invalidates only the exact <code>/</code> — not everything. For everything use <code>revalidatePath('/', 'layout')</code>.",
+        "Time-based revalidation is stale-while-revalidate — the first request after expiry still returns the old version."
+      ],
+      "terms": [
+        [
+          "Time-based revalidate",
+          "<code>revalidate: N</code> — after N seconds the cache becomes \"stale\", and the next request refreshes it."
+        ],
+        [
+          "On-demand revalidate",
+          "<code>revalidatePath()</code> / <code>revalidateTag()</code> — fresh whenever you ask."
+        ],
+        [
+          "Cache tag",
+          "Attach a tag on fetch, then later invalidate the whole group by that name."
+        ]
+      ],
+      "where": [
+        [
+          "CMS webhooks",
+          "Content publish → webhook → <code>revalidateTag</code>."
+        ],
+        [
+          "E-commerce",
+          "Only product pages fresh on stock/price change."
+        ],
+        [
+          "Comments/likes",
+          "With the action use <code>revalidatePath</code> — UI syncs instantly."
+        ]
+      ],
+      "visualCap": "Time-based: after expiry the first request returns stale data while a background refresh runs. On-demand: refreshes instantly as soon as the publish happens.",
+      "codeSwap": [
+        [
+          "// Server Action / Route Handler mein:",
+          "// In a Server Action / Route Handler:"
+        ],
+        [
+          "// 2. On-demand TAG — sabse precise",
+          "// 2. On-demand TAG — the most precise"
+        ],
+        [
+          "// 1. Time-based — fetch par",
+          "// 1. Time-based — on fetch"
+        ],
+        [
+          "// Ya poore route par:",
+          "// Or on the whole route:"
+        ],
+        [
+          "// fetch par tag:",
+          "// tags on fetch:"
+        ],
+        [
+          "// ek route",
+          "// one route"
+        ],
+        [
+          " bas yahi toota",
+          " only this broke"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "agli request par fresh data — koi wait nahi",
+          "fresh data on the next request — no waiting"
+        ],
+        [
+          "uske baad pehli request par bg refresh",
+          "after that, a background refresh on the first request"
+        ],
+        [
+          "Us tag wala cache TURANT toot gaya",
+          "The cache with that tag broke IMMEDIATELY"
+        ],
+        [
+          "60s tak purana chalega —",
+          "the old one will serve for 60s —"
+        ]
+      ]
+    },
+    "t2_1": {
+      "desc": "Passing RSC as children to Client Components. Server-only imports. The \"leaves are clients\" principle."
+    },
+    "t2_5": {
+      "desc": "server-only and client-only packages. Preventing server code from reaching the client bundle."
+    }
+  }
+}

@@ -1,0 +1,1047 @@
+{
+  "lessons": {
+    "ms0-what-microservice": {
+      "qsub": "When drawing service boundaries in a system design interview, what principles guide the split?",
+      "what": "<p><b>Definition:</b> A microservice is a small, independent process that owns a business capability — its own code, its own data, its own deployment. It communicates with other services over the network (HTTP/gRPC/events).</p>",
+      "why": "<p>Teams become autonomous and services can scale and deploy independently.</p>",
+      "gotchas": [
+        "Size (lines) doesn't matter; the boundary does",
+        "Shared DB = distributed monolith",
+        "Network can fail — plan for each call"
+      ],
+      "terms": [
+        [
+          "Independently deployable",
+          "Deploy independently without affecting others."
+        ],
+        [
+          "Owns its data",
+          "Its own database."
+        ],
+        [
+          "Single business capability",
+          "A single function done well."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// orders payments ka DB nahi chhoota — sirf API/events",
+          "// orders never touches payments' DB — only API/events"
+        ]
+      ]
+    },
+    "ms0-what-monolith": {
+      "desc": "A monolith is a single application where ALL the code runs in one process and deploys as one unit. Login, ordering, payments, emails — one codebase, one server, one deploy command.",
+      "q": "What is a monolith? Why is it the correct starting architecture for most products?",
+      "qsub": "If microservices are the solution, what exactly is the problem they solve that a monolith cannot?",
+      "what": "<p><b>Definition:</b> All functionality (login, orders, payments, emails) is deployed in a single application, in a single process. Modules communicate with each other via function calls.</p>",
+      "analogy": "<p>Monolith is a big joint-family house: one kitchen, one meter, one door. It works simply, but if you need to renovate one room, the whole house gets disturbed.</p>",
+      "why": "<p>For most products, it's the best starting point — simple, fast development, easy debugging.</p>",
+      "pros": [
+        "Simple deploy and debug",
+        "ACID transactions easy"
+      ],
+      "cons": [
+        "Scale all at once",
+        "Tight coupling as it grows"
+      ],
+      "gotchas": [
+        "Monolith ≠ bad design — modular monolith also exists",
+        "'Legacy' and 'monolith' are not the same",
+        "Performance is often better than microservices (no network hops)"
+      ],
+      "terms": [
+        [
+          "Monolith",
+          "One codebase, one process, one deploy."
+        ],
+        [
+          "In-process call",
+          "Function call, no network."
+        ],
+        [
+          "Single DB",
+          "A shared database."
+        ]
+      ],
+      "where": [
+        [
+          "Early-stage startups",
+          "MVP speed."
+        ],
+        [
+          "Small teams",
+          "One team, one codebase."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// Monolith: order place karna = ek process, ek transaction",
+          "// Monolith: placing an order = one process, one transaction"
+        ],
+        [
+          "// function call, network nahi",
+          "// function call, not network"
+        ]
+      ]
+    },
+    "ms0-pain-points": {
+      "q": "What are the four concrete ways a monolith breaks at scale?",
+      "what": "<p><b>Definition:</b> The four pain points of a monolith at scale: (1) no independent scaling, (2) a single bug can bring everything down, (3) deploys are slow and risky, (4) merge conflicts and unclear ownership in large teams.</p>",
+      "why": "<p>Microservices are justified only when these problems are actually occurring.</p>",
+      "cons": [
+        "Splitting before pain occurs = over-engineering"
+      ],
+      "gotchas": [
+        "Pain can also be organizational, not just technical",
+        "Modularize first, then extract",
+        "Measure (deploy time, incident impact)"
+      ],
+      "terms": [
+        [
+          "Independent scaling",
+          "Scaling only the hot module."
+        ],
+        [
+          "Deploy coupling",
+          "One change = full redeploy."
+        ],
+        [
+          "Team contention",
+          "Conflicts in the same codebase."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "- search ko 10x CPU chahiye par poora app scale",
+          "- search needs 10x CPU but the whole app has to scale"
+        ],
+        [
+          "- 5 teams ek hi repo mein bhidte hain",
+          "- 5 teams jostling in one repo"
+        ],
+        [
+          "- release 1x/week kyunki risk",
+          "- release 1x/week because of risk"
+        ]
+      ]
+    },
+    "ms0-why-monolith": {
+      "q": "Why are monoliths simpler than microservices? What advantages do they have in the early stages?",
+      "qsub": "What is premature splitting and why is it the most common microservices mistake?",
+      "what": "<p><b>Definition:</b> A monolith is simple in every dimension: function calls instead of network calls, a single debugger, a single deployment, easy refactoring and transactions.</p>",
+      "why": "<p>Use the complexity of distributed systems only when the benefit exceeds the cost.</p>",
+      "cons": [
+        "Spaghetti code without discipline"
+      ],
+      "gotchas": [
+        "Enforce boundaries (lint/ArchUnit)",
+        "Do not directly access shared DB tables",
+        "It also keeps the splitting path clear"
+      ],
+      "terms": [
+        [
+          "Modular monolith",
+          "A single deployment, with clear module boundaries inside."
+        ],
+        [
+          "Local transaction",
+          "A single DB transaction."
+        ],
+        [
+          "Low ops",
+          "Low infrastructure complexity."
+        ]
+      ],
+      "where": [
+        [
+          "Startups",
+          "Even large companies like Shopify use modular monoliths."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// rule: modules sirf dusre module ka public API import karein (lint rule)",
+          "// rule: modules may import only another module's public API (lint rule)"
+        ]
+      ]
+    },
+    "ms0-when-not": {
+      "q": "When should you NOT use microservices? What is the team size test?",
+      "what": "<p><b>Definition:</b> Small team, unclear domain, early product, or without strong ops skills, do not adopt microservices. Changing wrong boundaries later is more expensive than a monolith.</p>",
+      "why": "<p>Many teams become slow after adopting microservices.</p>",
+      "pros": [
+        "Avoid over-engineering"
+      ],
+      "gotchas": [
+        "'Netflix does it' is not a reason",
+        "If the team size is 5-10, it may not be needed",
+        "First extract one service and learn"
+      ],
+      "terms": [
+        [
+          "Distributed monolith",
+          "Cost of microservices, coupling of monolith."
+        ],
+        [
+          "Operational overhead",
+          "K8s, tracing, discovery, CI per service."
+        ],
+        [
+          "Premature split",
+          "Incorrectly guessed boundaries."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "[ ] 3+ teams jo block ho rahi hain?",
+          "[ ] 3+ teams that are blocked?"
+        ],
+        [
+          "Checklist: split karne se pehle",
+          "Checklist: before splitting"
+        ],
+        [
+          "(koi 'No' → modular monolith)",
+          "(if any is 'No' → modular monolith)"
+        ]
+      ]
+    },
+    "ms0-conways-law": {
+      "desc": "Organizations design systems that mirror their own communication structure. A company with 5 engineering teams will inevitably build 5 services. Amazon applied this deliberately with the two-pizza team rule.",
+      "qsub": "What is the Inverse Conway Maneuver and how did Amazon use it to shape AWS?",
+      "what": "<p><b>Definition:</b> 'The organization that designs a system creates a design that copies its communication structure.' Three teams = three modules.</p>",
+      "why": "<p>Service boundaries should align with team boundaries, otherwise there will be constant cross-team coordination.</p>",
+      "pros": [
+        "Practical guide to boundaries"
+      ],
+      "gotchas": [
+        "Reverse Conway: build teams according to the target architecture",
+        "Clear owner for each service",
+        "Shared services become ownerless"
+      ],
+      "terms": [
+        [
+          "Conway's Law",
+          "Mirrors the system's organization's communication structure."
+        ],
+        [
+          "Inverse Conway",
+          "Design the team structure first."
+        ],
+        [
+          "Team Topologies",
+          "Stream-aligned teams."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// Agar ek feature ke liye 4 teams chahiye, boundary galat hai",
+          "// If one feature needs 4 teams, the boundary is wrong"
+        ]
+      ],
+      "cons": [
+        "If the org changes, the architecture lags"
+      ]
+    },
+    "msf1": {
+      "q": "What are the core characteristics of microservices? What tradeoffs do they introduce?",
+      "qsub": "How do you determine the right level of service granularity — too fine vs too coarse?",
+      "what": "<p><b>Definition:</b> Application a collection of small independent services, each focused on a business capability, with its own data and lifecycle, lightweight communication.</p>",
+      "why": "<p>Scale, resilience, and team autonomy — but network, consistency, and operational cost.</p>",
+      "gotchas": [
+        "Distributed monolith anti-pattern",
+        "Versioning APIs backwards-compatible",
+        "Observability from day 1"
+      ],
+      "terms": [
+        [
+          "Loose coupling",
+          "A change in one does not break the other."
+        ],
+        [
+          "High cohesion",
+          "Related things together."
+        ],
+        [
+          "Polyglot",
+          "Each service uses a different technology."
+        ]
+      ]
+    },
+    "msf2": {
+      "qsub": "How does the Strangler Fig pattern enable gradual migration from monolith to microservices?",
+      "what": "<p><b>Definition:</b> Decompose services by business capability or bounded context, not by technical layers. For an existing monolith, Strangler Fig: new features go into a new service, old ones migrate gradually.</p>",
+      "why": "<p>Incorrect decomposition = chatty services and distributed transactions.</p>",
+      "cons": [
+        "Boundaries may be incorrect"
+      ],
+      "gotchas": [
+        "Not one entity per service",
+        "First examine data boundaries",
+        "Chatty calls = boundary smell"
+      ],
+      "terms": [
+        [
+          "Bounded context",
+          "DDD boundary where the model is consistent."
+        ],
+        [
+          "By business capability",
+          "Orders, Payments, Shipping."
+        ],
+        [
+          "Strangler Fig",
+          "Gradually extract from the monolith."
+        ]
+      ],
+      "codeSwap": [
+        [
+          " -> naya service, baaki monolith",
+          " -> a new service, the rest stays monolith"
+        ],
+        [
+          "Sahi: orders, catalog, payments, shipping (capabilities)",
+          "Right: orders, catalog, payments, shipping (capabilities)"
+        ],
+        [
+          "Galat: ui-service, logic-service, db-service (layers)",
+          "Wrong: ui-service, logic-service, db-service (layers)"
+        ]
+      ]
+    },
+    "msf3": {
+      "qsub": "What is the difference between choreography and orchestration in service communication?",
+      "what": "<p><b>Definition:</b> Sync is simple but depends on the caller and callee's availability. Async decouples but introduces eventual consistency and complexity. Mix: queries sync, workflows async.</p>",
+      "why": "<p>Resilience and latency are core design decisions.</p>",
+      "gotchas": [
+        "Sync chains multiply availability (0.99^n)",
+        "Async idempotent consumers",
+        "Timeouts always"
+      ],
+      "terms": [
+        [
+          "Sync",
+          "HTTP/gRPC request-response."
+        ],
+        [
+          "Async",
+          "Events/messages."
+        ],
+        [
+          "Coupling",
+          "Temporal coupling is higher in sync."
+        ]
+      ]
+    },
+    "msf4": {
+      "qsub": "What is the BFF pattern? Why might mobile and web clients need different gateways?",
+      "what": "<p><b>Definition:</b> Gateway protects clients from the internal structure of services. BFF provides separate tailored APIs for web/mobile.</p>",
+      "why": "<p>Cross-cutting concerns in one place and fewer chatty client calls.</p>",
+      "cons": [
+        "Gateway bottleneck/SPOF if badly designed"
+      ],
+      "gotchas": [
+        "Do not put business logic in the gateway",
+        "Deploy with high availability",
+        "BFF team should own the client team"
+      ],
+      "terms": [
+        [
+          "API Gateway",
+          "Single entry, routing, auth, rate limit."
+        ],
+        [
+          "BFF",
+          "Backend-for-frontend per client type."
+        ],
+        [
+          "Aggregation",
+          "Multiple calls in a single response."
+        ]
+      ]
+    },
+    "msf5": {
+      "qsub": "What is the difference between client-side and server-side service discovery?",
+      "what": "<p><b>Definition:</b> Instances dynamically come and go, IPs change. Discovery: Kubernetes DNS/Services, Consul, Eureka. Unhealthy instances are removed via health checks.</p>",
+      "why": "<p>Hardcoded IPs don't work in the cloud.</p>",
+      "gotchas": [
+        "Stale entries",
+        "Usually built-in in K8s",
+        "Health check should be meaningful"
+      ],
+      "terms": [
+        [
+          "Registry",
+          "List of service instances."
+        ],
+        [
+          "Client-side",
+          "Client chooses from the registry."
+        ],
+        [
+          "Server-side",
+          "LB/Kubernetes DNS."
+        ]
+      ]
+    },
+    "msd1": {
+      "desc": "Each service owns its data exclusively — no direct DB sharing. Polyglot persistence: choose the right DB per service (SQL for orders, document for catalog, graph for recommendations).",
+      "what": "<p><b>Definition:</b> The service's data is accessed only through its API. This makes schema changes independent. Cross-service queries are done via API composition or CQRS views.</p>",
+      "why": "<p>Shared DB coupling creates a situation where a schema change breaks all services.</p>",
+      "cons": [
+        "Joins and transactions are difficult"
+      ],
+      "gotchas": [
+        "Different schemas on the same DB server reduce coupling but do not provide true isolation",
+        "Use a data warehouse for reporting",
+        "Plan for data duplication"
+      ],
+      "terms": [
+        [
+          "Database per service",
+          "Each service's private data store."
+        ],
+        [
+          "Polyglot persistence",
+          "DB based on the use case."
+        ],
+        [
+          "No shared tables",
+          "The other service's DB is not accessed directly."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// report chahiye? events se read-model banao, dusre ka DB join mat karo",
+          "// need reports? build a read-model from events, don't join another service's DB"
+        ]
+      ]
+    },
+    "msd2": {
+      "q": "How do you handle a transaction that spans multiple services? Explain the Saga pattern.",
+      "qsub": "What is the difference between choreography and orchestration in sagas? When do you choose each?",
+      "what": "<p><b>Definition:</b> Instead of a distributed transaction, each service performs a local transaction; if it fails, compensating actions (refund, release stock) are executed.</p>",
+      "why": "<p>Two-phase commit is not practical for scaling or availability in microservices.</p>",
+      "gotchas": [
+        "Steps should be idempotent",
+        "Compensation can fail — retry or alert",
+        "No isolation — intermediate state is visible"
+      ],
+      "terms": [
+        [
+          "Saga",
+          "Sequence of local transactions + compensation."
+        ],
+        [
+          "Choreography",
+          "Driven by events, no central controller."
+        ],
+        [
+          "Orchestration",
+          "Central orchestrator executes the steps."
+        ]
+      ]
+    },
+    "msd3": {
+      "what": "<p><b>Definition:</b> CQRS commands (writes) and queries (reads) in separate models. Event sourcing stores events instead of state — full history, replay possible.</p>",
+      "why": "<p>For read-heavy views, audit trail, and cross-service queries.</p>",
+      "gotchas": [
+        "It is not necessary to take both together",
+        "Event schema evolution is difficult",
+        "Overkill for simple CRUD"
+      ],
+      "terms": [
+        [
+          "CQRS",
+          "Read and write models are separate."
+        ],
+        [
+          "Event sourcing",
+          "State = sequence of events."
+        ],
+        [
+          "Projection",
+          "Read model derived from events."
+        ]
+      ]
+    },
+    "msd4": {
+      "qsub": "Compare Kafka and RabbitMQ. When would you choose one over the other?",
+      "what": "<p><b>Definition:</b> Services emit facts (OrderPlaced); interested services subscribe. The producer doesn't know the consumers — loose coupling.</p>",
+      "why": "<p>Add new consumers without changing the producer.</p>",
+      "cons": [
+        "Understanding the flow and debugging is difficult"
+      ],
+      "gotchas": [
+        "Events should be named in past tense",
+        "Consumers must be idempotent",
+        "To make the outbox pattern DB write and publish atomic"
+      ],
+      "terms": [
+        [
+          "Event",
+          "A fact that has already happened (past tense)."
+        ],
+        [
+          "Producer/Consumer",
+          "Emit / react."
+        ],
+        [
+          "Event vs command",
+          "Event notification; command instruction."
+        ]
+      ]
+    },
+    "msd5": {
+      "qsub": "Explain the CAP theorem in the context of a real microservices system. What is PACELC?",
+      "what": "<p><b>Definition:</b> There is no strong consistency between services; accept eventual consistency. Tools: sagas, outbox, idempotency keys, reconciliation jobs.</p>",
+      "why": "<p>Distributed transactions hurt availability.</p>",
+      "cons": [
+        "Handle stale data in the UI"
+      ],
+      "gotchas": [
+        "Dual-write problem (DB + broker) solved with outbox",
+        "At-least-once → duplicates",
+        "Show the user a 'processing' state"
+      ],
+      "terms": [
+        [
+          "Eventual consistency",
+          "Everything syncs after a short delay."
+        ],
+        [
+          "Idempotency",
+          "Duplicate processing safe."
+        ],
+        [
+          "Outbox",
+          "Event saved within the DB transaction."
+        ]
+      ]
+    },
+    "msc1": {
+      "q": "Compare REST and gRPC for inter-service communication. What are the tradeoffs?",
+      "what": "<p><b>Definition:</b> Sync request-response is simple. REST is public/compatible; gRPC is internal low-latency. Resilience: timeout, retry, circuit breaker.</p>",
+      "why": "<p>Queries and user-facing flows are natural.</p>",
+      "gotchas": [
+        "Keep call chain depth small",
+        "Versioning should be backward compatible",
+        "Retries on non-idempotent calls are dangerous"
+      ],
+      "terms": [
+        [
+          "REST",
+          "Resource HTTP/JSON."
+        ],
+        [
+          "gRPC",
+          "HTTP/2 + protobuf, fast, typed."
+        ],
+        [
+          "Timeout",
+          "On every call."
+        ]
+      ]
+    },
+    "msc2": {
+      "qsub": "What is the difference between at-most-once, at-least-once, and exactly-once delivery?",
+      "what": "<p><b>Definition:</b> Producer sends a message to the broker, consumer processes it later. Temporal decoupling, buffering, retry, fan-out.</p>",
+      "why": "<p>Absorbing spikes and keeping services independent.</p>",
+      "gotchas": [
+        "Poison message in DLQ",
+        "Exactly-once practically = at-least-once + idempotency",
+        "Monitor consumer lag"
+      ]
+    },
+    "msc3": {
+      "what": "<p><b>Definition:</b> Agreement on data format between services. The schema registry enforces compatibility so that changes by the producer do not break consumers. JSON is flexible but untyped.</p>",
+      "why": "<p>Safe schema evolution is necessary for independent deployments.</p>",
+      "gotchas": [
+        "Field removal/rename is a breaking change",
+        "Make backward compatibility the default",
+        "Money as integer cents"
+      ],
+      "codeSwap": [
+        [
+          "// field number kabhi reuse mat karo; naya field optional add",
+          "// never reuse a field number; add a new optional field"
+        ]
+      ]
+    },
+    "msc4": {
+      "q": "How does the Outbox Pattern ensure reliable event publishing alongside database writes?",
+      "what": "<p><b>Definition:</b> If an operation spans multiple services, then 2PC (strong consistency, coordinator single point of failure, lock holding) or Saga/TCC (eventual) can be used. In microservices, saga is preferred.</p>",
+      "gotchas": [
+        "Dual writes avoid",
+        "Design to avoid cross-service transactions (boundaries)",
+        "Compensations are business-level, not rollbacks"
+      ],
+      "why": "<p>Understanding the trade-off: consistency vs availability.</p>"
+    },
+    "msc5": {
+      "what": "<p><b>Definition:</b> In Federation, each service owns its subgraph; the router connects them into a unified graph. Clients fetch data from multiple services with a single query.</p>",
+      "why": "<p>Frontend gets a single API, backend gets team autonomy.</p>",
+      "terms": [
+        [
+          "Subgraph",
+          "Part of the service's GraphQL schema."
+        ],
+        [
+          "Supergraph/Router",
+          "Combined schema."
+        ],
+        [
+          "Entity",
+          "Shared type between services defined with @key."
+        ]
+      ]
+    },
+    "msr1": {
+      "q": "Explain the Circuit Breaker pattern. What are its three states and when does it trip?",
+      "what": "<p><b>Definition:</b> The circuit breaker counts failures; when the threshold is crossed it goes OPEN — calls fail immediately (or fallback). After the timeout it moves to HALF-OPEN for test requests; on success it becomes CLOSED.</p>",
+      "why": "<p>It prevents threads/requests from being wasted on a failing dependency (cascading failure) and gives it time to recover.</p>",
+      "pros": [
+        "Prevents cascading failure"
+      ],
+      "terms": [
+        [
+          "Closed",
+          "Normal, calls pass."
+        ],
+        [
+          "Open",
+          "Fail fast, calls are not sent."
+        ],
+        [
+          "Half-open",
+          "Check recovery with some trial calls."
+        ]
+      ]
+    },
+    "msr2": {
+      "desc": "Retry transient failures with exponential backoff + jitter. Timeouts prevent waiting forever. Never retry on the critical path without circuit breaker.",
+      "what": "<p><b>Definition:</b> Retry on transient failures (exponential backoff + jitter, max attempts). Retry only idempotent operations. Maintain a retry budget.</p>",
+      "why": "<p>Without jitter, all clients retry together and bring down the recovering service again.</p>",
+      "pros": [
+        "Transient errors are hidden."
+      ],
+      "gotchas": [
+        "Retry storms: multiply across layers",
+        "Do not retry POST without an idempotency key",
+        "Timeout must be within the total deadline"
+      ],
+      "terms": [
+        [
+          "Backoff",
+          "Retry delay increases."
+        ],
+        [
+          "Jitter",
+          "Random delay — prevents thundering herd."
+        ],
+        [
+          "Timeout",
+          "On every call."
+        ]
+      ]
+    },
+    "msr3": {
+      "q": "What is the Bulkhead pattern? How does it prevent one slow service from affecting others?",
+      "qsub": "What is the difference between thread pool isolation and semaphore isolation?",
+      "what": "<p><b>Definition:</b> Like compartments of a ship — each dependency has its own pool/semaphore. A slow service will only fill its own pool, not the entire app.</p>",
+      "why": "<p>If a slow dependency consumes all threads, all features fail.</p>",
+      "gotchas": [
+        "Determine pool sizes based on data",
+        "Reject quickly when the pool is full",
+        "Allocate dedicated resources for critical paths"
+      ],
+      "terms": [
+        [
+          "Bulkhead",
+          "Separate resource pools."
+        ],
+        [
+          "Thread/connection pool",
+          "Per-dependency limit."
+        ],
+        [
+          "Isolation",
+          "A slow dependency should not consume the rest."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// reports ko max 10",
+          "// at most 10 reports"
+        ]
+      ]
+    },
+    "msr4": {
+      "q": "What are the main rate limiting algorithms? Compare token bucket and sliding window.",
+      "what": "<p><b>Definition:</b> Per-client limits prevent the service from being overloaded. Algorithms: token bucket, sliding window. At the gateway or service level; if distributed, use Redis.</p>",
+      "why": "<p>Protection from noisy neighbors and abuse.</p>",
+      "cons": [
+        "Legitimate bursts can be blocked"
+      ],
+      "gotchas": [
+        "Give clients Retry-After",
+        "Limits tier-wise",
+        "Load shedding also on internal services"
+      ],
+      "terms": [
+        [
+          "Rate limit",
+          "Max requests / window."
+        ],
+        [
+          "Throttling",
+          "Slow down or reject excess."
+        ],
+        [
+          "429",
+          "Too Many Requests + Retry-After."
+        ]
+      ]
+    },
+    "msr5": {
+      "desc": "When a dependency fails, degrade the feature instead of breaking the user. Show cached data, hide the widget, serve a fallback response. Fail-open vs fail-closed.",
+      "what": "<p><b>Definition:</b> If the recommendation service is down, show popular items, not an error. Classify features as critical vs non-critical.</p>",
+      "why": "<p>Partial service is better than a full outage.</p>",
+      "gotchas": [
+        "Test fallbacks (chaos)",
+        "Label for stale data",
+        "Ensure the fallback itself is not heavy"
+      ],
+      "cons": [
+        "Testing fallback paths"
+      ]
+    },
+    "mst1": {
+      "desc": "Trace a single request across multiple services. Each request gets a traceId propagated in headers. Spans represent units of work. OpenTelemetry is the standard.",
+      "q": "How does distributed tracing work? What is the role of traceId and spans?",
+      "qsub": "What is the difference between head-based and tail-based sampling?",
+      "what": "<p><b>Definition:</b> Each request receives a trace ID that propagates between services (W3C traceparent). Backends: Jaeger, Tempo; instrumentation: OpenTelemetry.</p>",
+      "why": "<p>Which service is the latency bottleneck — traces reveal it.</p>",
+      "gotchas": [
+        "Propagate across async boundaries (queues) as well",
+        "Include the Trace ID in logs",
+        "Sampling strategy"
+      ],
+      "terms": [
+        [
+          "Trace",
+          "Complete request journey."
+        ],
+        [
+          "Span",
+          "A step of a service."
+        ],
+        [
+          "Context propagation",
+          "Forward the Trace ID in headers."
+        ]
+      ],
+      "pros": [
+        "Find the root cause fast"
+      ]
+    },
+    "mst2": {
+      "qsub": "Compare ELK stack and Loki for log aggregation. What are the tradeoffs?",
+      "what": "<p><b>Definition:</b> Each service writes JSON logs to stdout; an agent sends them to a central system. Fields: timestamp, level, service, traceId, userId (no PII/secrets).</p>",
+      "why": "<p>Viewing logs from dozens of services separately is impractical.</p>",
+      "gotchas": [
+        "Do not log PII/secrets",
+        "Log levels discipline",
+        "Retention policy"
+      ],
+      "terms": [
+        [
+          "Structured logs",
+          "JSON with fields."
+        ],
+        [
+          "Correlation ID",
+          "Link the request in logs."
+        ],
+        [
+          "ELK/Loki",
+          "Central search."
+        ]
+      ]
+    },
+    "mst3": {
+      "q": "What is the RED method? How do you use it to monitor microservice health?",
+      "what": "<p><b>Definition:</b> RED for services, USE for resources. Prometheus + Grafana. SLO-based alerts (burn rate) on symptoms, not on causes.</p>",
+      "why": "<p>Proactive detection and capacity planning.</p>",
+      "gotchas": [
+        "Average latency hides the tail",
+        "Do not put userId in labels",
+        "Alert fatigue — actionable alerts"
+      ]
+    },
+    "mst4": {
+      "qsub": "How does the Pact framework work? What is a Pact Broker?",
+      "what": "<p><b>Definition:</b> The consumer writes its expectations (request/response) in a contract; the provider verifies it in CI. Breaking changes are caught before deployment — instead of full E2E.</p>",
+      "why": "<p>E2E tests are slow and flaky; contracts are fast and precise.</p>",
+      "gotchas": [
+        "Only assert what the consumer uses",
+        "Can-I-Deploy check",
+        "Share contracts in the broker"
+      ],
+      "terms": [
+        [
+          "Consumer-driven contract",
+          "Defined by consumer expectations."
+        ],
+        [
+          "Pact",
+          "Popular tool."
+        ],
+        [
+          "Provider verification",
+          "Provider verifies the contract."
+        ]
+      ]
+    },
+    "mst5": {
+      "qsub": "What is the ideal test pyramid for microservices? How many e2e tests should you write?",
+      "what": "<p><b>Definition:</b> Test the service with real dependencies (DB, Kafka) — better confidence than mocks. Testcontainers provides disposable containers for each test run.</p>",
+      "why": "<p>Mocks miss real behavior (constraints, transactions).</p>",
+      "gotchas": [
+        "Do not share the DB when tests run in parallel",
+        "Container startup reuse",
+        "Keep E2E low (critical journeys)"
+      ],
+      "terms": [
+        [
+          "Testcontainers",
+          "Real DB/broker tests with Docker."
+        ],
+        [
+          "Test pyramid",
+          "Unit > integration > E2E."
+        ],
+        [
+          "Test data",
+          "Isolated, repeatable."
+        ]
+      ]
+    },
+    "mso1": {
+      "q": "Compare monorepo and polyrepo strategies for microservices. What are the tradeoffs?",
+      "what": "<p><b>Definition:</b> Each service has its own independent pipeline: build → test → image → deploy. In a monorepo, path-based triggers; in a polyrepo, shared-libs versioning.</p>",
+      "why": "<p>Independent deploy means an independent pipeline.</p>",
+      "terms": [
+        [
+          "Monorepo",
+          "One repo, many services."
+        ],
+        [
+          "Polyrepo",
+          "One repo per service."
+        ],
+        [
+          "Path filters",
+          "Only build the changed service."
+        ]
+      ]
+    },
+    "mso2": {
+      "q": "What are the core Kubernetes objects for running microservices? How does K8s enable self-healing?",
+      "qsub": "What is the sidecar pattern in Kubernetes and how does a service mesh like Istio use it?",
+      "what": "<p><b>Definition:</b> Kubernetes containers schedule, scale, heal, and handle service discovery. Rolling updates, resource limits, probes.</p>",
+      "why": "<p>Manually managing dozens of services is impossible.</p>",
+      "gotchas": [
+        "Use managed K8s (EKS/GKE)",
+        "Requests/limits set",
+        "Incorrect probes cause restart loops"
+      ]
+    },
+    "mso3": {
+      "what": "<p><b>Definition:</b> Blue/Green fast rollback with double capacity. Canary rollout by observing metrics on a small portion of real traffic. Mesh/ingress traffic split.</p>",
+      "why": "<p>Make frequent deployments safe.</p>",
+      "gotchas": [
+        "DB migrations backward compatible",
+        "Multiple versions run together",
+        "Automated analysis"
+      ]
+    },
+    "mso4": {
+      "what": "<p><b>Definition:</b> Config separate from code (environment-specific), secrets from encrypted store, rotation, per-environment values. Feature flags for runtime behavior.</p>",
+      "why": "<p>Same image in every environment; secrets do not leak.</p>",
+      "gotchas": [
+        "Secrets are not in git",
+        "Rolling restart on config change",
+        "Validation at startup"
+      ],
+      "terms": [
+        [
+          "12-factor config",
+          "Config in the environment."
+        ],
+        [
+          "Secrets manager",
+          "Vault/AWS Secrets Manager."
+        ],
+        [
+          "Dynamic config",
+          "Change at runtime."
+        ]
+      ]
+    },
+    "why-microservices": {
+      "q": "When should you move from a monolith to microservices? What are the hidden costs?",
+      "qsub": "What is Conway's Law and how does it influence microservice boundaries? What is the strangler fig pattern?",
+      "what": "<p><b>Definition:</b> Microservices when the team size, independent scaling, or release cadence demand it. Martin Fowler: 'MonolithFirst'. Splits should be data-driven, not trend-driven.</p>",
+      "why": "<p>Articulating trade-offs in an interview is most important.</p>",
+      "terms": [
+        [
+          "Monolith first",
+          "First monolith, then split."
+        ],
+        [
+          "Split triggers",
+          "Team size, deploy frequency, scale needs."
+        ],
+        [
+          "Conway",
+          "Team boundaries."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "- 3+ teams ek codebase mein block",
+          "- 3+ teams blocked on one codebase"
+        ]
+      ]
+    },
+    "ddd-intro": {
+      "qsub": "What is the difference between an Aggregate and an Entity? How do you handle relationships between aggregates?",
+      "what": "<p><b>Definition:</b> DDD models the business domain. An Aggregate (Order + OrderLines) is a transaction boundary; other aggregates are referenced by IDs. A context map shows the relationships between contexts.</p>",
+      "why": "<p>The best guide for microservice boundaries.</p>",
+      "gotchas": [
+        "Keep aggregates small",
+        "One context, one model — 'Customer' is different everywhere",
+        "Avoid an anemic domain model"
+      ],
+      "terms": [
+        [
+          "Bounded context",
+          "The boundary of the model."
+        ],
+        [
+          "Aggregate",
+          "Consistency boundary."
+        ],
+        [
+          "Ubiquitous language",
+          "Dev + business shared vocabulary."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// bahar se sirf Order ke through; Customer sirf customerId se refer",
+          "// from outside only through Order; Customer is referred to only by customerId"
+        ],
+        [
+          " invariants yahin */ }",
+          " invariants here */ }"
+        ]
+      ]
+    },
+    "kafka-patterns": {
+      "q": "How does Kafka achieve exactly-once delivery? What is the difference between at-least-once and exactly-once?",
+      "what": "<p><b>Definition:</b> Kafka distributed append-only log. Key to partition → order for the same key is guaranteed. Consumer group scale-out. Exactly-once (idempotent producer + transactions) in a limited scope.</p>",
+      "why": "<p>Event streaming, CQRS/event sourcing's backbone.</p>",
+      "gotchas": [
+        "Order only within a partition",
+        "Rebalances cause lag",
+        "Retention versus replay requirement"
+      ],
+      "terms": [
+        [
+          "Partition",
+          "Parallelism + ordering unit."
+        ],
+        [
+          "Consumer group",
+          "Partitions are shared."
+        ],
+        [
+          "Offset",
+          "Log position."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// consumer group 'email-service' — partitions mein split",
+          "// consumer group 'email-service' — split across partitions"
+        ]
+      ]
+    },
+    "service-mesh": {
+      "q": "What is a service mesh? When does the overhead justify the benefits?",
+      "qsub": "What is the difference between Istio and Linkerd? How does mTLS work in a service mesh?",
+      "what": "<p><b>Definition:</b> Mesh cross-cutting concerns (mTLS, retries, observability, traffic shifting) are moved from application code into proxies. Istio/Linkerd.</p>",
+      "why": "<p>Consistent policy across polyglot services.</p>",
+      "gotchas": [
+        "Overkill in small setups",
+        "Sidecar resource cost",
+        "Debugging proxy layer"
+      ],
+      "terms": [
+        [
+          "Sidecar",
+          "Proxy (Envoy) with each pod."
+        ],
+        [
+          "mTLS",
+          "Service-to-service encryption."
+        ],
+        [
+          "Traffic management",
+          "Retries, splits, timeouts."
+        ]
+      ]
+    },
+    "chaos-engineering": {
+      "qsub": "What is the difference between chaos engineering and penetration testing? How do you limit blast radius?",
+      "what": "<p><b>Definition:</b> Verify resilience by injecting failures into a production-like environment. Latency, pod kill, dependency down, AZ failure. GameDays give teams practice.</p>",
+      "why": "<p>Find failures under controlled conditions.</p>",
+      "gotchas": [
+        "Observability first",
+        "Start with a small scope",
+        "Fix findings in the backlog"
+      ]
+    },
+    "event-storming": {
+      "q": "What is Event Storming and how do you facilitate one? What are the different types of stickies?",
+      "qsub": "How does Event Storming help identify microservice boundaries? What is the difference between Big Picture and Design Level Event Storming?",
+      "what": "<p><b>Definition:</b> Workshop where developers and domain experts create an events timeline on the wall. Then they suggest commands, aggregates, policies, hotspots; clusters of bounded contexts.</p>",
+      "why": "<p>Service boundaries emerge from business understanding, not from guesswork.</p>",
+      "cons": [
+        "Right people are needed in the room"
+      ],
+      "gotchas": [
+        "Events past tense",
+        "Useless without business experts",
+        "Validate boundaries after the workshop"
+      ],
+      "terms": [
+        [
+          "Domain event",
+          "Orange sticky: OrderPlaced."
+        ],
+        [
+          "Command / Aggregate",
+          "Blue / yellow stickies."
+        ],
+        [
+          "Bounded context",
+          "They are formed by clusters."
+        ]
+      ]
+    }
+  }
+}

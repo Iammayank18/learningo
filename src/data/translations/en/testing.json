@@ -1,0 +1,906 @@
+{
+  "lessons": {
+    "t0_0": {
+      "what": "<p><b>Definition:</b> Vitest is configured from the <code>vite.config.ts</code> block in <code>test</code>. For component tests, <code>environment: 'jsdom'</code>, <code>globals: true</code> (describe/it global), and jest-dom matchers are imported in <code>setupFiles</code>.</p>",
+      "why": "<p>Vite uses the same transform pipeline, so aliases, TS, JSX work without separate configuration. Watch mode provides instant feedback like HMR.</p>",
+      "cons": [
+        "Some Jest-specific plugins/mocks behave differently"
+      ],
+      "gotchas": [
+        "Add TS types (<code>vitest/globals</code>) when using <code>globals: true</code>",
+        "The default environment is node — set jsdom for DOM tests",
+        "In CI use <code>vitest run</code> (no watch)"
+      ],
+      "terms": [
+        [
+          "Vitest",
+          "Vite-native test runner — Jest-like API, but very fast and ESM/TS out of the box."
+        ],
+        [
+          "environment",
+          "<code>node</code> (default) or <code>jsdom</code>/<code>happy-dom</code> — use jsdom when you need a DOM."
+        ],
+        [
+          "setupFiles",
+          "File that runs before each test (extends matchers, starts MSW)."
+        ]
+      ],
+      "where": [
+        [
+          "Vite / React projects",
+          "default choice instead of Jest."
+        ],
+        [
+          "Libraries",
+          "fast unit tests."
+        ]
+      ]
+    },
+    "t0_1": {
+      "what": "<p><b>Definition:</b> <code>describe</code> groups tests, <code>it</code>/<code>test</code> is a case, <code>expect(value).matcher()</code> is an assertion. <code>test.each</code> runs the same logic on multiple data sets.</p>",
+      "why": "<p>Tests also serve as documentation: name them so that when they fail you know what broke. Table-driven tests eliminate duplication.</p>",
+      "cons": [
+        "Over-specified tests break during refactoring."
+      ],
+      "gotchas": [
+        "Object comparisons fail with <code>toBe</code> — use <code>toEqual</code> or <code>toStrictEqual</code>.",
+        "Check only one behavior per test.",
+        "Use snapshots sparingly — large snapshots are not reviewed."
+      ],
+      "terms": [
+        [
+          "Matcher",
+          "<code>expect(x).toBe()</code>, <code>toEqual()</code>, <code>toContain()</code>, <code>toThrow()</code>."
+        ],
+        [
+          "toBe vs toEqual",
+          "toBe = <code>Object.is</code> (reference); toEqual = deep equality."
+        ],
+        [
+          "test.each",
+          "Table-driven tests: one test, many input/output rows."
+        ]
+      ]
+    },
+    "t0_2": {
+      "what": "<p><b>Definition:</b> Mocks dependencies (API, timers, modules) to fake them so that tests stay fast and deterministic. Behaviour is set with <code>mockReturnValue</code>, <code>mockResolvedValue</code>, <code>mockImplementation</code>; reset with <code>vi.clearAllMocks()</code>/<code>restoreAllMocks()</code>.</p>",
+      "why": "<p>A unit test should not depend on the network or database. However, excessive mocking ties you to the implementation — mock at boundaries (network, time), not on internal functions.</p>",
+      "cons": [
+        "Over-mocking makes tests brittle"
+      ],
+      "gotchas": [
+        "<code>vi.mock</code> is hoisted to the top of the file — use <code>vi.hoisted</code> for variables defined above",
+        "Reset mocks between tests",
+        "For network, MSW module-mock is better"
+      ],
+      "terms": [
+        [
+          "vi.fn()",
+          "Mock function that records calls."
+        ],
+        [
+          "vi.spyOn(obj, 'method')",
+          "Wraps an existing method to track or override it."
+        ],
+        [
+          "vi.mock(path)",
+          "Replaces the entire module (hoisted)."
+        ]
+      ],
+      "where": [
+        [
+          "API / module boundaries",
+          "fake responses."
+        ],
+        [
+          "Callbacks",
+          "Verify interaction with vi.fn()."
+        ]
+      ]
+    },
+    "t0_3": {
+      "what": "<p><b>Definition:</b> In async tests, use <code>async/await</code> and always await/return, otherwise the test passes prematurely. For time-based code, use fake timers: <code>advanceTimersByTime(ms)</code>.</p>",
+      "why": "<p>Sleeping on real <code>setTimeout</code> makes tests slow and flaky. Fake timers let you test debounce/polling logic in milliseconds.</p>",
+      "pros": [
+        "Fast and deterministic async tests"
+      ],
+      "cons": [
+        "Interaction between fake timers and promises is tricky (needs async variants)"
+      ],
+      "gotchas": [
+        "If you forget await, the test passes without any assertion",
+        "Restore real timers after fake timers with <code>useRealTimers</code>",
+        "Use <code>advanceTimersByTimeAsync</code> with promises"
+      ],
+      "terms": [
+        [
+          "resolves / rejects",
+          "Promise matchers: <code>await expect(p).resolves.toBe(1)</code>."
+        ],
+        [
+          "Fake timers",
+          "<code>vi.useFakeTimers()</code> — control over setTimeout/Date."
+        ],
+        [
+          "waitFor",
+          "Retry until the condition becomes true (RTL)."
+        ]
+      ]
+    },
+    "t0_4": {
+      "what": "<p><b>Definition:</b> <code>vitest run --coverage</code> creates a report (lines, branches, functions). Coverage shows what was executed, not whether it was correctly verified.</p><p>Exclude config, types, trivial getters, and generated code; focus on branch coverage for critical logic.</p>",
+      "why": "<p>Aiming for 100% coverage encourages gaming and useless tests. Better: high coverage on critical paths plus a threshold so it doesn’t fall.</p>",
+      "pros": [
+        "Untested code becomes visible"
+      ],
+      "cons": [
+        "Coverage does not guarantee quality"
+      ],
+      "gotchas": [
+        "Executed ≠ asserted: tests without asserts also contribute to coverage.",
+        "Don’t treat coverage as a target; treat it as a signal.",
+        "Branch coverage is more useful than line coverage."
+      ],
+      "terms": [
+        [
+          "Coverage",
+          "Which lines/branches the tests executed."
+        ],
+        [
+          "v8 vs istanbul",
+          "v8: native, fast; istanbul: instrumentation, more accurate branches."
+        ],
+        [
+          "Threshold",
+          "Minimum coverage enforced in CI."
+        ]
+      ]
+    },
+    "t0_5": {
+      "what": "<p><b>Definition:</b> Lifecycle hooks (<code>beforeAll</code>, <code>beforeEach</code>, <code>afterEach</code>, <code>afterAll</code>) handle setup/teardown. In a nested <code>describe</code>, hooks run according to their scope. <code>test.todo</code> is a marker for planned tests.</p>",
+      "why": "<p>Tests that depend on test order are flaky and difficult to debug. Each test should create its own data and clean it up.</p>",
+      "cons": [
+        "Heavy beforeAll shared state can break isolation"
+      ],
+      "gotchas": [
+        "<code>it.only</code> should not be committed — the entire suite gets skipped in CI.",
+        "Shared module-level variables leak between tests.",
+        "Use async/await inside hooks."
+      ],
+      "terms": [
+        [
+          "beforeEach / afterEach",
+          "Setup/cleanup before/after each test."
+        ],
+        [
+          "Isolation",
+          "Each test runs independently — no shared mutable state."
+        ],
+        [
+          "test.skip / only / todo",
+          "Temporarily skip, run only this, or mark as pending."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// it.only chhod kar commit mat karo — CI lint: no-only-tests",
+          "// don't commit with it.only left in — CI lint: no-only-tests"
+        ]
+      ]
+    },
+    "t1_0": {
+      "desc": "\"The more your tests resemble the way your software is used, the more confidence they give you.\" Avoid testing state, class names, internal functions.",
+      "what": "<p><b>Definition:</b> RTL's motto: 'The more your tests resemble the way your software is used, the more confidence they give you.' Render the component, interact like a user (click, type), and assert what appears on the screen.</p>",
+      "why": "<p>Implementation tests (state variable name, instance method) break on refactor even if the app works fine. Behaviour tests only break when a user-facing thing changes.</p>",
+      "cons": [
+        "Real browser behaviours (layout) are not in jsdom"
+      ],
+      "gotchas": [
+        "Do not test the component's internal state/hooks",
+        "Do not over-depend on snapshots",
+        "Layout/CSS checks require E2E/visual tests"
+      ],
+      "terms": [
+        [
+          "Behaviour over implementation",
+          "Test what the user sees/experiences, not state/internal function."
+        ],
+        [
+          "Confidence",
+          "The more the test resembles real use, the more confidence."
+        ],
+        [
+          "Refactor-safe",
+          "Tests do not break when implementation changes."
+        ]
+      ],
+      "where": [
+        [
+          "Component tests",
+          "user flows."
+        ],
+        [
+          "Refactors",
+          "tests remain stable."
+        ]
+      ]
+    },
+    "t1_1": {
+      "what": "<p><b>Definition:</b> Query priority: <code>getByRole</code> &gt; <code>getByLabelText</code> &gt; <code>getByPlaceholderText</code> &gt; <code>getByText</code> &gt; <code>getByDisplayValue</code> &gt; <code>getByAltText</code> &gt; <code>getByTitle</code> &gt; <code>getByTestId</code>.</p><p>For checking absence use <code>queryBy</code> + <code>not.toBeInTheDocument()</code>.</p>",
+      "why": "<p>Role-based queries validate accessibility simultaneously: if <code>getByRole('button', {name})</code> succeeds, a screen-reader user will also receive it.</p>",
+      "pros": [
+        "A11y-friendly and stable queries"
+      ],
+      "cons": [
+        "Learning curve to understand role/name"
+      ],
+      "gotchas": [
+        "<code>getBy</code> throws an error on multiple matches — use <code>getAllBy</code>",
+        "For absence checks, use <code>queryBy</code> instead of <code>getBy</code>",
+        "testId only as a last resort"
+      ],
+      "terms": [
+        [
+          "getByRole",
+          "The most preferred query — using accessible role + name."
+        ],
+        [
+          "getBy / queryBy / findBy",
+          "getBy: immediate or error; queryBy: returns null; findBy: async wait."
+        ],
+        [
+          "getByTestId",
+          "Last resort when no semantic query is available."
+        ]
+      ]
+    },
+    "t1_2": {
+      "what": "<p><b>Definition:</b> <code>@testing-library/user-event</code> runs the full sequence hover → mousedown → focus → mouseup → click on a click, and on type each key triggers keydown/keyup. <code>fireEvent.click</code> only generates a single click event.</p>",
+      "why": "<p>The test mimics real browser behavior (e.g., clicking a disabled button does nothing). Therefore user-event should be the default.</p>",
+      "cons": [
+        "a bit slower and asynchronous compared to fireEvent"
+      ],
+      "gotchas": [
+        "In v14, call <code>userEvent.setup()</code> first and await it",
+        "Use fireEvent only when user-event does not support it (e.g., some custom events)",
+        "Provide the <code>advanceTimers</code> option when using fake timers"
+      ],
+      "terms": [
+        [
+          "user-event",
+          "Real user interactions simulate the full sequence of focus, pointer, and keyboard events."
+        ],
+        [
+          "fireEvent",
+          "Only dispatches a single low-level DOM event."
+        ],
+        [
+          "userEvent.setup()",
+          "Create an instance, then await it before use (v14)."
+        ]
+      ],
+      "where": [
+        [
+          "Forms / keyboard flows",
+          "type, tab, enter."
+        ],
+        [
+          "Dropdowns / menus",
+          "hover, click sequences."
+        ]
+      ]
+    },
+    "t1_3": {
+      "what": "<p><b>Definition:</b> For async UI (showing data after an API) use <code>await screen.findByText()</code>. <code>waitFor</code> retries the assertion; <code>waitForElementToBeRemoved</code> waits for the loading spinner to disappear.</p>",
+      "why": "<p>Fixed sleeps (<code>setTimeout</code>) are slow and flaky. Polling-based waits run until the condition becomes true and finish quickly.</p>",
+      "pros": [
+        "Fast and stable async assertions"
+      ],
+      "cons": [
+        "Timeout default 1 s — increase it for slow cases"
+      ],
+      "gotchas": [
+        "Do not perform side effects (click) inside waitFor",
+        "Keep only one assertion per waitFor",
+        "'not wrapped in act' warning is often a signal that await is missing"
+      ],
+      "terms": [
+        [
+          "findBy*",
+          "getBy + waitFor: wait until the element appears."
+        ],
+        [
+          "waitFor",
+          "Retry the callback until it passes or times out."
+        ],
+        [
+          "act()",
+          "Allows React to flush state updates; RTL usually wraps it automatically."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// bad: side effects waitFor ke andar",
+          "// bad: side effects inside waitFor"
+        ],
+        [
+          "// ❌ baar baar click hoga",
+          "// ❌ will be clicked again and again"
+        ]
+      ]
+    },
+    "t1_4": {
+      "what": "<p><b>Definition:</b> A component needs context (Router, React Query, Redux), so create a <code>renderWithProviders</code> helper that provides a wrapper. Mock child components only when they are very heavy or third-party (chart, map).</p>",
+      "why": "<p>Repeating providers in every test is noisy. Excessive mocking (of our own child components) pushes tests away from integration and makes them brittle.</p>",
+      "cons": [
+        "Over-mocking reduces confidence"
+      ],
+      "gotchas": [
+        "Create a new QueryClient for each test (to avoid cache leaks).",
+        "Set query retry to false in tests.",
+        "Do not mock your own child components."
+      ],
+      "terms": [
+        [
+          "Custom render",
+          "Render wrapper with providers (Router, QueryClient, Theme)."
+        ],
+        [
+          "Module mock",
+          "Replace router/hooks using vi.mock."
+        ],
+        [
+          "Boundary mocking",
+          "Mock only network/browser APIs, not your child components."
+        ]
+      ]
+    },
+    "t1_5": {
+      "what": "<p><b>Definition:</b> <code>axe(container)</code> runs WCAG rules on the rendered DOM (missing labels, bad contrast, invalid ARIA). Role-based RTL queries are also implicit accessibility tests.</p>",
+      "why": "<p>It is a cheap way to catch regressions. However, keyboard flow and screen-reader experience must be verified manually or via E2E (Playwright + axe).</p>",
+      "cons": [
+        "Color contrast and layout rules do not run in jsdom."
+      ],
+      "gotchas": [
+        "Passing axe does not mean fully accessible.",
+        "Contrast checks are performed in a real browser (Playwright).",
+        "Keyboard navigation tests need to be written separately."
+      ],
+      "terms": [
+        [
+          "axe-core",
+          "Automated accessibility rules engine."
+        ],
+        [
+          "jest-axe / vitest-axe",
+          "<code>toHaveNoViolations()</code> matcher."
+        ],
+        [
+          "Manual testing",
+          "Automation catches only ~30–40% of accessibility issues."
+        ]
+      ]
+    },
+    "t2_0": {
+      "what": "<p><b>Definition:</b> MSW intercepts requests at the real network layer, so fetch/axios/React Query code doesn't even know it's a mock. In Node use <code>setupServer(...handlers)</code>, in the browser a service worker.</p>",
+      "why": "<p>Module-level mocks (vi.mock('axios')) stick to the code's approach. With MSW the same code runs as in production — only the response is fake.</p>",
+      "cons": [
+        "Initial setup and maintaining handlers"
+      ],
+      "gotchas": [
+        "<code>onUnhandledRequest: 'error'</code> makes unmocked calls appear immediately",
+        "Start the server in a shared setup file",
+        "Use msw v2 with global fetch in Node 18+"
+      ],
+      "terms": [
+        [
+          "MSW",
+          "Mock Service Worker — intercepts requests at the network level."
+        ],
+        [
+          "setupServer",
+          "Node (Vitest/Jest) version; <code>setupWorker</code> for the browser."
+        ],
+        [
+          "Lifecycle",
+          "<code>listen()</code> before all, <code>resetHandlers()</code> after each, <code>close()</code> after all."
+        ]
+      ]
+    },
+    "t2_1": {
+      "what": "<p><b>Definition:</b> Handlers are created with <code>http.get/post/put/delete(url, resolver)</code>. The resolver can read the request (<code>await request.json()</code>, query params) and returns an <code>HttpResponse</code>.</p>",
+      "why": "<p>If a handler set behaves like a realistic backend (validation, 404), it is useful for both tests and development.</p>",
+      "cons": [
+        "Handlers can drift away from the backend."
+      ],
+      "gotchas": [
+        "For relative URLs, the base URL must be set in the environment",
+        "The request body can be read only once — clone it",
+        "Order matters: the first matching handler wins"
+      ],
+      "terms": [
+        [
+          "Handler",
+          "A mock of a route: method + path + resolver."
+        ],
+        [
+          "HttpResponse",
+          "Helper to create a response: <code>HttpResponse.json(data, { status })</code>."
+        ],
+        [
+          "Path params",
+          "<code>/users/:id</code> — in the resolver as <code>params.id</code>."
+        ]
+      ]
+    },
+    "t2_2": {
+      "what": "<p><b>Definition:</b> Not only the happy path, also test error and loading states: 4xx/5xx responses, network failure, slow response (<code>await delay(500)</code>) and empty list.</p>",
+      "why": "<p>Production bugs often occur in error/empty/loading states that are not manually tested. You can make all of these deterministic with MSW.</p>",
+      "cons": [
+        "Testing many scenarios can make the test suite long."
+      ],
+      "gotchas": [
+        "Turn off retries in tests for clients with retry logic (React Query).",
+        "<code>delay('infinite')</code> always shows a loading state.",
+        "Keep the error format the same as the backend."
+      ],
+      "terms": [
+        [
+          "Error response",
+          "<code>HttpResponse.json(..., { status: 500 })</code>."
+        ],
+        [
+          "Network error",
+          "<code>HttpResponse.error()</code> — like a request failure."
+        ],
+        [
+          "delay()",
+          "Latency simulation: for testing loading states."
+        ]
+      ]
+    },
+    "t2_3": {
+      "what": "<p><b>Definition:</b> Default handlers serve the happy path; if a single test needs a different response, override it with <code>server.use(http.get(...))</code>. <code>afterEach(() =&gt; server.resetHandlers())</code> clears the overrides.</p>",
+      "why": "<p>You don’t need a separate handlers file for each scenario. The override applies only to that test, so isolation is maintained.</p>",
+      "cons": [
+        "If you forget resetHandlers, you get leaks"
+      ],
+      "gotchas": [
+        "Call resetHandlers in afterEach",
+        "Overrides match before defaults",
+        "Parallel tests share the same server — keep files isolated"
+      ],
+      "terms": [
+        [
+          "server.use()",
+          "Override the handler for a test."
+        ],
+        [
+          "resetHandlers()",
+          "Restore defaults after each test."
+        ],
+        [
+          "{ once: true }",
+          "Handler runs only on the first request."
+        ]
+      ],
+      "codeSwap": [
+        [
+          " retry scenario: pehli call fail, doosri pass",
+          " retry scenario: first call fails, second passes"
+        ]
+      ]
+    },
+    "t2_4": {
+      "what": "<p><b>Definition:</b> GraphQL posts everything to a single endpoint, so MSW matches by <b>operation name</b> instead of URL: <code>graphql.query('GetUser', ...)</code>.</p>",
+      "why": "<p>You can test clients like Apollo, urql, or React Query without changing them. By inspecting variables you can provide conditional responses.</p>",
+      "cons": [
+        "The operation must have a name (anonymous queries do not match)"
+      ],
+      "gotchas": [
+        "GraphQL errors come with a 200 status, not an HTTP error",
+        "Give the query a name (do not keep it anonymous)",
+        "Both partial data and errors can be present"
+      ],
+      "terms": [
+        [
+          "graphql.query / mutation",
+          "Matches by operation name."
+        ],
+        [
+          "Variables",
+          "You can read <code>variables</code> in the resolver."
+        ],
+        [
+          "graphql.link",
+          "Scoped handlers for a specific endpoint URL."
+        ]
+      ]
+    },
+    "t2_5": {
+      "what": "<p><b>Definition:</b> Reuse <code>src/mocks/handlers.ts</code> in Vitest (<code>setupServer</code>), browser development (<code>setupWorker</code>) and Playwright (<code>page.route</code> or MSW). Data builders/factories are also shared.</p>",
+      "why": "<p>If the API contract changes, it must be updated in one place. The frontend can be developed without the backend and tests see the same data that appears in development.</p>",
+      "cons": [
+        "Handlers need to stay in sync with the real API (contract tests help)"
+      ],
+      "gotchas": [
+        "Ensure mock data does not end up in the production bundle (use dynamic import + environment guard)",
+        "The service worker file must be in the public folder (<code>msw init</code>)",
+        "Catch handler drift with contract tests"
+      ],
+      "terms": [
+        [
+          "Single source of truth",
+          "A single handlers.ts used by tests, Playwright, and dev mode."
+        ],
+        [
+          "Shared fixtures",
+          "Common mock data in one place."
+        ],
+        [
+          "Dev mode worker",
+          "Start MSW in the browser to develop the UI without a backend."
+        ]
+      ],
+      "where": [
+        [
+          "Frontend-first development",
+          "UI without a backend."
+        ],
+        [
+          "E2E + unit parity",
+          "same data."
+        ]
+      ]
+    },
+    "t3_0": {
+      "what": "<p><b>Definition:</b> In the Playwright config, <code>projects</code> define separate browsers/devices, <code>use.baseURL</code>, <code>retries</code> (1–2 on CI), <code>workers</code> (parallelism) and <code>reporter</code> (html/github) are set. <code>webServer</code> starts the app automatically.</p>",
+      "why": "<p>Cross-browser coverage (especially WebKit/Safari) is a major benefit of E2E. Trace on first retry makes debugging failures easier.</p>",
+      "cons": [
+        "Browser downloads and CI time"
+      ],
+      "gotchas": [
+        "On CI you need <code>npx playwright install --with-deps</code>",
+        "Retries hide flakiness — fix by examining the trace",
+        "Keep data isolated for parallel tests"
+      ],
+      "terms": [
+        [
+          "playwright.config.ts",
+          "Configuration for projects (browsers), baseURL, retries, workers, reporters."
+        ],
+        [
+          "projects",
+          "Same tests on chromium / firefox / webkit / mobile viewports."
+        ],
+        [
+          "webServer",
+          "Start the dev/preview server before the test."
+        ]
+      ]
+    },
+    "t3_1": {
+      "what": "<p><b>Definition:</b> Create locators from user-facing queries: <code>getByRole</code>, <code>getByLabel</code>, <code>getByText</code>, <code>getByTestId</code>. Chain/filter: <code>page.getByRole('listitem').filter({ hasText: 'Asha' })</code>.</p>",
+      "why": "<p>CSS/XPath selectors break during UI refactors. Role-based locators are stable and also encourage accessibility. Manual <code>waitForTimeout</code> is not needed.</p>",
+      "cons": [
+        "Ambiguous locators cause strict mode errors (good signal)"
+      ],
+      "gotchas": [
+        "Avoid <code>waitForTimeout</code> — web-first assertions (<code>expect(...).toBeVisible()</code>)",
+        "CSS class selectors are fragile",
+        "Assertions on <code>locator.count()</code> do not retry — use <code>toHaveCount</code>"
+      ],
+      "terms": [
+        [
+          "Locator",
+          "Lazy, auto-waiting element handle — <code>page.getByRole(...)</code>."
+        ],
+        [
+          "Auto-waiting",
+          "Playwright automatically checks actionability (visible, enabled, stable) before an action."
+        ],
+        [
+          "Strict mode",
+          "If a locator matches multiple elements, it throws an error — catches ambiguity."
+        ]
+      ]
+    },
+    "t3_2": {
+      "what": "<p><b>Definition:</b> In POM, a class is created for each page/component that exposes locators and actions (<code>login(email, pw)</code>). Tests are written in business language, not with selectors.</p>",
+      "why": "<p>In large suites, selectors get duplicated; a UI change can break 30 tests. POM makes maintenance cheaper. In small suites it can be overkill.</p>",
+      "cons": [
+        "Extra abstraction; overkill in small projects"
+      ],
+      "gotchas": [
+        "Keep assertions minimal in page objects (assert in tests)",
+        "Avoid very deep inheritance (BasePage chains)",
+        "Also create component-level objects (Modal, Table)"
+      ],
+      "terms": [
+        [
+          "Page Object Model",
+          "Wrapping page interactions in a class."
+        ],
+        [
+          "Reuse",
+          "Selectors and flows in one place — update a single file when UI changes."
+        ],
+        [
+          "Fixture",
+          "Playwright way to inject a page object into a test."
+        ]
+      ]
+    },
+    "t3_3": {
+      "what": "<p><b>Definition:</b> In every test, logging in through the UI is slow. A setup project logs in and saves a <code>storageState</code> file; the remaining tests start authenticated using <code>use: { storageState }</code>. Fixtures can be worker-scoped or test-scoped.</p>",
+      "why": "<p>A large part of the E2E suite is spent on authentication and data setup. Fixtures and saved state make tests run faster and isolated.</p>",
+      "cons": [
+        "Be aware when the shared state file expires or rotates."
+      ],
+      "gotchas": [
+        "Do not commit the <code>.auth</code> folder to git",
+        "Shared mutable data between tests can cause flakiness",
+        "Always perform cleanup in the fixture after (<code>await use(x)</code>)"
+      ],
+      "terms": [
+        [
+          "Fixture",
+          "Setup for a test that is created and cleaned up automatically (<code>test.extend</code>)."
+        ],
+        [
+          "storageState",
+          "Login session (cookies/localStorage) saved and reused."
+        ],
+        [
+          "globalSetup",
+          "Runs once before the entire run."
+        ]
+      ]
+    },
+    "t3_4": {
+      "what": "<p><b>Definition:</b> The first run creates a baseline snapshot; subsequent runs compare against it. Use <code>--update-snapshots</code> for intentional UI changes. Mask dynamic content with <code>mask</code> or disable animations with <code>animations: 'disabled'</code>.</p>",
+      "why": "<p>CSS regressions (spacing, overflow, wrong color) that functional tests miss are caught by visual tests. However, OS/font differences can be noisy — create baselines only in CI (Linux, Docker).</p>",
+      "pros": [
+        "Catches CSS/visual regressions"
+      ],
+      "cons": [
+        "Noisy and requires maintaining baselines"
+      ],
+      "gotchas": [
+        "Baselines on local macOS and CI Linux will differ",
+        "Animations and lazy-loaded images can cause flaky diffs",
+        "Don’t screenshot everything — only high-value screens"
+      ],
+      "terms": [
+        [
+          "toHaveScreenshot",
+          "Compares the page/element pixel-by-pixel with the baseline image."
+        ],
+        [
+          "Threshold",
+          "Maximum pixel difference allowed (maxDiffPixels / threshold)."
+        ],
+        [
+          "Masking",
+          "Hiding dynamic areas (timestamps, ads)."
+        ]
+      ]
+    },
+    "t3_5": {
+      "what": "<p><b>Definition:</b> <code>page.route('**/api/items', route =&gt; route.fulfill({ json }))</code> is used to mock the network layer. Seed test data from the API with a real backend for E2E (<code>request</code> fixture).</p>",
+      "why": "<p>Third-party, flaky, or rare cases (500 error, slow response) are mocked to make them deterministic; and the core happy path uses a real backend so that the contract is also tested.</p>",
+      "cons": [
+        "Over-mocking reduces the realism of E2E."
+      ],
+      "gotchas": [
+        "Register the route before page.goto.",
+        "Glob patterns must match precisely.",
+        "Too much mocking reduces the benefit of E2E."
+      ],
+      "terms": [
+        [
+          "page.route",
+          "Intercepts a network request to fulfill, abort, or modify."
+        ],
+        [
+          "Mock vs seed",
+          "Mock: fake response; seed: create data in the real backend via the API."
+        ],
+        [
+          "MSW + Playwright",
+          "Reuse the same handlers in E2E."
+        ]
+      ]
+    },
+    "t4_0": {
+      "what": "<p><b>Definition:</b> TDD loop: first a failing test (red), then the simplest code that makes it pass (green), then refactor. Pure logic and bug fixes (first repro test) benefit the most; UI/exploratory work may incur overhead.</p>",
+      "why": "<p>Small steps, fast feedback and testable design are obtained. But turning it into a dogma and applying it to every line can reduce productivity — judgment is needed.</p>",
+      "cons": [
+        "May feel slow in exploratory / UI-heavy work"
+      ],
+      "gotchas": [
+        "If you write tests around the implementation, refactoring becomes difficult",
+        "Keep tests focused on public behavior",
+        "A mock-heavy London-style design can create tight coupling"
+      ],
+      "terms": [
+        [
+          "Red → Green → Refactor",
+          "A failing test, pass it with minimal code, then clean up."
+        ],
+        [
+          "London vs Detroit",
+          "London: mocks, outside-in; Detroit (classicist): real objects, inside-out."
+        ],
+        [
+          "Test-first",
+          "Shaping design through tests."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// 3. REFACTOR: coupons table, validation... tests green rehte hain",
+          "// 3. REFACTOR: coupons table, validation... tests stay green"
+        ],
+        [
+          " bug fix flow: pehle failing test likho, phir fix",
+          " bug fix flow: write a failing test first, then fix"
+        ]
+      ]
+    },
+    "t4_1": {
+      "desc": "Testing pyramid, testing trophy, when to use unit vs integration vs E2E. The cost of each type. Avoiding the ice cream cone.",
+      "what": "<p><b>Definition:</b> Test types mix: static checks (TypeScript, ESLint), unit (pure logic), integration (components + hooks + network mock), E2E (real browser). Integration tests in the frontend often provide the best ROI.</p>",
+      "why": "<p>Unit tests are fast but give low confidence; E2E gives higher confidence but is slow/flaky. Maintaining the right cost-confidence balance is the testing architecture.</p>",
+      "cons": [
+        "Layer boundaries are a topic of debate within the team"
+      ],
+      "gotchas": [
+        "Don’t try to cover everything with E2E",
+        "Don’t make coverage percentage a goal",
+        "Quarantine flaky E2E tests; don’t ignore them"
+      ],
+      "terms": [
+        [
+          "Testing pyramid",
+          "Many unit, few integration, very few E2E."
+        ],
+        [
+          "Testing trophy",
+          "Kent C. Dodds: static + unit + <b>integration (most)</b> + E2E."
+        ],
+        [
+          "Ice cream cone",
+          "Anti-pattern: too many E2E/manual, few unit — slow and flaky."
+        ]
+      ],
+      "where": [
+        [
+          "Test planning",
+          "what and where testing will occur."
+        ],
+        [
+          "CI design",
+          "fast checks first."
+        ]
+      ]
+    },
+    "t4_2": {
+      "what": "<p><b>Definition:</b> GitHub Actions workflow: checkout → <code>actions/setup-node</code> with cache → install → lint/typecheck → unit tests → build → E2E (sharded). Required checks are set in branch protection, and the test report artifact is uploaded.</p>",
+      "why": "<p>Slow CI blocks developers and people start ignoring tests. Caching, parallel jobs, and fail-fast deliver feedback in minutes.</p>",
+      "cons": [
+        "CI cost and maintenance"
+      ],
+      "gotchas": [
+        "Keep the cache key based on the lockfile hash",
+        "Upload traces/reports artifacts on failure",
+        "Secrets are not available in PRs from forks"
+      ],
+      "terms": [
+        [
+          "Parallelism / sharding",
+          "Distribute tests across multiple machines/jobs."
+        ],
+        [
+          "Cache",
+          "Save install time by caching <code>node_modules</code>/Playwright browsers."
+        ],
+        [
+          "Fail fast",
+          "Run cheap checks (lint/typecheck) first, expensive ones later."
+        ]
+      ]
+    },
+    "t4_3": {
+      "what": "<p><b>Definition:</b> A consumer test runs against a mock provider and creates a <i>pact</i> (JSON contract). In backend CI, the same pact is replayed against the real provider; a mismatch means a breaking change was caught before deployment.</p>",
+      "why": "<p>Even without E2E, it prevents bugs like “the backend renamed a field and the frontend broke”. It is most useful in microservices/multiple teams.</p>",
+      "pros": [
+        "Breaking API changes are caught early"
+      ],
+      "gotchas": [
+        "Specify only the parts of the contract that the consumer actually uses",
+        "You need to maintain provider states",
+        "It can be overkill for a small single-team app"
+      ],
+      "terms": [
+        [
+          "Consumer-driven contract",
+          "Frontend (consumer) specifies what it expects from the API."
+        ],
+        [
+          "Pact",
+          "Contract testing tool: the consumer test generates a pact file, which the provider verifies."
+        ],
+        [
+          "Breaking change",
+          "If the contract breaks, the provider build fails."
+        ]
+      ]
+    },
+    "t4_4": {
+      "what": "<p><b>Definition:</b> Make performance part of the test suite: <code>size-limit</code> bundle budget, Lighthouse CI thresholds, and read LCP/CLS in Playwright using <code>PerformanceObserver</code> to assert.</p>",
+      "why": "<p>Performance regressions are silent; automated checks catch them at the PR stage, not after production.</p>",
+      "cons": [
+        "Lab numbers are noisy — keep a buffer on thresholds"
+      ],
+      "gotchas": [
+        "CI machines are variable — run multiple times / use relaxed thresholds",
+        "Complement with production RUM",
+        "Set realistic throttling"
+      ],
+      "terms": [
+        [
+          "size-limit",
+          "Assert JS bundle size in CI."
+        ],
+        [
+          "Web-vitals in E2E",
+          "Measure LCP/CLS in Playwright."
+        ],
+        [
+          "Lighthouse CI",
+          "Lighthouse score thresholds."
+        ]
+      ]
+    },
+    "t4_5": {
+      "what": "<p><b>Definition:</b> Common causes of flakiness: timing/race conditions, shared state, real network, random data, animation, test order dependence. Fix: auto-waiting/web-first assertions, isolated data, fake time, mocked network, and retry only for diagnosis.</p>",
+      "why": "<p>Flaky tests break trust — the team starts ignoring failures. Quarantine + tracking + root-cause fix should be a process.</p>",
+      "pros": [
+        "Team's confidence in tests"
+      ],
+      "cons": [
+        "Root-cause hunting takes time"
+      ],
+      "gotchas": [
+        "Retries hide flakiness — track the rate",
+        "Don't depend on test order",
+        "Control real time/random/network"
+      ],
+      "terms": [
+        [
+          "Flaky test",
+          "Passes sometimes and fails sometimes without code changes."
+        ],
+        [
+          "Quarantine",
+          "Removing the flaky test from the main gate and tracking it separately."
+        ],
+        [
+          "Determinism",
+          "Same input = same result: fixed time, seed, isolated data."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// 'flaky' tag report mein dikhta hai",
+          "// the 'flaky' tag shows up in the report"
+        ],
+        [
+          "// playwright: flaky ko report karo",
+          "// playwright: report the flaky ones"
+        ]
+      ]
+    }
+  }
+}

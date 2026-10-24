@@ -1,0 +1,1230 @@
+{
+  "lessons": {
+    "oop1": {
+      "name": "Encapsulation — bundling data + methods, access modifiers",
+      "desc": "Encapsulation binds data and methods that operate on that data together, restricting direct access to internal state. Access modifiers (private, protected, public) enforce boundaries.",
+      "q": "Why does encapsulation protect object invariants and reduce coupling? How do access modifiers enforce boundaries?",
+      "qsub": "Protects invariants, reduces coupling, makes refactoring safer. In interviews, demonstrate that you keep fields private and expose behavior, not data.",
+      "what": "<p><b>Encapsulation</b> simply means data (variables) and behavior (methods) encapsulated in a single container (class), and preventing that container from being directly modified from outside.</p><p>It works like a protective shield so that any external code cannot directly tamper with your data.</p>",
+      "analogy": "Imagine a medicine capsule. The actual drug (data) stays safe inside the capsule. You don't touch the drug (chemicals) directly; you just swallow the whole capsule.<br><br>Or think of an ATM. You cannot withdraw cash directly from the ATM's vault (private data). You must use the ATM's buttons (public methods) and enter the correct PIN before money is dispensed.",
+      "why": "<p>Without encapsulation, any external code could change your object's state (for example setting a bank balance to a negative value).</p><p>By hiding the data (making it private) and allowing changes only through methods, you can enforce rules and validation.</p>",
+      "pros": [
+        "Data remains safe (no one can set weird values)",
+        "Changing the implementation under the hood becomes easy without breaking external code",
+        "Validation is in one place (centralized)"
+      ],
+      "cons": [
+        "Code becomes a bit longer (need to write getters/setters)",
+        "Boilerplate code increases"
+      ],
+      "gotchas": [
+        "Writing getters/setters for every private variable without thought is an anti-pattern. If you intended to expose everything, why make it private? This is called an \"Anemic Domain Model\"."
+      ],
+      "terms": [
+        [
+          "State",
+          "Object's own internal data or variables"
+        ],
+        [
+          "Behavior",
+          "Object's methods or functions that work with that state"
+        ],
+        [
+          "Access Modifiers",
+          "keywords like private, public, protected that decide who can view/change the data"
+        ]
+      ],
+      "where": [
+        [
+          "Banking Apps",
+          "When handling account balances and transaction limits"
+        ],
+        [
+          "React/Vue Components",
+          "Component's own local state that cannot be changed directly from outside"
+        ]
+      ],
+      "visualCap": "Data is kept private; only methods can touch it.",
+      "codeSwap": [
+        [
+          "// Public method - validation ke baad hi balance badhega",
+          "// Public method - the balance increases only after validation"
+        ],
+        [
+          "// Public method - yaha se balance check hoga",
+          "// Public method - the balance check happens from here"
+        ],
+        [
+          "// Private field (JS mein # lagate hain)",
+          "// Private field (in JS you use #)"
+        ],
+        [
+          "throw new Error(\"Paisa negative nahi ho sakta!\");",
+          "throw new Error(\"Money can't be negative!\");"
+        ]
+      ]
+    },
+    "oop2": {
+      "name": "Inheritance — IS-A relationships, super/sub classes, method overriding",
+      "desc": "Inheritance creates an IS-A hierarchy where a subclass inherits fields and methods from a parent class. Method overriding allows subclasses to provide specialized behavior.",
+      "q": "Why does inheritance create tight coupling and when should you prefer composition over inheritance?",
+      "qsub": "Promotes code reuse and establishes polymorphic relationships. But misuse leads to fragile hierarchies — prefer composition over inheritance.",
+      "what": "<p><b>Inheritance</b> means creating a new class that automatically takes the properties (state) and methods (behavior) of an existing class.</p><p>It establishes an \"IS-A\" relationship.</p>",
+      "analogy": "Think of biological inheritance. A child inherits eye color (property) and walking style (behavior) from its parents. But the child can also learn a new talent (e.g., coding) and change its walking style (Method Overriding).",
+      "why": "<p>To avoid code duplication (DRY). If you have Dog, Cat, and Cow classes, instead of writing <code>eat()</code> and <code>sleep()</code> in each, create an <code>Animal</code> class and have them inherit from it.</p>",
+      "pros": [
+        "Code reusability",
+        "Runtime polymorphism (Method overriding)",
+        "A natural logical hierarchy forms"
+      ],
+      "cons": [
+        "Tight coupling: If something breaks in the parent class, all children break",
+        "Deep inheritance trees (Yo-Yo problem) make the code hard to understand"
+      ],
+      "gotchas": [
+        "Excessively deep inheritance (e.g., A -> B -> C -> D) is a red flag.",
+        "Often \"Composition over Inheritance\" (i.e., embedding objects) is a better approach."
+      ],
+      "terms": [
+        [
+          "Superclass (Parent)",
+          "The class whose features are being inherited"
+        ],
+        [
+          "Subclass (Child)",
+          "The new class that takes the parent's features"
+        ],
+        [
+          "IS-A Relationship",
+          "This relationship indicates that the child is actually a type of the parent (e.g., Car IS-A Vehicle)"
+        ]
+      ],
+      "where": [
+        [
+          "UI Components",
+          "Base Component class that all UI elements inherit"
+        ],
+        [
+          "Custom Errors",
+          "Custom Error classes in error handling (e.g., ValidationError extends Error)"
+        ]
+      ],
+      "visualCap": "Child class inherits all details from the parent.",
+      "codeSwap": [
+        [
+          "// Method overriding (Parent wale ko chupa kar apna logic chalana)",
+          "// Method overriding (hiding the parent's and running your own logic)"
+        ],
+        [
+          "// Parent constructor ko call karna zaroori hai",
+          "// Calling the parent constructor is required"
+        ],
+        [
+          "console.log(\"Kuch generic si aawaz...\");",
+          "console.log(\"Some generic sound...\");"
+        ]
+      ]
+    },
+    "oop3": {
+      "name": "Polymorphism — compile-time (overloading) vs runtime (overriding)",
+      "desc": "Polymorphism means \"many forms\". Compile-time polymorphism (method overloading) vs runtime polymorphism (method overriding, virtual dispatch).",
+      "q": "How does polymorphism enable treating objects of different types uniformly through a common interface?",
+      "qsub": "Enables treating objects of different types uniformly through a common interface. The foundation of Strategy, Command, and many behavioral patterns.",
+      "what": "<p><b>Polymorphism</b> simply means \"many forms\". A single function or method can behave differently for different objects.</p>",
+      "analogy": "Imagine a TV remote with a \"Power\" button (method). If you use the TV remote, the TV turns on; if you use the AC remote, the AC turns on. The button (interface) is the same, but the device (object) behaves differently.",
+      "why": "<p>Because we don't want to write long chains of if-else statements. If all objects share a common interface, we can treat them uniformly.</p>",
+      "pros": [
+        "Eliminates if-else and switch case clutter (clean code)",
+        "Extensibility – adding new functionality is easy without touching existing code"
+      ],
+      "cons": [
+        "Code tracing can be a bit difficult (the actual method called is determined at runtime)"
+      ],
+      "gotchas": [
+        "Polymorphism is beneficial only when you design code using interfaces or base classes."
+      ],
+      "terms": [
+        [
+          "Poly",
+          "Many"
+        ],
+        [
+          "Morph",
+          "Forms"
+        ],
+        [
+          "Method Overloading",
+          "Multiple methods with the same name in a single class but different parameters (compile-time)"
+        ],
+        [
+          "Method Overriding",
+          "Child class replaces its parent's method (run-time)"
+        ]
+      ],
+      "where": [
+        [
+          "Strategy Pattern",
+          "When selecting a payment method (CreditCard, PayPal, UPI) – each has its own pay() method"
+        ],
+        [
+          "React",
+          "Each component has its own render() method in React"
+        ]
+      ],
+      "visualCap": "A single method performs different actions on different objects.",
+      "codeSwap": [
+        [
+          "// Polymorphism in action! Humein nahi farq padta ki shape konsi hai, ",
+          "// Polymorphism in action! We don't care which shape it is, "
+        ],
+        [
+          "// bas draw() call karna hai.",
+          "// you just have to call draw()."
+        ]
+      ]
+    },
+    "oop4": {
+      "name": "Abstraction — abstract classes vs interfaces, hiding complexity",
+      "desc": "Abstraction hides implementation details and exposes only essential features. Achieved via abstract classes (partial impl + abstract methods) and interfaces (pure contracts).",
+      "q": "How does abstraction reduce complexity for the caller and isolate change? What is the difference between abstract classes and interfaces?",
+      "qsub": "Reduces complexity for the caller, isolates change, and enforces contracts. The \"what\" is separated from the \"how\".",
+      "what": "<p><b>Abstraction</b> means showing the necessary details and hiding the rest of the complexity (background mess).</p>",
+      "analogy": "Imagine you are driving a car. You know that turning the steering wheel makes the car turn and applying the brakes stops it. You don't need to know how the cylinders inside the engine work. The steering wheel is an \"Abstraction\".",
+      "why": "<p>Because systems become very complex. The caller (the code using it) only needs to know \"what\" to do, not \"how\" it works.</p>",
+      "pros": [
+        "Complexity is reduced",
+        "Underlying code can be changed without informing anyone"
+      ],
+      "cons": [
+        "Boilerplate increases slightly (creating interfaces/abstract classes)"
+      ],
+      "gotchas": [
+        "Abstraction leak: When the internal implementation complexity starts appearing in the external interface."
+      ],
+      "terms": [
+        [
+          "Abstract Class",
+          "A partially implemented class that cannot be instantiated"
+        ],
+        [
+          "Interface",
+          "A contract (set of rules) with no implementation"
+        ]
+      ],
+      "where": [
+        [
+          "APIs",
+          "REST APIs hide the complexity of their databases"
+        ],
+        [
+          "Design Patterns",
+          "Facade pattern is entirely based on abstraction"
+        ]
+      ],
+      "visualCap": "The user sees only simple buttons; the complex machinery remains hidden.",
+      "codeSwap": [
+        [
+          "// Ye implementation details hain (Abstraction inko chupa leti hai)",
+          "// These are implementation details (Abstraction hides them)"
+        ],
+        [
+          "// par hum throw error karke unhe simulate kar sakte hain.",
+          "// but we can simulate them by throwing an error."
+        ],
+        [
+          "// JS mein direct interfaces/abstract classes nahi hote, ",
+          "// JS has no direct interfaces/abstract classes, "
+        ],
+        [
+          "// Abstract method (Bacho ko implement karna padega)",
+          "// Abstract method (children must implement it)"
+        ],
+        [
+          "// Abstract class ban rahi hai",
+          "// This becomes an abstract class"
+        ],
+        [
+          "throw new Error(\"Isko direct instantiate nahi kar sakte!\");",
+          "throw new Error(\"This can't be instantiated directly!\");"
+        ]
+      ]
+    },
+    "solid4": {
+      "name": "ISP — Interface Segregation: small focused interfaces",
+      "desc": "Clients should not be forced to depend on methods they do not use. Large interfaces should be split into smaller, more specific ones.",
+      "q": "How does Interface Segregation reduce coupling and prevent dummy method implementations?",
+      "qsub": "Fat interfaces lead to coupling and empty method implementations. Segregation reduces surprise and makes systems easier to understand.",
+      "what": "<p><b>Interface Segregation Principle (ISP)</b> says that clients should not be forced to depend on methods they do not use. It is better to create many small specific interfaces rather than one large (fat) interface.</p>",
+      "analogy": "Imagine a restaurant menu that contains Italian, Chinese, and South Indian dishes all together. If you want a dosa, you would have to search through the entire menu. Instead, there should be three separate small menus.",
+      "codeSwap": [
+        [
+          "// Robot ko eat() kyun chahiye?",
+          "// Why does a Robot need eat()?"
+        ]
+      ]
+    },
+    "solid5": {
+      "name": "DIP — Dependency Inversion: depend on abstractions, not concretions",
+      "desc": "High-level modules should not depend on low-level modules. Both should depend on abstractions. Abstractions should not depend on details.",
+      "q": "How does Dependency Injection implement the Dependency Inversion Principle? What problem does it solve?",
+      "qsub": "Inverting dependencies decouples policy from implementation. Dependency Injection is the most common technique to achieve DIP.",
+      "what": "<p><b>Dependency Inversion Principle (DIP)</b> says that high-level classes should not directly depend on low-level classes. Both should depend on abstractions (interfaces).</p>",
+      "analogy": "Imagine you build a Lamp (high-level) and you directly wire the wall socket wires to it (low-level). Now this lamp cannot be plugged into a different outlet.<br><br>DIP says the Lamp should have a Plug (abstraction), and the wall should have a Socket. Both are connected through a contract and can be easily decoupled.",
+      "why": "<p>Direct dependencies make classes tightly coupled. If you are using MySQLDatabase and later need to switch to MongoDB, the entire high-level logic will become bloated.</p>",
+      "pros": [
+        "Pluggable architecture",
+        "Testing becomes very easy (you can swap the database with a Mock/Fake class)"
+      ],
+      "cons": [
+        "The wiring setup for classes becomes complex (DI containers are created for this purpose)"
+      ],
+      "gotchas": [
+        "Dependency Inversion and Dependency Injection are different. Inversion is a concept/principle, while Injection is a way to achieve it (design pattern)."
+      ],
+      "terms": [
+        [
+          "High-level modules",
+          "Your main business logic (e.g. OrderProcessing)"
+        ],
+        [
+          "Low-level modules",
+          "Small utilities or tools (e.g. MySQLDatabase, SmtpEmail)"
+        ],
+        [
+          "Abstraction",
+          "Interface or base class"
+        ]
+      ],
+      "where": [
+        [
+          "Dependency Injection (DI)",
+          "Spring Boot, Angular, NestJS and all frameworks operate on this principle."
+        ]
+      ],
+      "visualCap": "Don't depend on concrete details, depend on abstractions (interfaces).",
+      "codeSwap": [
+        [
+          "// ✅ GOOD: OrderService ko koi bhi Database object pass (inject) kiya jaa sakta hai",
+          "// ✅ GOOD: any Database object can be passed (injected) into OrderService"
+        ],
+        [
+          "// ❌ BAD: OrderService direct MySQLDatabase pe depend kar rahi hai",
+          "// ❌ BAD: OrderService depends directly on MySQLDatabase"
+        ]
+      ]
+    },
+    "concept1": {
+      "name": "Composition over Inheritance — prefer has-a over is-a when possible",
+      "desc": "Favor has-a relationships over is-a relationships. Achieve reuse by composing objects, not by inheriting from a base class.",
+      "q": "Why does composition provide more flexibility than inheritance at runtime? How does the Decorator pattern demonstrate this?",
+      "qsub": "Inheritance creates tight coupling and fragile hierarchies. Composition is more flexible, allows runtime behavior changes, and avoids the yo-yo problem.",
+      "what": "<p><b>Composition over Inheritance</b> is a rule of thumb that says reusing code by linking (composing) objects together is better than inheriting from a base class.</p>",
+      "analogy": "Imagine you need to build a custom car.<br><br><b>Inheritance approach:</b> You take a BaseCar, create a SportsCar from it, then a SunroofSportsCar, then a RedSunroofSportsCar. This chain becomes very messy.<br><br><b>Composition approach:</b> You have a car chassis, into which you add an Engine, Paint, and Roof separately. You can swap the engine at any time.",
+      "why": "<p>Inheritance creates tight coupling. If a change occurs in BaseCar, all derived cars are affected. Also, inheritance is static (cannot change at runtime).</p><p>Composition is very flexible and allows behavior to change at runtime.</p>",
+      "pros": [
+        "Runtime flexibility",
+        "Avoiding the web of fragile hierarchies from inheritance",
+        "Testing becomes very easy"
+      ],
+      "cons": [
+        "Initially requires a bit more code to wire up objects"
+      ],
+      "gotchas": [
+        "Inheritance is not a bad thing. If an \"IS-A\" relationship is genuine, use inheritance, but don’t create odd classes just for code reuse."
+      ],
+      "terms": [
+        [
+          "Inheritance (IS-A)",
+          "Creating a new class by extending an existing class"
+        ],
+        [
+          "Composition (HAS-A)",
+          "Combining small parts (objects) to build a larger object"
+        ]
+      ],
+      "where": [
+        [
+          "React",
+          "Using Hooks (composition) instead of Higher Order Components or Mixins"
+        ],
+        [
+          "Strategy Pattern",
+          "This pattern is a classic example of composition"
+        ]
+      ],
+      "visualCap": "Inheritance creates rigid trees, Composition assembles parts dynamically.",
+      "codeSwap": [
+        [
+          "// Ab in behaviours ko kisi bhi character ko chipkaya jaa sakta hai",
+          "// Now these behaviours can be attached to any character"
+        ],
+        [
+          "// Behavior ko inject kiya",
+          "// Injected the behaviour"
+        ],
+        [
+          " Yaha fas gaye (Diamond Problem)",
+          " Got stuck here (Diamond Problem)"
+        ]
+      ]
+    },
+    "concept2": {
+      "name": "Law of Demeter (Principle of Least Knowledge) — talk only to immediate friends",
+      "desc": "A method should only call methods on: itself, its parameters, objects it creates, its own fields. Dont talk to strangers (method chaining like a.getB().getC().do()).",
+      "q": "Why does the Law of Demeter reduce coupling? What is the trade-off of following it too strictly?",
+      "qsub": "Reduces coupling between components. Following LoD creates more maintainable code but can lead to many wrapper/delegate methods.",
+      "what": "<p><b>Law of Demeter</b> (Principle of Least Knowledge) says that an object should know as little as possible about the surrounding world (the internals of other objects).</p>",
+      "analogy": "You go to a shop to buy chips. You give money to the shopkeeper (method call). You do not reach into the shopkeeper’s pocket and take out his wallet to grab money yourself. Do not do such actions in code!",
+      "why": "<p>Because long chaining <code>a.getB().getC().doThing()</code> causes classes to become strongly coupled. If B’s internal structure changes, A’s code will break.</p>"
+    },
+    "oop5": {
+      "name": "Association, Aggregation, Composition — has-a vs owns-a differences",
+      "desc": "Association (uses-a), Aggregation (has-a, independent lifecycle), Composition (owns-a, dependent lifecycle). These define relationships with different ownership semantics.",
+      "q": "What is the difference between association, aggregation, and composition? How does ownership affect lifecycle management?",
+      "qsub": "Understanding relationship strength determines object lifecycle management. Composition implies destruction responsibility; aggregation does not.",
+      "what": "<p>These three <b>HAS-A</b> relationships are different levels (strength).</p>",
+      "analogy": "<b>Association:</b> A doctor and a patient (both are independent, they just know each other).<br><b>Aggregation:</b> A college and its teachers (teachers are part of the college, but they remain alive after the college closes).<br><b>Composition:</b> A human and his heart (the heart is part of the human; if the human dies, the heart also dies).",
+      "why": "<p>Because we need to manage the lifecycle of objects. If two objects are strongly coupled, deleting one should cause the other to be garbage collected as well.</p>",
+      "codeSwap": [
+        [
+          "// Human khud create kar raha hai (owns it)",
+          "// A human creates it themselves (owns it)"
+        ]
+      ]
+    },
+    "solid1": {
+      "name": "SRP — Single Responsibility: one class, one reason to change",
+      "desc": "A class should have one, and only one, reason to change. Every class should be responsible for a single part of the system functionality.",
+      "q": "Why do SRP classes lead to more cohesive, focused, and testable code? What is the God Object anti-pattern?",
+      "qsub": "SRP leads to more cohesive, focused, and testable classes. Classes with multiple responsibilities are harder to change, test, and understand.",
+      "what": "<p><b>Single Responsibility Principle (SRP)</b> states that a class should have only one reason to change.</p><p>In other words, a class should handle only a single part of the system.</p>",
+      "analogy": "Imagine a restaurant scene. There is a Chef (cooks food), a Waiter (takes orders) and a Cashier (creates the bill).<br><br>If the Chef also has to cook, generate the bill, and clean tables (God Object), the entire restaurant will collapse during busy times. Each person should have a single responsibility.",
+      "why": "<p>When a class performs many different tasks, internal coupling arises. If you update the email-sending logic, the database-saving logic might break by accident.</p><p>SRP makes code smaller, more cohesive, and easier to test.</p>",
+      "pros": [
+        "Code is easy to read (Highly cohesive)",
+        "Unit testing becomes very easy",
+        "Updating one feature does not break others"
+      ],
+      "cons": [
+        "The number of classes increases",
+        "Understanding the whole flow requires looking at multiple files"
+      ],
+      "gotchas": [
+        "Don't create a new class for every line. Avoid over-engineering; use context and common sense."
+      ],
+      "terms": [
+        [
+          "Responsibility",
+          "Reason why the class changes (Reason to change)"
+        ],
+        [
+          "God Object",
+          "The stubborn class that does a large portion of the system's work alone"
+        ]
+      ],
+      "where": [
+        [
+          "Microservices",
+          "Each microservice follows SRP for a specific domain"
+        ],
+        [
+          "React",
+          "Separate UI Components (display only) and Custom Hooks (handle logic)"
+        ]
+      ],
+      "visualCap": "God object vs SRP",
+      "codeSwap": [
+        [
+          "/* SMTP server se email bhejne ka logic */ }",
+          "/* logic to send email via the SMTP server */ }"
+        ],
+        [
+          "// ❌ BAD: Ek hi class sab kar rahi hai",
+          "// ❌ BAD: one class does everything"
+        ],
+        [
+          "/* DB mein save karne ka logic */ }",
+          "/* logic to save to the DB */ }"
+        ],
+        [
+          "/* Sirf Email ka logic */ }",
+          "/* only Email logic */ }"
+        ],
+        [
+          "/* Sirf DB ka logic */ }",
+          "/* only DB logic */ }"
+        ],
+        [
+          " ✅ GOOD: Sabka apna apna kaam",
+          " ✅ GOOD: Everyone has their own job"
+        ]
+      ]
+    },
+    "solid2": {
+      "name": "OCP — Open/Closed: open for extension, closed for modification",
+      "desc": "Software entities should be open for extension but closed for modification. Add new behavior through new code, not by changing existing code.",
+      "q": "How does the Strategy pattern exemplify the Open/Closed Principle? Why prevents modifying tested code?",
+      "qsub": "Prevents introducing bugs in working code. Achieved through polymorphism, inheritance, and composition. The Strategy pattern is a canonical example.",
+      "what": "<p><b>Open/Closed Principle (OCP)</b> states that code should be designed so that adding new functionality is easy (Open), but the existing code does not need to be changed (Closed).</p>",
+      "analogy": "Imagine an extension board. If you need to add a new charger, you don't open the board and cut its wires (Modification). You simply plug the charger into a new socket (Extension).",
+      "why": "<p>Because tampering with a working component introduces bugs. If the existing tested code is not touched, the chance of failures in production is zero.</p>",
+      "pros": [
+        "Reduced fear of introducing bugs",
+        "Code can scale easily"
+      ],
+      "cons": [
+        "Sometimes premature abstraction occurs (people start assuming future extensions may be needed)"
+      ],
+      "gotchas": [
+        "OCP does not mean code will never be modified. Code is changed for bug fixes. It only applies to adding new features."
+      ],
+      "terms": [
+        [
+          "Open for Extension",
+          "New features can be added easily"
+        ],
+        [
+          "Closed for Modification",
+          "Existing tested code does not need to be touched"
+        ]
+      ],
+      "where": [
+        [
+          "Strategy Pattern",
+          "The entire pattern applies OCP"
+        ],
+        [
+          "Plugin Architectures",
+          "Installing extensions in VS Code is a best example of OCP"
+        ]
+      ],
+      "visualCap": "To add a new feature, do not modify the old file; create a new file/plugin.",
+      "codeSwap": [
+        [
+          "// Kal ko HR aaye toh bas ek nayi class banani hai, ye purana logic same rahega",
+          "// If HR shows up tomorrow, you just make one new class, and this old logic stays the same"
+        ],
+        [
+          "// ❌ BAD: OCP Violation (Har naye role ke liye if-else badhega)",
+          "// ❌ BAD: OCP Violation (every new role adds another if-else)"
+        ],
+        [
+          "// Kal ko 'HR' aaya toh ye function phir modify hoga",
+          "// If 'HR' shows up tomorrow, this function will have to be modified again"
+        ],
+        [
+          " ✅ GOOD: Adheres to OCP (Polymorphism use karke)",
+          " ✅ GOOD: Adheres to OCP (using Polymorphism)"
+        ]
+      ]
+    },
+    "solid3": {
+      "name": "LSP — Liskov Substitution: subtypes must replace base types",
+      "desc": "Objects of a superclass should be replaceable with objects of a subclass without affecting correctness. Subtypes must satisfy the base type contract.",
+      "q": "Why is the Square-Rectangle problem the classic example of violating LSP? How do preconditions and postconditions relate?",
+      "qsub": "Violating LSP breaks polymorphism. Classic violation: Square extends Rectangle (width/height invariants differ). Design by Contract approach.",
+      "what": "<p><b>Liskov Substitution Principle (LSP)</b> states that if Class B inherits from Class A, then wherever Class A is used in a program, substituting Class B should not cause the program to fail.</p>",
+      "analogy": "If a toy duck looks like a duck and quacks, but requires batteries, you cannot place it in a pond with real ducks. It will short-circuit (LSP violation).",
+      "why": "<p>Because if a subclass breaks the parent’s rules (contracts), polymorphism fails and the client code will need many <code>if (obj instanceof B)</code> checks.</p>",
+      "gotchas": [
+        "Classic Example: Square extends Rectangle. In a Rectangle, width and height can change independently. If you use a Square, area calculation will fail because a Square requires both dimensions to be equal."
+      ]
+    },
+    "concept3": {
+      "name": "DRY, KISS, YAGNI — dont repeat, keep simple, avoid over-engineering",
+      "desc": "DRY (Don't Repeat Yourself), KISS (Keep It Simple, Stupid), YAGNI (You Aren't Gonna Need It). Three principles guiding pragmatic software design.",
+      "q": "How can over-applying DRY lead to premature abstraction? When does YAGNI apply to design patterns?",
+      "qsub": "DRY reduces duplication cost. KISS favors simplicity over cleverness. YAGNI prevents over-engineering for hypothetical future needs.",
+      "what": "<p>Three basic rules that every developer should know:</p><ul><li><b>DRY (Don't Repeat Yourself):</b> Don't copy-paste code. If the same logic appears in two places, put it into a single function.</li><li><b>KISS (Keep It Simple, Stupid):</b> Don't over-engineer the code. Write simple code that you can read tomorrow.</li><li><b>YAGNI (You Aren't Gonna Need It):</b> \"Maybe you'll need it in the future\" thinking—don't build features today that aren't currently required.</li></ul>"
+    },
+    "concept4": {
+      "name": "Coupling & Cohesion — low coupling, high cohesion",
+      "desc": "Coupling measures how dependent one module is on another. Cohesion measures how focused the responsibilities within a module are. Aim for low coupling, high cohesion.",
+      "q": "Why is low coupling and high cohesion the sweet spot for software maintainability and testability?",
+      "qsub": "Low coupling = changes are isolated. High cohesion = classes are focused. Together they make systems more maintainable, testable, and understandable.",
+      "what": "<p><b>Coupling:</b> How much classes depend on each other. (Aim: Low Coupling – classes should be independent).</p><p><b>Cohesion:</b> How closely a class's methods and variables relate to each other. (Aim: High Cohesion – the class should have a single focus, like SRP).</p>"
+    },
+    "concept5": {
+      "name": "Tell-Dont-Ask — command objects what to do, dont query state",
+      "desc": "Tell objects what to do rather than asking about their state and then deciding. Encapsulate behavior with data.",
+      "q": "How does Tell-Dont-Ask preserve encapsulation and eliminate anemic domain models? Give a code example.",
+      "qsub": "Preserves encapsulation and prevents decision-making being scattered across the codebase. Related to \"feature envy\" code smell in reverse.",
+      "what": "<p><b>Tell-Don't-Ask</b> principle states that instead of asking an object for data and making decisions yourself, you tell the object to perform its own work.</p>",
+      "analogy": "You ask the waiter (Ask): \"Is the kitchen open? Is there bread? Then make a sandwich for me.\" Instead, you just say (Tell): \"Bring me a sandwich.\" The waiter will check everything himself.",
+      "codeSwap": [
+        [
+          " Account khud condition check karega",
+          " The Account will check the condition itself"
+        ]
+      ]
+    },
+    "cr1": {
+      "name": "Singleton — ensure one instance, global access point. Thread-safety considerations.",
+      "desc": "Singleton ensures a class has only one instance and provides a global point of access. Thread-safety through eager initialization, synchronized getInstance, or Bill Pugh inner class.",
+      "q": "How do you implement a thread-safe Singleton in Java? Why is enum Singleton considered the most robust approach?",
+      "qsub": "Useful for shared resources (logging, configuration, thread pools). Overused / considered an anti-pattern — makes testing difficult and introduces global state.",
+      "what": "<p><b>Singleton Pattern</b> ensures that a class has only <b>one instance (object)</b> throughout the entire application, and provides a global way to access it.</p>",
+      "analogy": "Just like a country has only one Prime Minister. Whether you call from Delhi or Mumbai, the PM is the same person. You cannot create a new PM; you must interact with the existing one.",
+      "why": "<p>Some components should exist only once in a system, such as a Database Connection Pool, Logger, or Configuration settings. If you open a new connection everywhere, the system will crash and memory will fill up.</p>",
+      "pros": [
+        "Memory is saved (only one object is created)",
+        "Global shared state is easy to manage"
+      ],
+      "cons": [
+        "Unit testing becomes painful (because the state is global, garbage from one test can affect another)",
+        "In multithreading you need to add locks otherwise two threads may create two instances (not an issue in JavaScript)"
+      ],
+      "gotchas": [
+        "Singleton is often considered a \"Glorified Global Variable\" (anti-pattern). If you can pass the object (Dependency Injection), do not use a Singleton."
+      ],
+      "terms": [
+        [
+          "Instance",
+          "An object of the class"
+        ],
+        [
+          "Global Access Point",
+          "A way to access that object from anywhere"
+        ]
+      ],
+      "where": [
+        [
+          "Database connections",
+          "To manage a connection pool"
+        ],
+        [
+          "State Management",
+          "Redux store is a singleton under the hood"
+        ]
+      ],
+      "visualCap": "Every request receives the same object.",
+      "codeSwap": [
+        [
+          "// Agar pehle se instance bana hua hai, toh wahi return kardo",
+          "// If an instance already exists, just return that one"
+        ],
+        [
+          "// true! Dono ek hi object hain.",
+          "// true! Both are the same object."
+        ],
+        [
+          "// Warna naya setup karo",
+          "// Otherwise do a new setup"
+        ]
+      ]
+    },
+    "cr2": {
+      "name": "Factory Method — define interface for creating objects, subclasses decide instantiation",
+      "desc": "Factory Method defines an interface for creating an object, but lets subclasses decide which class to instantiate. The Creator class defers instantiation to subclasses.",
+      "q": "How does Factory Method decouple clients from concrete types and enable the Open/Closed Principle?",
+      "qsub": "Decouples the client from concrete types. Enables the Open/Closed principle — new types can be added without modifying existing code.",
+      "what": "<p><b>Factory Method</b> is a creational pattern that moves the logic for creating an object into a separate method. Subclasses can override that method to decide which type of object to create.</p>",
+      "analogy": "Imagine a logistics company that does deliveries. Initially they only had trucks, so they created a \"TruckDelivery\" class. Later they started delivering by ships (from the sea). The factory pattern says: \"Create a separate factory for creating transport. If it’s on land, use RoadLogistics (which will create a Truck), and if it’s on water, use SeaLogistics (which will create a Ship).\"",
+      "why": "<p>Creating objects directly with the <code>new</code> keyword tightly couples your class to that specific object. By using a factory you delegate the “what to create” decision to subclasses, making it much easier to add new products (following OCP).</p>",
+      "pros": [
+        "Single Responsibility Principle (Object creation logic is separated)",
+        "Open/Closed Principle (Want to add a new transport? Just create a new subclass, don’t touch existing code)"
+      ],
+      "cons": [
+        "Class explosion (Many small classes are created)"
+      ],
+      "gotchas": [
+        "People get confused between \"Simple Factory\" (a single class with a switch-case) and \"Factory Method\" (where subclasses decide). You should know the difference for interviews."
+      ],
+      "terms": [
+        [
+          "Creator",
+          "The class that contains the factory method"
+        ],
+        [
+          "Product",
+          "The object that the factory method creates"
+        ]
+      ],
+      "where": [
+        [
+          "UI Libraries",
+          "Creating cross-platform UI components (e.g., MacButton vs WinButton)"
+        ],
+        [
+          "Frameworks",
+          "Creating different database drivers in Laravel/Django"
+        ]
+      ],
+      "visualCap": "The Creator does not know which exact object will be created; it delegates that work to subclasses.",
+      "codeSwap": [
+        [
+          "// Core business logic (ye badlega nahi)",
+          "// Core business logic (this won't change)"
+        ]
+      ]
+    },
+    "cr3": {
+      "name": "Abstract Factory — create families of related objects without concrete classes",
+      "desc": "Abstract Factory provides an interface for creating families of related or dependent objects without specifying their concrete classes. A \"factory of factories\".",
+      "q": "When would you use Abstract Factory over Factory Method? How does it ensure product compatibility?",
+      "qsub": "Ensures products from the same family are used together. Switching families (e.g., different UI themes) is done by swapping the factory implementation.",
+      "what": "<p><b>Abstract Factory</b> is a level up from regular factories. It is a factory of factories. It lets you create an entire \"Family\" of related objects (theme) without specifying their concrete classes.</p>",
+      "analogy": "Imagine you need to set up a furniture factory. You have two themes: \"Modern\" and \"Victorian\".<br><br>The Modern Factory will give you: ModernChair, ModernSofa, ModernTable.<br>The Victorian Factory will give you: VicChair, VicSofa, VicTable.<br>Abstract Factory ensures you don’t accidentally match a ModernChair with a VictorianTable. Choose one factory and request all related furniture from it.",
+      "why": "<p>When you have products that belong to different families (e.g., macOS UI components vs Windows UI components) and you want the system to avoid mixing across families.</p>",
+      "pros": [
+        "Guarantee that the created objects will be mutually compatible",
+        "Client code and concrete classes become fully decoupled"
+      ],
+      "cons": [
+        "If you need to add a new product type (e.g., Scrollbar), you must modify all factories (Abstract, Mac, Win)."
+      ],
+      "where": [
+        [
+          "Cross-platform GUI",
+          "Handling Mac vs Windows vs Linux interfaces"
+        ],
+        [
+          "Database Connections",
+          "SQLServerFactory vs MySQLFactory (which return connection, command, and reader)"
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// Client ko nahi farq padta ki OS kya hai",
+          "// The client doesn't care what the OS is"
+        ],
+        [
+          "// OS ke hisaab se factory inject kardo",
+          "// Inject the factory according to the OS"
+        ]
+      ]
+    },
+    "cr4": {
+      "name": "Builder — separate construction of complex objects from representation",
+      "desc": "Builder separates the construction of a complex object from its representation. The same construction process can create different representations via a director + builder interface.",
+      "q": "How does Builder solve the telescoping constructor problem? What makes it different from Factory?",
+      "qsub": "Ideal for objects with many optional parameters (telescoping constructor problem). Provides fluent API and immutable objects.",
+      "what": "<p><b>Builder Pattern</b> helps construct complex objects step-by-step. Instead of passing 10 parameters to a constructor (telescoping constructor anti-pattern), we use a Builder object.</p>",
+      "analogy": "Ordering a burger at Subway or Burger King. You don’t say “Give me a burger with paneer, tomato, no onion, double mayo” in one breath. You say it step by step: “Give me the bread → add paneer → remove onion → add mayo”. That’s the Builder pattern.",
+      "why": "<p>When the object creation process is very complex and has many optional parameters. Constructor arguments become long and hard to read: <code>new House(true, false, 4, true, null, false)</code>.</p>",
+      "pros": [
+        "Objects with many optional parameters can be created easily",
+        "Code is enjoyable to read (thanks to method chaining / fluent interface)",
+        "Immutability: Once <code>build()</code> is called, the object is locked (frozen)"
+      ],
+      "cons": [
+        "A new Builder class must be created for each class (boilerplate)"
+      ]
+    },
+    "cr5": {
+      "name": "Prototype — clone existing objects instead of creating new from scratch",
+      "desc": "Prototype creates new objects by cloning/copying an existing instance (the prototype). Avoids costly creation from scratch, especially when object initialization is expensive.",
+      "q": "What is the difference between shallow copy and deep copy in the Prototype pattern? When is it useful?",
+      "qsub": "Useful when object creation is expensive and you need many similar objects. Shallow vs deep copy considerations are critical."
+    },
+    "cr6": {
+      "name": "Object Pool — reuse objects that are expensive to create (connections, threads)",
+      "desc": "Object Pool manages a reusable set of initialized objects. Clients borrow from the pool and return objects instead of creating/destroying them.",
+      "q": "What problems does Object Pool solve beyond performance? How do you handle stale/broken objects in the pool?",
+      "qsub": "Avoids expensive allocation/deallocation. Controls resource usage (max pool size). Requires careful thread-safety and handling of broken/expired objects."
+    },
+    "str1": {
+      "name": "Adapter — convert interface of a class to another interface clients expect",
+      "desc": "Adapter converts the interface of a class into another interface that clients expect. Lets classes work together that couldn't otherwise due to incompatible interfaces.",
+      "q": "What is the difference between class adapter and object adapter? Why is composition preferred?",
+      "qsub": "Integrate legacy or third-party code without modification. Two variants: class adapter (inheritance) and object adapter (composition). Composition is preferred.",
+      "what": "<p><b>Adapter Pattern</b> is a structural design pattern that allows two classes to work together when their interfaces do not match (incompatible interfaces).</p>",
+      "analogy": "Imagine you have an Indian plug (3-pin), but you travel to a foreign country where only 2-pin sockets are available. You won’t cut the plug’s wires; you’ll buy a <b>Travel Adapter</b> that converts the 3-pin plug to a 2-pin socket. In code, an adapter does the same job.",
+      "why": "<p>When you want to use a third-party library, legacy code, or a class whose interface does not match your new system, and you cannot (or do not want to) modify that old code.</p>",
+      "where": [
+        [
+          "Data Translation",
+          "Converting XML data to JSON before passing it to a third-party API"
+        ],
+        [
+          "Legacy Wrappers",
+          "Connecting old systems to a modern API"
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// Client ko farq nahi padta, usne apni local bhasha (rupees) mein baat ki",
+          "// The client doesn't mind, it spoke in its own local language (rupees)"
+        ],
+        [
+          "// ADAPTER: Naye system ko purane se connect kar raha hai",
+          "// ADAPTER: connects a new system to an old one"
+        ],
+        [
+          "// Target interface (Naya system jisko rupees chahiye)",
+          "// Target interface (the new system that wants rupees)"
+        ],
+        [
+          "// Old system (Jisko humein connect karna hai)",
+          "// Old system (the one we need to connect)"
+        ],
+        [
+          "// Purane system ko uski bhasha mein de diya",
+          "// Gave the old system its own language"
+        ],
+        [
+          " Adapter ne convert kiya (Interface transformation)",
+          " The Adapter converted it (Interface transformation)"
+        ],
+        [
+          " Naya system .pay() call karega",
+          " The new system will call .pay()"
+        ]
+      ]
+    },
+    "str2": {
+      "name": "Bridge — decouple abstraction from implementation so they vary independently",
+      "desc": "Bridge decouples an abstraction from its implementation so the two can vary independently. Avoids permanent binding between abstraction and implementation at compile time.",
+      "q": "How does Bridge prevent the Cartesian product explosion of subclasses? Give a real-world example.",
+      "qsub": "Prevents explosion of classes when you have multiple abstractions and multiple implementations. \"Bridge\" the gap when both can change."
+    },
+    "str3": {
+      "name": "Composite — compose objects into tree structures, treat individuals uniformly",
+      "desc": "Composite composes objects into tree structures to represent part-whole hierarchies. Clients treat individual objects and compositions uniformly via a common interface.",
+      "q": "How does Composite simplify client code when dealing with tree structures like file systems or UI components?",
+      "qsub": "Simplifies client code when dealing with tree structures. The client calls the same method regardless of whether it's a leaf or a composite."
+    },
+    "str4": {
+      "name": "Decorator — attach responsibilities to objects dynamically (wrapper)",
+      "desc": "Decorator attaches additional responsibilities to an object dynamically. Provides a flexible alternative to subclassing for extending functionality.",
+      "q": "How is Decorator more flexible than inheritance for adding behavior? How do decorators stack?",
+      "qsub": "Add behavior without modifying the original class. More flexible than inheritance (choose which decorators at runtime). Each decorator adds its own behavior.",
+      "what": "<p><b>Decorator Pattern</b> is a structural pattern that allows adding new behaviors (features) to objects at runtime, without modifying their class or creating a subclass.</p>",
+      "analogy": "Imagine you bought a simple pizza. Now you want extra cheese (add behavior), then you want olives (add more behavior). You don't create a new class for every combination (ExtraCheeseOlivesPizza). You wrap the original pizza with a \"Decorator\" (toppings).",
+      "why": "<p>Because adding behaviors with inheritance leads to a \"Class Explosion\". If there are 5 features, you would end up with 25 classes for their combinations. The Decorator pattern solves this problem by using composition.</p>",
+      "pros": [
+        "Eliminates subclassing explosion from inheritance",
+        "Single Responsibility Principle: Instead of putting all features into one large class, each feature gets its own decorator class"
+      ],
+      "cons": [
+        "A large number of small classes are created (MilkDecorator, SugarDecorator, VanillaDecorator, etc.)",
+        "The wrapping code can become verbose: <code>new A(new B(new C()))</code>"
+      ],
+      "gotchas": [
+        "People often confuse Decorator with Proxy. Decorator adds new behavior. Proxy only controls access (it generally does not add new functionality)."
+      ]
+    },
+    "str5": {
+      "name": "Facade — provide a simplified interface to a complex subsystem",
+      "desc": "Facade provides a unified, simplified interface to a set of interfaces in a subsystem. Defines a higher-level interface that makes the subsystem easier to use.",
+      "q": "How does Facade differ from Mediator? Does Facade hide the subsystem or just simplify access?",
+      "qsub": "Reduces complexity for the client. Decouples client code from subsystem components. Does NOT hide the subsystem — clients can still access lower-level APIs.",
+      "what": "<p><b>Facade Pattern</b> (pronounced: Fa-saad) provides a very simplified interface (or front face) for accessing a library, framework, or complex system.</p>",
+      "analogy": "Imagine you place an order on Amazon. You just press a single button \"Buy Now\". Behind the scenes there is the warehouse, logistics, inventory check, payment processing, invoice generation, bank confirmation — all of that is very complex, but you don't need to know about it. The \"Buy Now\" button is a Facade for that complex system.",
+      "why": "<p>If your code has to interact with 10 classes of another framework, it becomes tightly coupled. The Facade acts as a wall/shield. Your code talks only to the Facade, and the Facade handles the other 10 classes.</p>",
+      "gotchas": [
+        "Difference between Facade and Adapter: Adapter converts an existing interface (it does not reduce its complexity). Facade creates a new, *simplified* interface."
+      ],
+      "codeSwap": [
+        [
+          "// Client bas 1 line mein order place kar raha hai",
+          "// The client places the order in just 1 line"
+        ]
+      ]
+    },
+    "str6": {
+      "name": "Flyweight — share fine-grained objects to support large numbers efficiently",
+      "desc": "Flyweight minimizes memory usage by sharing as much data as possible with similar objects. Intrinsic state (shared) vs extrinsic state (passed in context).",
+      "q": "How do you decide what goes into intrinsic vs extrinsic state in the Flyweight pattern? Give an example.",
+      "qsub": "Critical when dealing with large numbers of fine-grained objects. The state split is the key insight — what can be shared vs what must be external."
+    },
+    "str7": {
+      "name": "Proxy — provide a surrogate or placeholder to control access",
+      "desc": "Proxy provides a surrogate or placeholder for another object to control access. Variants: virtual proxy (lazy load), protection proxy (access control), remote proxy.",
+      "q": "What are the four variants of Proxy and what problem does each solve? How does Proxy differ from Decorator?",
+      "qsub": "Add a level of indirection for separation of concerns. Each variant solves a different problem: lazy init, security, remote invocation, or logging.",
+      "what": "<p><b>Proxy Pattern</b> provides a surrogate (or substitute) for another object so that access to that object can be controlled.</p>",
+      "analogy": "Imagine you cannot meet a large CEO directly. You have to schedule an appointment through his Secretary (Proxy). The Secretary first checks whether you have a valid reason, and only then do you reach the CEO. The Proxy is filtering/controlling access.",
+      "why": "<p>Some objects are very heavy (e.g., a DB connection or large images), so the Proxy prevents them from loading until they are needed (Lazy Initialization). It is also used for security (access control), caching, and logging.</p>",
+      "pros": [
+        "We can add new capabilities (e.g., caching) without touching the original object (OCP)",
+        "The lifecycle (creation/destruction) of heavy objects can be controlled"
+      ]
+    },
+    "beh1": {
+      "name": "Chain of Responsibility — pass requests along a chain of handlers",
+      "desc": "Chain of Responsibility passes a request along a chain of handlers. Each handler decides to process the request or pass it to the next handler.",
+      "q": "How does Chain of Responsibility decouple the sender from the receiver? What happens if no handler processes the request?",
+      "qsub": "Avoids coupling the sender to a specific receiver. Multiple handlers get a chance to process the request. Common in logging frameworks, middleware pipelines."
+    },
+    "beh2": {
+      "name": "Command — encapsulate a request as an object (undo/redo, queue, log)",
+      "desc": "Command encapsulates a request as an object, allowing parameterization, queuing, logging, undo/redo. Contains all info needed to perform an action.",
+      "q": "How does Command enable undo/redo functionality? What is the relationship between Command and Memento?",
+      "qsub": "Enables delayed execution, queuing, and undoable operations. Foundation for transactional behavior and macro recording."
+    },
+    "beh3": {
+      "name": "Interpreter — define grammar + interpreter for language sentences",
+      "desc": "Interpreter defines a grammar for a language and an interpreter that uses the representation to interpret sentences in the language.",
+      "q": "When is Interpreter appropriate vs using a parser generator? What are the trade-offs?",
+      "qsub": "Useful for parsing simple languages or expressions (regex, SQL, arithmetic). For complex grammars, use parser generators instead."
+    },
+    "beh4": {
+      "name": "Iterator — provide sequential access to elements without exposing internals",
+      "desc": "Iterator provides a way to access elements of a collection sequentially without exposing the underlying representation.",
+      "q": "How does Iterator separate traversal logic from the collection? Why is it useful for different collection types?",
+      "qsub": "Simplifies collection interface and enables multiple simultaneous traversals. The client doesn't need to know if the collection is an array, tree, or hash map."
+    },
+    "beh5": {
+      "name": "Mediator — reduce chaotic coupling by centralizing communication",
+      "desc": "Mediator reduces chaotic communication between multiple objects by introducing a mediator object that centralizes interactions.",
+      "q": "What is the trade-off of Mediator? How does it risk becoming a God Object and how do you prevent that?",
+      "qsub": "Prevents many-to-many communication (simplified to one-to-many). Reduces coupling at the cost of a more complex mediator."
+    },
+    "beh6": {
+      "name": "Memento — capture and restore object state without violating encapsulation",
+      "desc": "Memento captures and externalizes an object's internal state so it can be restored later without violating encapsulation.",
+      "q": "How does Memento preserve encapsulation while enabling undo/checkpoint functionality? What are the three roles?",
+      "qsub": "Enables undo/redo, checkpoint/rollback, and snapshots without exposing internal structure. The caretaker never accesses memento contents."
+    },
+    "beh7": {
+      "name": "Observer — define one-to-many dependency; when one changes, all dependents notified",
+      "desc": "Observer defines a one-to-many dependency between objects. When the subject changes state, all its dependents (observers) are notified and updated automatically.",
+      "q": "What is the difference between push model and pull model in Observer? When would you use each?",
+      "qsub": "Essential for event-driven systems, UI updates, and reactive programming. The subject doesn't need to know observer details."
+    },
+    "beh8": {
+      "name": "State — alter behavior when internal state changes (state machine)",
+      "desc": "State allows an object to alter its behavior when its internal state changes. The object appears to change its class. Each state is a separate class.",
+      "q": "How does State eliminate complex if/else switch statements? How does it differ from Strategy?",
+      "qsub": "Eliminates complex if/else or switch state machines. Adding a new state is just adding a new class — OCP compliant."
+    },
+    "beh9": {
+      "name": "Strategy — define family of algorithms, make them interchangeable",
+      "desc": "Strategy defines a family of algorithms, encapsulates each one, and makes them interchangeable. The algorithm can vary independently from clients that use it.",
+      "q": "How does Strategy enable selecting algorithms at runtime? Give an example where it replaces complex conditional logic.",
+      "qsub": "Enables selecting algorithms at runtime. Cleaner alternative to conditional logic for algorithm selection. Follows Open/Closed principle."
+    },
+    "beh10": {
+      "name": "Template Method — define skeleton of algorithm, subclasses override steps",
+      "desc": "Template Method defines the skeleton of an algorithm in a method, deferring some steps to subclasses. Subclasses redefine certain steps without changing the algorithm's structure.",
+      "q": "What is the Hollywood Principle and how does Template Method embody it? What are hook methods?",
+      "qsub": "Reuses the invariant parts of an algorithm while letting subclasses define the variant parts. Hollywood Principle: \"Don't call us, we'll call you.\""
+    },
+    "beh11": {
+      "name": "Visitor — separate algorithm from object structure (Double Dispatch)",
+      "desc": "Visitor lets you define a new operation without changing the classes of the elements on which it operates. Separates algorithm from object structure via Double Dispatch.",
+      "q": "What is Double Dispatch and how does Visitor achieve it? When is Visitor appropriate vs when does it become a maintenance burden?",
+      "qsub": "When you have a stable object structure but need to add many operations. Classic example: AST nodes with type-checking, code generation, optimization."
+    },
+    "conc1": {
+      "name": "Active Object — decouple method execution from invocation (async + scheduler)",
+      "desc": "Active Object decouples method execution from method invocation. Each object has its own thread of control and a scheduler that queues invocation requests.",
+      "q": "How does Active Object enable asynchronous processing without explicit thread management? How does it relate to the Actor model?",
+      "qsub": "Enables asynchronous processing without explicit thread management. The caller doesn't block — results come back via futures or callbacks."
+    },
+    "conc2": {
+      "name": "Balking — only execute action if object is in appropriate state",
+      "desc": "Balking Pattern prevents an action if the object is in an inappropriate state. If the guard condition fails, the method returns immediately (bails out).",
+      "q": "How does Balking provide a simple alternative to blocking for handling race conditions? Give a real-world example.",
+      "qsub": "Simple way to handle race conditions without blocking. \"If not ready, just return/throw.\" Used when the work is only meaningful in specific states."
+    },
+    "conc3": {
+      "name": "Barrier — synchronize a group of threads at a common point",
+      "desc": "Barrier synchronizes multiple threads at a common point. All threads must arrive at the barrier before any can proceed past it.",
+      "q": "How does CyclicBarrier differ from CountDownLatch? When would you use a barrier for parallel algorithms?",
+      "qsub": "Useful for parallel algorithms where all threads must complete one phase before starting the next (e.g., parallel sort merge phases)."
+    },
+    "conc4": {
+      "name": "Double-Checked Locking — reduce lock overhead by checking before acquiring",
+      "desc": "Double-Checked Locking reduces the overhead of acquiring a lock by first testing the locking criterion without acquiring the lock.",
+      "q": "Why does Double-Checked Locking require the volatile keyword in Java? What problem occurs without it?",
+      "qsub": "Optimization for lazy initialization in multithreaded code. In Java, requires volatile to prevent instruction reordering issues."
+    },
+    "conc5": {
+      "name": "Future / Promise — placeholder for async result (CompletableFuture)",
+      "desc": "Future/Promise represents a placeholder for a result that hasn't been computed yet. The future is returned immediately; the caller can check, block, or attach callbacks.",
+      "q": "How does CompletableFuture enable non-blocking asynchronous composition without callback nesting?",
+      "qsub": "Enables non-blocking asynchronous programming. CompletableFuture chains transformations without callback nesting."
+    },
+    "conc6": {
+      "name": "Producer-Consumer — decouple producers from consumers via a buffer",
+      "desc": "Producer-Consumer decouples producers (create data) from consumers (process data) using a shared buffer/queue.",
+      "q": "How does BlockingQueue simplify Producer-Consumer? What happens if the buffer is full or empty?",
+      "qsub": "Solves the classic synchronization problem. Producers and consumers can operate at different rates. Buffer absorbs bursts of production."
+    },
+    "conc7": {
+      "name": "Read-Write Lock — allow concurrent reads, exclusive writes",
+      "desc": "Read-Write Lock allows multiple threads to read simultaneously but requires exclusive access for writes. Improves concurrency for read-heavy workloads.",
+      "q": "Why is Read-Write Lock better than a regular mutex for read-heavy workloads? What is the risk of writer starvation?",
+      "qsub": "Read operations don't conflict with each other, only with writes. Using a regular mutex would unnecessarily block readers."
+    },
+    "conc8": {
+      "name": "Thread Pool — manage reusable threads for executing tasks",
+      "desc": "Thread Pool manages a reusable pool of worker threads. Tasks are submitted to a queue, and idle workers pick up tasks.",
+      "q": "What are the different types of thread pools (fixed, cached, scheduled)? What is a rejection policy?",
+      "qsub": "Thread creation is expensive. Pool limits maximum concurrency, prevents resource exhaustion, and provides management (monitoring, tuning)."
+    },
+    "conc9": {
+      "name": "Thread-Local Storage — isolate data per thread (no synchronization needed)",
+      "desc": "Thread-Local Storage provides each thread with its own copy of a variable. No synchronization needed because each thread has exclusive access to its own copy.",
+      "q": "How does ThreadLocal eliminate contention for per-thread data? What is the memory leak risk in thread pools?",
+      "qsub": "Eliminates contention entirely for per-thread data. Common for request-scoped context (user ID, transaction ID) in web servers."
+    },
+    "arch1": {
+      "name": "MVC — Model-View-Controller: separate data, UI, and input handling",
+      "desc": "MVC separates an application into three components: Model (data + business logic), View (UI presentation), Controller (handles input and updates Model/View).",
+      "q": "How does MVC enable multiple views of the same model and testable business logic independent of UI?",
+      "qsub": "Separation of concerns enables parallel development, multiple views of the same model, and testable business logic independent of UI."
+    },
+    "arch2": {
+      "name": "MVP / MVVM — presentation patterns for testable UIs",
+      "desc": "MVP/MVVM are presentation patterns for testable UIs. MVP: View is passive, Presenter contains logic. MVVM: View binds to ViewModel via data binding.",
+      "q": "Compare MVP and MVVM. When would you choose one over the other for testability and boilerplate?",
+      "qsub": "MVP: maximal testability (Presenter has no UI dependency). MVVM: less boilerplate via data binding."
+    },
+    "arch3": {
+      "name": "Layered Architecture — horizontal layers (presentation, business, persistence)",
+      "desc": "Layered Architecture organizes code into horizontal layers (presentation, business, persistence). Each layer has a specific responsibility and communicates only with adjacent layers.",
+      "q": "What is the sinkhole anti-pattern in Layered Architecture? When does layered architecture become a monolithic problem?",
+      "qsub": "Separation of concerns, each layer can be developed/tested independently. But can lead to monolithic designs and \"sinkhole\" anti-pattern."
+    },
+    "arch4": {
+      "name": "Microservices — decompose by business capability, independently deployable",
+      "desc": "Microservices decomposes an application into small, independently deployable services organized around business capabilities.",
+      "q": "What are the trade-offs of microservices vs monoliths? How do you handle distributed transactions?",
+      "qsub": "Independent scaling, deployment, and technology choices. Better fault isolation but introduces distributed systems complexity."
+    },
+    "arch5": {
+      "name": "Event-Driven Architecture — components communicate via events (pub/sub)",
+      "desc": "Event-Driven Architecture components communicate through events. Producers emit events, consumers react. Can use message brokers (Kafka, RabbitMQ).",
+      "q": "What are the challenges of event-driven architecture in terms of tracing and debugging? Compare pub/sub to point-to-point.",
+      "qsub": "Highly decoupled, asynchronous, and scalable. Enables real-time processing and event sourcing. Harder to trace and debug."
+    },
+    "arch6": {
+      "name": "CQRS — separate command (write) and query (read) models",
+      "desc": "CQRS separates read operations (queries) from write operations (commands). They may use different models and even different data stores.",
+      "q": "How does CQRS optimize reads and writes independently? Why is it often paired with Event Sourcing?",
+      "qsub": "Optimizes reads and writes independently. Reads can use denormalized projections, writes use normalized models."
+    },
+    "arch7": {
+      "name": "Event Sourcing — store state changes as sequence of events",
+      "desc": "Event Sourcing stores state changes as a sequence of events. Current state is derived by replaying all events. Events are the single source of truth.",
+      "q": "How does Event Sourcing provide a complete audit trail? What is the snapshot optimization for large event streams?",
+      "qsub": "Complete audit trail, temporal queries, ability to rebuild state at any point. Complex to query current state without projections."
+    },
+    "arch8": {
+      "name": "Hexagonal / Ports & Adapters — core logic isolated from external systems",
+      "desc": "Hexagonal Architecture (Ports & Adapters) isolates core business logic from external systems. Core defines ports (interfaces); adapters implement them.",
+      "q": "How does Hexagonal Architecture make core logic testable without infrastructure? What are driving vs driven adapters?",
+      "qsub": "Core logic is pure and testable without infrastructure. Swap databases, UIs, or external services by writing new adapters."
+    },
+    "arch9": {
+      "name": "Domain-Driven Design — ubiquitous language, bounded contexts, aggregates",
+      "desc": "Domain-Driven Design focuses on modeling the domain first. Uses ubiquitous language, bounded contexts, aggregates, entities, value objects.",
+      "q": "What is a bounded context and an aggregate in DDD? How does ubiquitous language bridge domain experts and developers?",
+      "qsub": "Aligns software with business needs. Ubiquitous language bridges domain experts and developers."
+    },
+    "arch10": {
+      "name": "Repository Pattern — mediate between domain and data mapping layers",
+      "desc": "Repository Pattern mediates between the domain and data mapping layers. Acts like an in-memory collection of domain objects.",
+      "q": "How does Repository abstract persistence details away from domain code? How does it simplify unit testing?",
+      "qsub": "Provides a clean separation of concerns. Domain code doesn't know about databases, ORMs, or file storage. Makes unit testing easy."
+    },
+    "arch11": {
+      "name": "Unit of Work — maintain list of changed objects, commit as transaction",
+      "desc": "Unit of Work maintains a list of objects affected by a business transaction. Coordinates writing changes and resolves concurrency problems.",
+      "q": "How does Unit of Work ensure transactional consistency? What is the relationship with Repository?",
+      "qsub": "Ensures transactional consistency. Multiple changes are written as one atomic unit. Performance improvements by batching writes."
+    },
+    "lld1": {
+      "name": "Parking Lot System",
+      "desc": "Design a multi-level parking lot handling vehicle entry/exit, spot assignment, fee calculation. Patterns: Singleton, Factory, Strategy.",
+      "q": "LLD Problem: Design a parking lot system. Model different vehicle types, spot assignment, and fee calculation.",
+      "qsub": "Walk through your class design, key patterns used, and tradeoffs. How do you handle a full lot scenario?"
+    },
+    "lld2": {
+      "name": "Elevator Control System",
+      "desc": "Design elevator logic with request handling, direction strategy, door operations. Patterns: State, Command, Observer.",
+      "q": "LLD Problem: Design an elevator control system. Handle concurrent requests from multiple floors.",
+      "qsub": "Walk through your class design, key patterns used, and tradeoffs. How do you handle emergency stop?"
+    },
+    "lld3": {
+      "name": "Vending Machine",
+      "desc": "Design product selection, payment processing, change calculation, and inventory management. Patterns: State, Factory.",
+      "q": "LLD Problem: Design a vending machine with product selection, payment, and change calculation.",
+      "qsub": "Walk through your class design, key patterns used, and tradeoffs. How do you handle out-of-stock and exact change scenarios?"
+    },
+    "lld4": {
+      "name": "Chess / Game Design",
+      "desc": "Model pieces with movement rules, board state, player turns, check/checkmate detection. Patterns: Composite, Command, Strategy, Memento.",
+      "q": "LLD Problem: Design a chess game system with move validation, undo/redo, and AI opponents.",
+      "qsub": "Walk through your class design, key patterns used, and tradeoffs. How do you handle special moves like castling and en passant?"
+    },
+    "lld5": {
+      "name": "Library Management System",
+      "desc": "Design books, members, borrowing/returning, fines management. Patterns: Repository, Singleton, Factory.",
+      "q": "LLD Problem: Design a library management system with borrowing, returns, reservations, and fine calculation.",
+      "qsub": "Walk through your class design, key patterns used, and tradeoffs. How do you handle due dates and overlapping reservations?"
+    },
+    "lld6": {
+      "name": "Logger Framework",
+      "desc": "Design a flexible logging system with multiple appenders, log levels, formatting. Patterns: Singleton, Chain of Resp, Factory.",
+      "q": "LLD Problem: Design a logging framework with configurable log levels, appenders, and formatting.",
+      "qsub": "Walk through your class design, key patterns used, and tradeoffs. How do you add a new appender without modifying existing code?"
+    },
+    "lld7": {
+      "name": "Pub-Sub Message Queue",
+      "desc": "Design a topic-based publish/subscribe system. Patterns: Observer, Singleton, Thread Pool.",
+      "q": "LLD Problem: Design a pub-sub message queue with topics, subscribers, and async delivery.",
+      "qsub": "Walk through your class design, key patterns used, and tradeoffs. How do you guarantee at-least-once delivery?"
+    },
+    "lld8": {
+      "name": "ATM / Banking System",
+      "desc": "Model card authentication, account types, transactions. Patterns: State, Command, Chain of Resp.",
+      "q": "LLD Problem: Design an ATM system with card authentication, PIN verification, and transaction processing.",
+      "qsub": "Walk through your class design, key patterns used, and tradeoffs. How do you handle rollback on transaction failure?"
+    },
+    "lld9": {
+      "name": "Tic Tac Toe",
+      "desc": "Design the board, players, win condition checking. Patterns: Strategy, Factory.",
+      "q": "LLD Problem: Design a Tic Tac Toe game supporting human vs human and human vs computer modes.",
+      "qsub": "Walk through your class design, key patterns used, and tradeoffs. How do you detect a draw?"
+    },
+    "lld10": {
+      "name": "Task Management (Jira-like)",
+      "desc": "Create stories/tasks, assign, transition through workflow states. Patterns: State, Command, Observer, Composite.",
+      "q": "LLD Problem: Design a task management system with workflow states, assignments, and notifications.",
+      "qsub": "Walk through your class design, key patterns used, and tradeoffs. How do you model sub-tasks and epics?"
+    },
+    "lld11": {
+      "name": "Rate Limiter",
+      "desc": "Limit API requests per client within time windows. Patterns: Strategy, Proxy, Factory.",
+      "q": "LLD Problem: Design a rate limiter supporting multiple algorithms (Token Bucket, Leaky Bucket, Sliding Window).",
+      "qsub": "Walk through your class design, key patterns used, and tradeoffs. How do you handle distributed rate limiting?"
+    },
+    "lld12": {
+      "name": "Chat System",
+      "desc": "Design real-time messaging with rooms, private messages, user status. Patterns: Observer, Mediator, Command, Singleton.",
+      "q": "LLD Problem: Design a real-time chat system with rooms, private messaging, and presence tracking.",
+      "qsub": "Walk through your class design, key patterns used, and tradeoffs. How do you handle message ordering?"
+    },
+    "anti1": {
+      "name": "God Object — one class knows/does too much (violates SRP)",
+      "desc": "God Object — a single class that knows too much or does too much. It has too many responsibilities and becomes extremely hard to maintain.",
+      "q": "How does the God Object violate SRP? What refactoring steps would you take to fix one?",
+      "qsub": "Classic SRP violation. God objects are a code smell — refactor by extracting responsibilities into focused classes."
+    },
+    "anti2": {
+      "name": "Spaghetti Code — no clear structure, GOTO-like logic",
+      "desc": "Spaghetti Code — code with no clear structure, characterized by excessive nesting, and unpredictable control flow.",
+      "q": "How does deep nesting and scattered state mutations create spaghetti code? How do design patterns help?",
+      "qsub": "Unmaintainable and bug-prone. Deeply nested callbacks, scattered state mutations, and convoluted conditionals create the same problem as GOTO."
+    },
+    "anti3": {
+      "name": "Golden Hammer — applying a favorite pattern everywhere",
+      "desc": "Golden Hammer — treating every problem as a nail because you have a favorite pattern. Over-applying a pattern that worked well elsewhere.",
+      "q": "When does using a design pattern become over-engineering? How does YAGNI relate to the Golden Hammer?",
+      "qsub": "Patterns are solutions in context, not universal remedies. The right pattern depends on the specific problem characteristics."
+    },
+    "anti4": {
+      "name": "Callback Hell — deeply nested callbacks, use Promises/async patterns",
+      "desc": "Callback Hell (Pyramid of Doom) — deeply nested callbacks that make code hard to read, reason about, and debug.",
+      "q": "How do Promises and async/await solve Callback Hell? What design pattern can help organize callback chains?",
+      "qsub": "Creates unmanageable code structure with complex error handling. Modern alternatives (Promises, async/await) flatten the pyramid."
+    },
+    "anti5": {
+      "name": "Singleton Abuse — overusing global state, testing difficulties",
+      "desc": "Singleton Abuse — overusing the Singleton pattern leads to global state that is hard to test, reason about, and maintain.",
+      "q": "Why are Singletons considered an anti-pattern in many contexts? What is the preferred alternative?",
+      "qsub": "Singletons create implicit shared global state. Code with Singletons is hard to unit test and creates invisible coupling."
+    },
+    "anti6": {
+      "name": "Yo-Yo Problem — deep inheritance hierarchies making code hard to follow",
+      "desc": "Yo-Yo Problem — deep inheritance hierarchies where understanding behavior requires jumping up and down the hierarchy repeatedly.",
+      "q": "How does deep inheritance create the fragile base class problem? How does composition over inheritance solve this?",
+      "qsub": "Over-reliance on inheritance creates fragile hierarchies. A change at the top can ripple through the entire system."
+    },
+    "anti7": {
+      "name": "Premature Optimization — optimizing before understanding the real bottleneck",
+      "desc": "Premature Optimization — optimizing code before understanding the actual bottleneck. Knuth: \"Premature optimization is the root of all evil.\"",
+      "q": "Why is premature optimization problematic even when the optimization seems obvious? What is the correct approach?",
+      "qsub": "Optimization adds complexity. Without profiling, you might optimize the wrong thing. Write clean, correct code first, then profile, then optimize."
+    },
+    "faang1": {
+      "name": "\"Design a system to support multiple notification channels\" (Strategy + Observer)",
+      "desc": "Design a system that sends notifications via email, SMS, push, and in-app. Strategy (channel algorithms), Observer (trigger events), Factory (channel creation).",
+      "q": "Design a notification system that supports email, SMS, push, and in-app notifications. How do you add a new channel?",
+      "qsub": "Tests pattern composition for a real-world, extensible system. Interviewers ask about adding new channels, prioritization, and failure handling."
+    },
+    "faang2": {
+      "name": "\"Design a document editor with undo/redo\" (Command + Memento)",
+      "desc": "Design text operations as Command objects. Each command stores state for undo (Memento). Command history stack enables undo/redo navigation.",
+      "q": "Design a document editor with full undo/redo capability. How do you handle large document memory for undo history?",
+      "qsub": "Classic problem that naturally fits Command + Memento composition. Tests understanding of undo semantics and state management."
+    },
+    "faang3": {
+      "name": "\"Design a cache with eviction policies\" (Strategy + Proxy)",
+      "desc": "Design a cache with pluggable eviction algorithms. Strategy (LRU, LFU, FIFO), Proxy (wrap data source), Singleton (cache manager).",
+      "q": "Design a thread-safe cache with pluggable eviction policies. How would you implement LRU efficiently?",
+      "qsub": "Cache design is a system design staple. Tests Strategy pattern in a performance-critical context with concurrency considerations."
+    },
+    "faang4": {
+      "name": "\"Design a workflow engine\" (Chain of Resp + Command + State)",
+      "desc": "Design a system that executes a series of steps with branching, parallel execution, and state persistence.",
+      "q": "Design a workflow engine that supports sequential steps, branching, parallel execution, and state persistence.",
+      "qsub": "Complex business process modeling. Tests how patterns compose across concerns: execution flow, state, and operation logging."
+    },
+    "faang5": {
+      "name": "\"Design a plugin system\" (Strategy + Factory + Proxy)",
+      "desc": "Architecture for loading third-party extensions at runtime. Strategy (plugin interface), Factory (discovery/instantiation), Proxy (sandboxed wrapper).",
+      "q": "Design a plugin system that loads third-party extensions at runtime with security isolation.",
+      "qsub": "Extensibility architecture is a senior engineer concern. Tests class loading, isolation, and contract design."
+    },
+    "faang6": {
+      "name": "\"Design a UI component library\" (Composite + Decorator + Strategy)",
+      "desc": "Design a reusable component system. Composite (component tree), Decorator (add styling/behavior), Strategy (rendering for themes).",
+      "q": "Design a UI component library that supports theming and composable component trees.",
+      "qsub": "Reflects real frontend architecture. Tests how patterns compose in a tree-based UI system. Example: React/Vue component architecture."
+    },
+    "compar1": {
+      "name": "Strategy vs State — same structure, different intent (algorithm vs state machine)",
+      "desc": "Strategy vs State — both have identical class structures (Context + interface + concrete classes). Difference is intent: Strategy selects algorithm, State manages behavior transitions.",
+      "q": "Strategy and State have identical UML. How do you distinguish them by intent and usage?",
+      "qsub": "Interviewers love this comparison. Both behavioral patterns with the same structure but different intent. Mixing them up is a common mistake."
+    },
+    "compar2": {
+      "name": "Decorator vs Proxy — both wrap, but intent differs (add features vs control access)",
+      "desc": "Decorator vs Proxy — both wrap an object and forward calls. Intent differs: Decorator adds new behavior, Proxy controls access.",
+      "q": "How is the intent different between Decorator and Proxy when they both wrap objects? Give examples.",
+      "qsub": "Distinguishing these shows depth. Both are structural wrappers but serve fundamentally different purposes."
+    },
+    "compar3": {
+      "name": "Factory vs Builder — Factory creates in one step, Builder in multiple steps",
+      "desc": "Factory vs Builder — Factory creates in one step (single method call). Builder creates in multiple steps, allowing different configurations.",
+      "q": "When would you choose Builder over Factory? What problem does each solve?",
+      "qsub": "Both are creational but suit different complexity levels. Builder handles complex objects with optional parts; Factory handles type selection."
+    },
+    "compar4": {
+      "name": "Observer vs Mediator — Observer is distributed, Mediator is centralized",
+      "desc": "Observer vs Mediator — both handle communication. Observer distributes (one-to-many notification). Mediator centralizes (many-to-many through coordinator).",
+      "q": "When does Observer's distributed communication become a problem, and how does Mediator solve it?",
+      "qsub": "Understanding the distinction reveals when to decouple directly (Observer) vs through a coordinator (Mediator)."
+    },
+    "compar5": {
+      "name": "Adapter vs Facade — Adapter changes interface, Facade simplifies",
+      "desc": "Adapter vs Facade — both wrap something existing. Adapter converts one interface to another (interface transformation). Facade provides simplified interface (simplification).",
+      "q": "What is the key difference in motivation between Adapter and Facade? Compare their level of abstraction.",
+      "qsub": "Both are structural wrappers with different motivations. Adapter is for compatibility, Facade is for simplicity."
+    },
+    "compar6": {
+      "name": "Command vs Strategy — Command has undo/redo, Strategy is interchangeable algorithms",
+      "desc": "Command vs Strategy — both encapsulate behavior in objects. Command represents a request (action + parameters) with undo support. Strategy represents interchangeable algorithms.",
+      "q": "How does Command's undo/redo capability distinguish it from Strategy which also encapsulates behavior?",
+      "qsub": "Both behavioral, both encapsulate behavior. Command: what to do (with history). Strategy: how to do it (with swapping)."
+    },
+    "dp-null-object": {
+      "name": "Null Object Pattern",
+      "desc": "A Null Object implements the interface with no-op behavior. Client code works with real and null objects identically — no null checks needed. Common in UI trees (no-op component), logging (null logger), and caching (null cache that just doesn't cache).",
+      "q": "How does the Null Object pattern eliminate null checks and where is it commonly used?",
+      "qsub": "Eliminates null checks scattered throughout code — cleaner than optional/nullable handling everywhere."
+    },
+    "dp-specification": {
+      "name": "Specification Pattern",
+      "desc": "Specification pattern encapsulates business rules as composable objects. Each specification tests an object against a rule. Compose with AND, OR, NOT to build complex queries. Separates business logic from data access.",
+      "q": "How does the Specification pattern encapsulate and compose business rules? How does it fit with the Repository pattern?",
+      "qsub": "Business rules become first-class citizens that can be combined, tested, and reused — instead of scattered if-statements."
+    }
+  }
+}

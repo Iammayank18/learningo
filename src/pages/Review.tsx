@@ -10,9 +10,9 @@ import { QuizRunner, type QuizItem, type QuizResult } from '../components/QuizRu
 import { Mascot } from '../components/Mascot'
 import { Celebration, type CelebrationData } from '../components/Celebration'
 import { snap, stepsBetween } from '../lib/celebrate'
-import { tr } from '../lib/i18n'
+import { t, tp, getLocale } from '../lib/i18n'
 
-const SIZES = [[4, 'Quick · 4'], [8, 'Standard · 8'], [15, 'Deep · 15']] as const
+const SIZES = [[4, 'review.quick'], [8, 'review.standard'], [15, 'review.deep']] as const
 
 const crowns = (n: number) => '●'.repeat(n) + '○'.repeat(5 - n)
 const split = (id: string) => { const [cid, ...rest] = id.split('/'); return [cid, rest.join('/')] as const }
@@ -72,7 +72,7 @@ export function Review() {
     const next = snap()
     setRunning(false)
     setSummary({
-      title: free ? 'Practice done!' : 'Revision done!', subtitle: tr(free ? '{ok}/{n} topics yaad the · free practice, schedule same rahi' : '{ok}/{n} topics yaad the', { ok, n: groups.length }),
+      title: free ? t('review.freeDoneTitle') : t('review.revisionDoneTitle'), subtitle: t(free ? 'review.rememberedFree' : 'review.remembered', { ok, n: groups.length }),
       xp, perfect: ok === groups.length && groups.length > 0, prev, next, steps: stepsBetween(prev, next),
       accuracy: Math.round((ok / Math.max(1, groups.length)) * 100), seconds: (Date.now() - startedAt) / 1000, free,
     })
@@ -91,7 +91,7 @@ export function Review() {
   const forecast = Array.from({ length: 7 }, (_, i) => {
     const from = now + (i - 1) * DAY, to = now + i * DAY
     const n = cards.filter(([, c]) => (i === 0 ? c.due <= to : c.due > from && c.due <= to)).length
-    return { n, label: i === 0 ? 'Aaj' : new Date(now + i * DAY).toLocaleDateString(undefined, { weekday: 'short' }) }
+    return { n, label: i === 0 ? t('common.todayShort') : new Date(now + i * DAY).toLocaleDateString(getLocale(), { weekday: 'short' }) }
   })
   const fmax = Math.max(1, ...forecast.map((f) => f.n))
   const byCourse = new Map<string, string[]>()
@@ -103,52 +103,52 @@ export function Review() {
 
   return (
     <div className="page">
-      <h1>🔁 Revision</h1>
-      <p className="muted">{tr('Spaced repetition: lesson ke baad woh {i} din pe wapas aata hai. Sahi jawab = crown badhta hai, galat = peeche.', { i: INTERVALS.join(' → ') })}</p>
+      <h1>🔁 {t('review.title')}</h1>
+      <p className="muted">{t('review.spacedRepetition', { i: INTERVALS.join(' → ') })}</p>
 
       <div className={'card rev-hero' + (hasDue ? ' due' : '')}>
         <Mascot mood={hasDue ? 'idle' : 'happy'} size={84} />
         <div className="rev-hero-text">
           {total === 0 ? (
-            <><h3>{tr('Abhi koi revision nahi')}</h3><p className="muted small">{tr('Pehla lesson complete karo — phir wo yahan schedule ho jayega.')}</p></>
+            <><h3>{t('review.noRevision')}</h3><p className="muted small">{t('review.firstLesson')}</p></>
           ) : hasDue ? (
-            <><h3>{snapshotDue.length} lesson{snapshotDue.length > 1 ? 's' : ''} due</h3><p className="muted small">{tr('Abhi karo — yahi time sabse zyada yaad rakhwata hai. ~{m} min', { m: Math.max(2, Math.round(Math.min(size, snapshotDue.length) * 1.5)) })}</p></>
+            <><h3>{tp('review.dueOne', 'review.dueOther', snapshotDue.length)}</h3><p className="muted small">{t('review.doNow', { m: Math.max(2, Math.round(Math.min(size, snapshotDue.length) * 1.5)) })}</p></>
           ) : (
-            <><h3>{tr('Aaj ki revision clear! 🎉')}</h3><p className="muted small">{tr('Chaho to sabse kamzor topics par free practice kar lo (schedule nahi badlega).')}</p></>
+            <><h3>{t('review.clear')}</h3><p className="muted small">{t('review.freePracticeHint')}</p></>
           )}
         </div>
         {total > 0 && (
           <div className="rev-actions">
             <div className="seg">
-              {SIZES.map(([n, l]) => <button key={n} className={'seg-btn' + (size === n ? ' on' : '')} onClick={() => { sfx.tap(); setSize(n) }}>{l}</button>)}
+              {SIZES.map(([n, key]) => <button key={n} className={'seg-btn' + (size === n ? ' on' : '')} onClick={() => { sfx.tap(); setSize(n) }}>{t(key)}</button>)}
             </div>
             {hasDue && (
-              <button className="btn btn-green" disabled={!items?.length || free} onClick={begin}>{items && !free ? tr('Revision shuru karo') : 'Loading…'}</button>
+              <button className="btn btn-green" disabled={!items?.length || free} onClick={begin}>{items && !free ? t('review.startRevision') : t('common.loading')}</button>
             )}
             <button className={'btn ' + (hasDue ? 'btn-outline' : 'btn-blue')} disabled={free && !items?.length} onClick={() => { if (free) begin(); else { sfx.tap(); setFree(true) } }}>
-              {free ? (items ? tr('Free practice shuru →') : 'Loading…') : tr('💪 Free practice (kamzor topics)')}
+              {free ? (items ? t('review.startFree') : t('common.loading')) : t('review.freePracticeBtn')}
             </button>
-            {free && <button className="btn btn-outline" onClick={() => setFree(false)}>{tr('← Wapas')}</button>}
+            {free && <button className="btn btn-outline" onClick={() => setFree(false)}>{t('review.back')}</button>}
           </div>
         )}
-        {total === 0 && <a className="btn btn-green" href={href()}>{tr('Lesson shuru karo')}</a>}
+        {total === 0 && <a className="btn btn-green" href={href()}>{t('review.startLesson')}</a>}
       </div>
 
       {total > 0 && (
         <>
           <div className="tiles">
-            <div className="tile"><small>DUE</small><b>⏰ {snapshotDue.length}</b><span className="muted small">{tr('abhi')}</span></div>
-            <div className="tile"><small>{tr('SEEKHE')}</small><b>📘 {total}</b><span className="muted small">lessons tracked</span></div>
-            <div className="tile"><small>STRONG</small><b>👑 {strong}</b><span className="muted small">crown 4+</span></div>
-            <div className="tile"><small>LAST OK</small><b>🎯 {acc}%</b><span className="muted small">{tr('pichle review mein')}</span></div>
+            <div className="tile"><small>{t('review.dueTag')}</small><b>⏰ {snapshotDue.length}</b><span className="muted small">{t('review.now')}</span></div>
+            <div className="tile"><small>{t('review.learnedTag')}</small><b>📘 {total}</b><span className="muted small">{t('review.lessonsTracked')}</span></div>
+            <div className="tile"><small>{t('review.strongTag')}</small><b>👑 {strong}</b><span className="muted small">{t('review.crown4plus')}</span></div>
+            <div className="tile"><small>{t('review.lastOkTag')}</small><b>🎯 {acc}%</b><span className="muted small">{t('review.lastReview')}</span></div>
           </div>
 
           <div className="rev-cols">
             <section className="card">
-              <h3>{tr('Agle 7 din')}</h3>
-              <div className="bars" role="img" aria-label="Reviews due per day">
+              <h3>{t('review.next7')}</h3>
+              <div className="bars" role="img" aria-label={t('review.reviewsPerDay')}>
                 {forecast.map((f, i) => (
-                  <div key={i} className="bar-col" title={`${f.n} reviews`}>
+                  <div key={i} className="bar-col" title={t('review.reviewsCount', { n: f.n })}>
                     <span className="small">{f.n || ''}</span>
                     <div className={'bar' + (i === 0 && f.n ? ' hit' : '')} style={{ height: `${(f.n / fmax) * 100}%` }} />
                     <small>{f.label}</small>
@@ -157,7 +157,7 @@ export function Review() {
               </div>
             </section>
             <section className="card">
-              <h3>Crown levels</h3>
+              <h3>{t('review.crownLevels')}</h3>
               {stageCount.map((n, i) => (
                 <div key={i} className="crow crown-row">
                   <span className="crowns-lbl">{crowns(i + 1)}</span>
@@ -165,7 +165,7 @@ export function Review() {
                   <span className="muted small">{n}</span>
                 </div>
               ))}
-              <p className="muted small">{tr('Crown 5 = lesson 56-din interval tak pahunch gaya.')}</p>
+              <p className="muted small">{t('review.crown5Hint')}</p>
             </section>
           </div>
         </>
@@ -173,7 +173,7 @@ export function Review() {
 
       {hasDue && (
         <section>
-          <h3 className="group-title">{tr('Abhi due')}</h3>
+          <h3 className="group-title">{t('review.dueNow')}</h3>
           {[...byCourse.entries()].map(([cid, ids]) => {
             const m = metaOf(cid)
             return (
@@ -186,7 +186,7 @@ export function Review() {
                     return (
                       <li key={id}>
                         <a href={href('read', ...split(id))}>{nameOf(id)}</a>
-                        <span className="muted small"><span className="crowns-lbl">{crowns(c.stage)}</span>{late > 0 ? ` · ${late}d late` : ''}</span>
+                        <span className="muted small"><span className="crowns-lbl">{crowns(c.stage)}</span>{late > 0 ? ` · ${t('review.lateDays', { n: late })}` : ''}</span>
                       </li>
                     )
                   })}
@@ -194,13 +194,13 @@ export function Review() {
               </div>
             )
           })}
-          {snapshotDue.length > size && <p className="muted small">{tr('Ek session mein {n} lessons — baaki agle round mein.', { n: size })}</p>}
+          {snapshotDue.length > size && <p className="muted small">{t('review.sessionLimit', { n: size })}</p>}
         </section>
       )}
 
       {weak.length > 0 && (
         <section>
-          <h3 className="group-title">{tr('⚠️ Kamzor topics')}</h3>
+          <h3 className="group-title">{t('review.weakTopics')}</h3>
           <div className="card"><ul className="rev-list">
             {weak.slice(0, 8).map((id) => <li key={id}><a href={href('read', ...split(id))}>{nameOf(id)}</a><span className="muted small">{metaOf(split(id)[0])?.title}</span></li>)}
           </ul></div>
@@ -209,12 +209,12 @@ export function Review() {
 
       {upcoming.length > 0 && (
         <section>
-          <h3 className="group-title">{tr('Aane wale reviews')}</h3>
+          <h3 className="group-title">{t('review.upcoming')}</h3>
           <div className="card"><ul className="rev-list">
             {upcoming.map(([id, c]) => (
               <li key={id}>
                 <a href={href('read', ...split(id))}>{nameOf(id)}</a>
-                <span className="muted small"><span className="crowns-lbl">{crowns(c.stage)}</span> · {new Date(c.due).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</span>
+                <span className="muted small"><span className="crowns-lbl">{crowns(c.stage)}</span> · {new Date(c.due).toLocaleDateString(getLocale(), { day: 'numeric', month: 'short' })}</span>
               </li>
             ))}
           </ul></div>
@@ -229,8 +229,8 @@ function Summary({ s, onBack }: { s: CelebrationData; onBack: () => void }) {
     <div className="overlay">
       <div className="done-screen">
         <Celebration data={s} actions={<>
-          <button className="btn btn-outline" onClick={onBack}>Review page</button>
-          <button className="btn btn-green" onClick={() => go()}>Continue</button>
+          <button className="btn btn-outline" onClick={onBack}>{t('review.reviewPage')}</button>
+          <button className="btn btn-green" onClick={() => go()}>{t('common.continue')}</button>
         </>} />
       </div>
     </div>

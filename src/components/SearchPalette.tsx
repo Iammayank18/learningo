@@ -4,7 +4,7 @@ import { ensureSearch, highlightParts, search, snippet } from '../lib/search'
 import { go } from '../lib/router'
 import { dueCards, getProgress, setActiveCourse } from '../lib/store'
 import { toggleTheme } from '../lib/theme'
-import { tr } from '../lib/i18n'
+import { t } from '../lib/i18n'
 
 interface Item { key: string; icon: string; title: string; sub?: string; group: string; run: (practice?: boolean) => void; q?: string }
 
@@ -31,19 +31,19 @@ function Palette({ onClose, courseId }: { onClose: () => void; courseId: string 
     const dueN = dueCards(getProgress()).length
     const nav = (path: string[]) => () => { go(...path); onClose() }
     const commands: Item[] = [
-      { key: 'c-learn', icon: '🏠', title: 'Go to Learn path', group: 'Actions', run: nav([]) },
-      { key: 'c-review', icon: '🔁', title: `Start revision${dueN ? ` (${dueN} due)` : ''}`, group: 'Actions', run: nav(['review']) },
-      { key: 'c-courses', icon: '📚', title: 'All courses', group: 'Actions', run: nav(['courses']) },
-      { key: 'c-stats', icon: '📈', title: 'Progress & stats', group: 'Actions', run: nav(['stats']) },
-      { key: 'c-theme', icon: '🌓', title: 'Toggle light / dark theme', group: 'Actions', run: () => { toggleTheme(); onClose() } },
+      { key: 'c-learn', icon: '🏠', title: t('search.goLearn'), group: t('search.actions'), run: nav([]) },
+      { key: 'c-review', icon: '🔁', title: dueN ? t('search.startRevisionDue', { n: dueN }) : t('search.startRevision'), group: t('search.actions'), run: nav(['review']) },
+      { key: 'c-courses', icon: '📚', title: t('search.allCoursesCmd'), group: t('search.actions'), run: nav(['courses']) },
+      { key: 'c-stats', icon: '📈', title: t('search.progressStats'), group: t('search.actions'), run: nav(['stats']) },
+      { key: 'c-theme', icon: '🌓', title: t('search.toggleTheme'), group: t('search.actions'), run: () => { toggleTheme(); onClose() } },
     ]
     const courses: Item[] = courseIndex.map((c) => ({
-      key: 'course-' + c.id, icon: c.icon, title: `Open ${c.title}`, sub: `${c.lessons} lessons`, group: 'Courses',
+      key: 'course-' + c.id, icon: c.icon, title: t('search.openCourse', { title: c.title }), sub: `${c.lessons} ${t('common.lessons')}`, group: t('search.courses'),
       run: () => { setActiveCourse(c.id); go(); onClose() },
     }))
-    const t = q.trim().toLowerCase()
-    if (!t) return [...commands, ...courses.slice(0, 6)]
-    const matchCmd = [...commands, ...courses].filter((c) => c.title.toLowerCase().includes(t)).slice(0, 4)
+    const term = q.trim().toLowerCase()
+    if (!term) return [...commands, ...courses.slice(0, 6)]
+    const matchCmd = [...commands, ...courses].filter((c) => c.title.toLowerCase().includes(term)).slice(0, 4)
     const hits = (ready ? search(q, 40, scoped ? courseId : undefined) : []).map<Item>((h) => ({
       key: `${h.e.c}/${h.e.l}`,
       icon: metaOf(h.e.c)?.icon ?? '📄',
@@ -73,16 +73,16 @@ function Palette({ onClose, courseId }: { onClose: () => void; courseId: string 
   let lastGroup = ''
   return (
     <div className="palette-back" onMouseDown={onClose}>
-      <div className="palette" role="dialog" aria-label="Search" onMouseDown={(e) => e.stopPropagation()} onKeyDown={onKey}>
+      <div className="palette" role="dialog" aria-label={t('nav.search')} onMouseDown={(e) => e.stopPropagation()} onKeyDown={onKey}>
         <div className="palette-input">
           <span>🔍</span>
-          <input ref={input} value={q} onChange={(e) => { setQ(e.target.value); setIdx(0) }} placeholder="Search topics, concepts, terms…  (e.g. useEffect, closure, index)" aria-label="Search" />
+          <input ref={input} value={q} onChange={(e) => { setQ(e.target.value); setIdx(0) }} placeholder={t('search.placeholder')} aria-label={t('nav.search')} />
           <button className={'scope' + (scoped ? ' on' : '')} onClick={() => { setScoped(!scoped); input.current?.focus() }} title="Tab to toggle">
-            {scoped ? (metaOf(courseId)?.title ?? 'This course') : 'All courses'}
+            {scoped ? (metaOf(courseId)?.title ?? t('search.thisCourse')) : t('search.allCourses')}
           </button>
         </div>
         <div className="palette-list" ref={list} role="listbox">
-          {items.length === 0 && <div className="palette-empty">{ready ? tr('“{q}” ke liye kuch nahi mila. Chhota ya alag keyword try karo.', { q }) : tr('Index load ho raha hai…')}</div>}
+          {items.length === 0 && <div className="palette-empty">{ready ? t('search.empty', { q }) : t('search.loadingIndex')}</div>}
           {items.map((it, i) => {
             const head = it.group !== lastGroup ? it.group : null
             lastGroup = it.group
@@ -96,13 +96,13 @@ function Palette({ onClose, courseId }: { onClose: () => void; courseId: string 
                     <div className="pi-title">{it.q ? <Hl text={it.title} q={it.q} /> : it.title}</div>
                     {it.sub && <div className="pi-sub">{it.q ? <Hl text={it.sub} q={it.q} /> : it.sub}</div>}
                   </div>
-                  {i === sel && <span className="pi-hint">{it.q ? '↵ read · ⇧↵ practice' : '↵'}</span>}
+                  {i === sel && <span className="pi-hint">{it.q ? t('search.readPracticeHint') : '↵'}</span>}
                 </div>
               </div>
             )
           })}
         </div>
-        <div className="palette-foot"><span><kbd>↑</kbd><kbd>↓</kbd> navigate</span><span><kbd>↵</kbd> open</span><span><kbd>⇧↵</kbd> practice</span><span><kbd>Tab</kbd> scope</span><span><kbd>Esc</kbd> close</span></div>
+        <div className="palette-foot"><span><kbd>↑</kbd><kbd>↓</kbd> {t('search.navigate')}</span><span><kbd>↵</kbd> {t('search.open')}</span><span><kbd>⇧↵</kbd> {t('search.practice')}</span><span><kbd>Tab</kbd> {t('search.scope')}</span><span><kbd>Esc</kbd> {t('search.close')}</span></div>
       </div>
     </div>
   )

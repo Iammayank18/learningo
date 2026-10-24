@@ -1,0 +1,1330 @@
+{
+  "lessons": {
+    "njs-what": {
+      "name": "What is Node.js? — JavaScript outside the browser",
+      "q": "What is Node.js and why does it matter that JavaScript can run outside the browser?",
+      "qsub": "Node.js is why the same language (JS) works on both frontend and backend. It's the foundation of the entire npm ecosystem.",
+      "what": "<p><b>Node.js</b> is a <b>runtime environment</b> that runs JavaScript on the server outside the browser. Before 2009, JS could only run in the browser. Node took the V8 engine (Chrome's) and added OS APIs (file, network) on top of it.</p>\n<p>That means now you can build <b>web servers, CLI, tools, microservices</b> all in JS. Same language frontend + backend — with a single skill set for both. It is also the foundation of the npm ecosystem.</p>",
+      "analogy": "<b>Car engine</b> (V8) is a separate component, <b>car body + steering + wheels</b> (OS APIs) are separate. Node = the work of putting the V8 engine into a complete car — same engine, now the car can run directly where a browser (SEO) is not needed.",
+      "why": "<p>Running JS on the backend = <b>the same language frontend+backend</b>, heavy non-blocking I/O, and a large npm ecosystem. Therefore startups to FAANG build their backend on Node. This is the straightforward answer for the interview question \"what is Node\".</p>",
+      "pros": [
+        "One language frontend + backend.",
+        "Non-blocking async I/O — scalable.",
+        "Large npm ecosystem."
+      ],
+      "cons": [
+        "CPU-bound work blocks the event loop.",
+        "Callback/promise hassle.",
+        "JS type safety (fixed with TypeScript)."
+      ],
+      "gotchas": [
+        "Just remember: <b>Node = V8 + OS APIs, JS outside the browser.</b>",
+        "Browser globals (window, document) do not exist in Node.",
+        "Interview: \"What is V8?\" — JIT compiler, C++."
+      ],
+      "terms": [
+        [
+          "Runtime",
+          "JS environment that runs outside the browser — Node.js is a runtime."
+        ],
+        [
+          "V8 engine",
+          "Google's C++ JS engine that compiles JS to machine code."
+        ],
+        [
+          "Event-driven",
+          "Node operates on events (callbacks), everything is async."
+        ],
+        [
+          "npm",
+          "Registry for installing packages — the app store of the JS world."
+        ]
+      ],
+      "where": [
+        [
+          "Web servers",
+          "Express/Fastify — Node.js backbone."
+        ],
+        [
+          "CLI tools",
+          "npm, eslint, vite — all Node."
+        ],
+        [
+          "Interview",
+          "\"Why Node?\" \"What is a runtime?\""
+        ]
+      ],
+      "svgSwap": [
+        [
+          "ek language, dono jagah",
+          "one language, in both places"
+        ],
+        [
+          "APIs alag",
+          "APIs separate"
+        ]
+      ]
+    },
+    "njs-vs-browser": {
+      "desc": "Browser JS has: window, document, DOM, alert(), fetch(). Node.js has NONE of these. Instead, Node.js has: fs (file system), http (create servers), os (OS info), path (file paths), process (env vars, args). Both run the same JS syntax (ES6+) but the APIs are totally different.",
+      "q": "What are the key differences between running JavaScript in a browser versus Node.js?",
+      "qsub": "Developers switching from frontend to backend get confused because the globals are different. Knowing this upfront saves hours of confusion.",
+      "what": "<p>Both run the same <b>JS syntax</b>, but the <b>globals differ</b>. Browser: <code>window</code>, <code>document</code>, <code>DOM</code>, <code>alert()</code>, <code>fetch()</code>. Node: none of these. Node has: <code>fs</code> (files), <code>http</code> (server), <code>os</code>, <code>path</code>, <code>process</code> (env, args).</p>\n<p>This confuses frontend developers the most — seeing <code>window is not defined</code>. Understanding it upfront saves hours of confusion.</p>",
+      "analogy": "Both speak <b>Hindi</b> (JS syntax) but one operates in a <b>home kitchen</b> (browser: window DOM) and the other in a <b>factory</b> (Node: fs, http). Same words, different environments (utensils).",
+      "why": "<p>This shows why Node is <b>server-side</b> — it handles OS-level files and network. The interview answer for \"node vs browser\" is: <b>globals + APIs</b> differ, language is the same. It’s also essential for debugging — understanding what \"window is not defined\" means.</p>",
+      "pros": [
+        "Reuse the same language skill.",
+        "Node system-level access."
+      ],
+      "cons": [
+        "Globals confuse beginners.",
+        "Accidentally using window/document."
+      ],
+      "gotchas": [
+        "Just remember: <b>language same, globals different.</b>",
+        "\"window is not defined\" = a browser-only API used in Node.",
+        "Interview: process.env vs process.argv."
+      ],
+      "terms": [
+        [
+          "window",
+          "Browser global — not in Node."
+        ],
+        [
+          "document / DOM",
+          "Page manipulation — browser-only."
+        ],
+        [
+          "process",
+          "Node global — env vars, args, PID."
+        ],
+        [
+          "global",
+          "Node's global object (the role of browser's window)."
+        ]
+      ],
+      "svgSwap": [
+        [
+          "global (window-nahi)",
+          "global (not window)"
+        ]
+      ]
+    },
+    "njs-install": {
+      "qsub": "What commands do you use to run a file, check your version, and open the interactive REPL?",
+      "what": "<p><b>Install</b> after installing you do three things: run the script with <code>node file.js</code>, check the version with <code>node -v</code>, and open <code>node</code> to try JavaScript instantly in the <b>REPL</b> (interactive terminal).</p>\n<p><b>npm init</b> creates a <code>package.json</code> — your project's identity. Many beginners confuse npm and node: <b>node</b> = runtime (run JS), <b>npm</b> = package manager (install libraries).</p>",
+      "analogy": "<b>Kitchen</b>: node = stove + gas (cook food). npm = vegetable market (bring ingredients). Food doesn't get made without a stove, and there is no variety without a market. Both have different roles, both are essential.",
+      "why": "<p>Having the setup ready is half the interview preparation — writing code without being able to run it isn’t possible. Version control (switching Node versions with nvm) and testing small pieces in the REPL are part of the daily routine for anyone giving an interview. This is basic, but consider it essential.</p>",
+      "gotchas": [
+        "Just remember: <b>node=run, npm=packages, REPL=try.</b>",
+        "npm vs npx: npm installs, npx runs (temporary).",
+        "Interview: you can run a one-liner with node -e."
+      ],
+      "terms": [
+        [
+          "node <file>",
+          "Command to run a .js file."
+        ],
+        [
+          "node -v",
+          "Command to check Node version."
+        ],
+        [
+          "REPL",
+          "Interactive shell — just type node in the terminal to try JavaScript instantly."
+        ],
+        [
+          "npm init",
+          "Creates a package.json for a new project."
+        ]
+      ],
+      "where": [
+        [
+          "Machine setup",
+          "Node versions managed with nvm."
+        ],
+        [
+          "Daily dev",
+          "Small tests using the REPL."
+        ],
+        [
+          "Interview",
+          "\"How do you run JS?\""
+        ]
+      ],
+      "cons": [
+        "Version mismatch bugs.",
+        "Without nvm, global setup is a mess.",
+        "npx always fetches the latest."
+      ],
+      "pros": [
+        "Instant feedback (REPL).",
+        "Easy version switching (nvm).",
+        "npm ecosystem ready."
+      ]
+    },
+    "njs-v8": {
+      "q": "What is the V8 engine and how does it make JavaScript fast in Node.js?",
+      "what": "<p><b>V8</b> is Google’s open-source <b>C++ JS engine</b> (Chrome also uses this). It compiles JS to machine code using <b>JIT</b>, which makes JS fast.</p>\n<p>Node.js is literally a <b>C++ program that embeds V8</b> and adds OS APIs (fs, net) on top. V8’s <b>GC</b> manages memory. But <b>V8 does not create the event loop</b> — that is done by <b>libuv</b> (Node’s C layer), which handles async I/O and the thread pool.</p>",
+      "analogy": "<b>V8</b> = a super-fast translator/engine. <b>Node</b> = the engine mounted in a chassis that contains parts to interact with the OS (libuv, fs). V8 only handles JS; Node connects it to the world (files/network).",
+      "why": "<p>This explains <b>why JS is fast</b> (JIT), <b>why GC</b>, and <b>why Node perf tuning looks at V8 flags</b>. It is the first step of an interview deep dive — keeping the V8 vs Node boundary clear.</p>",
+      "pros": [
+        "JIT = fast JS.",
+        "GC = handles memory.",
+        "Open source, tuned."
+      ],
+      "gotchas": [
+        "Just remember: <b>V8=JIT+GC; libuv=event loop+I/O.</b>",
+        "V8 does NOT create the event loop — that’s libuv’s job.",
+        "Interview: \"--max-old-space-size\" V8 heap flag."
+      ],
+      "terms": [
+        [
+          "V8",
+          "Google's C++ JS engine — converts JS to machine code."
+        ],
+        [
+          "JIT",
+          "Just-In-Time compilation — optimizes code at runtime."
+        ],
+        [
+          "Garbage collector",
+          "V8 manages memory — allocate first, then collect."
+        ],
+        [
+          "libuv",
+          "Node's C layer — event loop + async I/O, works with V8."
+        ]
+      ],
+      "where": [
+        [
+          "Node core",
+          "V8 + libuv + OS."
+        ],
+        [
+          "Chrome",
+          "V8 is also in Chrome."
+        ],
+        [
+          "Interview",
+          "\"V8 vs libuv?\" \"JIT?\" \"GC?\""
+        ]
+      ],
+      "svgSwap": [
+        [
+          "event loop NAHI banata",
+          "does NOT build an event loop"
+        ],
+        [
+          "ye V8 ke bahar hai",
+          "this is outside V8"
+        ]
+      ]
+    },
+    "njs-npm": {
+      "desc": "npm (Node Package Manager) is the world's largest software registry. npm install express downloads the Express package to node_modules/. package.json tracks your dependencies. package-lock.json locks exact versions for reproducible installs.",
+      "q": "How does npm work? What is the purpose of package.json and package-lock.json?",
+      "what": "<p><b>npm</b> installs JS packages. <code>npm install express</code> downloads Express to <code>node_modules/</code> and adds it to package.json.</p>\n<p><b>package.json</b>: the app’s identity (dependencies, scripts). <b>package-lock.json</b>: locks <b>exact versions</b> so that the same version installs on every machine (reproducible). package.json can have ranges (<code>^1.2.3</code>), lock has exact versions.</p>",
+      "analogy": "<b>Recipe book</b> (package.json) writes \"2 cups flour (^ = any 2-cup flour)\". <b>Locked shopping list</b> (package-lock.json) includes a picture saying \"this exact brand of flour\" — so the kitchen looks the same everywhere.",
+      "why": "<p>Reproducible builds are the foundation of production. Without a lock file you get the classic \"it works on my machine\" bug. Scripts (<code>npm run build</code>) are used in CI/CD — their code must be present.</p>",
+      "gotchas": [
+        "Just remember: <b>package.json = ranges, lock = exact.</b>",
+        "npm ci installs 100% from lock (fast, reproducible). npm install updates lock.",
+        "Interview: \"session idempotent?\" no — commit the lock before CI."
+      ],
+      "terms": [
+        [
+          "npm",
+          "Node Package Manager — the world’s largest package registry."
+        ],
+        [
+          "package.json",
+          "Dependencies, scripts, metadata — the project’s identity."
+        ],
+        [
+          "package-lock.json",
+          "Exact versions lock — reproducible installs."
+        ],
+        [
+          "node_modules",
+          "Folder containing installed packages."
+        ]
+      ]
+    },
+    "nel1": {
+      "q": "Walk me through the phases of the Node.js event loop. What happens in each phase?",
+      "qsub": "The event loop is the beating heart of Node.js async I/O — understanding phases prevents callback hell and timing surprises.",
+      "what": "<p>Node's <b>event loop</b> is a round-robin C loop (libuv) that runs in the order of <b>6 phases</b>: <b>timers → pending → idle → poll → check → close</b>. On each tick, the queue for one phase is processed.</p>\n<p><b>Timers</b>: setTimeout. <b>Poll</b>: I/O callbacks (file, network) — this is where most waiting occurs. <b>Check</b>: setImmediate. <b>Close</b>: cleanup. The loop runs until no work remains.</p>",
+      "analogy": "<b>Railway station</b> (event loop): each phase is a <b>platform</b> (timers, poll, check). The train (loop) stops at each platform in systematic order and picks up any passenger (callback) that is ready. If none are ready, it moves to the next round.",
+      "why": "<p>This is the <b>heart</b> of Node's async I/O. If you don't understand the phases, callback timing, ordering bugs, and performance can all go wrong. This is the deepest \"event loop walk-through\" question in interviews.</p>",
+      "pros": [
+        "Single-threaded simple model.",
+        "Non-blocking I/O efficient.",
+        "Reliance on libuv C."
+      ],
+      "gotchas": [
+        "Just remember: <b>timers→poll→check; the loop runs until there is work.</b>",
+        "Which phase does setImmediate belong to? — check phase.",
+        "Interview: idle/prepare rarely matter; timers/poll/check core."
+      ],
+      "terms": [
+        [
+          "Event loop",
+          "libuv's C loop — 6 phases, callback/async era."
+        ],
+        [
+          "Timers",
+          "setTimeout/setInterval callbacks here."
+        ],
+        [
+          "Poll",
+          "I/O callbacks (fs, net) arrive here."
+        ],
+        [
+          "Check",
+          "setImmediate here."
+        ],
+        [
+          "Close",
+          "close/cleanup callbacks."
+        ]
+      ],
+      "where": [
+        [
+          "libuv",
+          "C event loop implementation."
+        ],
+        [
+          "Node core",
+          "http, fs and everything else are built on it."
+        ],
+        [
+          "Interview",
+          "\"walk me through the loop\""
+        ]
+      ]
+    },
+    "nel2": {
+      "q": "What is the difference between microtasks and macrotasks in Node.js? What is the execution order?",
+      "what": "<p><b>Microtasks</b> (nextTick, Promise.then) <b>run after every single operation</b> — therefore they execute <b>before macrotasks</b>. <b>Macrotasks</b> (setTimeout, I/O, setImmediate) run in the next phase/round.</p>\n<p><b>process.nextTick</b> is the very next — technically it is not in a phase, but <b>drains its own queue after each call-slice</b>. <b>Promise.then</b> comes from the microtask queue. Order: <code>nextTick</code> > <code>promise</code> > macrotask.</p>",
+      "analogy": "<b>ATM queue</b>: macrotask = people (a lot of people). Microtask = <b>VIP lane</b> that always gets served instantly. nextTick = \"the most VIP VIP\" — <b>immediately after every incomplete transaction</b> its number comes first, then the promise VIP.",
+      "why": "<p>Ordering bugs arise from this — \"Why doesn't <code>setTimeout(...,0)</code> run before a promise?\" — because microtasks run first. This subtle ordering is a classic FAANG deep-dive topic.</p>",
+      "gotchas": [
+        "Just remember: <b>nextTick > promise > macrotask, every tick.</b>",
+        "nextTick recursion can starve the event loop — use setImmediate for batching.",
+        "Interview: \"setImmediate vs nextTick\" — nextTick immediate, setImmediate check phase."
+      ],
+      "terms": [
+        [
+          "Microtask",
+          "process.nextTick + Promise.then + queueMicrotask."
+        ],
+        [
+          "Macrotask",
+          "setTimeout/setImmediate/I-O — next round."
+        ],
+        [
+          "nextTick",
+          "Immediately after the current operation completes."
+        ],
+        [
+          "setImmediate",
+          "Check phase — next round."
+        ]
+      ],
+      "svgSwap": [
+        [
+          "har makrotask ke pehle",
+          "before every macrotask"
+        ],
+        [
+          "microtasks drain hote",
+          "microtasks drain"
+        ]
+      ]
+    },
+    "nel3": {
+      "q": "How does libuv handle async I/O under the hood? What role does the thread pool play?",
+      "qsub": "libuv is the C layer that makes Node.js async I/O possible — knowing it separates Node devs from architects.",
+      "what": "<p><b>libuv</b> gives Node async I/O. OS-level event notification: on Linux <b>epoll</b>, on macOS <b>kqueue</b>, on Windows <b>IOCP</b>.</p>\n<p><b>Network I/O</b> (net, tcp) becomes non-blocking via these OS mechanisms — a single thread can handle many sockets. But <b>file system, DNS, crypto</b> are not supported by the OS in a non-blocking way (file operations block), so libuv runs them on a <b>thread pool</b> (default 4 threads). The result is delivered via a callback.</p>",
+      "analogy": "<b>Restaurant manager</b> (main thread) is a single entity — it processes orders (callbacks) only after the waiters finish them (event loop). Meanwhile, <b>kitchen helpers</b> (thread pool) act as a brigade — blocking work such as reading a file or cooking is split among the 4 helpers (threads) so the manager never stalls.",
+      "why": "<p>This reveals what <b>Node does with the OS</b> — network through epoll, file/crypto through the thread pool. It is a concise architect-level separation insight. In an interview, \"libuv, thread pool, epoll\" is the answer.</p>",
+      "gotchas": [
+        "Just remember: <b>net=epoll non-block; fs/crypto=threadpool.</b>",
+        "Heavy crypto (bcrypt) fills the pool — not fully parallel.",
+        "Interview tip: UV_THREADPOOL_SIZE env variable."
+      ],
+      "terms": [
+        [
+          "libuv",
+          "Node's C library — async I/O, event loop, thread pool."
+        ],
+        [
+          "epoll",
+          "Linux I/O multiplexing (notifies on file changes)."
+        ],
+        [
+          "kqueue",
+          "macOS/BSD equivalent of epoll."
+        ],
+        [
+          "Thread pool",
+          "libuv's 4 default threads — used for fs, DNS, crypto."
+        ],
+        [
+          "IOCP",
+          "Windows mechanism."
+        ]
+      ],
+      "svgSwap": [
+        [
+          "thread pool ka result",
+          "result of the thread pool"
+        ],
+        [
+          "event loop par wapas",
+          "back to the event loop"
+        ],
+        [
+          "blocking kaam yahan",
+          "blocking work goes here"
+        ],
+        [
+          "kai sockets status",
+          "status of many sockets"
+        ]
+      ]
+    },
+    "nel4": {
+      "desc": "Timers are stored in a sorted min-heap inside libuv. setImmediate runs in the check phase of the event loop.",
+      "qsub": "Timers are the most common async primitive — knowing their internal precision and ordering is essential.",
+      "what": "<p><b>Timers</b> are stored inside libuv in a <b>sorted min-heap</b> — the one with the smallest deadline comes first. <code>setTimeout(fn, 0)</code> is also not <b>0ms</b>, minimum ~1ms + phase delay.</p>\n<p><b>setImmediate</b> is not a timer — it runs in the <b>check phase</b>. <code>setTimeout(...,0)</code> vs <code>setImmediate</code> — inside an I/O callback, setImmediate always runs first; at the top level the order is environment-dependent.</p>",
+      "analogy": "<b>Alarm clock wall</b>: all timers are stuck on a min-heap board, the earliest alarm rings first. setImmediate = \"I will run on the check platform ahead of the station, no routine wait\" fast-pass.",
+      "why": "<p>The <b>precision and ordering</b> of timers is a favorite interview topic. The subtle ordering of setImmediate vs setTimeout(0) — and the \"0ms\" timer myth — are where production scheduling bugs appear. Cheap but important.</p>",
+      "gotchas": [
+        "Just remember: <b>timers=min-heap; setImmediate=check phase; 0 ≈ 1ms.</b>",
+        "Inside I/O, setImmediate beats setTimeout(0); top-level undefined order.",
+        "Interview: \"why two?\" — different phases."
+      ],
+      "terms": [
+        [
+          "setTimeout",
+          "Scheduled on the min-heap (timers); the minimum delay."
+        ],
+        [
+          "setInterval",
+          "Repeats every interval; recursive timers."
+        ],
+        [
+          "setImmediate",
+          "Check phase — after the current poll."
+        ],
+        [
+          "Min-heap",
+          "Sorted timeout structure — the smallest deadline first."
+        ]
+      ]
+    },
+    "nel5": {
+      "desc": "Async/await is syntactic sugar over Promises. Awaited continuations are queued as .then() microtasks after the promise resolves.",
+      "q": "How does async/await interact with the event loop? When exactly does the awaited code resume?",
+      "qsub": "Promise microtask ordering with the event loop is one of the most common tricky interview questions at FAANG.",
+      "what": "<p><b>async/await</b> is only syntactic sugar over Promises. <code>await x</code> actually creates <code>x.then(continuation)</code> — which goes into the <b>microtask</b> queue as a callback.</p>\n<p>Await <b>does not block</b> — it suspends the function, gives work back to the event loop, and when the promise resolves the continuation resumes in a <b>microtask</b> before the next tick. Order: <b>synchronous code > microtasks > macrotasks</b>.</p>",
+      "analogy": "<b>Waiter</b> (event loop) gives a customer (async fn) an <b>order</b> (await) — \"call when the food is ready\". The waiter does not stop; works on other tables. When the food is ready (promise resolves) → on the next pause (microtask) the waiter brings the food (continuation) to that customer.",
+      "why": "<p>Promise/async ordering is <b>the most common tricky FAANG question</b>. The answer to \"When does awaited code resume?\" is <b>in a microtask, before the next phase</b>. This helps understand concurrency bugs and performance.</p>",
+      "gotchas": [
+        "Just remember: <b>await = .then; resumes in microtask before next macrotask.</b>",
+        "await alone runs sequentially; use Promise.all for parallel — the thread idea is wrong.",
+        "Interview: try/catch await → .catch."
+      ],
+      "terms": [
+        [
+          "async/await",
+          "syntactic sugar over Promise — awaited .then()."
+        ],
+        [
+          "Microtask",
+          "Awaited code resumes here."
+        ],
+        [
+          "await",
+          "Does not stop the thread — gives control to the scheduler, then resumes."
+        ]
+      ],
+      "svgSwap": [
+        [
+          "next target, phase se pehle",
+          "next target, before the phase"
+        ],
+        [
+          "(block nahi)",
+          "(not block)"
+        ]
+      ]
+    },
+    "nel6": {
+      "q": "How does the EventEmitter pattern work in Node.js? What causes memory leaks with event listeners?",
+      "qsub": "EventEmitter is the foundation of Node.js streams, HTTP, and custom modules — leaks are a common production issue.",
+      "what": "<p><b>EventEmitter</b> is Node's <b>pub-sub</b> pattern — <code>on</code> adds a listener, <code>emit</code> fires an event, <code>once</code> registers a one-time listener. All components such as <b>streams, HTTP, custom modules</b> rely on it.</p>\n<p><b>Memory leak</b>: when you add a listener with <code>.on()</code> and never remove it. If you don’t call <code>removeListener</code> or <code>removeAllListeners</code>, that listener and its object are not reclaimed by <b>GC</b> — leading to unbounded listeners. The default <code>maxListeners=10</code> triggers a warning.</p>",
+      "analogy": "<b>Radio station + subscribers</b>: the station (EventEmitter) broadcasts events (emit); subscribers (listeners) listen (on). If a subscriber <b>doesn’t turn off the radio</b> (removeListener), the channel keeps playing forever — draining the battery (memory).",
+      "why": "<p>This <b>pub-sub</b> model is the basis of streams/HTTP. In production, the most common cause of a <b>leak</b> is not removing listeners. Interview question: “How does an EventEmitter leak occur?” — listeners accumulate, the event emitter stays alive. </p>",
+      "gotchas": [
+        "Just remember: <b>on=listen, emit=fire, remove=no leak; maxListeners=10.</b>",
+        "error event without listener → throw.",
+        "Interview: unref() to not hold loop."
+      ],
+      "terms": [
+        [
+          "EventEmitter",
+          "Node's pub-sub — on/emit/once."
+        ],
+        [
+          "on",
+          "Add a listener."
+        ],
+        [
+          "emit",
+          "Trigger event and call listeners."
+        ],
+        [
+          "maxListeners",
+          "Default 10 — warning if exceeded."
+        ],
+        [
+          "Memory leak",
+          "Listener not removed — object stays alive."
+        ]
+      ],
+      "svgSwap": [
+        [
+          "removeListener abhi!",
+          "removeListener now!"
+        ]
+      ]
+    },
+    "nel7": {
+      "desc": "AbortController provides a standard way to cancel async operations via AbortSignal. Node.js adopted the Web API standard.",
+      "qsub": "Cancellation is the hardest async pattern — AbortController unifies it across timers, streams, and HTTP.",
+      "what": "<p><b>AbortController</b> is Node's standard async-cancel mechanism (adopted from the Web API). Create an <code>AbortSignal</code>, pass it to timers/streams/HTTP/fetch, and cancel with <code>controller.abort()</code> — those operations throw an <code>AbortError</code>.</p>\n<p>Earlier each library had its own cancel method (request.abort(), stream.destroy()) — <b>no single standard</b>. AbortController unifies them. It is the modern solution for the hardest async pattern (cancellation).</p>",
+      "analogy": "<b>Kitchen order bell</b>: the waiter (async operation) takes an order. You add a \"cancel\" button (signal) to the <b>AbortController</b> bell. When any chef (timer/stream/fetch) sees that signal and you ring the bell (abort) — the chef stops and says \"task cancelled (AbortError)\".",
+      "why": "<p>Cancellation = <b>the hardest async pattern</b>. The user changed their mind, the request is in flight — if it isn’t cancelled, ghost operations consume resources. Node 17.3+ / 18 now provides a universal AbortController. It’s the modern interview answer for \"how to cancel async\".</p>",
+      "gotchas": [
+        "Just remember: <b>AbortController → signal → operations → abort() = AbortError.</b>",
+        "Check err.name === AbortError, else catch real errors.",
+        "Interview: single controller can abort multiple ops."
+      ],
+      "terms": [
+        [
+          "AbortController",
+          "Standard signal for cancelling async operations."
+        ],
+        [
+          "AbortSignal",
+          "Provided by the controller — indicates cancel status."
+        ],
+        [
+          "AbortError",
+          "Error type thrown when cancelled."
+        ],
+        [
+          "signal",
+          "Pass to request/stream/timer."
+        ]
+      ],
+      "svgSwap": [
+        [
+          "standard cancel · destroy() nahi",
+          "standard cancel · no destroy()"
+        ]
+      ]
+    },
+    "nmo1": {
+      "q": "How does require() resolve modules in Node.js? What is the module wrapper?",
+      "qsub": "The module system is the first thousand lines of code a Node process runs — understanding resolution prevents baffling import failures.",
+      "what": "<p><b>CommonJS</b> code is wrapped in a <b>wrapper function</b>: <code>(function(exports, require, module, __filename, __dirname){ ... })</code>. Therefore your variables are file-scoped (module-scoped), not global.</p>\n<p><b>require()</b> 4 steps: <b>resolve</b> (path/extension) → <b>load</b> (read) → <b>compile</b> (wrapper + run) → <b>cache</b> (by filename). The second time require = <b>cached</b>, it does not run again.</p>",
+      "analogy": "<b>Restaurant recipe file</b>: when someone orders a dish (module), the chef (require) <b>searches for the recipe</b> (resolve), <b>reads</b> (load), <b>cooks</b> (compile), and <b>remembers the cost with the plate</b> (cache) so that cooking does not have to be done again.",
+      "why": "<p>This is the root of all <b>module confusion</b> — why variables are scoped, why cache matters (singleton), circular dependencies. The module system is that first 1,000 lines that run as soon as the process starts. The interview resolution algorithm comes from here.</p>",
+      "gotchas": [
+        "Just Remember: <b>wrapper + resolve→load→compile→cache.</b>",
+        "Cached object = singleton; if you mutate it, all see.",
+        "Interview: __dirname/__filename from wrapper."
+      ],
+      "terms": [
+        [
+          "CommonJS",
+          "require/module.exports — Node's original module system."
+        ],
+        [
+          "module wrapper",
+          "(function(exports, require, module, __filename, __dirname){...})"
+        ],
+        [
+          "require()",
+          "resolve → load → compile → cache."
+        ],
+        [
+          "cache",
+          "Module by resolved filename; second time cached."
+        ]
+      ],
+      "svgSwap": [
+        [
+          "doosri baar = cached, no rerun",
+          "second time = cached, no rerun"
+        ]
+      ]
+    },
+    "nmo2": {
+      "q": "How does ESM work in Node.js? What are the differences between ESM and CommonJS?",
+      "qsub": "ESM is the future of Node.js — interoperability with CJS is the most common source of confusion.",
+      "what": "<p><b>ESM</b> (import/export) is the <b>official spec</b> module system. Node supports it via: <b>.mjs</b> extension or in <code>\"type\":\"module\"</code> inside package.json. CommonJS files use <b>.cjs</b> or the default (type commonjs).</p>\n<p><b>Interop</b>: CJS can require and import ESM as a <b>default import</b> (as a CJS-style export), but named exports can sometimes be tricky. Static analysis (import is hoisted, async) makes ESM behave differently for bundlers — tree-shaking possible.</p>",
+      "analogy": "<b>Standard kitchen rack</b> (ESM) — each item's place is written (static import, hoisted) so the bundler can understand everything in advance and optimize (tree-shake). The old loose system (CJS) sees an item only when called (dynamic require) — cannot see it beforehand.",
+      "why": "<p>ESM is now the <b>future</b> — static, spec-based, tree-shakable. CJS is Node's legacy. Interop (mixing in a project) is the <b>most common confusion</b>. In an interview, a crisp \"ESM vs CJS\" difference signals senior level.</p>",
+      "gotchas": [
+        "Just remember: <b>ESM = static spec, CJS = dynamic legacy; type:module switches.</b>",
+        "CJS require(ESM) needs dynamic import for named exports.",
+        "Interview: package.json \"type\" field."
+      ],
+      "terms": [
+        [
+          "ESM",
+          "import/export — static, spec-standard."
+        ],
+        [
+          "\"type\":\"module\"",
+          "In package.json, .js files are treated as ESM."
+        ],
+        [
+          ".mjs / .cjs",
+          "Extension forces the module type."
+        ],
+        [
+          "Interop",
+          "ESM ↔ CJS sharing — named/default dance."
+        ]
+      ]
+    },
+    "nmo3": {
+      "what": "<p>Node <b>caches modules by the resolved filename</b>. That's why <code>require('./a')</code> twice → the <b>same object</b> (a singleton), and the code ran only once.</p>\n<p><b>Circular dependency</b> (A→B→A): when B requires A, A may still be <b>incomplete</b> — Node returns the <b>partially-built module.exports</b> (whatever has been set so far). That means in a circular case you will not get a property that was added to A after B's require.</p>",
+      "analogy": "<b>Two friends sharing work</b> (A and B). B asks A to \"bring the dairy\" while A has done only <b>half the job</b> — A hands over only what has been made so far (partial). If you need the full thing, call a function (lazy), which resolves later.",
+      "why": "<p>Circular deps <b>happen in big codebases</b> — partial exports cause silent undefined bugs. Knowing this = a <b>common senior interview</b> topic. Cache also means singleton — state sharing. </p>",
+      "gotchas": [
+        "Just remember: <b>resolve cache by filename; circular → partial exports.</b>",
+        "Use functions (lazy), not raw values, to dodge partial.",
+        "Interview: cache cleared via require.cache for testing."
+      ],
+      "terms": [
+        [
+          "Module cache",
+          "require by resolved path → same object."
+        ],
+        [
+          "Circular dependency",
+          "A require B, B require A."
+        ],
+        [
+          "Partial exports",
+          "In a circular dependency you get a partially-built module.exports."
+        ],
+        [
+          "Singleton",
+          "Cache = the module runs once, everyone shares the same instance."
+        ]
+      ],
+      "svgSwap": [
+        [
+          "{x} ka bina {z} (bache hue)",
+          "{x} without {z} (the remaining)"
+        ]
+      ]
+    },
+    "nmo4": {
+      "q": "What is the difference between spawn, exec, fork, and execFile in child_process?",
+      "what": "<p><b>child_process</b> creates OS-level processes. Four methods:</p>\n<p><b>spawn()</b> — streams I/O, large output works (bash/scripts). <b>exec()</b> — small shell command, <b>buffers</b> output (size limit!). <b>execFile()</b> — direct executable <b>without a shell</b> (prevents injection). <b>fork()</b> — Node child + <b>IPC channel</b> (message passing).</p>\n<p>How to choose: need a shebang/pipe? <b>spawn</b>. Small buffer + shell? <b>exec</b>. Binary without shell? <b>execFile</b>. Node worker + messages? <b>fork</b>.</p>",
+      "analogy": "<b>Manager hiring</b>: <b>spawn</b> = give a contractor direct work (streams output). <b>exec</b> = \"complete the work and bring back the full result\" (buffer). <b>execFile</b> = only a direct tool, no shell interpreter. <b>fork</b> = your own team member (Node child) who talks via walkie-talkie (IPC).",
+      "why": "<p>Multiprocess scaling in production is the foundation — each has a <b>memory/speed tradeoff</b>. The classic spawn vs exec comparison involves output size and shell injection. Fork provides real IPC state. A crisp four-way difference in an interview signals strong understanding.</p>",
+      "gotchas": [
+        "Just remember: <b>spawn=stream, exec=buffer+shell, execFile=no shell, fork=+IPC.</b>",
+        "exec output limit — use spawn for big.",
+        "Interview: never concat user input into exec string."
+      ]
+    },
+    "nmo5": {
+      "q": "How does the cluster module enable multi-core scaling in Node.js?",
+      "what": "<p><b>cluster</b> multi-core scaling is built into Node. <b>Master process</b> forks workers; <b>all workers share the same server port</b>. Master distributes connections to slave workers in <b>round-robin</b> (default on Linux).</p>\n<p>Each worker has its own <b>event loop</b> + memory — therefore N cores = N event loops. <b>Sticky sessions</b> are required where state/per-socket association (WebSocket) — same client same worker. On worker crash the master <b>spawns a new one</b> (zero-downtime restart).</p>",
+      "analogy": "<b>Hotel reception</b>: a telephone operator (master) who routes calls (connections) to N room attendants (workers) in round-robin. Each attendant handles its own line (event loop). If an attendant quits (crash), the operator immediately hires a new attendant (restart).",
+      "why": "<p>Node runs on a single core — cluster enables use of <b>multi-core</b>. It is the default for production scaling. Interview question \"how does Node use all cores?\" → cluster/PM2. Awareness of sticky sessions is essential for WebSocket deployments.</p>",
+      "gotchas": [
+        "Just remember: <b>master forks workers; share port; round-robin; restart worker on crash.</b>",
+        "WebSockets need sticky sessions across workers.",
+        "Interview: cluster vs worker_threads vs child_process."
+      ],
+      "terms": [
+        [
+          "cluster",
+          "Master forks workers sharing server ports."
+        ],
+        [
+          "Round-robin",
+          "Master distributes connections (default)."
+        ],
+        [
+          "Sticky sessions",
+          "Same client → same worker (WebSocket/auth)."
+        ],
+        [
+          "Restart",
+          "Worker crash, master spawns a new one."
+        ]
+      ]
+    },
+    "nmo6": {
+      "qsub": "Worker threads are the only way to do CPU-bound work in Node without blocking the event loop.",
+      "what": "<p><b>worker_threads</b> runs JavaScript in parallel — each worker has its own V8 instance + event loop, same process (no OS process spawn like child_process). This is for <b>CPU-bound</b> work — to avoid blocking the event loop.</p>\n<p>Communication: <b>message passing</b> (postMessage, structured clone) or <b>SharedArrayBuffer</b> (shared raw memory, atomics). Use case: image processing, hashing, parsing, compression — compute-heavy libraries. VS child_process (heavier, OS process). VS cluster (multi-instance).</p>",
+      "analogy": "<b>Factory with floors</b>: child_process = separate buildings (heavy, own kitchen). worker_threads = <b>different floors in the same building</b> — machine (CPU) shared, each floor has its own supervisor (event loop). Send compute-heavy work (maths/rendering) to a sub-floor so that the main floor stays free (event loop responsive).",
+      "why": "<p>Node uses async I/O, but <b>CPU work stops the event loop</b>. worker_threads — <b>the only</b> way to run CPU work without blocking. Interview answer for \"CPU-bound in Node?\". Isolates heavy workloads.</p>",
+      "gotchas": [
+        "Just remember: <b>worker_threads = own V8 in same process; messages/SharedArrayBuffer.</b>",
+        "use Atomics with SharedArrayBuffer to avoid races.",
+        "Interview: worker_threads for CPU, child_process for process isolation."
+      ],
+      "terms": [
+        [
+          "worker_threads",
+          "JS threads in same process, parallel execution."
+        ],
+        [
+          "SharedArrayBuffer",
+          "Shared raw memory across workers."
+        ],
+        [
+          "MessageChannel",
+          "Structured-clone message passing."
+        ],
+        [
+          "postMessage",
+          "Worker↔main message send."
+        ],
+        [
+          "CPU-bound",
+          "Works without blocking the event loop."
+        ]
+      ],
+      "svgSwap": [
+        [
+          "event loop saaf (responsive)",
+          "event loop clean (responsive)"
+        ]
+      ]
+    },
+    "nmo7": {
+      "what": "<p>Node process lifecycle: <b>init → event loop → exit</b>. SIGTERM/SIGINT are used to implement a <b>graceful shutdown</b> — server close, DB disconnect, in-flight requests drain, then exit 0.</p>\n<p><b>SIGKILL</b> cannot be caught (force). <b>uncaughtException</b>: you can handle it, but you must <b>kill the process</b> (state unsafe) — restart via supervisor (PM2). Exit codes: 0 ok, non-zero error.</p>",
+      "analogy": "<b>Office closed</b>: SIGTERM = manager says “close the office properly” — save files (DB disconnect), finish client work (drain), turn off lights (exit 0). SIGINT = same. SIGKILL = <b>blazing fire</b> — the office shuts down without saving. uncaughtException = a virus appears on a desk (corrupt) — shut down the building (exit), the janitor (PM2) will bring a new one.",
+      "why": "<p>Production-grade service = <b>graceful shutdown</b>. Without it, deployments drop requests and cause data loss. A top-tier interview topic. This is what makes your service \"production-grade\".</p>",
+      "gotchas": [
+        "Just remember: <b>SIGTERM/SIGINT graceful; SIGKILL force; uncaught → exit 1.</b>",
+        "Send SIGTERM to a container, then SIGKILL after a timeout.",
+        "Interview: keep process.on handlers idempotent."
+      ]
+    },
+    "nst1": {
+      "q": "What are the four types of streams in Node.js and when do you use each?",
+      "what": "<p>Streams are Node's <b>data abstraction</b> — every I/O broken data flows in chunks, not all at once in memory. 4 types: <b>Readable</b> (provides data), <b>Writable</b> (accepts data), <b>Duplex</b> (both), <b>Transform</b> (a Duplex that modifies data) because \"pass-through\" handles a lot of data.</p>\n<p>Each stream is internally <b>EventEmitter</b> with its own states. HTTP request/response, file read, pipe — all are streams.</p>",
+      "analogy": "<b>Not a water pipeline</b>: Readable = tank (water/data source), Writable = tap (destination), Duplex = open pipe both ways, Transform = filter (removes impurities). Water does not come all at once, it flows chunk-by-chunk (drops).",
+      "why": "<p>Large files/network data are <b>memory-chunked</b>. A full buffer at once = OOM. Streams operate at the memory boundary. Core interview point — \"every I/O is a stream\".</p>",
+      "gotchas": [
+        "Just remember: <b>R/W/Duplex/Transform; all EventEmitter; chunked I/O.</b>",
+        "Http request/response are streams.",
+        "Interview: pipe composability is key."
+      ],
+      "terms": [
+        [
+          "Readable",
+          "Source of data — file, HTTP request body. You select the data yourself."
+        ],
+        [
+          "Writable",
+          "Data destination — file, HTTP response. You send the data."
+        ],
+        [
+          "Duplex",
+          "Readable + Writable both — net socket, zlib."
+        ],
+        [
+          "Transform",
+          "Duplex that modifies data — compress/encrypt (gzip)."
+        ]
+      ]
+    },
+    "nst2": {
+      "desc": "Backpressure prevents overwhelming consumers. highWaterMark sets the buffer limit before pushback signals are sent.",
+      "qsub": "Backpressure is the most common stream failure point — missing it causes OOM in production pipelines.",
+      "what": "<p><b>Backpressure</b> = the data producer saying \"slow down, I can't keep up\". When a Writable's internal buffer <b>highWaterMark</b> (default 16384 bytes) is exceeded, the return value becomes <code>false</code> — you must stop calling <code>write()</code> until a <code>drain</code> event occurs.</p>\n<p><b>pipe()/pipeline()</b> handle this automatically. Memory flooding is prevented, OOM does not occur.</p>",
+      "analogy": "<b>Feast and waiter</b>: food (data) moves from the kitchen (producer) but the dining table (buffer) is full. The waiter (pipe) signals the kitchen \"stop, make space\" — when the table is empty (drain event), then continue. If this didn't happen, both the table and kitchen would be in trouble.",
+      "why": "<p>Missing backpressure = <b>unbounded memory growth → OOM crash</b>. It's the \"most common stream failure\". Production pipelines avoid this issue.</p>",
+      "gotchas": [
+        "Just remember: <b>highWaterMark cap; false + drain = backpressure; pipeline auto-handles.</b>",
+        "pipe() does backpressure but not errors.",
+        "Interview: pipeline() recommended."
+      ],
+      "terms": [
+        [
+          "Backpressure",
+          "When the consumer is slow, upstream incoming data is paused."
+        ],
+        [
+          "highWaterMark",
+          "Buffer size limit (default 16KB / 64KB) — after this pushback occurs."
+        ],
+        [
+          "push()",
+          "Adds data to the Readable's internal buffer."
+        ],
+        [
+          "_write()",
+          "Writable async write method — callback = space free."
+        ]
+      ]
+    },
+    "nst3": {
+      "q": "What is a Buffer in Node.js? What is the difference between Buffer.alloc and Buffer.allocUnsafe?",
+      "qsub": "Buffer is the bridge between JS and binary data — nearly every I/O operation touches it.",
+      "what": "<p><b>Buffer</b> = JavaScript <code>Uint8Array</code> binary data handler — fixed-size, allocated native memory outside the V8 heap. <code>Buffer.alloc(size)</code> zero-fills (safe), <code>Buffer.allocUnsafe(size)</code> reuses (fast but uninitialized — old data may be visible). Small (<4KB) buffers come from a shared <b>8KB pool</b>.</p>\n<p>Encoding (utf8/base64/hex) and <b>slice</b> (sparse view, no copy) are also important.</p>",
+      "analogy": "<b>Chalk-board vs fresh chalk</b>: <code>alloc</code> = new yellow chalk-board (safe, empty). <code>allocUnsafe</code> = previously used board — fast shown, but old writing may remain (unsafe). Pool = chalk sticks from a box.",
+      "why": "<p>I/O (file/network) provides binary data — JS strings don't cut it. Buffer bridges JS ↔ raw bytes. This is the foundation for interview questions about \"binary data\".</p>",
+      "gotchas": [
+        "Just remember: <b>alloc safe/filled, allocUnsafe fast/dirty; 8KB pool for small.</b>",
+        "Never read allocUnsafe before writing.",
+        "Interview: Buffer outside V8 heap."
+      ],
+      "terms": [
+        [
+          "Buffer",
+          "Fixed-size raw memory chunk, allocated outside the V8 heap (native)."
+        ],
+        [
+          "Buffer.alloc",
+          "Safe — zero-fills memory (slower)."
+        ],
+        [
+          "Buffer.allocUnsafe",
+          "Fast — may leak old data, must overwrite."
+        ],
+        [
+          "Pool",
+          "8KB internal pool for small (<4KB) buffers — reuse."
+        ]
+      ]
+    },
+    "nst4": {
+      "qsub": "Using pipe() without proper error handling is the #1 Node.js production bug — always prefer pipeline().",
+      "what": "<p><code>source.pipe(dest)</code> provides simple chaining, but <b>does not forward errors</b> and when it fails the streams are not destroyed — leaks/hanging. <code>stream.pipeline(src, ...dests, cb)</code> handles everything: if any error occurs, <b>all streams are destroyed</b>, and backpressure is also managed.</p>\n<p>In production always <b>prefer pipeline()</b>.</p>",
+      "analogy": "<b>Fire-extinguishing bucket chain</b>: pipe = just hand-to-hand bucket (if one falls in the middle, no one knows — the fire and bucket stop). pipeline = supervisor who ensures everyone participates, and if anyone falls (error) it immediately stops the whole chain and cleans up (destroys).",
+      "why": "<p><code>pipe()</code> without error handling = <b>#1 Node production bug</b> (leaked handles, hanging pipelines). Core interview question \"why pipeline over pipe\".</p>",
+      "gotchas": [
+        "Just remember: <b>pipe chains only; pipeline destroys+errors+backpressure.</b>",
+        "pipe() doesn't forward errors.",
+        "Interview: always pipeline in prod."
+      ]
+    },
+    "nst5": {
+      "what": "<p>To create a custom stream, extend <code>stream.Readable/Writable/Transform</code> and implement the <b>underscore methods</b>. Readable: call <code>push()</code> inside <code>_read()</code> to emit data, <code>push(null)</code> signals end. Writable: <code>_write(chunk, enc, cb)</code> — invoke <code>cb()</code> when processing is done. Transform: <code>_transform(chunk, enc, cb)</code> — <code>cb(null, result)</code>.</p>\n<p>This is how parsers, protocol encoders, and DB drivers are built.</p>",
+      "analogy": "<b>Factory assembly line</b>: You set the rules for a machine (custom stream). A Readable machine produces its own output (push). A Writable machine takes input and processes it (cb). A Transform machine modifies the input and passes it on (cb with result). Each machine has its own token flow.",
+      "why": "<p>Production libraries (DBs, queues, parsers) are not built without custom streams. It provides a practical answer for interview questions like “how to build a stream”.</p>",
+      "gotchas": [
+        "Just remember: <b>extend + _read/_write/_transform; cb signals completion.</b>",
+        "always call cb() once.",
+        "In an interview, note: push(null) ends a readable."
+      ],
+      "terms": [
+        [
+          "_read(size)",
+          "Readable implementation — call push() to emit data."
+        ],
+        [
+          "_write(chunk, enc, cb)",
+          "Writable implementation — cb() indicates successful write."
+        ],
+        [
+          "_transform(chunk, enc, cb)",
+          "Transform implementation — cb(null, out) with modified data."
+        ],
+        [
+          "push(data)",
+          "Adds data to the readable buffer."
+        ]
+      ]
+    },
+    "nst6": {
+      "what": "<p><code>string_decoder.StringDecoder</code> correctly joins <b>partial/cut-off chunks</b> of multi-byte characters (emoji, <code>中</code>, accented) on a text stream. If a character is split across two chunks, StringDecoder buffers it so that <code>write()</code> does not produce garbled output.</p>\n<p><code>decoder.write(buf) + decoder.end()</code> pattern is recommended for every text stream.</p>",
+      "analogy": "<b>Desi Jigsaw</b>: an emoji = 2-4 lego blocks that form a statue (character). The stream will send them in separate packets — a chunk may contain only half a lego block. StringDecoder = helper that keeps the incomplete block together until the remaining block arrives, then creates the full character — no garbled output.",
+      "why": "<p>Text streams without a decoder = <b>corrupted/garbled output</b> for Unicode. Real-world message/chat/log pipelines stay correct because of this.</p>",
+      "gotchas": [
+        "Just remember: <b>multi-byte chars split across chunks; decoder joins.</b>",
+        "Always call decoder.end() at end.",
+        "Interview: avoids garbled text."
+      ],
+      "terms": [
+        [
+          "StringDecoder",
+          "Handles multi-byte UTF-8 characters across chunks."
+        ],
+        [
+          "Multi-byte",
+          "Emoji/unicode characters that require 2-4+ bytes."
+        ],
+        [
+          "crypto hash",
+          "createHash(myDecoder.write + .end())."
+        ]
+      ]
+    },
+    "nv81": {
+      "q": "How does V8 compile JavaScript? Walk me through the Ignition, Sparkplug, and TurboFan pipeline.",
+      "what": "<p>V8 compiles code in a <b>multi-tier</b> fashion: 1) <b>Ignition</b> — interprets JS to bytecode (fast start). 2) <b>Sparkplug</b> — quickly generates baseline machine code from bytecode (balance of start speed). 3) <b>TurboFan</b> — aggressively optimizes frequently-run (hot) code, up to 100× faster.</p>\n<p><b>Deoptimization</b> = when assumptions (monomorphic types) fail, the optimized code falls back — slow. Therefore type stability is essential.</p>",
+      "analogy": "<b>Cooking shows</b>: Ignition = the first bite instantly reveals the recipe (fast start). Sparkplug = half-cooked quickly. TurboFan = for a dish that’s made repeatedly, a <b>custom special kitchen</b> is built — 100× faster. If the ingredients (types) change, the special kitchen becomes useless (deopt) and you return to the basic kitchen.",
+      "why": "<p>This explains why some code can be 100× faster — and why type flipping hurts performance. A top V8 performance topic.</p>",
+      "gotchas": [
+        "Just remember: <b>Ignition (bytecode) → Sparkplug (baseline) → TurboFan (hot 100×); deopt = slow.</b>",
+        "Keep types stable.",
+        "Interview: monomorphic fast, polymorphic slow."
+      ],
+      "terms": [
+        [
+          "Ignition",
+          "Fast interpreter — converts code to bytecode."
+        ],
+        [
+          "Sparkplug",
+          "Quick baseline compiler — bytecode → machine code."
+        ],
+        [
+          "TurboFan",
+          "Optimizing JIT — turns hot code into highly optimized code."
+        ],
+        [
+          "Deoptimization",
+          "When optimized code becomes invalid, it falls back to the interpreter."
+        ]
+      ]
+    },
+    "nv82": {
+      "what": "<p>V8 tracks a <b>hidden class / Shape</b> for each object that remembers the property offsets. Property access uses <b>Inline Caching</b>: if the shape is always the same, a lookup cache is created — <b>monomorphic</b> = fastest. If an object's shape varies (<b>polymorphic</b>), it results in a cache miss — slow.</p>\n<p>Therefore, a consistent object shape (same key order, no adding properties later) is critical for performance.</p>",
+      "analogy": "<b>Library bookshelf cards</b>: Hidden class = each book's same \"location card\" (shelf offset). If all books have the same shape (same layout), the librarian (IC) knows the exact shelf — instant (monomorphic). If each book is placed differently, it must be searched each time (polymorphic cache miss) — slow.",
+      "why": "<p>Monomorphic code in tight loops is <b>100x faster</b> than polymorphic. It’s a hidden gem for performance interviews — \"why object shape matters\".</p>",
+      "gotchas": [
+        "Just remember: <b>Shape+IC; monomorphic fast, polymorphic slow.</b>",
+        "Avoid adding props dynamically.",
+        "Interview: init all keys up front."
+      ],
+      "terms": [
+        [
+          "Hidden class (Shape)",
+          "Object's property layout/offset tracker."
+        ],
+        [
+          "Inline Caching (IC)",
+          "Shape lookup cache for property access — fast path."
+        ],
+        [
+          "Monomorphic",
+          "One shape — fastest."
+        ],
+        [
+          "Polymorphic",
+          "Multiple shapes — slow (IC misses)."
+        ]
+      ]
+    },
+    "nv83": {
+      "desc": "V8 heap has young generation (semi-space, scavenge), old generation (mark-sweep-compact), and large object space. Orinoco is the concurrent GC.",
+      "q": "How does V8's garbage collector work? What are the young and old generations?",
+      "qsub": "GC pauses are the #1 Node.js latency source — understanding GC phases is critical for production Node tuning.",
+      "what": "<p>V8 heap <b>generations</b> are built. <b>Young gen</b> (semi-space ×2): new objects, cheap <b>scavenge</b> (copy survivor). <b>Old gen</b>: survivors <b>mark-sweep-compact</b> (dead mark + free + compact). <b>Orinoco</b> = concurrent/parallel GC that stops the main thread for <b>minor</b> pauses.</p>\n<p>GC pause latency is the #1 source in production Node.</p>",
+      "analogy": "<b>Office desk</b>: Young gen = in-tray (new papers). Scavenge = small cleaning, quickly move papers to trash or \"keep\" box. Keep box (old gen) = important files, occasionally big cleanup (mark-sweep) — desk organization. Orinoco = cleaning staff that cleans in the background without stopping your work.",
+      "why": "<p>GC = <b>main latency source</b>. Knowing this is the foundation for production Node tuning, heap dumps, leak diagnosis.</p>",
+      "gotchas": [
+        "Just remember: <b>young scavenge, old mark-sweep-compact, Orinoco concurrent.</b>",
+        "Promotion to old gen via flags.",
+        "Interview: GC pause = latency source."
+      ],
+      "terms": [
+        [
+          "Young generation",
+          "New data — semi-space, scavenge copy GC."
+        ],
+        [
+          "Old generation",
+          "Surviving objects — mark-sweep-compact."
+        ],
+        [
+          "Orinoco",
+          "Concurrent GC — background threads."
+        ],
+        [
+          "Large object space",
+          "Large buffers/strings in a separate space."
+        ]
+      ]
+    },
+    "nv84": {
+      "what": "<p>Memory leak = heap <b>monotonically growing</b> — objects are not released. Common causes: 1) <b>global references</b> (unintended <code>global.x</code>), 2) <b>closures</b> (callback holds a large parent scope), 3) <b>timers/listeners</b> not cleaned, 4) <b>caches</b> without eviction.</p>\n<p>Detection: <code>--inspect</code> → Chrome DevTools → heap snapshot compare; use <code>--max-old-space-size</code> + monitoring.</p>",
+      "analogy": "<b>Small store</b>: Clothes (objects) arrive every day but none exit — the warehouse keeps filling (heap grows). Root cause: an \"old list\" (global/closure) holds everything. Heap snapshot = the warehouse's complete inventory, like a chain of clothes where it gets stuck.",
+      "why": "<p>Leaks = <b>crash + degraded performance</b>. Production skill — every serious Node app knows this detection.</p>",
+      "gotchas": [
+        "Just remember: <b>global refs, closures, timers, no-eviction caches = leaks; snapshot to find.</b>",
+        "Clear setInterval/setTimeout.",
+        "Interview: monitor heap growth."
+      ],
+      "terms": [
+        [
+          "Heap snapshot",
+          "Frozen dump of the object graph."
+        ],
+        [
+          "Retained size",
+          "Object plus its reachable subtree."
+        ],
+        [
+          "Closure leak",
+          "Callback holds a large parent scope."
+        ],
+        [
+          "Detached",
+          "Gone from DOM but still referenced."
+        ]
+      ]
+    },
+    "nv85": {
+      "desc": "CPU profiling captures stack samples to identify hot functions. Flame graphs visualize the call stack over time.",
+      "what": "<p><code>node --cpu-prof</code> or DevTools profile captures <b>stack samples</b>. <b>Flame graph</b> shows which function is using the most CPU (wide bar = hot). <b>clinic.js</b> (<code>clinic doctor</code>) auto-identifies — event loop delay, CPU-bound, memory, I/O bottleneck.</p>\n<p>Profiling = not intuition, optimization from <b>data</b>.</p>",
+      "analogy": "<b>Factory time-motion study</b>: Collect each employee's daily schedule (stack samples) and see which machine (function) takes the most time. Flame graph = the day's stacked calendar — the one that is widest is the bottleneck. Clinic doctor = a consultant who immediately tells you what the main problem is.",
+      "why": "<p>Improvements without profiling = <b>guesswork</b>. Data-driven = the standard for production-grade performance engineering.</p>",
+      "gotchas": [
+        "Just remember: <b>CPU profile/flame graph; clinic.js auto-diagnose.</b>",
+        "Profile in prod-like env.",
+        "Interview: optimize wide bars."
+      ]
+    },
+    "nv86": {
+      "desc": "async_hooks tracks the lifetime of async resources (Promises, Timeouts, TCP). AsyncLocalStorage provides context propagation across async chains.",
+      "qsub": "Async context propagation is the hardest async feature — essential for tracing, DI, and logging correlation IDs.",
+      "what": "<p><code>async_hooks</code> tracks the init/before/after/destroy of every <b>async resource</b> (Promise, Timeout, TCP connection). <code>AsyncLocalStorage</code> provides an <b>execution context</b> on top of it that propagates through the async chain — request-scoped state (user, correlation id) available in every await/callback without being passed manually.</p>\n<p>This is the gold standard for tracing, DI, and logging correlation.</p>",
+      "analogy": "<b>Airport tag</b>: Attach a tag (correlation id) to the passenger (request) at bag drop (AsyncLocalStorage). At each counter (async step) the baggage carries the same tag — no need to manually label at every step. async_hooks = CCTV that records the activity of each baggage-counter (async resource).",
+      "why": "<p>Async context propagation is <b>the hardest async feature</b> — so you can link logs/errors to the entire request. Essential for distributed tracing.</p>",
+      "gotchas": [
+        "Just remember: <b>AsyncLocalStorage carries context across the async chain.</b>",
+        "Wrap request in als.run().",
+        "Interview: uses in tracing/DI."
+      ],
+      "terms": [
+        [
+          "async_hooks",
+          "Lifecycle tracker for async resources (Promise/Timeout/TCP)."
+        ],
+        [
+          "AsyncLocalStorage",
+          "Carries context through the async chain (request-local state)."
+        ],
+        [
+          "executionAsyncId",
+          "ID of the current async resource."
+        ],
+        [
+          "Context propagation",
+          "Log/trace correlation ID at every async step."
+        ]
+      ]
+    },
+    "nv87": {
+      "qsub": "Accurate performance measurement is the foundation of optimization — perf_hooks beats Date.now() for precision.",
+      "what": "<p><code>perf_hooks</code> provides high-resolution timing — <code>process.hrtime.bigint()</code> gives nanoseconds, <code>performance.mark()/measure()</code> plus <code>PerformanceObserver</code> tracks event loop delays and runtime <b>metrics</b>. <code>performance.eventLoopUtilization()</code> calculates event loop busy%.</p>\n<p><code>Date.now()</code> ~1ms precision — not the best choice for timing; hrtime is its precise replacement.</p>",
+      "analogy": "<b>Company stopwatch</b>: Date.now = mobile clock (rough, 1 s). hrtime.bigint = high-speed race stopwatch (nanoseconds precise). performance.mark = marker before/after the track; PerformanceObserver = the post-game replay screen of those recorded timings where start and end appear automatically.",
+      "why": "<p>Accurate measurement = <b>the base of optimization</b>. perf_hooks precision eliminates <code>Date.now()</code> measurement error.</p>",
+      "gotchas": [
+        "Just remember: <b>hrtime.bigint()/perf_hooks nanosecond; mark→measure→observe.</b>",
+        "Don't use Date.now for micro bench.",
+        "Interview: measure, then optimize."
+      ],
+      "terms": [
+        [
+          "perf_hooks",
+          "High-res timing + runtime metrics (hrtime.bigint())."
+        ],
+        [
+          "PerformanceObserver",
+          "Observe marks/measures async."
+        ],
+        [
+          "hrtime.bigint()",
+          "Nanosecond-clock — more precise than Date.now()."
+        ],
+        [
+          "process.getBuiltinModule",
+          "Access perf_hooks reliably."
+        ]
+      ]
+    },
+    "ner1": {
+      "q": "What is the difference between operational errors and programmer errors in Node.js?",
+      "qsub": "Distinguishing error types determines whether to retry, degrade gracefully, or fail hard — it's the foundation of robust error handling.",
+      "what": "<p><b>Operational errors</b> = runtime mishaps (network, user input) — handle them, retry or graceful degrade. <b>Programmer errors</b> = actual bugs (TypeError) — state corrupt, <b>crash + restart</b> them (PM2), do not loop.</p>\n<p>This classification is the <b>foundation</b> of robust error handling.</p>",
+      "analogy": "<b>Restaurant</b>: Operational = food ran out / ingredient didn't arrive (you filter/double-check — retry). Programmer = chef wrote the recipe incorrectly and served a bad dish (bug) — you can't let the service continue, stop the kitchen and fix it. Both should not be treated the same way.",
+      "why": "<p>This determines <b>retry vs crash</b>. It is the core distinction for robust services — relevant for interviews.</p>",
+      "gotchas": [
+        "Remember: <b>operational=handle/retry; programmer=crash+fix.</b>",
+        "Don't swallow programmer errors.",
+        "Interview: never retry programmer errors."
+      ],
+      "terms": [
+        [
+          "Operational errors",
+          "Runtime problems — ECONNREFUSED, timeout, 404. Handle/retry."
+        ],
+        [
+          "Programmer errors",
+          "Bugs — TypeError, ReferenceError. Should crash + fix."
+        ],
+        [
+          "Retry",
+          "For operational errors — transient."
+        ],
+        [
+          "Fail fast",
+          "Crash immediately on programmer errors."
+        ]
+      ]
+    },
+    "ner2": {
+      "what": "<p>Async errors <b>try/catch does not auto-propagate</b> — because await/callback work on a separate task. Patterns: <b>async/await + try/catch</b> (clean), <b>.catch()</b>, or <b>err-first callback</b> <code>cb(err, data)</code>.\n<code>unhandledRejection</code> event fires when a rejection occurs without a <code>.catch()</code> — a global safety net, but always prefer an explicit catch.</p>",
+      "analogy": "<b>Package delivery</b>: try/catch = you catch errors inside your house (sync). Promise/await = courier (async task) — you <code>await</code>; if the courier makes a mistake, the error is received via <code>catch</code> (return slip). err-first = courier \"left an error here\" informs you. unhandledRejection = a package that nobody received — post office alert.",
+      "gotchas": [
+        "Just Remember: <b>try/catch works only for sync; use await+try/catch or .catch() for async.</b>",
+        "Avoid relying on unhandledRejection.",
+        "Interview: always attach .catch or try."
+      ],
+      "terms": [
+        [
+          "try/catch",
+          "Sync errors only — does not work for async."
+        ],
+        [
+          "Promise rejection",
+          "async function throw → .catch()."
+        ],
+        [
+          "err-first callback",
+          "cb(err, data) — first arg error."
+        ],
+        [
+          "unhandledRejection",
+          "Global catch-all for async (discouraged)."
+        ]
+      ],
+      "why": "<p>Unhandled async errors = <b>silent failures / haunted prod bugs</b>. Understanding propagation = non-negotiable.</p>"
+    },
+    "ner3": {
+      "what": "<p>Error <b>codes</b> (<code>EACCES</code>/<code>ENOENT</code>) categorically identify the error. <b>Custom Error classes</b> (<code>class NotFoundError extends Error</code>) provide domain-specific semantics and extra fields (statusCode, details). Production APIs expect a consistent <b>error shape</b> — clients parse <code>{ code, message }</code>.</p>",
+      "analogy": "<b>Hospital codes</b>: Error code = \"CODE RED\" / \"CODE BLUE\" — a label literally tells what happened (EACCES = no permission). Custom Error = department-specific doctor’s form — extra fields (which file, statusCode) that inform the route. Standardization = everyone fills out the same form — anyone can know how to handle it.",
+      "gotchas": [
+        "Just remember: <b>code + custom Error class + consistent shape.</b>",
+        "Switch on code, not string message.",
+        "Interview: extend Error, add fields."
+      ]
+    },
+    "ner4": {
+      "desc": "node --inspect starts the V8 inspector protocol on port 9229. Chrome DevTools connects for full debug capability.",
+      "q": "How do you use the Node.js debugger with Chrome DevTools to step through code?",
+      "what": "<p><code>node --inspect</code> runs the V8 inspector protocol on port 9229. Connect with <b>Chrome DevTools</b> (<code>chrome://inspect</code>) to inspect variables, set <b>breakpoints</b>, step over/into, and view the call stack. <code>--inspect-brk</code> breaks on the first line — for attaching.</p>\n<p><code>source-map</code> maps TypeScript/bundled code back to the original source for debugging.</p>",
+      "analogy": "<b>Car engine diagnostic port</b>: --inspect = opening the engine's OBD port (9229). Chrome DevTools = the diagnostician's dashboard that shows live RPM (variables), start/stop (breakpoints), and the full engine history (call stack). console.log = a \"sensor\" hidden in advance — static.",
+      "gotchas": [
+        "Just Remember: <b>--inspect + DevTools; --inspect-brk early break.</b>",
+        "Never --inspect in prod.",
+        "Interview: enable-source-maps for TS."
+      ]
+    },
+    "ner5": {
+      "qsub": "Production debugging depends entirely on logs — structured logging is the minimum bar for distributed systems.",
+      "what": "<p><b>Structured logging</b> = <code>log.info({ userId, route }, 'msg')</code> — JSON objects, not strings; levels (debug/info/warn/error) + timestamp + metadata. <b>Correlation ID</b> inject on every request (via AsyncLocalStorage) so that all logs of a single request can be traced across services.</p>\n<p>Pino/bunyan are standard — pino is fastest, low overhead.</p>",
+      "analogy": "<b>Hospital patient file</b>: Structured log = machine-readable chart (optional fields: vitals/metadata) instead of filled prose. Correlation ID = patient’s ID bracelet — all department (service) notes are linked to that ID. Levels = severity tag (minor note vs emergency).",
+      "gotchas": [
+        "Just remember: <b>structured JSON + levels + correlation id.</b>",
+        "Never log secrets.",
+        "Interview: correlation id via ALS."
+      ]
+    },
+    "ner6": {
+      "q": "How do you monitor the health of a Node.js application in production?",
+      "what": "<p><b>Event loop lag</b> = delay between scheduling and execution — if >50ms, loop blocked. <code>performance.eventLoopUtilization()</code> busy/idle ratio. <b>Process metrics</b>: memory (RSS), CPU, open handles, active requests. APM (Datadog/NewRelic) all auto-collect + trace.</p>\n<p>Baseline metrics always track — before users experience problems.</p>",
+      "analogy": "<b>Car dashboard</b>: event loop lag = engine RPM gauge — if revs are high but the car isn’t moving (lag), engine (loop) blocked. Process metrics = fuel/engine-temp/mileage. APM = diagnostic company monitoring app that watches all gauges together and alerts. Baselines = normal readings, so that anomalies are caught immediately.",
+      "gotchas": [
+        "Just remember: <b>monitor event loop lag + RSS + CPU; baseline deviation = alert.</b>",
+        "Track over time, not snapshot.",
+        "Interview: event loop lag key health metric."
+      ]
+    },
+    "npr1": {
+      "analogy": "<b>Ship's cargo vs Cabin</b>: multi-stage = build five separate docks (build stage, heavy tools) but the final cabin (runtime) contains only the necessary goods (prod deps). Exec form ([\"node\",\"app.js\"]) = direct captain; CMD npm (shell) = a wave in the water — when SIGTERM arrives, the captain can directly respond. Health check = dock's beacon, orchestrator live/dead.",
+      "gotchas": [
+        "Just remember: <b>multi-stage + exec-form CMD + non-root + /health.</b>",
+        "exec form so SIGTERM reaches node.",
+        "Interview: CMD [\"node\",\"app.js\"] not npm run."
+      ],
+      "why": "<p>Container = <b>default deployment</b>. Mistakes (bloat, npm-as-PID-1, no signals) → crashes, slow restarts, security.</p>"
+    },
+    "npr2": {
+      "qsub": "Config management is the first thing that breaks in production — env-based config is the industry standard.",
+      "what": "<p>Node config <b>environment variables</b> are provided via (<code>process.env</code>). <b>dotenv</b> loads a local .env (in prod the orchestrator injects). <b>Secrets</b> (DB password, API keys) are never in commit/image — CI secret store / K8s secrets. <b>Validation</b> (schema/simple check) fails fast on boot if required values are missing.</p>",
+      "analogy": "<b>Building's light switches vs control room</b>: env vars = control room dials (config) that are set according to the building (environment). dotenv = a \"default settings card\" for local dev (.env). Secrets = master keys — kept in the control room safe (secret store), never on the corridor wall (image/code). Validation = doorman who does not let anyone in unless the required dial is set.",
+      "gotchas": [
+        "Just Remember: <b>env config; dotenv local; secrets in store; validate fail-fast.</b>",
+        "Never commit .env secrets.",
+        "Interview: fail fast on missing required."
+      ]
+    },
+    "npr3": {
+      "qsub": "Express architecture is the most-deployed Node pattern — internal knowledge separates seniors from juniors.",
+      "what": "<p>Express = thin wrapper over Node http. <b>Middleware</b> is a chain — each <code>next()</code> call moves to the next. <b>Router</b> provides modular paths. <b>Error middleware</b> requires 4 arguments (Express detects 4-arity) — errors are handled centrally here. <code>app.use</code> runs globally in the order added.</p>",
+      "analogy": "<b>Airport security line</b>: Middleware = each security check (auth, logging, body parse) — passenger (request) passes through each check, next() = \"move forward\". Router = Delhi/AUS/Mumbai separate queues grouped. Error middleware = emergency desk that everyone reaches immediately for any problem (4-person desk). Order means check order.",
+      "why": "<p>Express arch = <b>most-deployed Node pattern</b>. Internal know-how is the senior vs junior differentiator.</p>",
+      "gotchas": [
+        "Just remember: <b>mw chain via next(); 4-arity = error mw; order matters.</b>",
+        "Return next(err) to route to error mw.",
+        "Interview: async errors need wrapper."
+      ]
+    },
+    "npr4": {
+      "what": "<p><b>Rate limiting</b> (express-rate-limit/token bucket) per-IP abuse control → 429. <b>Circuit breaker</b>: when external call starts failing at the threshold, circuit <b>open</b> — direct fallback/cache, when dependency recovers <b>half-open</b> test → close. Prevents <b>cascading failures</b>.</p>",
+      "analogy": "<b>Building gate + elevator guard</b>: Rate limit = gate guard only allows n times/minute to enter (abuse). Circuit breaker = elevator completely broken — any floor attempt fails, then the elevator guard says \"take the stairs (fallback/cache)\" until repaired (dependency recover). Half-open = a test ride, then decide.",
+      "gotchas": [
+        "Just remember: <b>rate limit per client; breaker OPEN on failures → half-open test.</b>",
+        "Set realistic thresholds.",
+        "Interview: fallback when OPEN."
+      ]
+    },
+    "npr5": {
+      "q": "How does DataLoader solve the N+1 query problem in a GraphQL Node.js server?",
+      "qsub": "GraphQL is the modern API paradigm — DataLoader solves the N+1 problem that makes naive GraphQL slow.",
+      "what": "<p>GraphQL queries N parent items (e.g. 10 books), each parent’s <b>resolver field</b> runs its own DB query → <b>N+1</b> (11 queries). <b>DataLoader</b> groups the queries within the same batch (inId order) and provides a per-request <b>cache</b> — only 1-2 queries. Apollo Server resolvers hook into this.</p>",
+      "analogy": "<b>Library lookup</b>: N+1 = go to a separate shelf for each book (per-author query) — 10 books = 10 extra runs. DataLoader = take the list of all authors once, build a registry (batch via inId) and use it behind the scenes for this request (cache) — only 1 trip.",
+      "gotchas": [
+        "Just remember: <b>DataLoader batches + caches per request to eliminate N+1.</b>",
+        "New loader per request (no cross-request cache).",
+        "Interview: inId preserves order."
+      ],
+      "terms": [
+        [
+          "Apollo Server",
+          "GraphQL execution engine (resolvers)."
+        ],
+        [
+          "Resolver",
+          "Field's data-fetch function."
+        ],
+        [
+          "DataLoader",
+          "Batches + caches DB calls per request cycle."
+        ],
+        [
+          "N+1 problem",
+          "Per parent item 1 extra query — explosion."
+        ]
+      ]
+    },
+    "npr6": {
+      "qsub": "Real-time is the default expectation in modern web apps — understanding transport tradeoffs is essential.",
+      "analogy": "<b>Radio vs phone vs walkie</b>: WS = phone call — both sides live talk (chat). SSE = radio broadcast — station (server) speaks, listeners only listen (notifications). Socket.IO = walkie-talkie service with auto-link retry and channels (rooms) — if a method fails (transport blocked), automatically switch.",
+      "gotchas": [
+        "Just remember: <b>WS duplex TCP; SSE one-way HTTP; Socket.IO adds smarts.</b>",
+        "WS needs sticky/upgrade on LB.",
+        "Interview: SSE for simple server push."
+      ]
+    },
+    "npr7": {
+      "desc": "Jest is the standard test runner. Supertest tests HTTP without a port. TestContainers manage Docker resources for integration tests.",
+      "what": "<p><b>Jest</b> test runner + mock. <b>Supertest</b> simulate HTTP requests on an Express app (no port) — integration endpoint test. <b>TestContainers</b> spin up real Postgres/Redis in an ephemeral Docker container — realistic integration. <code>jest.mock</code> external dependencies are faked. Coverage, parallel, snapshots.</p>",
+      "analogy": "<b>Car test track</b>: Jest = track with lap timer + rules (assert). Supertest = driver simulation — gas/brake without the real public road (network), directly on the dashboard (app). TestContainers = real spare parts (Postgres) instantly ready garages. jest.mock = dummy co-pilot that gives common predictions instead of a real stunt double.",
+      "why": "<p>Testing = <b>safe refactor gateway</b>; without it changes are risky. E2E HTTP + integration = production confidence.</p>",
+      "gotchas": [
+        "Just remember: <b>Jest runner + Supertest HTTP-in-memory + TestContainers real dependencies.</b>",
+        "Export app separate from server.listen.",
+        "Interview: supertest app, no port."
+      ]
+    },
+    "node-fs": {
+      "q": "What is the difference between fs.readFile and fs.createReadStream? When would you use each?",
+      "qsub": "How do you watch for file changes in Node.js? What are the limitations of fs.watch?",
+      "what": "<p><code>fs</code> file I/O: <code>readFile</code> (async cb), <code>fs.promises.readFile</code> (await), <code>readFileSync</code> (blocking — only startup/config). For large files <code>createReadStream</code> (chunked, no OOM). <code>fs.watch</code> file/dir changes detect (file system events; not always reliable cross-platform).</p>",
+      "analogy": "<b>Office file cabinet</b>: readFileSync = lift the whole drawer and dump it on the desk, you can't do anything else (blocks). readFile = send an office boy, you can do other work while waiting (async). createReadStream = copy each file from the drawer one by one (memory safe for large data). fs.watch = secretary who notifies you when any file changes.",
+      "why": "<p>File I/O = <b>the foundation of every app</b>. Understanding stream vs whole and sync-vs-async is essential for making the right choice.</p>",
+      "gotchas": [
+        "Just remember: <b>stream for large; sync only for startup; fs.watch has platform quirks.</b>",
+        "Never readFileSync in request path.",
+        "Interview: createReadStream = memory safe."
+      ]
+    },
+    "node-crypto": {
+      "qsub": "What is the difference between crypto.createHash and crypto.createHmac? How do you generate secure random tokens?",
+      "analogy": "<b>Stamp vs signature vs safe</b>: hash = fingerprint — any document's fingerprint (integrity), no secret. HMAC = signed seal with company stamp (secret) — tamper detection. scrypt/pbkdf2 = an expensive, deliberately slow safe — makes password brute-force practically impossible. randomBytes = good random dice in the kitchen. createCipheriv = safe with key + IV.",
+      "why": "<p>Security basics in every backend. Password hashing approach = <b>security question staple</b>; wrong = leak risk.</p>",
+      "gotchas": [
+        "Just Remember: <b>scrypt/pbkdf2 for passwords; createHash for integrity; never createCipher.</b>",
+        "Always unique salt per password.",
+        "Interview: why not SHA for passwords."
+      ]
+    },
+    "node-net": {
+      "q": "How do you create a basic TCP server in Node.js? What is the relationship between net and http modules?",
+      "what": "<p><code>net</code> = raw <b>TCP</b> layer. <code>net.createServer</code> creates a TCP server; each connection creates a <b>Socket</b> (duplex stream). <code>net.createConnection</code> creates a client. <code>socket.pipe()</code> performs a backpressure-safe transfer. This is the foundation — <code>http</code> module itself is built on net; custom protocols are also created here.</p>",
+      "analogy": "<b>Landline vs operator</b>: net = raw phone line (TCP) — data channel, just bits. http = operator (protocol) that adds \"hello/hi, GET /\" rules. Socket = ready two-way phone call — both can talk (duplex). socket.pipe = transfer session without interruption where forward and backward sync.",
+      "why": "<p>TCP = <b>transport foundation</b>; http/https are all built on it. Custom protocols (in-house wire) come from net. Core-layer understanding.</p>",
+      "gotchas": [
+        "Just remember: <b>net=TCP server; socket=duplex; http builds on net.</b>",
+        "TCP has no message boundaries (need framing).",
+        "Interview: socket is a duplex stream."
+      ]
+    },
+    "node-tls": {
+      "qsub": "What is the difference between tls and https modules? How does certificate validation work?",
+      "what": "<p><code>tls.createServer({ cert, key })</code> adds a TLS layer on a net server. <b>SNI</b> allows multiple domains on a single IP — the certificate is chosen based on the hostname during the handshake. <code>https</code> module = HTTP over TLS. Certs Let’s Encrypt (free ACME). Validation = chain (leaf→intermediate→root CA) trust.</p>",
+      "analogy": "<b>Locked letter + postmark</b>: TLS = sealed, encrypted letters (no snooping). cert+key = the post office’s official seal proving whose letter (identity). SNI = multiple tenements (domains) at the same physical address — specify which name’s box (certificate chosen by hostname). Let’s Encrypt = free seal-issuing post office. Chain = package seal → postman → head office trust chain.",
+      "gotchas": [
+        "Just remember: <b>tls=net+TLS(cert,key); SNI=multiple domains one IP; https=http+TLS.</b>",
+        "Always keep certs out of git.",
+        "Interview: validate chain leaf→root."
+      ]
+    },
+    "node-workspaces": {
+      "qsub": "What is the difference between npm workspaces and yarn workspaces? When would you use turborepo with workspaces?",
+      "what": "<p><code>npm workspaces</code>: in a monorepo, multiple packages (packages/*). In the root <code>package.json</code> the <code>\"workspaces\": [\"packages/*\"]</code> field lists them. Dependencies <b>hoist</b> to a shared root <code>node_modules</code> (no duplication). <code>npm run --workspace=a</code> is scoped. pnpm/yarn alternatives — pnpm is strict (no phantom deps). turborepo adds a cached task runner on top.</p>",
+      "analogy": "<b>Apartment building</b>: workspaces = a building (repo) with multiple flats (packages). Hoisting = shared plumbing/electricity (common deps) in the building's basement — each flat does not have its own (no duplication). --workspace = flat-specific maintenance. pnpm = strict: can you use items from another flat? — no (prevents phantom deps). Turborepo = building manager who caches renovation for all flats.",
+      "gotchas": [
+        "Just remember: <b>workspaces=monorepo; hoisting=shared; --workspace scoped; pnpm strict.</b>",
+        "Watch phantom deps with npm hoist.",
+        "Interview: pnpm strict vs npm hoist."
+      ],
+      "terms": [
+        [
+          "workspaces",
+          "Root package.json field listing packages."
+        ],
+        [
+          "Hoisting",
+          "Shared dependencies in a root node_modules — no duplication."
+        ],
+        [
+          "--workspace",
+          "npm run in a specific package."
+        ],
+        [
+          "pnpm/yarn",
+          "Alternatives; pnpm strict deps."
+        ],
+        [
+          "turborepo",
+          "Task orchestration over workspaces (cache)."
+        ]
+      ]
+    }
+  }
+}

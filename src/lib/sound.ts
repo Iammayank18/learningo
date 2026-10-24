@@ -136,7 +136,7 @@ export const sfx = {
     { f: 2093, t: 0, d: 0.045, v: 'pop', g: 0.16, to: 1865, dry: true },
     { f: 1568, t: 0.05, d: 0.07, v: 'pop', g: 0.16, to: 1397, dry: true },
   ]),
-  /** bright "ding-DING!" — climbs a semitone per combo step (max +7) */
+    /** bright "ding-DING!" — climbs a semitone per combo step (max +7) */
   correct: (combo = 0) => {
     const k = Math.pow(2, Math.min(7, Math.max(0, combo - 1)) / 12)
     play([

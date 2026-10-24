@@ -1,27 +1,27 @@
 import type { Lesson } from '../types'
-import { tr } from './i18n'
+import { t, type MessageKey } from './i18n'
 
 export type SectionKind = 'concept' | 'analogy' | 'why' | 'code' | 'use' | 'answer' | 'gotchas' | 'interview'
 
-export const SECTION_META: Record<SectionKind, { title: string; icon: string }> = {
-  concept: { title: 'Concept', icon: '💡' },
-  analogy: { title: 'Real-life analogy', icon: '🍛' },
-  why: { title: 'Kyun zaroori hai', icon: '🎯' },
-  code: { title: 'Code mein dekho', icon: '👨‍💻' },
-  use: { title: 'Kahan use hota hai & trade-offs', icon: '⚖️' },
-  answer: { title: 'Model answer', icon: '✅' },
-  gotchas: { title: 'Interview traps', icon: '⚠️' },
-  interview: { title: 'Interview question', icon: '🎤' },
+export const SECTION_META: Record<SectionKind, { titleKey: MessageKey; icon: string }> = {
+  concept: { titleKey: 'section.concept', icon: '💡' },
+  analogy: { titleKey: 'section.analogy', icon: '🍛' },
+  why: { titleKey: 'section.why', icon: '🎯' },
+  code: { titleKey: 'section.code', icon: '👨‍💻' },
+  use: { titleKey: 'section.use', icon: '⚖️' },
+  answer: { titleKey: 'section.answer', icon: '✅' },
+  gotchas: { titleKey: 'section.gotchas', icon: '⚠️' },
+  interview: { titleKey: 'section.interview', icon: '🎤' },
 }
 
-const PROBLEM_META: Partial<Record<SectionKind, { title: string; icon: string }>> = {
-  concept: { title: 'Problem', icon: '📝' },
-  why: { title: 'Hints', icon: '💡' },
-  code: { title: 'Starter / code', icon: '👨‍💻' },
+const PROBLEM_META: Partial<Record<SectionKind, { titleKey: MessageKey; icon: string }>> = {
+  concept: { titleKey: 'section.problem', icon: '📝' },
+  why: { titleKey: 'section.hints', icon: '💡' },
+  code: { titleKey: 'section.starter', icon: '👨‍💻' },
 }
 export const sectionMeta = (k: SectionKind, l: Lesson) => {
   const m = (l.kind === 'problem' && PROBLEM_META[k]) || SECTION_META[k]
-  return { ...m, title: tr(m.title) }
+  return { title: t(m.titleKey), icon: m.icon }
 }
 
 export function sectionKinds(l: Lesson, withInterview = false): SectionKind[] {

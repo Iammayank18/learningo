@@ -1,0 +1,1154 @@
+{
+  "lessons": {
+    "t0_0": {
+      "desc": "Measures load performance of the largest image or text block. Target: < 2.5s. Key causes: slow server, render-blocking resources, slow resource load, client-side rendering.",
+      "what": "<p><b>Definition:</b> Largest Contentful Paint indicates how quickly the user sees the page’s main content — usually the hero image or a large heading. Good: ≤2.5s, poor: &gt;4s (at the 75th percentile).</p><p>LCP breaks into four parts: TTFB, resource load delay, resource load duration, element render delay. First check which part is largest.</p>",
+      "why": "<p>This is the metric closest to the user’s “page has loaded” feeling and also an SEO ranking signal. Optimizing the wrong area (e.g., compressing images when the problem is late discovery) doesn’t change anything.</p>",
+      "pros": [
+        "Directly connected to user-perceived load speed"
+      ],
+      "cons": [
+        "Depends on server, network, and rendering — root cause must be identified"
+      ],
+      "gotchas": [
+        "Adding <code>loading=\"lazy\"</code> to the LCP image is the most common mistake",
+        "Browsers discover CSS background images late — use <code>&lt;img&gt;</code> or preload instead",
+        "In client-side rendered apps, LCP occurs only after JavaScript"
+      ],
+      "terms": [
+        [
+          "LCP",
+          "When the largest image/text block in the viewport was rendered. Target ≤ 2.5s."
+        ],
+        [
+          "TTFB + resource load",
+          "LCP = sum of server response, resource discovery, download, and render delay."
+        ],
+        [
+          "fetchpriority",
+          "With <code>fetchpriority=\"high\"</code> the browser fetches the LCP image first."
+        ]
+      ],
+      "where": [
+        [
+          "Landing / product pages",
+          "The hero image or heading is the LCP."
+        ],
+        [
+          "SEO audits",
+          "Search Console Core Web Vitals report."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// field mein measure",
+          "// measure in the field"
+        ],
+        [
+          " LCP image jaldi discover ho -->",
+          " LCP image is discovered early -->"
+        ],
+        [
+          " lazy-load mat lagao LCP par -->",
+          " don't lazy-load the LCP -->"
+        ]
+      ]
+    },
+    "t0_1": {
+      "what": "<p><b>Definition:</b> Measures the time from an interaction (click/tap/keypress) to the next paint when the screen updates. It replaced FID in 2024 because FID only measured the first interaction and only the delay.</p>",
+      "why": "<p>If the main thread is busy (large JS, hydration, heavy re-render), the UI stalls after a button click. When INP is poor, the site feels laggy even if the load is fast.</p>",
+      "pros": [
+        "Captures real responsiveness"
+      ],
+      "cons": [
+        "Difficult to reproduce in lab; requires field data (RUM)"
+      ],
+      "gotchas": [
+        "Third-party scripts also block the main thread",
+        "Even a small handler can be slow because of a large re-render",
+        "INP looks at interactions across the page’s entire lifetime, not just load"
+      ],
+      "terms": [
+        [
+          "INP",
+          "Approximately the slowest (p98) interaction latency among all page interactions. Target ≤ 200 ms."
+        ],
+        [
+          "Long task",
+          "Work on the main thread longer than 50 ms — blocks input handling."
+        ],
+        [
+          "Input delay / processing / presentation",
+          "The three phases of INP: wait before the handler, handler execution time, and time until the next paint."
+        ]
+      ],
+      "where": [
+        [
+          "Dashboards / forms",
+          "Lag on typing and filtering."
+        ],
+        [
+          "Hydration-heavy pages",
+          "Interaction immediately after load."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// long task ko todo, beech mein browser ko saans lene do",
+          "// break up the long task, let the browser breathe in between"
+        ],
+        [
+          "// React: heavy update ko non-urgent banao",
+          "// React: make the heavy update non-urgent"
+        ]
+      ]
+    },
+    "t0_2": {
+      "what": "<p><b>Definition:</b> CLS impact fraction × distance fraction is formed. Shifts that occur within 500 ms of a user click are not counted (they are expected).</p><p>Common causes: images without dimensions, late-loading ads/banners, font swap, dynamically injected content above.</p>",
+      "why": "<p>If the layout moves while pressing a button, the wrong item gets clicked. CLS affects both user trust and conversions.</p>",
+      "pros": [
+        "Fix is often a simple CSS/markup change."
+      ],
+      "cons": [
+        "Debugging late dynamic content is a bit tricky."
+      ],
+      "gotchas": [
+        "Shifts can still be counted after a bfcache restore.",
+        "Insert content below or in a reserved slot instead of above.",
+        "Font swap also creates CLS."
+      ],
+      "terms": [
+        [
+          "CLS",
+          "Cumulative score of unexpected layout shifts. Target ≤ 0.1."
+        ],
+        [
+          "Layout shift",
+          "A visible element changes position without user input."
+        ],
+        [
+          "Reserved space",
+          "Provide width, height, or aspect-ratio in advance for images/ads/embeds."
+        ]
+      ],
+      "where": [
+        [
+          "Article / feed pages",
+          "Reserve space for images and ads."
+        ],
+        [
+          "Web fonts",
+          "Match fallback metrics."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "/* animations: transform use karo, top/height nahi */",
+          "/* animations: use transform, not top/height */"
+        ],
+        [
+          " jagah reserve */",
+          " reserve the space */"
+        ]
+      ]
+    },
+    "t0_3": {
+      "what": "<p><b>Definition:</b> First Contentful Paint is the first moment when anything (non-white) appears on the page. It depends on TTFB and render-blocking resources.</p>",
+      "why": "<p>The user needs feedback that something is happening. If FCP is fast, bounce rate decreases, even if the full content arrives later.</p>",
+      "cons": [
+        "FCP alone does not tell the whole user experience story"
+      ],
+      "gotchas": [
+        "A spinner after a blank white screen can also be counted as FCP",
+        "The larger the CSS, the later the FCP",
+        "Invisible text due to fonts can delay FCP"
+      ],
+      "terms": [
+        [
+          "FCP",
+          "First content pixel (text/image) appears. Target ≤ 1.8 s."
+        ],
+        [
+          "Render-blocking",
+          "Paint is paused until the head's CSS/synchronous JS loads."
+        ],
+        [
+          "Leading indicator",
+          "If FCP is poor, LCP will also be poor."
+        ]
+      ],
+      "where": [
+        [
+          "Server-rendered pages",
+          "Stream HTML quickly."
+        ],
+        [
+          "SPA",
+          "FCP comes from app shell + skeleton."
+        ]
+      ],
+      "pros": [
+        "Fast feedback, simple to optimize"
+      ],
+      "codeSwap": [
+        [
+          " chhota critical CSS inline */</style>",
+          " small critical CSS inline */</style>"
+        ]
+      ]
+    },
+    "t0_4": {
+      "what": "<p><b>Definition:</b> TTFB includes DNS, TCP/TLS, redirects, and server processing. It is the baseline for all other metrics — if TTFB is 1.5s, achieving LCP 2.5s is difficult.</p>",
+      "why": "<p>Frontend optimizations don’t help if the HTML itself arrives late. Slow DB queries, distant origin, redirects, and cold starts are the most common reasons.</p>",
+      "pros": [
+        "Improves every metric directly"
+      ],
+      "cons": [
+        "Requires coordination with the backend/infra team"
+      ],
+      "gotchas": [
+        "Redirect chains increase TTFB (http→https→www)",
+        "Cache hit vs miss yields different TTFB — measure both",
+        "Serverless cold starts create spikes"
+      ],
+      "terms": [
+        [
+          "TTFB",
+          "Time from sending the request to receiving the first byte of the response. Target ≤ 800 ms."
+        ],
+        [
+          "CDN / edge",
+          "Serving from a server close to the user to reduce latency."
+        ],
+        [
+          "Cache hit",
+          "The server/CDN responded without contacting the origin."
+        ]
+      ],
+      "where": [
+        [
+          "Dynamic server rendering",
+          "Optimize DB and API calls."
+        ],
+        [
+          "Global users",
+          "CDN / edge rendering."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "# Early Hints: HTML se pehle preload hint",
+          "# Early Hints: preload hint before the HTML"
+        ]
+      ]
+    },
+    "t0_5": {
+      "what": "<p><b>Definition:</b> There are two ways to measure performance: <b>lab</b> (Lighthouse, DevTools Performance panel) for debugging and <b>field</b> (CrUX, PageSpeed Insights, <code>web-vitals</code> JS library for RUM) for real user experience.</p>",
+      "why": "<p>Your laptop + fast WiFi and the user's mid-range phone are different worlds. Find the fix in the lab, then verify in the field that real users benefited.</p>",
+      "pros": [
+        "A complete picture from both lab and field"
+      ],
+      "cons": [
+        "Field data takes time to arrive (28-day rolling)"
+      ],
+      "gotchas": [
+        "Lighthouse scores and CrUX can differ",
+        "Apply CPU/network throttling in Chrome DevTools",
+        "The target is the 75th percentile, not the average"
+      ],
+      "terms": [
+        [
+          "Lab data",
+          "Controlled test (Lighthouse, DevTools) — reproducible but synthetic."
+        ],
+        [
+          "Field data / RUM",
+          "Real users' data (CrUX, web-vitals library) — realistic."
+        ],
+        [
+          "CrUX",
+          "Chrome User Experience Report: public field data, 28-day rolling."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// RUM: web-vitals se field data bhejo",
+          "// RUM: send field data using web-vitals"
+        ]
+      ]
+    },
+    "t1_0": {
+      "what": "<p><b>Definition:</b> A component re-renders when its state changes, its parent re-renders, or the context it reads changes. Re-render means the function runs again (render phase) — a DOM update is not required.</p><p>Even if props are the same, the child re-renders by default when the parent renders.</p>",
+      "why": "<p>Before optimizing you need a mental model: “Is the render slow?” or “Are there too many renders?” In most apps, the problem is keeping component state too high.</p>",
+      "pros": [
+        "Correct diagnosis before memoization"
+      ],
+      "cons": [
+        "Rendering semantics become slightly complex with concurrent features"
+      ],
+      "gotchas": [
+        "Re-render ≠ DOM update — React performs a diff",
+        "When the context value changes, all consumers re-render",
+        "Using index as key or inline objects causes unnecessary work"
+      ],
+      "terms": [
+        [
+          "Re-render triggers",
+          "State change, parent re-render, context value change."
+        ],
+        [
+          "Reconciliation",
+          "Compute the diff between the new virtual tree and the old one to produce minimal DOM updates."
+        ],
+        [
+          "Referential equality",
+          "Objects/functions are newly created on each render, so they appear different for memoization."
+        ]
+      ],
+      "where": [
+        [
+          "Performance debugging",
+          "Understanding why a re-render happened."
+        ],
+        [
+          "Component design",
+          "State colocation."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// fix 2: children prop pass karo (wo element parent state se nahi badlta)",
+          "// fix 2: pass a children prop (that element doesn't change with the parent's state)"
+        ],
+        [
+          "// fix 1: state ko neeche le jao (colocate)",
+          "// fix 1: move the state down (colocate)"
+        ],
+        [
+          "/* n badla to Child bhi re-render hoga */}",
+          "/* if n changes, Child re-renders too */}"
+        ]
+      ]
+    },
+    "t1_1": {
+      "what": "<p><b>Definition:</b> <code>memo(Component)</code> skips rendering if the props are the same as the previous render. However, if you create a new object/function on each render and pass it, the props are considered “changed” and memo becomes ineffective.</p>",
+      "why": "<p>Memo has its own cost (comparison + memory). It is beneficial only when the component is expensive and the props often remain the same. After the React Compiler arrives, the need for manual memo is reduced in many places.</p>",
+      "pros": [
+        "Avoid unnecessary re-renders"
+      ],
+      "gotchas": [
+        "Inline <code>{}</code>, <code>[]</code>, and arrow functions in props break memo",
+        "The children prop (JSX) is a new object on every render",
+        "Profile first, then apply memo"
+      ],
+      "terms": [
+        [
+          "React.memo",
+          "Wraps a component: if props are shallow-equal, skip re-render."
+        ],
+        [
+          "Shallow compare",
+          "Compares top-level prop values using <code>Object.is</code>."
+        ],
+        [
+          "Bailout",
+          "React skipping a render."
+        ]
+      ],
+      "where": [
+        [
+          "Long lists / charts",
+          "Expensive children."
+        ],
+        [
+          "Parent that frequently re-renders",
+          "Protect the child."
+        ]
+      ]
+    },
+    "t1_2": {
+      "desc": "Memoize expensive values (useMemo) and stable function references (useCallback). The real cost: memory + comparison overhead.",
+      "what": "<p><b>Definition:</b> <code>useMemo(() =&gt; compute(a, b), [a, b])</code> caches the value; <code>useCallback(fn, deps)</code> caches the function (similar to useMemo(() => fn)). Both aim for referential stability or to save costly computation.</p>",
+      "why": "<p>They are not free: memory + dependency comparison. For most small calculations, the overhead outweighs the benefits. Correct usage: (1) give stable props to a memoized child, (2) need a stable function in hook dependencies, (3) when the calculation is truly expensive.</p>",
+      "cons": [
+        "Bugs from stale values when dependencies are incorrect"
+      ],
+      "gotchas": [
+        "useCallback does nothing on its own if the child is not memoized",
+        "All used values must be present in the deps array (follow lint rules)",
+        "If the compiler is on, you can often eliminate manual memoization"
+      ],
+      "terms": [
+        [
+          "useMemo",
+          "Caches the result of an expensive calculation when dependencies do not change."
+        ],
+        [
+          "useCallback",
+          "Keeps the function reference stable."
+        ],
+        [
+          "Dependency array",
+          "The value/function is recomputed only when this changes."
+        ]
+      ],
+      "where": [
+        [
+          "Heavy filtering / sorting",
+          "useMemo."
+        ],
+        [
+          "Callbacks for memoized child",
+          "useCallback."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// Form memo hai to useful",
+          "// If the form is memo'd, it's useful"
+        ],
+        [
+          " bekaar: chhoti calculation",
+          " useless: a small calculation"
+        ]
+      ]
+    },
+    "t1_3": {
+      "what": "<p><b>Definition:</b> In the DevTools Profiler, press 'Record' and interact; you see a flame chart for each commit. Grey = not rendered, colored = rendered (how much time). Turn on 'Record why each component rendered' in Settings.</p>",
+      "why": "<p>Stop guessing to optimize: first profile, then fix, then profile again. A profiling build is required for production profiling.</p>",
+      "cons": [
+        "Dev mode timings differ from production"
+      ],
+      "gotchas": [
+        "A profiling build is required for production profiling",
+        "StrictMode double-renders in development — don’t get confused",
+        "Look at not only render time but also commit/paint"
+      ],
+      "terms": [
+        [
+          "Profiler",
+          "React DevTools tab that records the time and reason for commits."
+        ],
+        [
+          "Flame / ranked chart",
+          "Visual representation of component tree render time / list ordered from slowest."
+        ],
+        [
+          "Why did this render",
+          "Which change in props/state/hook caused the render."
+        ]
+      ],
+      "where": [
+        [
+          "Slow interactions",
+          "Which component is rendering excessively."
+        ],
+        [
+          "Regression hunts",
+          "Before/after comparison."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// 3. Ranked chart se slowest component dekho",
+          "// 3. Find the slowest component in the ranked chart"
+        ],
+        [
+          "// code se bhi measure",
+          "// measure from code too"
+        ]
+      ]
+    },
+    "t1_4": {
+      "what": "<p><b>Definition:</b> In a list of 10,000 rows, only ~20 visible rows are rendered; rows are reused on scroll. Libraries: <code>react-window</code>, <code>@tanstack/react-virtual</code>.</p>",
+      "why": "<p>If there are many DOM nodes, layout, paint, and memory all become slow. After 100+ complex rows, the benefit of virtualization becomes apparent.</p>",
+      "cons": [
+        "Ctrl+F, accessibility, dynamic heights and SEO are difficult"
+      ],
+      "gotchas": [
+        "Keep the item key stable, not the index",
+        "For variable height you need to measure and cache",
+        "Print/Ctrl+F cannot find offscreen rows"
+      ],
+      "terms": [
+        [
+          "Virtualization",
+          "Rendering only the visible rows in the DOM, not the rest."
+        ],
+        [
+          "Overscan",
+          "Rendering extra rows just outside the viewport so scrolling feels smooth."
+        ],
+        [
+          "Dynamic row height",
+          "When rows have different heights, they need to be measured."
+        ]
+      ],
+      "where": [
+        [
+          "Tables / feeds / chat",
+          "long lists."
+        ],
+        [
+          "Dropdown with thousands of options",
+          "combobox virtualization."
+        ]
+      ]
+    },
+    "t1_5": {
+      "desc": "Mark state updates as non-urgent. The UI stays responsive during heavy re-renders. Concurrent rendering in practice.",
+      "what": "<p><b>Definition:</b> <code>startTransition(() =&gt; setState(...))</code> tells React that this update can be interrupted. Urgent updates (input typing) are processed first and the heavy render runs later, the UI does not freeze.</p>",
+      "why": "<p>When typing in a search box, the render that filtered 10,000 items used to freeze the input. With a transition, the input updates immediately and the list updates later.</p>",
+      "pros": [
+        "Responsive UI without debounce"
+      ],
+      "cons": [
+        "The total work does not decrease, it is only prioritized"
+      ],
+      "gotchas": [
+        "Updates after async/await inside a transition are not tracked (use actions in React 19 for better handling)",
+        "Keep the state of a controlled input urgent",
+        "Memoize the heavy render as well; transition alone is not magic"
+      ],
+      "terms": [
+        [
+          "useTransition",
+          "Marks a state update as non-urgent; provides <code>isPending</code>."
+        ],
+        [
+          "Urgent vs transition",
+          "Typing/click is urgent; the heavy render for list filtering is a transition."
+        ],
+        [
+          "useDeferredValue",
+          "Provides a 'lagging' version of a value."
+        ]
+      ],
+      "where": [
+        [
+          "Search / filter UIs",
+          "Keep typing smooth."
+        ],
+        [
+          "Tab switching",
+          "Render heavy tab content."
+        ]
+      ]
+    },
+    "t2_0": {
+      "what": "<p><b>Definition:</b> <code>rollup-plugin-visualizer</code>, <code>webpack-bundle-analyzer</code> or <code>vite-bundle-visualizer</code> give a treemap of the build output. Large rectangles = large size. Start with the biggest segment first.</p>",
+      "why": "<p>Bundle size directly impacts parse/execute time and INP/LCP. Mistakes such as importing 'moment.js' or the whole lodash show up immediately in the treemap.</p>",
+      "pros": [
+        "The biggest wins appear instantly"
+      ],
+      "cons": [
+        "Stats for gzip/brotli and parsed size differ — look at both"
+      ],
+      "gotchas": [
+        "Not just gzipped size; parsed size and execution time matter too",
+        "Deduplicate duplicate versions (peer dependencies)",
+        "Source maps make the analyzer more accurate"
+      ],
+      "terms": [
+        [
+          "Bundle analyzer",
+          "Treemap that shows which library is adding how much JavaScript."
+        ],
+        [
+          "Duplicate deps",
+          "Multiple versions of a package in the bundle."
+        ],
+        [
+          "Dead code",
+          "Imported but not used."
+        ]
+      ],
+      "where": [
+        [
+          "Release checks",
+          "Catch bundle regressions."
+        ],
+        [
+          "Library selection",
+          "Choose lightweight alternatives instead of heavy dependencies."
+        ]
+      ],
+      "codeSwap": [
+        [
+          " behtar: sirf function",
+          " better: only the function"
+        ],
+        [
+          " bekaar: poori library",
+          " useless: the whole library"
+        ]
+      ]
+    },
+    "t2_1": {
+      "what": "<p><b>Definition:</b> Perform route-based splitting first (separate each page into its own chunk). Then load heavy components (charts, editors, modals) on interaction. Prefetching the chunk makes the next navigation instant.</p>",
+      "why": "<p>The user shouldn't have to download the entire app's JavaScript for the first page. A smaller initial bundle = better FCP/LCP/INP.</p>",
+      "cons": [
+        "Risk of loading waterfalls and spinners"
+      ],
+      "gotchas": [
+        "Too many tiny chunks increase network overhead",
+        "A lazy component requires a Suspense boundary",
+        "Prefetch on hover/idle masks the delay"
+      ],
+      "terms": [
+        [
+          "Code splitting",
+          "Splitting the bundle into small chunks that load on demand."
+        ],
+        [
+          "Dynamic import",
+          "<code>import('./x')</code> — returns a Promise, creates a separate chunk."
+        ],
+        [
+          "React.lazy + Suspense",
+          "Load the component lazily and display a fallback."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// interaction par load",
+          "// load on interaction"
+        ]
+      ],
+      "pros": [
+        "Small initial bundle"
+      ]
+    },
+    "t2_2": {
+      "what": "<p><b>Definition:</b> The bundler examines static ESM imports to determine which exports are unused and drops them. CommonJS is dynamic, so it is not shaken.</p>",
+      "why": "<p>Barrel files (<code>index.ts</code> that re-export everything) and side-effectful modules break tree shaking; the whole library gets included in the bundle.</p>",
+      "cons": [
+        "Because of side effects, the bundler stays on the safe side."
+      ],
+      "gotchas": [
+        "List CSS imports in sideEffects, otherwise they may be dropped",
+        "<code>export *</code> and barrel files prevent shaking",
+        "Shaking does not occur in dev mode — check the production build"
+      ],
+      "terms": [
+        [
+          "Tree shaking",
+          "The bundler removes unused exports from the final bundle."
+        ],
+        [
+          "ESM",
+          "Static <code>import/export</code> — can be analyzed; CommonJS <code>require</code> cannot."
+        ],
+        [
+          "sideEffects: false",
+          "Flag in package.json indicating that the module does not have side effects at import time."
+        ]
+      ],
+      "where": [
+        [
+          "Library selection",
+          "ESM + libraries with sideEffects flag."
+        ],
+        [
+          "Internal packages",
+          "Avoid barrel files."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// consumer ko sab load ho sakta hai",
+          "// the consumer might have to load everything"
+        ],
+        [
+          " bad: CJS poora",
+          " bad: all of CJS"
+        ]
+      ]
+    },
+    "t2_3": {
+      "desc": "Gzip vs Brotli (Brotli is 15-25% smaller). Static pre-compression vs on-the-fly. AVIF/WebP for images. woff2 for fonts.",
+      "what": "<p><b>Definition:</b> Text assets (HTML/CSS/JS/JSON/SVG) should be compressed with Brotli (or gzip). Pre-compress static files at build time (highest level); serve dynamic responses on the fly at a medium level. Browser <code>Accept-Encoding</code> sends, server replies with <code>Content-Encoding</code>.</p>",
+      "why": "<p>Network bytes are directly load time. Compression headers do not help for compressing images/video — change the format (AVIF/WebP).</p>",
+      "cons": [
+        "Max-level Brotli on the fly is CPU-heavy."
+      ],
+      "gotchas": [
+        "Do not recompress already compressed files (jpg/mp4/woff2).",
+        "Vary: Accept-Encoding header is required for CDN.",
+        "Brotli is used by browsers only over HTTPS."
+      ],
+      "terms": [
+        [
+          "Brotli",
+          "15–25% smaller compression than Gzip; best for text assets."
+        ],
+        [
+          "Static pre-compression",
+          "Create .br/.gz files at build time, server serves them directly."
+        ],
+        [
+          "woff2 / AVIF / WebP",
+          "Modern compressed formats for fonts and images."
+        ]
+      ],
+      "where": [
+        [
+          "Static hosting / CDN",
+          "pre-compressed br files."
+        ],
+        [
+          "API JSON",
+          "gzip/brotli on the fly."
+        ]
+      ]
+    },
+    "t2_4": {
+      "what": "<p><b>Definition:</b> HTTP/2 multiplexing and header compression reduce the cost of many small files (unlike the 6-connection limit in HTTP/1.1). Server push is deprecated; use <code>103 Early Hints</code> and resource hints instead.</p>",
+      "why": "<p>Place hints in the right spots: preload critical late-discovered resources, preconnect cross-origin API/CDN, prefetch the next page. Incorrect preload steals bandwidth.</p>",
+      "cons": [
+        "Too many hints dilute priority"
+      ],
+      "gotchas": [
+        "Preload without usage triggers a console warning and wastes bandwidth",
+        "Font preload requires <code>crossorigin</code>",
+        "Preconnect should be limited to 2–3 critical origins"
+      ],
+      "terms": [
+        [
+          "Multiplexing",
+          "Multiple parallel requests on a single HTTP/2 connection."
+        ],
+        [
+          "preload / prefetch",
+          "preload = needed now (current page), prefetch = maybe on the next page."
+        ],
+        [
+          "preconnect / dns-prefetch",
+          "Opening a connection to a third-party origin in advance."
+        ]
+      ],
+      "pros": [
+        "Hide latency, break the waterfall"
+      ],
+      "codeSwap": [
+        [
+          " speculation rules: agla page prerender -->",
+          " speculation rules: prerender the next page -->"
+        ]
+      ]
+    },
+    "t2_5": {
+      "what": "<p><b>Definition:</b> Strategy: HTML <code>no-cache</code> (validate each time), hashed static assets <code>max-age=31536000, immutable</code>, API/data <code>stale-while-revalidate</code>. Content-hashed filenames give a new URL on deployment, so cache invalidation is not needed.</p>",
+      "why": "<p>On repeat visits the network is completely avoided. Incorrect headers either show a stale site or waste the benefit of the cache.</p>",
+      "gotchas": [
+        "<code>no-cache</code> does not mean 'don’t cache', it means 'use after validation'",
+        "Don’t assign a long cache to HTML — a new deployment gets blocked",
+        "<code>no-store</code> can also block the bfcache"
+      ],
+      "terms": [
+        [
+          "Cache-Control",
+          "Informs the browser/CDN how long to cache."
+        ],
+        [
+          "immutable + hashed filenames",
+          "<code>app.3f9a.js</code> never changes — cached for a year."
+        ],
+        [
+          "stale-while-revalidate",
+          "Serve the stale version immediately, refresh in the background."
+        ]
+      ],
+      "cons": [
+        "Invalidation planning is essential"
+      ]
+    },
+    "t3_0": {
+      "what": "<p><b>Definition:</b> Modern formats: AVIF &lt; WebP &lt; JPEG in size. In <code>&lt;picture&gt;</code> provide AVIF, then WebP, then a JPEG fallback. Use AVIF/WebP for photos and SVG for logos/icons.</p>",
+      "why": "<p>Images make up a large portion of page bytes and LCP is often an image. Changing the format can be a bigger win than code optimization.</p>",
+      "cons": [
+        "Encode time and pipeline setup"
+      ],
+      "gotchas": [
+        "PNG/WebP lossless may be better for screenshots or flat graphics",
+        "Heavy compression can introduce artifacts",
+        "Auto-format and resize are easy with an image CDN"
+      ],
+      "terms": [
+        [
+          "AVIF",
+          "Best compression, about 50% smaller than JPEG; encode slow."
+        ],
+        [
+          "WebP",
+          "Good compression, near-universal support."
+        ],
+        [
+          "Quality vs size",
+          "Quality ~60–80 is often enough for visual match."
+        ]
+      ],
+      "pros": [
+        "Saves 60–80% of the bytes"
+      ]
+    },
+    "t3_1": {
+      "what": "<p><b>Definition:</b> <code>srcset</code> + <code>sizes</code> let the browser select the correct image based on the viewport and DPR. For art direction (different crop on mobile) the <code>&lt;picture&gt;</code> <code>media</code> source is used.</p>",
+      "why": "<p>Sending a 1x laptop image to a 3x phone wastes bandwidth; sending a small image to the phone looks blurry. The correct sizes give both performance and quality.</p>",
+      "gotchas": [
+        "<code>sizes</code> incorrect causes the browser to fetch a larger image",
+        "Provide both width and height — prevents CLS",
+        "Do not mix x and w descriptors in srcset"
+      ],
+      "terms": [
+        [
+          "w descriptor",
+          "<code>img-800.jpg 800w</code> — the file’s actual width."
+        ],
+        [
+          "sizes",
+          "How wide the image will appear in the layout (the browser selects based on this)."
+        ],
+        [
+          "DPR",
+          "Retina screens need 2x/3x pixels."
+        ]
+      ],
+      "cons": [
+        "Generating multiple variants (build/CDN)"
+      ]
+    },
+    "t3_2": {
+      "what": "<p><b>Definition:</b> Apply <code>loading=\"lazy\"</code> on below-the-fold images; on above-the-fold (especially LCP) image use <code>eager</code> (default) + <code>fetchpriority=\"high\"</code>. <code>decoding=\"async\"</code> removes decoding from the main thread.</p>",
+      "why": "<p>Initial page weight is reduced. But making the LCP image lazy makes LCP very poor; this is the most common performance bug.</p>",
+      "cons": [
+        "Late load flicker can occur on scroll"
+      ],
+      "gotchas": [
+        "Do not apply lazy loading to the LCP image",
+        "Lazy images need width/height (to avoid CLS)",
+        "You need to consider preloading the next slides of a carousel"
+      ],
+      "terms": [
+        [
+          "loading=lazy",
+          "Load offscreen images/iframes only when they approach the viewport."
+        ],
+        [
+          "decoding=async",
+          "Image decoding does not block the main thread."
+        ],
+        [
+          "IntersectionObserver",
+          "For custom lazy loading or infinite scroll."
+        ]
+      ],
+      "where": [
+        [
+          "Long product / blog pages",
+          "lazy cards and galleries."
+        ],
+        [
+          "Embeds",
+          "lazy iframes."
+        ]
+      ]
+    },
+    "t3_3": {
+      "desc": "Inline above-the-fold CSS, defer non-critical CSS, remove unused CSS, PurgeCSS, critical npm package",
+      "what": "<p><b>Definition:</b> CSS is render-blocking. Inline the critical CSS, load the rest using the <code>media=\"print\" onload</code> trick or <code>preload</code> asynchronously, and remove unused CSS with DevTools Coverage / PurgeCSS.</p>",
+      "why": "<p>A large stylesheet directly delays FCP/LCP. Frameworks with tools (Next, Astro) handle much of this automatically.</p>",
+      "cons": [
+        "Maintaining critical CSS and the risk of FOUC"
+      ],
+      "gotchas": [
+        "Inline CSS is not cached",
+        "Dynamic classes may be purged — provide a safelist",
+        "@import chains create a waterfall"
+      ],
+      "terms": [
+        [
+          "Critical CSS",
+          "The minimum CSS required for above-the-fold rendering that is inlined in the head."
+        ],
+        [
+          "Unused CSS",
+          "Rules that are not used on the page — found via a coverage tool."
+        ],
+        [
+          "Async CSS",
+          "Loading the remaining CSS in a non-blocking way."
+        ]
+      ]
+    },
+    "t3_4": {
+      "what": "<p><b>Definition:</b> Serve fonts in woff2, subset them, preload critical fonts, and keep <code>font-display: swap</code> (or <code>optional</code>). Use a variable font to replace multiple weights with a single file.</p>",
+      "why": "<p>Fonts create render-blocking text (FOIT) or layout shift (FOUT swap). The system font stack is the fastest option.</p>",
+      "cons": [
+        "Effort required for subsetting and fallback tuning"
+      ],
+      "gotchas": [
+        "The <code>crossorigin</code> attribute is required in the preload",
+        "<code>swap</code> can cause CLS; use a metric-matched fallback",
+        "Self-hosting Google Fonts is often faster"
+      ],
+      "terms": [
+        [
+          "font-display",
+          "<code>swap</code> / <code>optional</code> / <code>block</code> — text behavior during loading."
+        ],
+        [
+          "Subsetting",
+          "Only keep necessary characters (Latin) — smaller file."
+        ],
+        [
+          "Variable font",
+          "Multiple weights/widths in a single file."
+        ]
+      ],
+      "pros": [
+        "Small files, less shift"
+      ]
+    },
+    "t3_5": {
+      "what": "<p><b>Definition:</b> Replace the animated GIF with <code>&lt;video autoplay muted loop playsinline&gt;</code>. Use <code>preload=\"none\"</code> + poster on below-fold video. Animate only with <code>transform</code>/<code>opacity</code>.</p>",
+      "why": "<p>GIFs are very heavy and CPU-intensive. Video + poster reduces bytes and makes playback smooth.</p>",
+      "pros": [
+        "Very small files, smooth playback"
+      ],
+      "cons": [
+        "Autoplay policies (muted + playsinline required)"
+      ],
+      "gotchas": [
+        "Autoplay works only with muted video",
+        "Don't forget to provide a poster image",
+        "Don't apply will-change to everything"
+      ],
+      "terms": [
+        [
+          "Video vs GIF",
+          "MP4/WebM is 5–10× smaller than GIF; never use GIF."
+        ],
+        [
+          "preload=none",
+          "Do not load the bytes of a below-fold video until it plays."
+        ],
+        [
+          "Compositor animation",
+          "transform/opacity run on the GPU; avoid layout/paint."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "/* layout nahi */",
+          "/* not layout */"
+        ]
+      ]
+    },
+    "t4_1": {
+      "what": "<p><b>Definition:</b> Lighthouse runs on every PR via <code>@lhci/cli</code>, scores are compared, and a comment appears on the PR. In GitHub Actions, <code>treosh/lighthouse-ci-action</code> is common.</p>",
+      "why": "<p>It’s easy to forget to run Lighthouse manually. Running it in CI makes performance an automated quality gate, just like tests.</p>",
+      "cons": [
+        "Noisy results due to variance in CI machines"
+      ],
+      "gotchas": [
+        "Increase the number of runs (3–5)",
+        "Keep test URLs representative and stable",
+        "Lab score field does not guarantee performance"
+      ],
+      "terms": [
+        [
+          "Lighthouse CI (LHCI)",
+          "Running Lighthouse in CI to get results and assertions."
+        ],
+        [
+          "Assertion",
+          "Metric threshold; build fails in red."
+        ],
+        [
+          "Median of runs",
+          "Median of 3–5 runs — reduces noise."
+        ]
+      ]
+    },
+    "t4_2": {
+      "what": "<p><b>Definition:</b> A service worker can intercept requests and serve them from the cache. Strategies: <b>cache-first</b> (static assets), <b>network-first</b> (API/HTML), <b>stale-while-revalidate</b> (feed, avatars). Offline fallback page and Background Sync (queued actions) are also possible.</p>",
+      "why": "<p>Repeat visits are instant, offline support and PWA features are provided. However, if update/invalidation is incorrect, users continue to see the old app.</p>",
+      "cons": [
+        "Debugging and update flow are complex"
+      ],
+      "gotchas": [
+        "On SW update, older tabs run the old version — plan skipWaiting/prompt",
+        "Only on HTTPS (localhost exempt)",
+        "Do not cache-first HTML without versioning"
+      ],
+      "terms": [
+        [
+          "Service Worker",
+          "Browser and network proxy script (runs in the background)."
+        ],
+        [
+          "Cache-first / network-first / SWR",
+          "Fetch strategies — speed vs freshness trade-off."
+        ],
+        [
+          "Workbox",
+          "Service worker routing/caching library."
+        ]
+      ]
+    },
+    "t4_3": {
+      "what": "<p><b>Definition:</b> Hydrating the entire page is heavy (TBT/INP suffer). Selective hydration (React Suspense), islands (Astro), and resumability (Qwik) provide interactivity with less JS. Hydrate below-fold components when idle/visible.</p>",
+      "why": "<p>SSR HTML appears quickly, but the page stays 'dead' until it is hydrated. Reducing hydration cost improves INP and TBT.</p>",
+      "cons": [
+        "Depends on architecture and framework"
+      ],
+      "gotchas": [
+        "Server/client HTML mismatches cause hydration errors",
+        "Sharing state between islands is difficult",
+        "Prerender ≠ interactive; avoid showing users a fake-interactive UI"
+      ],
+      "terms": [
+        [
+          "Hydration",
+          "Attaching JS to server HTML to make it interactive."
+        ],
+        [
+          "Islands architecture",
+          "Only interactive widgets are hydrated; the rest remains static HTML."
+        ],
+        [
+          "Resumability",
+          "Qwik: instead of hydration, instantly resume from serialized state."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// React: Suspense se selective hydration",
+          "// React: selective hydration with Suspense"
+        ],
+        [
+          "// Astro island: sirf visible hone par",
+          "// Astro island: only when visible"
+        ]
+      ],
+      "pros": [
+        "Less JS, better INP/TBT"
+      ]
+    },
+    "t4_4": {
+      "what": "<p><b>Definition:</b> Third-party scripts affect the main thread, network, and CLS. Measure: Lighthouse 'reduce impact of third-party code', DevTools Network by domain. Fix: <code>async/defer</code>, lazy load, facades, Partytown, and Tag Manager audit.</p>",
+      "why": "<p>Often the biggest slowdown on a site isn’t your code, but the 15 scripts hidden inside the tag manager. Their impact isn’t visible without measurement.</p>",
+      "cons": [
+        "Tradeoff conversation with business teams"
+      ],
+      "gotchas": [
+        "A tag manager can load many scripts",
+        "Loading after consent still reduces the load",
+        "Self-hosting third-party scripts gives privacy and cache control, but updates become your responsibility"
+      ],
+      "terms": [
+        [
+          "Third-party script",
+          "Analytics, ads, chat widgets, tag managers — outside your control."
+        ],
+        [
+          "Facade",
+          "A lightweight placeholder (YouTube thumbnail) instead of a real embed that loads on click."
+        ],
+        [
+          "Partytown",
+          "Running third-party scripts in a web worker."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// idle par load",
+          "// load on idle"
+        ]
+      ],
+      "pros": [
+        "Big, often easy wins"
+      ]
+    },
+    "t4_5": {
+      "desc": "Sharing perf wins with the team. Automated regression detection. Grafana dashboards for RUM. Performance as a KPI.",
+      "what": "<p><b>Definition:</b> Performance culture = measurement + ownership. Dashboards (p75 LCP/INP/CLS by page), alerts on regressions, PR budgets, and share wins with business impact (e.g. 'LCP 400ms less → conversion +2%').</p>",
+      "why": "<p>One-time optimization slowly reverses over a few months. Culture and automation keep wins lasting.</p>",
+      "pros": [
+        "Wins persist; trade-offs visible"
+      ],
+      "cons": [
+        "Effort for instrumentation and ownership"
+      ],
+      "gotchas": [
+        "Look at p75/p95, not averages",
+        "Segment by page/route",
+        "Linking wins to business metrics convinces stakeholders"
+      ],
+      "terms": [
+        [
+          "RUM dashboard",
+          "Show real users' vitals in Grafana/Datadog."
+        ],
+        [
+          "Regression alert",
+          "Automatic alert when metric exceeds threshold."
+        ],
+        [
+          "Performance as KPI",
+          "Tie performance to business metrics (conversion, bounce)."
+        ]
+      ],
+      "where": [
+        [
+          "Product teams",
+          "perf OKRs and dashboards."
+        ],
+        [
+          "Release process",
+          "budget + alerts."
+        ]
+      ]
+    },
+    "t4_0": {
+      "terms": [
+        [
+          "Performance budget",
+          "A maximum limit on a metric or size that makes the build fail."
+        ],
+        [
+          "size-limit / bundlesize",
+          "JS bundle size assertions."
+        ],
+        [
+          "Lighthouse thresholds",
+          "Minimums for LCP, TBT, score."
+        ]
+      ],
+      "what": "<p><b>Definition:</b> Budget = a limit: 'main JS ≤ 170KB gz', 'LCP ≤ 2.5s', 'CLS ≤ 0.1'. It is checked in CI; when a budget is broken the PR fails or warns.</p>",
+      "why": "<p>Performance degrades slowly (a little more JS in every PR). A budget stops regressions before they merge, and gives the team a shared target.</p>",
+      "where": [
+        [
+          "CI pipelines",
+          "every PR check."
+        ],
+        [
+          "Release gates",
+          "before production."
+        ]
+      ],
+      "pros": [
+        "Catches regressions automatically"
+      ],
+      "cons": [
+        "Very tight budgets can slow the team down"
+      ],
+      "gotchas": [
+        "Keep realistic (data-based) budgets, not aspirational ones",
+        "Lab metrics are noisy — take the median of multiple runs",
+        "Review budgets over time"
+      ]
+    }
+  }
+}

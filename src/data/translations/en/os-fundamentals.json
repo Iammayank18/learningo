@@ -1,0 +1,3622 @@
+{
+  "lessons": {
+    "system-calls": {
+      "name": "System Calls — How Programs Talk to the OS",
+      "desc": "A system call is how a user program requests a service from the kernel. Examples: open() (open a file), read() (read data), write() (write data), fork() (create a process), exit() (terminate). Every file operation, network call, or memory allocation goes through a syscall.",
+      "qsub": "What is the cost of a system call? What happens at the CPU level when a syscall is made (trap/interrupt mechanism)?",
+      "what": "<p>When an app needs to perform an <b>OS task</b> — open a file, read data, create a new process, get the time — it <b>cannot do it directly</b> (low privilege). It makes a <b>system call</b>.</p>\n<p>Think of <code>read()</code> as: <b>the app asks the kernel \"give me data from this file\".</b> The kernel reads it and returns the result to the app.</p>",
+      "analogy": "In school, a <b>peon pass</b>: the child (app) wants to go to the library but cannot go on its own. It gets a <b>teacher (kernel) pass</b> — the teacher checks if it is allowed, then the child goes. Every major task requires the <b>teacher's permission</b>.",
+      "why": "<p>If every app had full control over files/disks/network on its own, it could steal other users' data or damage hardware. The system call is a barrier — <b>the kernel checks each request before granting it</b> (allowed? safe?). This provides both security and safety.</p>",
+      "pros": [
+        "Hardware usage is controlled and safe.",
+        "The app doesn't need to manage hardware details.",
+        "The kernel checks every request (permission)."
+      ],
+      "cons": [
+        "Each syscall adds overhead — context switch + boundary.",
+        "Many syscalls can slow the program down (batching).",
+        "The complexity of understanding syscalls (privacy, data copy)."
+      ],
+      "gotchas": [
+        "Just remember: <b>system call = app asking the kernel \"do this for me\" — cannot access hardware directly.</b>",
+        "\"Why is a syscall costly?\" = Ring 3→Ring 0 switch + data copy + return.",
+        "Interview: \"how to read a file?\" = read() syscall → kernel → disk → back."
+      ],
+      "terms": [
+        [
+          "System call",
+          "App's request to the kernel — \"perform this hardware operation for me\"."
+        ],
+        [
+          "Syscall",
+          "Short name for system call."
+        ],
+        [
+          "Trap",
+          "The hardware door through which the app reaches the kernel (Ring 3 to Ring 0)."
+        ],
+        [
+          "Context switch (syscall)",
+          "Save the app's state, load the kernel, then return."
+        ]
+      ],
+      "where": [
+        [
+          "Har program",
+          "<code>read/write</code> file, <code>fork</code> process, <code>socket</code> network — all syscalls."
+        ],
+        [
+          "Node.js",
+          "<code>fs</code>, <code>net</code> — these all use syscalls internally."
+        ],
+        [
+          "Interview",
+          "\"How does a program talk to hardware?\" — answer: <b>system call</b>."
+        ]
+      ],
+      "visualCap": "App (Ring 3) cannot touch hardware — via syscall/trap to the kernel (Ring 0), the kernel performs the work and returns it.",
+      "codeSwap": [
+        [
+          "// Ye sab Ring 0 me hota hai — app Ring 3 me ruk kar wait karta.",
+          "// All this happens in Ring 0 — the app waits in Ring 3."
+        ],
+        [
+          "// wo seedha code nahi hai, wo kernel se request hai.",
+          "// that's not code directly, it's a request to the kernel."
+        ],
+        [
+          "// kernel: check permission → disk se read → return",
+          "// kernel: check permission → read from disk → return"
+        ],
+        [
+          "// file ko padhne ke liye aap read() kehate ho:",
+          "// to read a file you say read():"
+        ],
+        [
+          "// 1. app banta hai, request bhejta hai (trap)",
+          "// 1. the app is created, sends a request (trap)"
+        ],
+        [
+          "// 2. kernel kaam karta hai (hardware)",
+          "// 2. the kernel does the work (hardware)"
+        ],
+        [
+          "// 3. kernel wapas result deta hai",
+          "// 3. the kernel returns the result"
+        ],
+        [
+          "// Har \"dekho kya ho\" syscall me:",
+          "// In every \"see what happens\" syscall:"
+        ],
+        [
+          "// System call ka simple version",
+          "// A simple version of a system call"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "har file kaam, network, memory → syscall ke through",
+          "every file job, network, memory → via a syscall"
+        ],
+        [
+          "disk se data laata hai",
+          "brings data from disk"
+        ],
+        [
+          "wapas result",
+          "result back"
+        ]
+      ]
+    },
+    "types-of-os": {
+      "q": "What are the different types of operating systems? Give a real-world example of each.",
+      "qsub": "What is the difference between a general-purpose OS and a real-time OS? Why can you not use Linux to control a pacemaker?",
+      "what": "<p>Operating systems are built for different <b>tasks</b>. The <b>type is determined by</b> — which aspect is most important.</p>\n<p><b>Batch</b> — submit work first, the machine processes everything together, then gives the result. (Old card-punch era.)</p>\n<p><b>Time-sharing</b> — the OS on your desktop PC. Multiple users/programs, each gets a slice of time, everyone feels like they are the main one.</p>\n<p><b>Real-time</b> — strict deadline. A monitor needs an answer within 2 ms, otherwise the patient is at risk.</p>\n<p>Other categories: <b>Mobile</b> (power-saving, touch) and <b>Distributed</b> (many machines working together).</p>",
+      "analogy": "Two restaurant modes:<br>• <b>Batch</b> — you write down the order and give it, the kitchen collects all orders and prepares them together, and only then you get the plate.<br>• <b>Time-sharing</b> — a single chef prepares each table’s order a little at a time, making everyone feel their dish is being prepared.<br>• <b>Real-time</b> — in an ICU, when the monitor beeps, the nurse must arrive immediately — no room for delay.",
+      "why": "<p>One OS does not fit everyone. <b>Bank servers</b> need high throughput. <b>ICUs / flights</b> need precise timing. Hence different OSes — <b>each task has its primary requirement.</b></p>",
+      "pros": [
+        "Everyone gets a time slice (time-sharing, fair).",
+        "Real-time safety — immediate response in emergencies.",
+        "Distributed = as powerful as a large computer."
+      ],
+      "cons": [
+        "Batch is slow, no interaction/back-and-forth.",
+        "In real-time both hardware and software are expensive (must be reliable).",
+        "Distributed systems have challenges: synchronization, network failures."
+      ],
+      "gotchas": [
+        "Just remember: <b>Time-sharing = small time slices for everyone, Real-time = a fixed deadline.</b>",
+        "\"You cannot run a heart pacemaker using Linux\" — because a general OS may miss deadlines.",
+        "Interview: \"difference between general and RTOS?\" = the <b>deadline</b> is the real answer."
+      ],
+      "terms": [
+        [
+          "Batch OS",
+          "Submit work first, then process it all together — no interaction."
+        ],
+        [
+          "Time-sharing OS",
+          "Give a single CPU small time slices to many users so everyone feels it’s theirs."
+        ],
+        [
+          "Real-time OS (RTOS)",
+          "Strict deadline — if missed, disaster."
+        ],
+        [
+          "Distributed OS",
+          "Multiple computers work together as one, appearing as a single system to the user."
+        ],
+        [
+          "Mobile OS",
+          "OS designed for small devices (phone/tablet) — Android, iOS."
+        ]
+      ],
+      "where": [
+        [
+          "Desktop",
+          "<code>Windows</code>/<code>Linux</code> = time-sharing."
+        ],
+        [
+          "Device",
+          "<code>Raspberry Pi / Arduino</code> on FreeRTOS = real-time."
+        ],
+        [
+          "Mobile",
+          "<code>iOS</code>/<code>Android</code> = mobile OS (built on the Linux kernel)."
+        ]
+      ],
+      "visualCap": "The type is determined by that — all differ in deadline, interaction, and nature of work.",
+      "codeSwap": [
+        [
+          "// real-time ki baat: agar process ne 2ms me answer nahi diya",
+          "// on real-time: if the process didn't answer within 2ms"
+        ],
+        [
+          "// Types ka asal farak = \"deri bardash ho sakti hai ya nahi\"",
+          "// The real difference between types = \"whether a delay is tolerable\""
+        ],
+        [
+          "// to bebos (fail) — us deadline ko \"miss\" nahi kar sakte",
+          "// for a hard (fail) deadline — you can't \"miss\" it"
+        ],
+        [
+          "batch:       { deadline: 'nahi', interaction: 'nahi' },",
+          "batch:       { deadline: 'no', interaction: 'no' },"
+        ],
+        [
+          "distributed: { machines: 'kai, ek jaisa' },",
+          "distributed: { machines: 'many, all alike' },"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "distributed: kai machines = ek",
+          "distributed: many machines = one"
+        ],
+        [
+          "Batch — kaam jama, phir process",
+          "Batch — work piles up, then gets processed"
+        ],
+        [
+          "Time-sharing — sabko thoda time",
+          "Time-sharing — everyone gets a little time"
+        ],
+        [
+          "mobile: power-bachat, touch",
+          "mobile: power saving, touch"
+        ],
+        [
+          "Real-time — pakki deadline",
+          "Real-time — a firm deadline"
+        ]
+      ]
+    },
+    "what-is-os": {
+      "qsub": "What would happen if there was no OS and two programs both tried to write to the disk at the same time?",
+      "what": "<p>The computer's <b>real body (hardware)</b> is — CPU, RAM, disk. But when you open something like <code>chrome</code>, it cannot talk directly to the CPU/disk.</p>\n<p>In between, the <b>OS</b> stands. Its job: to allocate the hardware's time/resources to all programs, so each program feels like it is alone. <b>In short: OS = hardware's manager and programs' friend.</b></p>",
+      "analogy": "Hotel <b>manager</b>. All staff (programs) want to cook, but there is only one <b>kitchen (hardware)</b>. The manager decides who, when, how much gas, how much time to use. Without a manager, everyone would say \"me first!\" and the kitchen would break.",
+      "why": "<p>If there is no OS, two programs could write to the <b>disk</b> at the same time — erasing each other's data. Or they could both grab the CPU. The OS exists so that <b>all programs get safe and equal time</b>, and no one tampers with another's data.</p>",
+      "pros": [
+        "Programs don't interact directly with the hardware.",
+        "Each program feels like it is running alone.",
+        "If one program misbehaves, it doesn't crash the whole computer (safety)."
+      ],
+      "cons": [
+        "The OS is also software — new version upgrades are expensive.",
+        "Requesting the OS for every operation (syscall) takes a little time.",
+        "Bugs in the OS affect the entire system."
+      ],
+      "gotchas": [
+        "Just remember: <b>The OS doesn't cook biryani itself; it is the chef that takes raw ingredients (CPU, RAM) and serves them.</b>",
+        "\"Linux is only the kernel, Ubuntu is the full OS\" — mention this distinction in interviews.",
+        "The OS's real job = <b>managing processes, memory, files, devices</b>."
+      ],
+      "terms": [
+        [
+          "Operating System (OS)",
+          "The software that acts as a bridge between the computer's hardware (CPU, memory, disk) and your programs."
+        ],
+        [
+          "Resource",
+          "The thing in a computer that is useful — CPU time, memory, disk, keyboard, screen."
+        ],
+        [
+          "User space",
+          "Where your programs run."
+        ],
+        [
+          "Kernel space",
+          "Where the OS itself runs — full control over the hardware."
+        ]
+      ],
+      "where": [
+        [
+          "Interview",
+          "\"What is an OS?\" — hardware manager + gives time to programs."
+        ],
+        [
+          "Observe",
+          "<code>top</code>/<code>htop</code> — shows how much CPU/memory the OS gives each program."
+        ],
+        [
+          "Compare",
+          "Windows, Linux, macOS — all are \"OS\", just different manager styles."
+        ]
+      ],
+      "visualCap": "The OS is the bridge between hardware and programs — it allocates resources to each program individually.",
+      "codeSwap": [
+        [
+          "// JS mein socho: har app ek function, hardware ek shared object.",
+          "// Think in JS: every app is a function, the hardware is a shared object."
+        ],
+        [
+          "// agar screen already busy hai, OS kahata hai \"wait kar\"",
+          "// if the screen is already busy, the OS says \"wait\""
+        ],
+        [
+          "// App 1 kaise kahata hai \"mujhe screen chahiye\":",
+          "// How App 1 says \"I need the screen\":"
+        ],
+        [
+          "// Sahi: OS se request karo, OS tay karega kab de",
+          "// Right: request from the OS, the OS decides when to give it"
+        ],
+        [
+          "// OS ko samjho — wo ek \"middleman\" hai.",
+          "// Understand the OS — it's a \"middleman\"."
+        ],
+        [
+          "// seedha hardware chhedna galat",
+          "// poking the hardware directly is wrong"
+        ],
+        [
+          "// OS sanbhalta hai queue",
+          "// The OS manages the queue"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "CPU time, memory, files — sab khud sanbhalti hai aur baant-ti hai",
+          "CPU time, memory, files — it manages and hands out all of it itself"
+        ],
+        [
+          "Aapke Apps (User Space)",
+          "Your Apps (User Space)"
+        ]
+      ]
+    },
+    "kernel": {
+      "name": "Kernel — The Core of the OS",
+      "desc": "The kernel is the core program that runs at all times. It manages CPU, memory, devices, and files. User space = where your apps run. Kernel space = where the OS runs. Apps cannot touch hardware directly — they ask the kernel.",
+      "q": "What is the kernel? What is the difference between user space and kernel space?",
+      "qsub": "What are CPU privilege levels (Ring 0 vs Ring 3)? Why does the hardware enforce this separation?",
+      "what": "<p>The OS is not a single <b>thing</b> — its core is the <b>kernel</b>. Like the head chef in a restaurant staff.</p>\n<p>Inside the CPU there is a rule: your normal program (app) gets <b>low privilege</b> — it cannot touch hardware directly. Only the <b>kernel</b>, which runs with <b>high privilege</b>, uses the hardware directly.</p>\n<p>When an app needs hardware (e.g., write to disk), it makes a <b>request to the kernel</b>. This is called a <b>system call</b>.</p>",
+      "analogy": "At a railway station, the big officer is the <b>TCO (Train Control)</b>. The driver (app) cannot change signals directly. It tells the TCO, \"I need to go to the platform,\" as a request — the TCO (kernel) changes the track. That’s why two drivers don’t end up on the same track.",
+      "why": "<p>For safety. If every app could touch hardware directly — a single app could accidentally <b>erase all the computer’s data</b>. The kernel exists to <b>check and decide</b> — \"whether you are allowed to access this file or not.\"</p>",
+      "pros": [
+        "Direct control over hardware — fast and powerful.",
+        "Protects apps from hardware complexity (safe).",
+        "Multiple apps can share the same hardware."
+      ],
+      "cons": [
+        "A kernel bug = whole system crash.",
+        "System call overhead (time for each request).",
+        "The kernel itself is complex and heavy."
+      ],
+      "gotchas": [
+        "Just remember: <b>Kernel = OS core, high privilege, hardware in its hands. App = low privilege, makes requests.</b>",
+        "\"Now it’s kernel space vs user space\" — saying Ring 0 vs Ring 3 feels right.",
+        "Running your own code on the kernel (module) = risk to the whole system."
+      ],
+      "terms": [
+        [
+          "Kernel",
+          "OS core — talks directly to hardware, resides in memory at all times."
+        ],
+        [
+          "User space",
+          "Where your apps run (web browsers, games)."
+        ],
+        [
+          "Kernel space",
+          "Where the OS runs — full control over hardware."
+        ],
+        [
+          "Privilege level",
+          "CPU’s division of power — who can use how much authority (Ring 0 = OS, Ring 3 = app)."
+        ]
+      ],
+      "where": [
+        [
+          "OS core",
+          "Like the Linux kernel, Windows NT kernel — the core of every OS."
+        ],
+        [
+          "Safety",
+          "Ring 0 vs Ring 3 — this is how apps are restricted from the internet."
+        ],
+        [
+          "Interview",
+          "\"user space vs kernel space?\" — answer the direct difference."
+        ]
+      ],
+      "visualCap": "App runs with low privilege — cannot access hardware directly. Kernel runs with high privilege — can do everything.",
+      "codeSwap": [
+        [
+          "// Kernel vs app ko samjho — ye privileges ka farak hai.",
+          "// Understand kernel vs app — it's a difference of privileges."
+        ],
+        [
+          "// App: soch samajh ke kuch mangta hai (request)",
+          "// App: asks for something deliberately (request)"
+        ],
+        [
+          "// App directly hardware nahi chhod sakta:",
+          "// An app can't touch the hardware directly:"
+        ],
+        [
+          "// sirf kernel hi disk tak jaata hai",
+          "// only the kernel reaches the disk"
+        ],
+        [
+          "// OS check karta hai hona chahiye",
+          "// The OS checks it should be there"
+        ],
+        [
+          "if (!canAccess(path)) throw 'Allowed nahi';",
+          "if (!canAccess(path)) throw 'Not allowed';"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "sab apps hardware share kar sakti hain",
+          "all apps can share the hardware"
+        ],
+        [
+          "app → kernel ko kaam ka request",
+          "app → request work from the kernel"
+        ],
+        [
+          "Kernel ke faayde",
+          "Benefits of the kernel"
+        ],
+        [
+          "HIGH privilege · hardware pe pura control",
+          "HIGH privilege · full control of the hardware"
+        ],
+        [
+          "LOW privilege · hardware na chhoo saken",
+          "LOW privilege · can't touch the hardware"
+        ]
+      ]
+    },
+    "boot-process": {
+      "desc": "Power on → BIOS/UEFI (hardware check, find boot device) → Bootloader (GRUB loads kernel) → Kernel (initializes drivers, mounts filesystem) → Init/systemd (starts system services) → Login shell / Desktop. This is what happens before you see the login screen.",
+      "q": "Explain what happens from the moment you press the power button to when the OS is ready.",
+      "what": "<p>Press power → from start to <b>OS ready</b> is a single line:</p>\n<p><b>1. Power on</b> → <b>BIOS/UEFI</b> performs hardware check (RAM/disk on), finds the boot device.</p>\n<p><b>2. Bootloader</b> (GRUB) — extracts the kernel from disk into memory, then runs it.</p>\n<p><b>3. Kernel</b> — starts itself: loads drivers (keyboard, disk), mounts filesystem (prepares disk), sets up memory.</p>\n<p><b>4. init/systemd</b> — first user-space process; the rest of the services (wifi, sound) are its children.</p>\n<p><b>5. Login screen</b> — now you can log in.</p>",
+      "analogy": "Morning waking sequence:<br><b>1.</b> As soon as you wake, check — water, electricity (BIOS).<br><b>2.</b> Take out the school bag — the books you need (bootloader pulls the kernel).<br><b>3.</b> Teacher arrives to manage the class (kernel init).<br><b>4.</b> Monitor/children register (systemd) and other services start.<br><b>5.</b> Bell — you start work (login).",
+      "why": "<p>Because a computer cannot jump straight to the OS — <b>the hardware does not automatically invoke the OS</b>. The CPU must first decide: what to do, where to find the kernel on the disk, how to set up memory. <b>This sequence ensures</b> that everything happens in the correct order — otherwise the computer would fail.</p>",
+      "pros": [
+        "Order guaranteed — everything knows what runs first.",
+        "Hardware checked first (hot boot = immediate failure).",
+        "systemd = a parent that manages all services."
+      ],
+      "cons": [
+        "Many steps — if one fails, boot breaks.",
+        "BIOS/UEFI themselves have complex setup.",
+        "In dual-boot, the bootloader update must be done correctly."
+      ],
+      "gotchas": [
+        "Just remember: <b>Power → BIOS → Bootloader → Kernel → init → Login</b>.",
+        "<code>UEFI</code> is new & secure, <code>BIOS</code> is old — mention the difference in interviews.",
+        "Running <code>update-grub</code> makes GRUB show the new OS."
+      ],
+      "terms": [
+        [
+          "BIOS/UEFI",
+          "Computer's first software that \"wakes up\" the machine — OS is not running yet."
+        ],
+        [
+          "Bootloader",
+          "Small program that loads the kernel into memory and runs it (GRUB)."
+        ],
+        [
+          "Kernel init",
+          "When the kernel starts — it sets up drivers, filesystem, memory."
+        ],
+        [
+          "init/systemd",
+          "First OS service — all other background processes are its children."
+        ],
+        [
+          "UEFI",
+          "New BIOS — fast, safer (secure boot). The old BIOS."
+        ]
+      ],
+      "where": [
+        [
+          "Real boot",
+          "<code>dmesg</code> — shows all kernel boot lines."
+        ],
+        [
+          "Dual-boot",
+          "GRUB — asks the user which OS to boot."
+        ],
+        [
+          "Fix",
+          "If the boot fails (black screen), you need to repair the GRUB bootloader."
+        ],
+        [
+          "Interview",
+          "\"From power to login?\" — answer using this 5-step sequence."
+        ]
+      ],
+      "visualCap": "Boot flow: Power → BIOS → Bootloader → Kernel → systemd → Login.",
+      "codeSwap": [
+        [
+          "// Boot process ka order — chalte kram ko yaad rakho.",
+          "// The order of the boot process — remember the sequence."
+        ],
+        [
+          "'Bootloader (GRUB) — kernel ko RAM me load karo',",
+          "'Bootloader (GRUB) — load the kernel into RAM',"
+        ],
+        [
+          "'systemd — pehli service, baaki services start',",
+          "'systemd — the first service, then the rest of the services start',"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "UEFI (Secure Boot) = BIOS ka naya, safe version",
+          "UEFI (Secure Boot) = the new, safe version of BIOS"
+        ],
+        [
+          "har box OS ready hone ke liye zaroori hai",
+          "every box is needed for the OS to be ready"
+        ]
+      ]
+    },
+    "process-vs-thread": {
+      "q": "What is the difference between a process and a thread? What resources does each own?",
+      "qsub": "Why is creating a thread much cheaper than creating a process? What does fork() do under the hood?",
+      "what": "<p><b>Process</b> = a small \"house\" where a program lives. If you run two programs, you get two separate houses — one has no idea what’s inside the other’s house.</p>\n<p><b>Thread</b> = a worker inside the same house. Many people (threads) can live in one house, all sharing the same kitchen (memory).</p>\n<p>The only difference: <b>a process does not share the house, a thread shares the house.</b></p>",
+      "analogy": "Rainy day — a house with 3 brothers (threads). All share the same kitchen, so if one makes tea, all three will drink it. The neighbor next door (another process) has a separate kitchen; we cannot touch it.",
+      "why": "<p>A web page is a <b>process</b>. If a single person handled the entire page, a heavy task would freeze the page. Therefore the browser keeps multiple <b>threads</b> — one thread handles the UI, another handles the network.</p>",
+      "pros": [
+        "Processes are separate — if one crashes, the other stays safe.",
+        "Threads are cheap — no need to build a new house, just share the kitchen.",
+        "Process = safety, Thread = speed."
+      ],
+      "cons": [
+        "Two processes cannot signal each other directly (need IPC).",
+        "If a thread makes a mistake, the whole process can crash.",
+        "Coordinating threads (synchronization) is difficult."
+      ],
+      "gotchas": [
+        "Just remember: <b>process = separate house, thread = same house. Everything else follows from that.</b>",
+        "\"Is a Web Worker a virtual thread?\" — No, they are real OS threads, just created through the browser.",
+        "In an interview say: a process has its own memory, a thread shares memory — that’s the direct answer."
+      ],
+      "terms": [
+        [
+          "Process",
+          "A program that is running in memory. It has its own house (memory), its own papers (files), everything of its own."
+        ],
+        [
+          "Thread",
+          "A worker inside a process. A process can have many threads, all living in the same house."
+        ],
+        [
+          "Thread-safe",
+          "When multiple threads access the same thing, everything still works correctly."
+        ]
+      ],
+      "where": [
+        [
+          "Web Worker",
+          "Heavy computation worker thread to keep the UI from freezing."
+        ],
+        [
+          "Service Worker",
+          "Background thread of the browser — notifications, caching."
+        ],
+        [
+          "Interview",
+          "\"On a page with two heavy tasks — why does the main thread freeze?\" — answer: both run on the same thread."
+        ]
+      ],
+      "visualCap": "Process: separate houses, cannot touch each other. Thread: people in the same house, share everything.",
+      "codeSwap": [
+        [
+          "// Ek hi page (process) ke andar kai threads kaam kar sakte hain.",
+          "// Several threads can work inside a single page (process)."
+        ],
+        [
+          "// kyunki worker alag thread hai, UI ko jam nahi karta.",
+          "// because a worker is a separate thread, it doesn't freeze the UI."
+        ],
+        [
+          "// UI kaam (scroll, click) is beech bhi chalta rahega —",
+          "// UI work (scroll, click) keeps running during this too —"
+        ],
+        [
+          "// Web Worker = alag thread, lekin same page ka.",
+          "// Web Worker = a separate thread, but of the same page."
+        ],
+        [
+          "// Browser ek process hai.",
+          "// The browser is one process."
+        ],
+        [
+          "worker.postMessage('kaam shuru');   // UI thread -> wo thread",
+          "worker.postMessage('start work');   // UI thread -> that thread"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "kitchen (memory) — teeno share karte hain",
+          "kitchen (memory) — all three share it"
+        ],
+        [
+          "✗ A chalti hoke B ko nahi chhed sakta",
+          "✗ A, while running, can't poke B"
+        ],
+        [
+          "1 PROCESS — ek hi ghar, kai threads",
+          "1 PROCESS — one house, many threads"
+        ],
+        [
+          "✓ ek ne badla to sabko dikha",
+          "✓ one changes it and everyone sees it"
+        ],
+        [
+          "2 PROCESS — alag ghar",
+          "2 PROCESS — separate house"
+        ]
+      ]
+    },
+    "pcb": {
+      "desc": "Data structure the OS maintains for each process — PID, state, CPU registers, memory maps, open files.",
+      "q": "What information is stored in a Process Control Block? Why does the OS need it?",
+      "what": "<p>OS has to keep complete information about each process — not just the name, everything. This information resides in a <b>packed file</b>, which is called a <b>PCB</b>.</p>\n<p>When a process is created (an app opens), the OS gives it a PCB — like a file created at school admission.</p>",
+      "analogy": "The school office keeps a file for each student — name, roll number, marks, what mischief they did. When the student (process) is working, the entire file is with the office (OS).",
+      "why": "<p>The CPU leaves one process for another (context switch). When it returns, it needs to know where it left off. The PCB is that note — \"left here, resume here.\"</p>",
+      "pros": [
+        "All information about a process is in one place — the OS doesn't have to search.",
+        "The CPU knows where to resume.",
+        "Debugging/management is easy."
+      ],
+      "cons": [
+        "PCBs consume memory (a little for each process).",
+        "Managing the PCB list itself is a task.",
+        "The full structure of all information must be remembered."
+      ],
+      "gotchas": [
+        "Just remember: <b>PCB = a file for a process that contains its entire state (where it is, where it left off).</b>",
+        "Context switch = loading/unloading CPU registers to/from the PCB.",
+        "In an interview, don't list every field — say: <b>identity + state + registers + files + memory</b>."
+      ],
+      "terms": [
+        [
+          "PID",
+          "Each process's own number (like an ID card number)."
+        ],
+        [
+          "PCB",
+          "Process Control Block — the OS's record that holds the complete history of each process."
+        ],
+        [
+          "Registers",
+          "Small containers inside the CPU where the currently executing data resides."
+        ]
+      ],
+      "where": [
+        [
+          "Debugging",
+          "\"Why is the app hanging?\" — the OS checks the PCB state (pending/stopped)."
+        ],
+        [
+          "Signal",
+          "Sending SIGTERM changes the state directly in the PCB."
+        ],
+        [
+          "Interview",
+          "\"What is saved during a context switch?\" — answer: the PCB's registers/state."
+        ]
+      ],
+      "visualCap": "Each process has a PCB file — the OS stores everything in it.",
+      "codeSwap": [
+        [
+          "// Jab app switch hota hai, CPU is class ki tarah hata deta hai,",
+          "// When the app switches, the CPU removes it like this class,"
+        ],
+        [
+          "// aur jab wapas aata hai, same values wapas rakh deta hai.",
+          "// and when it comes back, it puts the same values back."
+        ],
+        [
+          "// PCB ko samjho — OS har app ki yeh file rakhta hai.",
+          "// Understand the PCB — the OS keeps this file for every app."
+        ],
+        [
+          "// JS mein socho to kuch aisa:",
+          "// Think of it in JS like this:"
+        ],
+        [
+          "// abhi kya ho raha hai",
+          "// what's happening right now"
+        ],
+        [
+          "// kiska beta hai",
+          "// whose child it is"
+        ],
+        [
+          " CPU kahan tha",
+          " where the CPU was"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "OS ke paas har process ki aisi ek file",
+          "The OS keeps one such file for every process"
+        ],
+        [
+          "PCB — wo packed file OS ke paas",
+          "PCB — that packed file the OS holds"
+        ],
+        [
+          "yeh save hua = kahan se uthana",
+          "this was saved = where to resume from"
+        ],
+        [
+          "registers (CPU ka data)",
+          "registers (the CPU's data)"
+        ],
+        [
+          "PCB mein likhta hai",
+          "Writes into the PCB"
+        ],
+        [
+          "OS iska sab kuch",
+          "All of this belongs to the OS"
+        ]
+      ]
+    },
+    "context-switching": {
+      "desc": "The OS saves the current process state and loads another process state — enables multitasking but has overhead.",
+      "what": "<p>The CPU does only one task at a time, but we need to show that the computer runs everything simultaneously.</p>\n<p>The trick is: the CPU <b>very quickly</b> drops one process, grabs another, then grabs the first again. Every time it \"drops\" it writes a note — <b>I was here up to this point</b>. Writing that note and reading the other note is what a <b>context switch</b> is.</p>",
+      "analogy": "Several people are reading books together, but there is only one chair. Whenever someone leaves the chair, they place a bookmark on the page of their book. Switching seats takes about 2 seconds (overhead), but everyone feels like they are all reading.",
+      "why": "<p>Without it, if you run one app, everything else will freeze (stop). Context switching is the magic of multitasking — <b>the switch happens so fast that you don’t notice it.</b></p>",
+      "pros": [
+        "Multiple apps can run on a single CPU.",
+        "Each process gets a little bit of time.",
+        "The user perceives everything as responsive."
+      ],
+      "cons": [
+        "Each switch incurs overhead (time waste).",
+        "More switches = more waste — \"context switch thrash\".",
+        "Thread switches are cheap, process switches are expensive (memory also has to be changed)."
+      ],
+      "gotchas": [
+        "Just remember: <b>context switch = leaving a bookmark, picking up another's book.</b>",
+        "<b>Process switch > thread switch</b> overhead — because the entire memory map of the process must be changed.",
+        "Interview: \"If a single heavyweight app runs alone, there will be no switch — everything freezes.\""
+      ],
+      "terms": [
+        [
+          "Context switch",
+          "CPU leaving one process for another — and remembering the way back."
+        ],
+        [
+          "Context",
+          "The \"where\" — the saved state from which to resume."
+        ],
+        [
+          "Overhead",
+          "The extra effort/time required to perform the switch."
+        ]
+      ],
+      "where": [
+        [
+          "Async JS",
+          "<code>await</code> is also a context switch — stack suspend, then resume."
+        ],
+        [
+          "Browser tabs",
+          "Each tab is a process — switching tabs triggers a context switch."
+        ],
+        [
+          "Interview",
+          "\"How does multitasking work?\" — the answer lies in the speed of this switch."
+        ]
+      ],
+      "visualCap": "A chair (CPU), many processes. Each time a process leaves, its bookmark (context) is saved and picked up elsewhere.",
+      "codeSwap": [
+        [
+          "// framework ko \"pause\" karke doosra chalao, phir wapas.",
+          "// pause the framework and run the other one, then come back."
+        ],
+        [
+          "// Context switch ko samjho — ek heavy kaam ke beech",
+          "// Understand the context switch — in the middle of a heavy task"
+        ],
+        [
+          "// Ye setTimeouts wale \"pause/switch\" hi OS ka",
+          "// Those setTimeout \"pause/switch\" bits are the OS's own"
+        ],
+        [
+          "// bade scale pe hai — bass microseconds mein.",
+          "// at a big scale — in just microseconds."
+        ],
+        [
+          " B pakdo",
+          " catch B"
+        ],
+        [
+          " wapas A",
+          " back to A"
+        ],
+        [
+          " A chhod",
+          " leave A"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "overhead: switch mein thoda time+memory jaata hai",
+          "overhead: a switch costs a bit of time+memory"
+        ],
+        [
+          "Process 1 CHAL RAHA",
+          "Process 1 RUNNING"
+        ],
+        [
+          "PCB2 se uthna baaki",
+          "Picking up from PCB2 is left"
+        ],
+        [
+          "Process 2 ruki hui",
+          "Process 2 is waiting"
+        ]
+      ]
+    },
+    "process-states": {
+      "q": "Describe the lifecycle of a process. Draw the state diagram and explain each transition.",
+      "what": "<p>Every process has a small \"life\" — several phases that occur one after another:</p>\n<p><code>New</code> (created) → <code>Ready</code> (ready, but waiting) → <code>Running</code> (CPU assigned) → <code>Waiting</code> (waiting for something) → <code>Running</code> back → <code>Terminated</code> (finished).</p>\n<p>The most important transition: <b>Running ⇄ Waiting</b>. When a process waits for I/O (for example reading a file), the CPU releases it and gives the CPU to another process.</p>",
+      "analogy": "In a bank there is one counter, many customers. Every customer is in <b>Waiting (queue)</b>. When the counter is free, one becomes <b>Running</b>. If that customer needs a <b>passport copy</b> (I/O) that will arrive in 2 minutes — they move to <b>Waiting</b>, and the counter is given to another. When the copy arrives, they go back to the queue.",
+      "why": "<p>The CPU should not sit idle. When a process <code>pareshan</code> (I/O wait), release it and give the CPU to another process. This keeps the CPU at \"100% work\", no one stays idle.</p>",
+      "pros": [
+        "The state tells you what the process is currently doing.",
+        "CPU does not stay idle — give it to another process during I/O wait.",
+        "The diagram is easy to remember — just 4-5 boxes."
+      ],
+      "cons": [
+        "The state can change in real hardware at any moment (race conditions).",
+        "Remembering many states and transitions is difficult.",
+        "Real OSes have many sub-states and queues."
+      ],
+      "gotchas": [
+        "Just remember: <b>Running ⇄ Waiting is the gate where I/O occurs.</b>",
+        "<b>Waiting means separated from the processor.</b> It is also called \"blocked\".",
+        "Interview: \"How many times does a process go from Running to Waiting?\" — on every I/O/sleep."
+      ],
+      "terms": [
+        [
+          "Ready",
+          "Ready to work, but the CPU is not present yet."
+        ],
+        [
+          "Running",
+          "CPU is doing its work — its turn."
+        ],
+        [
+          "Waiting/Blocked",
+          "Waiting for something — input or I/O. The CPU has already released it."
+        ]
+      ],
+      "where": [
+        [
+          "Process manager",
+          "In Linux <code>ps</code> you see S/R/D — these are the states."
+        ],
+        [
+          "Debug hang",
+          "\"App freeze\" — which state? Could be Waiting."
+        ],
+        [
+          "Interview",
+          "\"Why does a process know its CCW?\" — from this state diagram."
+        ],
+        [
+          "Node",
+          "An async function's promise also toggles between Ready and Waiting."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// Process state = ek simple toggle hai.",
+          "// Process state = a simple toggle."
+        ],
+        [
+          "// Ek chhota sa state machine socho:",
+          "// Think of a small state machine:"
+        ],
+        [
+          "// I/O ka wait",
+          "// Waiting on I/O"
+        ],
+        [
+          " I/O aaya → wapas line",
+          " I/O arrived → back in the queue"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "Waiting (I/O wait) khatam → Ready wapas",
+          "Waiting (I/O wait) over → back to Ready"
+        ]
+      ]
+    },
+    "user-vs-kernel-threads": {
+      "q": "What is the difference between user-level and kernel-level threads? What are green threads?",
+      "qsub": "Node.js uses a single kernel thread but handles concurrency. How? How does the thread pool in libuv help?",
+      "what": "<p>There are two types of threads:</p>\n<p><b>Kernel thread</b> — created by the OS. It gets a real CPU core and can run on multiple cores simultaneously. Creation (syscall) takes a little time.</p>\n<p><b>User thread</b> — managed inside the program by the runtime. Creation is cheap, execution is fast — but if a task blocks (I/O), the risk is that the entire program can stop (if one thread blocks, all block).</p>",
+      "analogy": "Kernel thread = your own worker that talks directly to the OS and can dispatch many tasks to separate cores. User thread = household members who divide work themselves — fast, but if one person gets stuck (I/O) the whole house can stop.",
+      "why": "<p>User threads are fast because they don’t need to ask the OS each time. Kernel threads are necessary because they get real CPU cores. A balance of both is needed.</p>",
+      "pros": [
+        "User thread cheap & fast — no syscall.",
+        "User thread can handle hundreds of thousands of tasks on a single thread.",
+        "Kernel thread utilizes real multicore."
+      ],
+      "cons": [
+        "User thread: if one blocks, all block (blocking I/O).",
+        "The OS doesn’t recognize green threads — no scheduler.",
+        "Kernel thread creation is expensive (syscall)."
+      ],
+      "gotchas": [
+        "Just remember: <b>user thread = runtime’s toy (fast, single place); kernel thread = OS’s worker (slower, gets cores).</b>",
+        "JS is single-threaded — but async I/O and networking work well because they follow a \"user thread\" model.",
+        "Interview: \"Why is Node fast? concurrency is all non-blocking.\" — that’s the green thread model."
+      ],
+      "terms": [
+        [
+          "Kernel thread",
+          "Created by the OS — can use CPU cores. Heavy, but important."
+        ],
+        [
+          "User thread",
+          "Thread inside the program — depends on the OS (diesel)."
+        ],
+        [
+          "Green thread",
+          "User thread that the runtime manages itself (as in JS/Python)."
+        ]
+      ],
+      "where": [
+        [
+          "Node.js",
+          "The main thread is a user thread; libuv’s thread pool uses kernel threads."
+        ],
+        [
+          "Python/Goroutine",
+          "asyncio/goroutine are also green/user threads."
+        ],
+        [
+          "Interview",
+          "\"Why isn’t JS thread-safe?\" — single user thread, so races don’t occur."
+        ]
+      ],
+      "visualCap": "Kernel: on separate cores. User (green) thread: on a single core, the runtime schedules it.",
+      "codeSwap": [
+        [
+          "// Web Worker = jab sachi kernel thread chahiye (asli core).",
+          "// Web Worker = when you want a true kernel thread (a real core)."
+        ],
+        [
+          "// kyunki JS ek user thread hai jo khud switch karta hai.",
+          "// because JS is a user thread that switches by itself."
+        ],
+        [
+          "// JS hi sabse acha example hai user/green thread ka:",
+          "// JS itself is the best example of user/green threads:"
+        ],
+        [
+          "// Event loop runtime khud sab sambhal leta hai.",
+          "// The event loop runtime handles everything itself."
+        ],
+        [
+          "// Ruka hua promise doosre tasks ko nhi rokta —",
+          "// A paused promise doesn't block other tasks —"
+        ],
+        [
+          "// ye \"bhar\" (I/O) par ruk gaya",
+          "// this paused on \"fill\" (I/O)"
+        ],
+        [
+          "console.log('ye pehle chalta hai');",
+          "console.log('this runs first');"
+        ],
+        [
+          "console.log('data mila');",
+          "console.log('got data');"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "✗ ek task I/O par ruka → ek hi core, sabko rukna",
+          "✗ one task blocked on I/O → one core, everyone has to wait"
+        ],
+        [
+          "✓ A aur B SAATH chal sakte hain (alag core)",
+          "✓ A and B CAN run together (separate cores)"
+        ],
+        [
+          "USER (green) threads — ek core",
+          "USER (green) threads — one core"
+        ],
+        [
+          "sab ek hi core par baant raha",
+          "everything shared on a single core"
+        ]
+      ]
+    },
+    "fork-exec": {
+      "what": "<p>The process needs to do a new task (like running a good program).</p>\n<p>Two steps are required:</p>\n<p><b>1. fork()</b> — create a \"copy of the game\" (a new process). Now there are two identical programs — parent and child.</p>\n<p><b>2. exec()</b> — replace the old code inside that new copy with a <b>new program</b>. The child's job becomes different.</p>\n<p>In short: to start a new thing, fork and then exec.</p>",
+      "analogy": "Make a photocopy of a book (fork) — now there are two pages with the same content. Then tear one page and WRITE the new book's content on it (exec). The photocopy is cheap because the actual copying happens only when something changes (copy-on-write).",
+      "why": "<p>The OS wants a \"cheap copy\" for the new program rather than creating a \"brand-new empty world\" — building an empty world is expensive. So it first makes a copy (fork, cheap), then swaps in a part (exec). That's it.</p>",
+      "pros": [
+        "fork is cheap because of copy-on-write.",
+        "Child is a separate process = crash isolation.",
+        "A cheap way to run a large program."
+      ],
+      "cons": [
+        "fork+exec both add overhead (memory + time).",
+        "Zombie/orphan — problems if you don't manage them.",
+        "Copy is also a bit expensive the first time it is touched."
+      ],
+      "gotchas": [
+        "Just remember: <b>fork = copy, exec = change the code of that copy.</b>",
+        "<b>Zombie</b> = child finished and parent did not call wait(); <b>orphan</b> = parent exited first.",
+        "Interview: \"why exec() after fork? because creating a new process from scratch is expensive.\""
+      ],
+      "terms": [
+        [
+          "fork()",
+          "Create a new copy of a process — essentially becoming a second process running the same program."
+        ],
+        [
+          "exec()",
+          "Replace the old program inside that new copy with a new program."
+        ],
+        [
+          "Copy-on-write",
+          "A cheap method: the copy exists only in name; actual copying occurs only when something is modified."
+        ]
+      ],
+      "where": [
+        [
+          "Node child_process",
+          "subprocess.fork() is a wrapper around OS fork+exec."
+        ],
+        [
+          "Shell",
+          "<code>cmd &</code> in the terminal — background process = fork+exec."
+        ],
+        [
+          "Interview",
+          "\"How <code>pwd | wc</code> works\" — first a pipe, then fork+exec."
+        ]
+      ],
+      "visualCap": "fork: makes a copy. exec: changes the code inside that copy — now a new program.",
+      "codeSwap": [
+        [
+          "// fork ≈ nayi copy jisme naya program (exec ki tarah) chalta hai",
+          "// fork ≈ a new copy in which a new program (like exec) runs"
+        ],
+        [
+          "// child.js crash ho bhi jae to parent safe (process isolation).",
+          "// even if child.js crashes, the parent is safe (process isolation)."
+        ],
+        [
+          "// parent apna kaam chalu rakhta hai — child alag process.",
+          "// the parent keeps doing its work — the child is a separate process."
+        ],
+        [
+          "// JS mein exact fork() nahi, par zaroori idea:",
+          "// JS has no exact fork(), but the essential idea:"
+        ],
+        [
+          " \"naya dabba banao phir alag kaam\" = Web Worker / child_process.",
+          " \"make a new box and do the work separately\" = Web Worker / child_process."
+        ],
+        [
+          "child.send({ work: 'do heavy kaam' });",
+          "child.send({ work: 'do heavy work' });"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "sasta copy (COW)",
+          "cheap copy (COW)"
+        ],
+        [
+          "chalu rakha",
+          "kept it on"
+        ],
+        [
+          "apna kaam",
+          "its own job"
+        ],
+        [
+          "ALAG ab",
+          "SEPARATE now"
+        ],
+        [
+          "chalu",
+          "on"
+        ]
+      ]
+    },
+    "stack-vs-heap": {
+      "what": "<p>When a program runs, it gets memory in two parts:</p>\n<p><b>Stack</b> — the fastest. On every function call a \"frame\" is placed on top, and removed as soon as it returns. <b>LIFO</b> (last in, first out) — one on top of another. Automatic, no one deletes it manually.</p>\n<p><b>Heap</b> — the largest. Here you request memory yourself (object, array) in any order. <b>Slow</b>, and you have to free it yourself (GC or manually).</p>",
+      "analogy": "Plate stack (stack) — always keep on top, remove from the top. Fast and fixed.<br>Store-room (heap) — place any item in any corner, take it when needed. Large space, but no ordering rule — many empty spots scattered.",
+      "why": "<p>The stack is fast because <b>it is simply that way</b> — just push/pop, no bookkeeping. The heap exists so that <b>large & dynamic data</b> (whose size isn’t known beforehand) can reside there. Each has its own purpose — so they are separate.</p>",
+      "pros": [
+        "Stack: fast, automatic, cheap to access.",
+        "Stack: no addressing strategy needed (fixed).",
+        "Heap: large, dynamic size, any order."
+      ],
+      "cons": [
+        "Stack: small — deep recursion can crash.",
+        "Heap: slow allocation, and must be freed (leak).",
+        "Heap: fragmentation — free space gets scattered."
+      ],
+      "gotchas": [
+        "Just remember: <b>Stack = plate stack (fast, top-top). Heap = store-room (large, request yourself).</b>",
+        "Small primitives usually on the stack, <code>new</code>/objects on the heap — but this is an implementation detail.",
+        "Interview: \"why is stack faster?\" — because LIFO, simple addressing, cache-friendly."
+      ],
+      "terms": [
+        [
+          "Stack",
+          "Fast part of memory — LIFO, automatic. Function call, local variables. Small (fixed size)."
+        ],
+        [
+          "Heap",
+          "Large part of memory — dynamic, you allocate it yourself. Slow, but large."
+        ],
+        [
+          "Stack overflow",
+          "Stack exhausted — deep recursion → crash."
+        ],
+        [
+          "Fragmentation",
+          "Heap has many small free fragments scattered — a new large block may not be available."
+        ]
+      ],
+      "where": [
+        [
+          "Recursion",
+          "Very deep recursion → stack overflow crash."
+        ],
+        [
+          "Objects",
+          "<code>new</code>, objects, closures data → heap."
+        ],
+        [
+          "Interview",
+          "\"stack vs heap\" — LIFO+fast+auto vs large+slow+manual."
+        ]
+      ],
+      "visualCap": "Stack: push/pop from the top, fast, small. Heap: anywhere, large, you have to request it.",
+      "codeSwap": [
+        [
+          "// Stack apne aap hata deta hai (function khatam = frame gaya).",
+          "// The stack cleans up by itself (function ends = frame gone)."
+        ],
+        [
+          "// Heap waalo ko garbage collector free karta hai.",
+          "// The garbage collector frees the heap ones."
+        ],
+        [
+          "// Stack vs Heap — JS mein aasaan dikhta hai.",
+          "// Stack vs Heap — looks easy in JS."
+        ],
+        [
+          "// a, b, return address — STACK par frames",
+          "// a, b, return address — frames on the STACK"
+        ],
+        [
+          "// heap par (new/object)",
+          "// on the heap (new/object)"
+        ],
+        [
+          "// stack par",
+          "// on the stack"
+        ],
+        [
+          "// heap par",
+          "// on the heap"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "khud maango / free karo",
+          "ask for / free it yourself"
+        ],
+        [
+          "koi bhi order mein",
+          "in any order"
+        ],
+        [
+          "pop upar se",
+          "pop from the top"
+        ],
+        [
+          "bikhri khaali jagah = frag",
+          "scattered empty space = fragmentation"
+        ],
+        [
+          "push upar,",
+          "push up,"
+        ]
+      ]
+    },
+    "virtual-memory": {
+      "what": "<p>Every program thinks that its <b>entire RAM belongs only to it</b> — for example from 0 to 4GB, all of it is theirs.</p>\n<p>But this is <b>false</b>. The OS creates a <b>virtual address space</b> — a fake, safe, larger space where the program runs. The real RAM is elsewhere.</p>\n<p><b>Page table</b> is the translator that tells: \"your data at 0x4000 is actually in RAM at 0x9000.\" The program does not care about the real world. This provides <b>isolation</b> — one program cannot see another program's memory.</p>",
+      "analogy": "In a large <b>warehouse (RAM)</b>, many people work on separate shelves. Everyone is given a <b>map (page table)</b> that shows where their item is. No one can look at another's shelf (isolation), and no one worries about the real layout. If an item is outside the warehouse (disk), the map later reports \"now found\" (page fault).",
+      "why": "<p>Two major benefits: (1) <b>Isolation</b> — a program's mistake does not corrupt another program's data. (2) <b>Larger programs</b> — programs can appear larger than physical memory because the unused portion can reside on disk (if more than RAM is needed).</p>",
+      "pros": [
+        "Isolation — a program cannot tamper with another program's data.",
+        "The program can do large work even on a small amount of RAM.",
+        "Each program sees \"full RAM\" — simple."
+      ],
+      "cons": [
+        "Each access incurs a page-table lookup (mitigated by TLB).",
+        "Page faults are slow — data must be fetched from disk.",
+        "Page tables themselves consume memory."
+      ],
+      "gotchas": [
+        "Just remember: <b>virtual = fake large address, physical = real RAM. Page table sits in between.</b>",
+        "\"Program requested 2 GB memory\" — that could be <b>virtual</b>, actual may be less.",
+        "Interview: \"What is ASLR?\" — random virtual addresses make attacks harder."
+      ],
+      "terms": [
+        [
+          "Virtual address",
+          "The address the program sees (e.g., 0x4000) — not real."
+        ],
+        [
+          "Physical address",
+          "The actual RAM address — the one on the hardware."
+        ],
+        [
+          "Page tables",
+          "A small book — maps each virtual address to a physical one."
+        ],
+        [
+          "Isolation",
+          "Each program has its own separate area — others cannot touch it."
+        ]
+      ],
+      "where": [
+        [
+          "OS",
+          "Linux/Windows give each program a virtual space."
+        ],
+        [
+          "Docker",
+          "Container isolation uses the same concept."
+        ],
+        [
+          "Interview",
+          "\"How can a program be larger than 4 GB RAM?\" — virtual memory plus disk."
+        ]
+      ],
+      "visualCap": "The program sees a large fake space; the page table maps it onto real RAM.",
+      "codeSwap": [
+        [
+          "// use hota hi: har memory access isi se guzarta hai",
+          "// it's used because every memory access passes through it"
+        ],
+        [
+          "// OS asli RAM par usko thik-kar deta hai.",
+          "// The OS fixes it up on the real RAM."
+        ],
+        [
+          "// Program ko fake bada space milta hai,",
+          "// The program gets a fake big space,"
+        ],
+        [
+          "// Virtual memory = ek map (page table).",
+          "// Virtual memory = a map (page table)."
+        ],
+        [
+          "// abhi disk par — useless",
+          "// still on disk — useless"
+        ],
+        [
+          " phir retry",
+          " then retry"
+        ],
+        [
+          "else throw 'PAGE FAULT — disk se uthao'; // then retry",
+          "else throw 'PAGE FAULT — fetch from disk'; // then retry"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "poori RAM meri lagti hai",
+          "I feel like all the RAM is mine"
+        ],
+        [
+          "Program ka nazariya",
+          "The program's point of view"
+        ],
+        [
+          "doosra program alag jagah",
+          "the other program in a different place"
+        ],
+        [
+          "0x8000 (doosra program)",
+          "0x8000 (another program)"
+        ],
+        [
+          "Asli RAM",
+          "Real RAM"
+        ]
+      ]
+    },
+    "paging": {
+      "qsub": "What is the TLB (Translation Lookaside Buffer)? Why is it critical for performance?",
+      "what": "<p>Divide memory into small same-size blocks (like pages of a book). The block on the virtual side is called a <b>page</b>, and the block on the physical (RAM) side is called a <b>frame</b>.</p>\n<p><b>Page table</b> tells which page resides in which frame. When a program accesses a page that is not in RAM (it is on disk), a <b>page fault</b> occurs — the OS fetches it from disk into RAM, then the program continues.</p>",
+      "analogy": "In a library you keep each book's <b>pages</b> in drawers — each drawer has a number (frame). You keep a register (page table) like \"page 5 = drawer 3\". When a page is requested and it is not in a drawer (it is in the store room/disk), you have to bring it from there (page fault) — it takes time.",
+      "why": "<p>Paging provides <b>isolation and flexibility</b>. Not all pages of a program need to be in RAM — only the needed ones are loaded. This allows large programs to run on small RAM. And fixed-size blocks eliminate <b>external fragmentation</b> (no need to search for a large free region).</p>",
+      "pros": [
+        "All external fragmentation eliminated — all blocks are fixed.",
+        "A program does not need to keep all its pages in RAM.",
+        "Isolation — each program's pages are separate."
+      ],
+      "cons": [
+        "Page fault is slow (disk I/O).",
+        "Internal fragmentation — some waste in the last page.",
+        "Each access incurs page table lookup time."
+      ],
+      "gotchas": [
+        "Just remember: <b>page = virtual block, frame = RAM block, page fault = not in RAM → from disk.</b>",
+        "\"Page vs frame\" — the difference is virtual vs physical.",
+        "Interview: \"TLB miss?\" — page table is looked up in real RAM, which is slow."
+      ],
+      "terms": [
+        [
+          "Page",
+          "Virtual memory's small portion (fixed, e.g. 4KB)."
+        ],
+        [
+          "Frame",
+          "The corresponding small portion of actual RAM."
+        ],
+        [
+          "Page table",
+          "Map: page → frame."
+        ],
+        [
+          "Page fault",
+          "Desired page not in RAM — had to fetch from disk (slow)."
+        ],
+        [
+          "TLB",
+          "Small fast cache of the page table — recent translations."
+        ]
+      ],
+      "where": [
+        [
+          "Modern OS",
+          "All paging (pages + frames) is used."
+        ],
+        [
+          "TLB",
+          "CPU keeps a TLB cache for every page-table lookup — speed."
+        ],
+        [
+          "Interview",
+          "\"what is page?\" \"what is frame?\" — the exact block names."
+        ]
+      ],
+      "visualCap": "Page table: virtual page → physical frame. Not in RAM → page fault → from disk.",
+      "codeSwap": [
+        [
+          "// Page fault: program ne kuch manga jo RAM mein nahi.",
+          "// Page fault: the program asked for something that isn't in RAM."
+        ],
+        [
+          "// faulty page ko baar-baar load karna padta.",
+          "// the faulty page would have to be loaded again and again."
+        ],
+        [
+          "// Har memory access isi se hota hai — isliye",
+          "// Every memory access goes through this — that's why"
+        ],
+        [
+          "// PAGE FAULT — slow: disk se load karo",
+          "// PAGE FAULT — slow: load from disk"
+        ],
+        [
+          "// Yeh flow hota hai:",
+          "// This is the flow:"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "disk se page 2 yahan bhejo",
+          "send page 2 from disk here"
+        ],
+        [
+          "page 2 RAM mein nahi →",
+          "page 2 is not in RAM →"
+        ],
+        [
+          "PAGE FAULT → disk se",
+          "PAGE FAULT → from disk"
+        ],
+        [
+          "f2 (kisi aur ka)",
+          "f2 (someone else's)"
+        ],
+        [
+          "khaali",
+          "empty"
+        ]
+      ]
+    },
+    "segmentation": {
+      "what": "<p>Paging divides memory into <b>fixed blocks</b>, but <b>segmentation</b> divides it into logical parts — <b>code, data, stack</b> as separate segments.</p>\n<p>Each segment has its own <b>base</b> (where it starts) and <b>limit</b> (how long it is). The program address is written as: <code>(segmentNo, offset)</code>. The hardware checks — if <code>offset &lt; limit</code> is not true, a segfault occurs!</p>\n<p>Unlike paging where blocks are fixed, segments can be small or large — therefore <b>external fragmentation</b> occurs (scattered free space).</p>",
+      "analogy": "Paging = all drawers are the same size. Segmentation = each item has its own separate container — a box for the recipe, a box for spices, a box for vegetables. Each box has its own size and label (base+limit). If you need to place a new large box and there is no contiguous free space, you get a problem (fragmentation).",
+      "why": "<p>Logical grouping: the program knows that code, data, and stack are separate — segmentation provides that structure in memory as well. Each segment also has its own <b>limit</b>, so if the program accesses an incorrect offset, a <b>immediate error (segfault)</b> occurs — preventing data corruption. However, drawback: sizes differ, leading to scattered free space.</p>",
+      "pros": [
+        "Logical — separate area for code, data, and stack.",
+        "The limit catches incorrect access immediately (segfault).",
+        "Sharing — two processes can share a segment."
+      ],
+      "cons": [
+        "External fragmentation — scattered free space.",
+        "Remembering / allocating each segment's length.",
+        "Compaction (bringing segments together) may be required."
+      ],
+      "gotchas": [
+        "Just remember: <b>Segment = logical part (code/data), defined by base+limit.</b>",
+        "Paging → internal fragmentation, Segmentation → external fragmentation.",
+        "Modern Linux uses <b>paging</b>, segmentation is mostly not used."
+      ],
+      "terms": [
+        [
+          "Segment",
+          "Logical part of memory — code, data, stack, etc. (any one part)."
+        ],
+        [
+          "Base",
+          "Starting address of the segment (in RAM)."
+        ],
+        [
+          "Limit",
+          "Length of the segment — how large it is."
+        ],
+        [
+          "External fragmentation",
+          "Scattered free space — a large contiguous area is not available for a new segment."
+        ]
+      ],
+      "where": [
+        [
+          "Segfault",
+          "\"Segmentation fault\" — comes from the limit check."
+        ],
+        [
+          "x86",
+          "Older x86 had segments; now VMM uses paging."
+        ],
+        [
+          "Interview",
+          "\"segmentation vs paging\" — logical vs fixed, external vs internal fragmentation."
+        ]
+      ],
+      "visualCap": "Segments are logical parts. The limit check prevents incorrect access.",
+      "svgSwap": [
+        [
+          "har segment ke apne base+limit",
+          "every segment has its own base+limit"
+        ],
+        [
+          "naye bade segment ko ek saath",
+          "the new big segment all at once"
+        ],
+        [
+          "Program ke segments",
+          "Segments of a program"
+        ],
+        [
+          "jagah nahi milti",
+          "no space is found"
+        ],
+        [
+          "chhoti-badi khaali = external frag",
+          "small and large gaps = external frag"
+        ],
+        [
+          "RAM me rakha",
+          "Kept in RAM"
+        ]
+      ],
+      "codeSwap": [
+        [
+          " asli RAM pata",
+          " knows the real RAM"
+        ],
+        [
+          "throw new Error('SEGFAULT — limit se bahar!');",
+          "throw new Error('SEGFAULT — out of bounds!');"
+        ]
+      ]
+    },
+    "page-replacement": {
+      "desc": "When RAM is full and a new page is needed, the OS must evict one. FIFO, LRU, LFU, Clock algorithm.",
+      "qsub": "Why is LRU difficult to implement in hardware? What is the Clock algorithm and why is it a practical approximation?",
+      "what": "<p>When RAM becomes full and a new page is needed, the OS must <b>evict an old page</b>. Which one should it evict? That is the <b>page replacement strategy</b>.</p>\n<p><b>FIFO</b> — remove the one that arrived first. Simple but not optimal.</p>\n<p><b>LRU</b> — remove the least recently used. <b>Best</b>, because the one that won’t be needed soon is removed. However, tracking time in actual hardware is expensive.</p>\n<p><b>Clock</b> — a practical version of LRU: each page has a \"use bit\". All pages are arranged in a circle; when a page's bit is 0, evict it, otherwise clear the bit and continue.</p>",
+      "analogy": "Office <b>paper tray</b> is full; to add a new sheet, which one should be removed?<br>• FIFO: remove the one that was placed <b>first</b> (even if it is currently in use).<br>• LRU: remove the one that was used <b>least recently</b> (and is not needed now) — more intelligent.",
+      "why": "<p>If the wrong page is evicted (the one that will be needed soon), it will immediately <b>fault again</b> — causing the system to experience repeated page faults: <b>thrashing</b>. Therefore selecting the correct page to evict is essential — evict the page that \"is not needed now\" in LRU style.</p>",
+      "pros": [
+        "LRU provides the best estimate of future accesses — fewer faults.",
+        "FIFO is simple, easy to implement.",
+        "Clock is hardware-friendly LRU approximation."
+      ],
+      "cons": [
+        "LRU exact is expensive — requires tracking on every access.",
+        "FIFO fully exhibits the Belady anomaly.",
+        "Clock is an approximation — not perfect."
+      ],
+      "gotchas": [
+        "Just remember: <b>LRU = evict the least recently used.</b>",
+        "<b>Belady anomaly</b>: FIFO can cause more faults with more frames — LRU does not.",
+        "Interview: \"Why isn’t LRU used in hardware?\" — tracking time is very expensive."
+      ],
+      "terms": [
+        [
+          "Page fault",
+          "The requested page is not in RAM — it must be fetched."
+        ],
+        [
+          "FIFO",
+          "Remove the first arrived page. Simple, but can be wrong."
+        ],
+        [
+          "LRU",
+          "Least Recently Used — evict the page that was used least recently. Best, but expensive."
+        ],
+        [
+          "Belady anomaly",
+          "FIFO can produce more faults when frames increase — the opposite of expectation!"
+        ],
+        [
+          "Clock",
+          "A cheap approximation of LRU — hardware friendly."
+        ]
+      ],
+      "where": [
+        [
+          "Replacement",
+          "OS evicts using LRU/Clock when RAM is full."
+        ],
+        [
+          "Cache",
+          "CPU cache / Redis also use LRU."
+        ],
+        [
+          "Interview",
+          "\"LRU vs FIFO\" — recent vs old, best vs expensive."
+        ]
+      ],
+      "visualCap": "LRU: evicts the least recent page — predicts future accesses.",
+      "codeSwap": [
+        [
+          "// LRU ko samjho — sabse purana use (least recent) nikalo.",
+          "// Understand LRU — evict the least recently used one."
+        ],
+        [
+          "// JS mein main access time track kar ke:",
+          "// In JS, by tracking access time:"
+        ],
+        [
+          "// → 5 (sabse kam recent) — isi ko hatao",
+          "// → 5 (least recent) — remove this one"
+        ],
+        [
+          "// sabse kam recent",
+          "// least recent"
+        ],
+        [
+          " FIFO: pehle jo bhari thi wo (oldest insert) hatao",
+          " FIFO: remove the one that was filled first (oldest insert)"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "LRU: sabse kam recent wala hatao",
+          "LRU: remove the least recent"
+        ],
+        [
+          "FIFO pehle aaya hatata — aksar galat",
+          "FIFO evicts the first one in — often wrong"
+        ],
+        [
+          "RAM frames — ab bhar gayi",
+          "RAM frames — full now"
+        ],
+        [
+          "page 5 hata kar",
+          "after removing page 5"
+        ]
+      ]
+    },
+    "memory-leaks": {
+      "qsub": "Explain the mark-and-sweep algorithm. What is a stop-the-world pause and why is it a problem for latency?",
+      "what": "<p><b>Leak</b> = memory you allocated, but never <b>returned</b> when it is no longer used. The program keeps running while holding onto those objects.</p>\n<p>In GC-enabled languages (JS, Java, Go) the GC automatically finds what is no longer used (unreachable) and frees it. <b>Mark & sweep</b>: start from the root (global) and mark everything reachable; anything not marked is freed.</p>\n<p>However, the GC cannot prevent a leak if an object is still <b>reachable</b> (e.g., data stored in a global array).</p>",
+      "analogy": "In a store-room, someone keeps bringing new items but never puts the old ones in the waste bin. Items (memory) fill every house. The GC is like a cleaner that looks for \"things that are no longer useful (no one points to them)\" and discards them. But if an item is still linked to something, the cleaner won’t discard it — and that is the real leak.",
+      "why": "<p>A leak gradually fills the program’s memory → <b>degradation, crash, or the OS kills it (OOM)</b>. Therefore you should understand: in manual languages (C) you must free yourself, while GC relies on reachability. Also watch out for closures and global hooks.</p>",
+      "pros": [
+        "GC easy — frees itself, no manual mistakes.",
+        "Mark & sweep handles cycles (better than ref-count).",
+        "Reachability provides a clear model."
+      ],
+      "cons": [
+        "Stop-the-world — GC pause adds latency.",
+        "Leak still occurs when an object is reachable.",
+        "Ref-count can leak in cycles (if no weak refs)."
+      ],
+      "gotchas": [
+        "Just remember: <b>leak = reachable memory that never gets removed. GC only frees unreachable memory.</b>",
+        "JS: added event listeners with addEventListener and forgot to remove them → leak.",
+        "Interview: \"mark & sweep vs ref-count\" — ref-count has cycles, sweep has pause."
+      ],
+      "terms": [
+        [
+          "Memory leak",
+          "Heap memory that was allocated but never freed — the program continues to use it."
+        ],
+        [
+          "GC (Garbage Collector)",
+          "Frees objects that are no longer in use automatically."
+        ],
+        [
+          "Mark & sweep",
+          "GC method: start from the root, mark everything reachable; anything not marked is freed."
+        ],
+        [
+          "Stop-the-world",
+          "Program stops while GC runs — pause adds latency."
+        ],
+        [
+          "Reference counting",
+          "Each object has a use-count; when it reaches 0 the object is freed. (Fails with cycles.)"
+        ]
+      ],
+      "where": [
+        [
+          "JS",
+          "Data accumulates in global arrays/closures → leak."
+        ],
+        [
+          "Node",
+          "Large in-memory cache without eviction → OOM."
+        ],
+        [
+          "Interview",
+          "\"How do GC leaks happen?\" — when memory stays reachable; cycles in ref-count."
+        ]
+      ],
+      "visualCap": "GC: mark what is reachable from the root; free the rest that is unreachable. Leak = still reachable.",
+      "codeSwap": [
+        [
+          "// Manual (C) mein: malloc() kar ke free() bhul gaya =",
+          "// In manual (C): malloc() and then forgetting to free() ="
+        ],
+        [
+          "// Leak: reachable rahega → GC free nahi karega.",
+          "// Leak: it stays reachable → GC won't free it."
+        ],
+        [
+          "// global — root se reachable",
+          "// global — reachable from the root"
+        ],
+        [
+          "// asli leak jo GC nahi dega.",
+          "// a real leak that GC won't collect."
+        ],
+        [
+          "// kabhi nahi hat-ta → leak",
+          "// never removed → leak"
+        ],
+        [
+          " Sahi: reuse/trim, ya Map with eviction",
+          " Correct: reuse/trim, or a Map with eviction"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "→ GC use kabhi free nahi karega",
+          "→ GC will never free it"
+        ],
+        [
+          "data ko pakde hai → reachable",
+          "holds the data → reachable"
+        ],
+        [
+          "root se na jude = kachra",
+          "not connected to the root = garbage"
+        ],
+        [
+          "global array abhi bhi",
+          "the global array is still there"
+        ],
+        [
+          "GC ka nazariya",
+          "The GC's point of view"
+        ]
+      ]
+    },
+    "scheduling-goals": {
+      "q": "What are the goals of CPU scheduling? What trade-offs exist between throughput and latency?",
+      "qsub": "What is the difference between preemptive and non-preemptive scheduling?",
+      "what": "<p>The scheduler's job: <b>which process runs on the CPU and when</b>. But \"best\" depends on the situation — therefore we define <b>goals</b>.</p>\n<p>System goals: keep the CPU <b>busy</b> (utilization), do more work (throughput). User goals: finish work <b>quickly</b> (turnaround), get the first answer <b>immediately</b> (response). All of these involve a <b>trade-off</b> — improving one goal can degrade another.</p>",
+      "analogy": "Imagine a chef (CPU) with a <b>kitchen</b> that gets many orders (processes). Goals: the kitchen should never be empty (utilization), serve as many orders as possible (throughput), have each order ready quickly (turnaround), and give the customer the first bite promptly (response). All cannot happen simultaneously — so the chef decides what is most important at any moment.",
+      "why": "<p>Without goals, the scheduler runs processes arbitrarily — some processes may starve, and the CPU may sit idle. Goals let the <b>designer decide</b> which strategy to use — background batch, interactive desktop, or real-time, each with different goals.</p>",
+      "pros": [
+        "With clear goals you can choose the right algorithm.",
+        "Understanding the trade-off lets you balance delay and throughput.",
+        "The distinction between system and user goals shows what kind of system it is."
+      ],
+      "cons": [
+        "Optimizing one goal can harm another.",
+        "Real workloads are mixed — a single policy does not fit all.",
+        "Balancing response and throughput is tricky."
+      ],
+      "gotchas": [
+        "Just remember: <b>utilization = CPU stays busy, throughput = more work done, turnaround = finishes quickly, response = first answer immediately.</b>",
+        "<b>Preemptive</b> = OS interrupts in the middle; non-preemptive = process yields on its own.",
+        "Interview: \"throughput vs latency\" — they are different, there is a trade-off."
+      ],
+      "terms": [
+        [
+          "CPU utilization",
+          "How much time the CPU stays busy — it should not be idle much."
+        ],
+        [
+          "Throughput",
+          "How many processes finish in one second."
+        ],
+        [
+          "Turnaround time",
+          "The total time from when a process starts to when it finishes."
+        ],
+        [
+          "Response time",
+          "The time from giving input to receiving the first output — important in interactive systems."
+        ],
+        [
+          "Preemptive",
+          "OS can interrupt and give the CPU to another process."
+        ]
+      ],
+      "where": [
+        [
+          "Server",
+          "Throughput and utilization matter more."
+        ],
+        [
+          "Desktop/UI",
+          "Response time is important — you get quick answers."
+        ],
+        [
+          "Interview",
+          "\"What are the scheduling goals?\" — utilization, throughput, turnaround, response."
+        ]
+      ],
+      "visualCap": "The trade-off in goals — increasing utilization reduces response, etc.",
+      "codeSwap": [
+        [
+          "// Goals ko JS mein socho — sab ek saath nahi ho sakte.",
+          "// Think of the goals in JS — they can't all be met together."
+        ],
+        [
+          "// Background job: utilization+throughput chahiye.",
+          "// Background job: needs utilization+throughput."
+        ],
+        [
+          "// Design ka sawaal: is app ke liye kaunsa goal?",
+          "// Design question: which goal is this app for?"
+        ],
+        [
+          "// Interactive app: response time chahiye.",
+          "// Interactive app: needs response time."
+        ]
+      ],
+      "svgSwap": [
+        [
+          "Preemptive: OS beech mein rok kar CPU kisi aur ko de sakta hai",
+          "Preemptive: the OS can stop it in the middle and give the CPU to someone else"
+        ],
+        [
+          "ek badhao, doosra girega",
+          "one goes up, the other goes down"
+        ]
+      ]
+    },
+    "fcfs-sjf": {
+      "q": "Compare FCFS and SJF. What is the convoy effect? Why is SJF optimal but impractical?",
+      "what": "<p><b>FCFS</b> — the simplest. Whichever process arrived first at the market gets the CPU. Order = arrival order. The problem: if one <b>long process</b> comes, everyone behind it waits — the <b>convoy effect</b> (a traffic jam).</p>\n<p><b>SJF</b> — shortest job first. This makes the <b>average wait time optimal</b>. But the problem: <b>you don't know the future</b> (which one will be how long), and if short ones keep arriving, the big one <b>starves</b> to death.</p>\n<p><b>SRTF</b> — the preemptive version of SJF: whenever a new shorter one arrives, stop the running process and give it the CPU.</p>",
+      "analogy": "Billing/ATM <b>line</b>:<br>• FCFS — first in line, first served. If the person ahead has a 10-minute task and everyone behind has 1-minute tasks, you will wait 10 minutes (convoy).<br>• SJF — serve the smallest task first. The line clears quickly (optimal), but if short tasks keep arriving, the long one may never get a turn (starvation).",
+      "why": "<p>FCFS is realistic but <b>wasteful</b> (convoy). SJF is <b>best for average</b> waiting time but has the problem of future prediction and starvation. Both clarify concepts — <b>preemption, optimality, starvation, aging</b> — which are also used in other algorithms.</p>",
+      "pros": [
+        "FCFS is simple, no starvation (fair order).",
+        "SJF gives optimal average wait (theoretically).",
+        "Helps understand concepts like preemption, starvation, aging."
+      ],
+      "cons": [
+        "FCFS convoy effect — long traffic jam.",
+        "SJF does not know future durations.",
+        "SJF starvation — long process starves."
+      ],
+      "gotchas": [
+        "Just remember: <b>FCFS = first, SJF = shortest. Convoy = a long job blocks everyone. Starvation = when short jobs arrive, the long one starves.</b>",
+        "SJF is optimal because processing short jobs first reduces the wait of longer jobs \"comparatively\".",
+        "SRTF (preemptive SJF) gives better response but adds more overhead."
+      ],
+      "terms": [
+        [
+          "FCFS",
+          "First Come First Served — the one that arrived first goes first (like a queue)."
+        ],
+        [
+          "Convoy effect",
+          "A long process blocks everyone behind it — traffic jam."
+        ],
+        [
+          "SJF",
+          "Shortest Job First — the smallest job first. Optimal average wait."
+        ],
+        [
+          "SRTF",
+          "Shortest Remaining Time First — preemptive SJF."
+        ],
+        [
+          "Starvation",
+          "If short processes keep arriving, the long one never gets CPU — it starves."
+        ],
+        [
+          "Aging",
+          "Increase the priority of older processes so they don’t starve."
+        ]
+      ],
+      "where": [
+        [
+          "Batch",
+          "SJF sorts processes (same arrival time)."
+        ],
+        [
+          "ATM/line",
+          "Common order like FCFS."
+        ],
+        [
+          "Interview",
+          "\"What is convoy effect?\" \"Why is SJF optimal?\""
+        ]
+      ],
+      "visualCap": "FCFS: convoy effect makes the line long. SJF: shortest first, line clears quickly.",
+      "codeSwap": [
+        [
+          "// chhote aate rahein to bada kabhi turn nahi paega (starvation).",
+          "// if small ones keep coming, the big one will never get its turn (starvation)."
+        ],
+        [
+          "// SJF optimal hai (avg wait), par future pata nahi +",
+          "// SJF is optimal (avg wait), but the future is unknown +"
+        ],
+        [
+          "// FCFS: order hi kaam ki baat hai.",
+          "// FCFS: the order is the whole point."
+        ],
+        [
+          " Aging: wait badha to priority badha — bhookh khatam.",
+          " Aging: as the wait grows, so does the priority — starvation ends."
+        ],
+        [
+          " SJF: chhota (duration) pehle.",
+          " SJF: shortest (duration) first."
+        ]
+      ],
+      "svgSwap": [
+        [
+          "lambey ke piche sab intezaar",
+          "everyone waits behind the long one"
+        ],
+        [
+          "future pata nahi + bhookh",
+          "future unknown + starvation"
+        ],
+        [
+          "SJF — sabse chhota pehle",
+          "SJF — shortest first"
+        ],
+        [
+          "par LONG starvation",
+          "but LONG starvation"
+        ],
+        [
+          "chhote pehle → avg wait optimal",
+          "shortest first → average wait is optimal"
+        ],
+        [
+          "pehle aaya, pehle pyaara",
+          "first come, first served"
+        ]
+      ]
+    },
+    "round-robin": {
+      "qsub": "What happens if the quantum is too large? Too small? What is the ideal quantum?",
+      "what": "<p><b>Round Robin</b> — each process is given a fixed <b>time quantum</b>, then the next one. The order is circular — after the last it returns to the first.</p>\n<p>Each process gets <b>equal time</b> — no one is left starving. Therefore it is best for <b>interactive/time-sharing</b>. But choose the <b>quantum</b> wisely: too small → many context switches (overhead), too large → becomes FCFS.</p>",
+      "analogy": "A <b>diet/round</b> where the chef gives each waiter <b>the same 2 minutes</b>, then the next. Everyone gets an equal chance. If 2 minutes is too short, the chef keeps stopping his work repeatedly (overhead); if too long, the first waiter eats all the work (FCFS). The right balance is needed.",
+      "why": "<p>When response time needs to be <b>fair and predictable</b>, Round Robin is best — no process holds the CPU for many seconds. This is what desktops/UI need: each app gets a little bit of CPU all the time. Time-sharing systems run on this principle.</p>",
+      "pros": [
+        "Fair — everyone gets an equal chance, no starvation.",
+        "Response time predictable & good.",
+        "Natural for interactive/time-sharing."
+      ],
+      "cons": [
+        "Context switch overhead always present.",
+        "Choosing the quantum is tricky — resizing is hard.",
+        "Throughput slightly lower (because of overhead)."
+      ],
+      "gotchas": [
+        "Just remember: <b>quantum = each process's fixed slice; when it ends, move to the next; circular.</b>",
+        "Ideal quantum ~10-100 ms — larger than the context switch cost.",
+        "Interview: \"quantum too large?\" — becomes FCFS; \"too small?\" — overhead increases."
+      ],
+      "terms": [
+        [
+          "Time quantum",
+          "Each process gets that amount of time (a \"slice\") of CPU."
+        ],
+        [
+          "Ready queue",
+          "Circular queue — when a process's time expires it goes to the back."
+        ],
+        [
+          "Preemptive",
+          "When the quantum expires, the OS stops it and schedules the next."
+        ],
+        [
+          "Context switch overhead",
+          "The time to save/restore state on each switch — overhead."
+        ]
+      ],
+      "where": [
+        [
+          "Linux",
+          "CFS is roughly a Round Robin-like fair share."
+        ],
+        [
+          "Desktop UI",
+          "Each app gets equal time — no freezes."
+        ],
+        [
+          "Interview",
+          "\"What size should the quantum be?\" \"Why RR for time-sharing?\""
+        ]
+      ],
+      "visualCap": "Each process gets an equal quantum — then the next. Quantum size = balance.",
+      "svgSwap": [
+        [
+          "Round Robin — har ek ko kya quantum",
+          "Round Robin — what quantum for each"
+        ],
+        [
+          "chhota quantum → zyada overhead · bada quantum → FCFS jaisa",
+          "small quantum → more overhead · big quantum → like FCFS"
+        ],
+        [
+          "wapas P1 (circular)",
+          "back to P1 (circular)"
+        ]
+      ],
+      "codeSwap": [
+        [
+          " quantum bada = sab saamne khatam, peechle intezaar (FCFS).",
+          " big quantum = everyone finishes in front, the ones behind wait (FCFS)."
+        ],
+        [
+          " quantum chhota = zyada switch = overhead.",
+          " small quantum = more switches = overhead."
+        ],
+        [
+          " ik quantum diya",
+          " gave one quantum"
+        ],
+        [
+          " agla, circular",
+          " next, circular"
+        ]
+      ]
+    },
+    "priority-scheduling": {
+      "qsub": "How does Linux's Completely Fair Scheduler (CFS) work? What is the nice value?",
+      "what": "<p><b>Priority scheduling</b> — each process has a <b>priority</b>; the highest-priority one runs first. But the risk: a low-priority process may never get CPU → <b>starvation</b>. The remedy is <b>aging</b> — increase priority the longer it waits, so it eventually gets CPU.</p>\n<p>In real systems there are <b>multilevel queues</b> — multiple queues with different priorities, each queue having its own policy (RR at the front, FCFS at the back). And <b>feedback</b> — if a process uses a lot of CPU (CPU-bound) lower its priority so that interactive processes get a chance.</p>",
+      "analogy": "Hospital <b>emergency triage</b> — the critical (higher priority) cases are handled first. But if only high-priority patients keep arriving, a low-priority patient <b>may never see a doctor</b> (starvation). Aging = “you have waited long enough, now raise your priority.” Feedback = a patient who stays in ICU for a long time (CPU-bound) is moved to a general ward (lower priority) to make room for urgent cases.",
+      "why": "<p>Real systems run different types of processes — interactive (UI, typing), batch (rendering, compilation), background (downloads). <b>Applying the same policy to all is wrong</b>. Priority plus multilevel feedback gives interactive processes quick response and batch processes balanced CPU usage. This is also Linux’s model.</p>",
+      "pros": [
+        "Critical processes first — flush table/urgent work.",
+        "Aging prevents starvation.",
+        "Multilevel feedback = real-world flexibility."
+      ],
+      "cons": [
+        "Low-priority may starve (without aging).",
+        "Priority misuse → high-priority monopoly.",
+        "Implementing CFS’s vruntime is complex."
+      ],
+      "gotchas": [
+        "Just remember: <b>priority = higher first; aging = increase priority with wait; feedback = lower priority for CPU-bound.</b>",
+        "Linux CFS is not a priority policy, it’s a fair-share — everyone gets equal vruntime.",
+        "Interview: \"nice 19 vs -20\" — lower nice = higher priority (odd but true)."
+      ],
+      "terms": [
+        [
+          "Priority",
+          "Each process gets a number — the higher one runs first."
+        ],
+        [
+          "Aging",
+          "Increase priority as wait time grows — to prevent starvation."
+        ],
+        [
+          "Multilevel feedback queue",
+          "Multiple queues (different priorities); a process can move between queues based on its behavior."
+        ],
+        [
+          "Completely Fair Scheduler (CFS)",
+          "Linux’s scheduler — gives every process fair CPU time (vruntime)."
+        ],
+        [
+          "nice value",
+          "User-level knob to adjust priority in Linux (range -20 to 19)."
+        ]
+      ],
+      "where": [
+        [
+          "Linux CFS",
+          "Fair share using vruntime + nice value."
+        ],
+        [
+          "RTOS",
+          "Priority + aging required (deadline)."
+        ],
+        [
+          "Interview",
+          "\"starvation remedy?\" \"what is CFS?\" \"nice value?\""
+        ]
+      ],
+      "visualCap": "Multilevel: higher priority first. Aging prevents starvation. CFS uses vruntime for fairness.",
+      "codeSwap": [
+        [
+          "// nice value (-20..19): weight tweak karta vruntime me.",
+          "// nice value (-20..19): tweaks the weight in vruntime."
+        ],
+        [
+          "// Aging: wait badhne par priority badhao.",
+          "// Aging: raise the priority as the wait grows."
+        ],
+        [
+          "// CFS (Linux): sabse kam vruntime wala.",
+          "// CFS (Linux): the one with the least vruntime."
+        ],
+        [
+          " vruntime = kitna CPU time mil chuka (normalized).",
+          " vruntime = how much CPU time it has already received (normalized)."
+        ]
+      ],
+      "svgSwap": [
+        [
+          "CFS: sabse kam vruntime wala chalta hai (fair)",
+          "CFS: the one with the least vruntime runs (fair)"
+        ],
+        [
+          "CPU-bound → priority ghati jati (feedback)",
+          "CPU-bound → priority drops (feedback)"
+        ]
+      ]
+    },
+    "real-time-scheduling": {
+      "q": "What is the difference between hard and soft real-time systems? What is Earliest Deadline First?",
+      "what": "<p><b>Real-time</b> = every task has a <b>deadline</b>. <b>Hard</b>: if the deadline is missed the system fails (brake system, pacemaker). <b>Soft</b>: if missed the quality degrades (video call, game) — but the system keeps running.</p>\n<p>Algorithms: <b>RMS</b> — the one that repeats quickly (short period) gets high priority. <b>EDF</b> — the task with the earliest deadline always runs first; it is <b>optimal</b> (if any schedule is possible EDF will find it). However EDF must track deadlines continuously.</p>",
+      "analogy": "Delivery company's <b>scheduler</b>:<br>• Hard deadline: an oxygen cylinder must be delivered <b>within 2 hours</b> — missing it endangers the patient. This requires earliest-deadline scheduling (EDF).<br>• Soft deadline: pizza in 30 min on a best-effort basis — the customer is still happy at 35 min (a bit late). RMS = the slot that repeats most frequently gets higher priority (like a daily delivery route).",
+      "why": "<p>Normal scheduling (fair share) does not consider deadlines — therefore <b>real-time systems need their own scheduler</b> that provides deadline guarantees. In hard systems the guarantee is essential. The proof that EDF is optimal is important because it underpins scheduler design.</p>",
+      "pros": [
+        "EDF is optimal — best for deadline scheduling.",
+        "RMS is simple — priority fixed at design time.",
+        "Hard vs soft distinction is clear — helps understand requirements."
+      ],
+      "cons": [
+        "EDF is expensive — must sort deadlines continuously.",
+        "Hard guarantee requires strict bounds.",
+        "Standard Linux is not real-time (without PREEMPT_RT)."
+      ],
+      "gotchas": [
+        "Just remember: <b>hard = fixed deadline, soft = best-effort. EDF = earliest deadline first.</b>",
+        "EDF is optimal but under sudden overload it can cause a \"domino\" effect — one miss leads to more misses.",
+        "The normal Linux scheduler does not provide real-time guarantees — therefore use PREEMPT_RT or an RTOS."
+      ],
+      "terms": [
+        [
+          "Hard real-time",
+          "Fixed deadline — missing it causes disaster (safety-critical)."
+        ],
+        [
+          "Soft real-time",
+          "Best-effort deadline — missing it reduces quality but not a disaster."
+        ],
+        [
+          "RMS",
+          "Rate Monotonic — short-period tasks get high priority."
+        ],
+        [
+          "EDF",
+          "Earliest Deadline First — the task with the earliest deadline runs first. Optimal."
+        ],
+        [
+          "PREEMPT_RT",
+          "Linux real-time patch — higher preemption, lower latency."
+        ]
+      ],
+      "visualCap": "Hard vs soft deadline. EDF: earliest deadline first — optimal.",
+      "codeSwap": [
+        [
+          "// Agar utilization safe bound ke andar hai, to RMS guarantee deta hai.",
+          "// If utilization is within the safe bound, RMS guarantees it."
+        ],
+        [
+          "// Hard vs soft: EDF optimal hai (agar schedule exist karta hai),",
+          "// Hard vs soft: EDF is optimal (if a schedule exists),"
+        ],
+        [
+          "// par har tick par deadline track karni padti hai.",
+          "// but the deadline has to be tracked on every tick."
+        ],
+        [
+          "// EDF: sabse jaldi deadline wala pehle.",
+          "// EDF: the earliest deadline goes first."
+        ],
+        [
+          " RMS: chhoti period → high priority (fixed at design time).",
+          " RMS: shorter period → higher priority (fixed at design time)."
+        ]
+      ],
+      "svgSwap": [
+        [
+          "guarantee chahiye (EDF/RMS)",
+          "need a guarantee (EDF/RMS)"
+        ],
+        [
+          "deadline miss = quality gire",
+          "deadline miss = quality drops"
+        ]
+      ]
+    },
+    "file-system-basics": {
+      "q": "How does a file system organize data on disk? What is the difference between a file, inode, and directory?",
+      "what": "<p>Data on a disk is stored as raw bytes. The <b>file system</b> organizes it — <b>files</b> (named byte sequences) and <b>directories</b> (which link files/dirs to a parent).</p>\n<p>Each file has an <b>inode</b> — it contains the file’s metadata (size, owner, permissions, where the blocks are on disk) but no <b>name</b>. The name is stored in the directory (name → inode number). Therefore, two names in different directories can point to the same inode (hard link).</p>",
+      "analogy": "Library’s <b>card catalog</b>: each book (file) has an entry (inode) with its details. In the catalog (directory) you get the entry’s number by name. Two catalog cards can refer to the same book (hard links). “Everything is a file” = a DVD player (device) is also like a library entry — it also supports read/write.",
+      "why": "<p>Without a file system there is no organization of data — everything is raw. The inode + directory design enables <b>named access, linking, permissions</b>. “Everything is a file” is Unix’s power — a uniform interface works for files, sockets, devices.</p>",
+      "pros": [
+        "Data is named — easy for people to understand.",
+        "Inode + directory provides clean linking & permissions.",
+        "Everything-is-a-file = uniform interface."
+      ],
+      "cons": [
+        "Without files/flattening data is unorganized.",
+        "Reading a directory also requires I/O — needs caching.",
+        "Metadata (inode) overhead."
+      ],
+      "gotchas": [
+        "Just remember: <b>file = named bytes. directory = name→inode map. inode = metadata, no name.</b>",
+        "Hard link = two names, one inode. Soft link = separate file that points to a path.",
+        "Interview: “delete one and a hard link remains — data isn’t gone” (one inode, two names)."
+      ],
+      "terms": [
+        [
+          "File",
+          "A named sequence of bytes — data stored with a name."
+        ],
+        [
+          "Directory (folder)",
+          "Also a file — stores a name→inode map."
+        ],
+        [
+          "Inode",
+          "File’s “identity card” — metadata (size, permissions, data blocks)."
+        ],
+        [
+          "Everything is a file",
+          "Unix principle — file, disk, device, pipe all behave like files."
+        ],
+        [
+          "Path",
+          "The route from root to a file — /home/user/a.txt."
+        ]
+      ],
+      "where": [
+        [
+          "Linux",
+          "ext4 — inode + directory structure."
+        ],
+        [
+          "Shell",
+          "<code>ls -i</code> shows the inode; <code>stat</code> shows metadata."
+        ],
+        [
+          "Interview",
+          "\"hard vs soft link?\" \"what is inode?\""
+        ]
+      ],
+      "visualCap": "Directory maps name→inode; inode stores file metadata + disk blocks.",
+      "codeSwap": [
+        [
+          "// \"Everything is a file\" = ek hi read/write interface",
+          "// \"Everything is a file\" = a single read/write interface"
+        ],
+        [
+          "// chahiye for file, device, socket, pipe.",
+          "// needed for file, device, socket, pipe."
+        ],
+        [
+          "// File system ko JS object jaisa socho:",
+          "// Think of the file system as a JS object:"
+        ],
+        [
+          "// disk par data kahan",
+          "// where on disk the data lives"
+        ],
+        [
+          "// inode se blocks",
+          "// blocks via the inode"
+        ],
+        [
+          " naam -> inode",
+          " name -> inode"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "par naam nahi — naam directory mein",
+          "but not the name — the name is in the directory"
+        ],
+        [
+          "inode mein size/perm/blocks",
+          "the inode holds size/perm/blocks"
+        ]
+      ]
+    },
+    "inodes": {
+      "desc": "An inode stores metadata about a file (size, permissions, timestamps, data block pointers) but NOT the filename.",
+      "q": "What is an inode? What information does it store? What is the inode table?",
+      "what": "<p><b>Inode</b> is a file's <b>metadata card</b> — it does not contain the file's content, but it holds everything about the file: <b>size, owner, permissions, timestamps</b> and <b>where the data blocks are</b>. The file name is not stored here.</p>\n<p>Every file has an <b>inode number</b>. The directory stores that number together with the name. <b>Link count</b> indicates how many names point to this inode — the data is actually freed only when the count becomes 0 after deletion.</p>\n<p>Data block pointers: <b>direct pointers</b> for small files. <b>Indirect</b> pointers for large files (a pointer to a block that holds additional pointers) — this allows very large files to be managed through the inode.</p>",
+      "analogy": "A library book's <b>index card</b>: it contains the book's info (size, shelf location) but not the book's title (name) — the title is in the catalog (directory). Two different catalog entries can point to the same index card (hard links). The total space for cards (inode table) is limited — the disk may have free space but the cards can run out (inode exhaustion).",
+      "why": "<p>Keeping the inode separate means <b>name and metadata are managed independently</b> — this enables hard links, renames (just a directory change), and a clean permissions model. Understanding the inode table is important because <b>the disk can have space while inodes run out</b> — a common gotcha.</p>",
+      "pros": [
+        "Metadata in one place — fast lookup (basic attributes).",
+        "Hard links & rename cheap (only directory change).",
+        "Direct/indirect flexibility — can handle large files."
+      ],
+      "cons": [
+        "Inode limit — disk may have space but no free inodes.",
+        "Metadata update requires inode write (journal).",
+        "Inode overhead on small files."
+      ],
+      "gotchas": [
+        "Just remember: <b>inode = metadata card (size/perm/blocks), name is in the directory. Data is truly freed only when link count reaches 0.</b>",
+        "\"Disk full but can't write\" — can happen when inodes are exhausted.",
+        "Interview: \"When is a deleted file actually freed?\" — only after the last link is removed and no process has it open."
+      ],
+      "terms": [
+        [
+          "Inode",
+          "File metadata — size, permissions, owner, timestamps, data-block pointers."
+        ],
+        [
+          "Inode number",
+          "File's unique ID within the filesystem."
+        ],
+        [
+          "Inode table",
+          "Area containing all inodes — fixed on disk."
+        ],
+        [
+          "Link count",
+          "Number of names that point to this inode."
+        ],
+        [
+          "Direct/indirect blocks",
+          "Small data via direct pointers; large data via indirect blocks (multi-level)."
+        ]
+      ],
+      "where": [
+        [
+          "ext4/xfs",
+          "Inode table allocated on disk — always."
+        ],
+        [
+          "Install",
+          "Very many small files → inode exhaustion (inode starvation)."
+        ],
+        [
+          "Interview",
+          "\"hard link inode\" \"indirect block\" \"inode exhaustion\""
+        ]
+      ],
+      "visualCap": "Inode = metadata card. Direct pointers for small files, indirect for large files.",
+      "codeSwap": [
+        [
+          "// Gotcha: disk space ho par inodes khatam —",
+          "// Gotcha: there is disk space but the inodes ran out —"
+        ],
+        [
+          "// linkcount 0 hone par hi data truly free.",
+          "// the data is truly freed only when linkcount hits 0."
+        ],
+        [
+          "// bade file ke liye aur pointers",
+          "// and pointers for big files"
+        ],
+        [
+          "/* indirect se aur */ }",
+          "/* even more indirectly */ }"
+        ],
+        [
+          " Inode = metadata, naam alag.",
+          " Inode = metadata, the name is separate."
+        ],
+        [
+          " chhota file",
+          " small file"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "do names → ek inode (link=2)",
+          "two names → one inode (link=2)"
+        ],
+        [
+          "link=0 hone par hi free",
+          "freed only when link=0"
+        ],
+        [
+          "naam yahan NAHI",
+          "the name is NOT here"
+        ],
+        [
+          "aur pointers",
+          "and pointers"
+        ],
+        [
+          "1 delete kiya → data baaki",
+          "1 deleted → the data remains"
+        ]
+      ]
+    },
+    "file-descriptors": {
+      "qsub": "What is the file descriptor limit per process? What is \"too many open files\" and how do you fix it?",
+      "what": "<p><b>File descriptor</b> is an <b>integer</b> — a process identifies its opened file with this number. When <code>open()</code> is called, the OS gives a new fd (each process has its own <b>FD table</b>).</p>\n<p>Default: <b>0=stdin, 1=stdout, 2=stderr</b>. Each fd points to one <b>open file description</b> (which holds offset, inode).</p>\n<p>There is an FD limit (ulimit). A server opens many sockets — <b>\"too many open files\"</b> occurs when the FD table is full. Therefore close fds (resource) and avoid leaks.</p>",
+      "analogy": "Restaurant <b>table number</b>: you (process) are given table 5 (fd). The waiter (OS) knows what table 5 is. Each day (process) has its own table numbers. Limit: don’t let too many tables be opened — the kitchen (OS) gets throttled. If a table is forgotten and not closed (fd leak) it can never become free.",
+      "why": "<p>Using FD provides <b>isolation and safety</b>: a process can interact only with its own fds—not others’. And <b>uniformity</b>: the same read/write interface works for files, sockets, and pipes. Layers such as web servers/Node are built on this (events + fds).</p>",
+      "pros": [
+        "Isolation — process can use only its own fds.",
+        "Uniform read/write interface for file/socket/pipe.",
+        "Cheap integer handle — fast pass in syscalls."
+      ],
+      "cons": [
+        "FD limit — opens too many and you run out.",
+        "FD leak — forgetting to close exhausts resources.",
+        "Abstraction overhead — kernel mapping."
+      ],
+      "gotchas": [
+        "Just remember: <b>fd = integer handle to an open file/socket. 0/1/2 = stdin/stdout/stderr. Exceeding the limit causes \"too many open files\".</b>",
+        "Each process has its own fd-table; the OS maintains a global open-file table.",
+        "Interview: \"socket must be closed\" — otherwise fd leak, connections leak."
+      ],
+      "terms": [
+        [
+          "File descriptor (fd)",
+          "An integer that represents an opened file/device/socket within a process."
+        ],
+        [
+          "File table",
+          "OS-level — record of globally opened files (offset, inode)."
+        ],
+        [
+          "FD table",
+          "Per-process — which open fds exist and which global file they point to."
+        ],
+        [
+          "stdin/stdout/stderr",
+          "0,1,2 — default open fds (input, output, error)."
+        ],
+        [
+          "Too many open files",
+          "FD limit reached — can view/increase with <code>ulimit -n</code>."
+        ]
+      ],
+      "where": [
+        [
+          "Server",
+          "Nginx/Node keeps an fd for each connection."
+        ],
+        [
+          "Shell",
+          "<code>lsof</code> / <code>ulimit -n</code> — view fds."
+        ],
+        [
+          "Interview",
+          "\"too many open files?\" \"what is fd?\""
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// FD = integer handle. open() se milta, close() se jaata.",
+          "// FD = an integer handle. You get it from open(), it goes away with close()."
+        ],
+        [
+          "// Node/core: har open socket ek fd —",
+          "// Node/core: every open socket is an fd —"
+        ],
+        [
+          "// ulimit -n se limit dekh/barha.",
+          "// check/raise the limit with ulimit -n."
+        ],
+        [
+          "// leak mat karo",
+          "// don't leak"
+        ],
+        [
+          " 3 (0,1,2 hamesha busy)",
+          " 3 (0,1,2 always busy)"
+        ],
+        [
+          " resource wapas",
+          " resource back"
+        ]
+      ]
+    },
+    "journaling": {
+      "qsub": "What is the difference between data journaling and metadata-only journaling?",
+      "what": "<p>On a file system, multiple writes need to happen together (inode + data block + directory). If power is lost in the middle, some parts are written and some are not → <b>corruption</b>.</p>\n<p><b>Journaling</b>: write the changes <b>first to a log (journal)</b>, then to the actual location. When a crash occurs, the OS looks at the journal and either <b>completes it or rolls it back</b> — consistent state.</p>\n<p><b>Write-ahead</b>: the journal is always written <b>before the data changes</b> — this provides the guarantee. Metadata journaling (ext4 default) logs only metadata instead of data — faster.</p>",
+      "analogy": "During a Formula 1 <b>race</b>, every action is first \"right to repair/review\" — write in the HEADER what is being changed. Crash = engine stops. By looking at the journal you know what was incomplete — you can complete or undo it. Without a journal, an incomplete operation leads to record corruption. Like a <b>to-do list</b>: write the list first, then do the work; if you stop midway, the list shows what happened.",
+      "why": "<p>Data is important to you. <b>Crashes / power cuts</b> are common. Without journaling, file system checks (fsck) took hours and data could be lost. Journal = <b>speed vs safety</b>: log first, then apply — a bit slower, but crash-safe. That’s why modern file systems (ext4, NTFS) all use journaling.</p>",
+      "pros": [
+        "Crash-safe — not corrupted on power cut.",
+        "Recovery fast — journal lookup reduces fsck work.",
+        "WAL setup — same pattern used by databases as well."
+      ],
+      "cons": [
+        "Each write involves double work (log + apply) — slower.",
+        "With metadata-only, data loss can occur.",
+        "The journal itself consumes disk space."
+      ],
+      "gotchas": [
+        "Just remember: <b>journal = log changes first, then apply; recover from crash.</b>",
+        "ext4 defaults to metadata journaling — not data, so data corruption is possible.",
+        "Interview: \"What is WAL?\" — log first, then change; commit until success."
+      ],
+      "terms": [
+        [
+          "Journal (log)",
+          "First log \"what is going to change\", then apply it to the file system."
+        ],
+        [
+          "Write-ahead logging",
+          "Log the change before applying it."
+        ],
+        [
+          "Crash consistency",
+          "Ensure the file system does not become corrupt on an abrupt power cut."
+        ],
+        [
+          "ext4/NTFS/HFS+",
+          "Journaling file systems — log data or metadata."
+        ],
+        [
+          "Metadata journaling",
+          "Log only metadata (directory/inode); not data blocks."
+        ]
+      ],
+      "where": [
+        [
+          "ext4",
+          "Metadata journaling is the default; data mode also available."
+        ],
+        [
+          "PostgreSQL",
+          "Same crash-safety concept as WAL."
+        ],
+        [
+          "Interview",
+          "\"journaling vs non\" \"WAL\" \"metadata only?\""
+        ]
+      ],
+      "visualCap": "Journal: log first, then apply. Recover from crash using the log.",
+      "codeSwap": [
+        [
+          "// fsync commit point tak, phir hi data par bharosa.",
+          "// fsync up to the commit point, only then trust the data."
+        ],
+        [
+          "// Journaling = transaction log jaisa (DB me bhi).",
+          "// Journaling = like a transaction log (as in a DB)."
+        ],
+        [
+          "// khatam karo",
+          "// finish it"
+        ],
+        [
+          " Pehle log, phir apply — crash-safe.",
+          " First log, then apply — crash-safe."
+        ],
+        [
+          "    durable hone do",
+          "    make it durable"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "Write-ahead: log hamesha change se pehle likho",
+          "Write-ahead: always write the log before the change"
+        ],
+        [
+          "log dekh ko",
+          "to look at the log"
+        ]
+      ]
+    },
+    "disk-scheduling": {
+      "what": "<p><b>HDD</b> has a read/write <b>head</b> that must move from one track to another — this movement is called a <b>seek</b> and it is the slowest operation. A <b>disk scheduler</b> orders requests so that the head moves as little as possible.</p>\n<p><b>FCFS</b> — serve as soon as it arrives (simple, but the head moves a lot). <b>SSTF</b> — serve the closest request first (fast, but not completely optimal). <b>SCAN</b> — the head moves from one side to the other, serving all requests along the way (elevator). <b>C-SCAN</b> — move in only one direction, then return (uniform wait for all positions).</p>",
+      "analogy": "Elevator analogy <b>SCAN</b>: while going up, it serves each floor it passes, then goes up and comes down. No floor waits excessively (no starvation). FCFS = like an elevator that goes to the floor in the order requests arrive — repeated up-and-down trips (high seek). SSTF = serves the nearest floor first — very fast, but distant floors wait (starvation possible).",
+      "why": "<p>Because HDDs are slow, reducing <b>seek</b> makes I/O faster. The scheduling order only optimizes seek time. However, <b>fairness</b> is also needed (no starvation) — therefore SCAN/C-SCAN use an elevator style: both speed and fairness. In SSDs the seek time is zero (no head), so scheduling has little impact.</p>",
+      "pros": [
+        "Reduced seek time → faster HDD.",
+        "SCAN is fair (no request ever starved).",
+        "SSTF gives optimal average seek (theoretically)."
+      ],
+      "cons": [
+        "FCFS has high seek — slow on HDDs.",
+        "SSTF can cause starvation (distant requests).",
+        "Designed for HDDs — no benefit on SSDs."
+      ],
+      "gotchas": [
+        "Just remember: <b>seek = head movement = HDD cost. SCAN = elevator (forward+serve). C-SCAN = one direction.</b>",
+        "SSD seek ≈ 0 → little impact on I/O scheduler.",
+        "Interview: \"SSTF vs SCAN\" — SSTF has better average, SCAN is fair."
+      ],
+      "terms": [
+        [
+          "Seek time",
+          "Time for the read/write head to move to the correct track — the largest cost on an HDD."
+        ],
+        [
+          "FCFS",
+          "Serve the request that arrived first — simple but high seek."
+        ],
+        [
+          "SSTF",
+          "Shortest Seek Time First — serve the nearest request first."
+        ],
+        [
+          "SCAN (elevator)",
+          "Head moves from one side to the other, serving requests along the way."
+        ],
+        [
+          "C-SCAN",
+          "Serve in only one direction, then the head returns immediately (uniform wait)."
+        ]
+      ],
+      "where": [
+        [
+          "HDD",
+          "SCAN/C-SCAN used more (seek reduction)."
+        ],
+        [
+          "SSD/NVMe",
+          "Scheduling minimal — no head."
+        ],
+        [
+          "Interview",
+          "\"elevator algorithm?\" \"why SCAN?\" \"SSD scheduling?\""
+        ]
+      ],
+      "visualCap": "SCAN (elevator): head moves in one direction, serving requests along the way. C-SCAN moves in only one direction.",
+      "codeSwap": [
+        [
+          "// SCAN — head aage, sorted requests raste mein.",
+          "// SCAN — the head moves forward, sorted requests picked up on the way."
+        ],
+        [
+          "// head se aage wale pehle, phir uske baad...",
+          "// those ahead of the head first, then after that..."
+        ],
+        [
+          " FCFS — bina soch samjhe, aate hi serve.",
+          " FCFS — no thinking, serve as they arrive."
+        ]
+      ],
+      "svgSwap": [
+        [
+          "C-SCAN: aage sirf, phir turant wapas (uniform wait)",
+          "C-SCAN: forward only, then jump straight back (uniform wait)"
+        ],
+        [
+          "SCAN: head aage jaata, raste ke requests serve",
+          "SCAN: the head moves forward, serving requests on the way"
+        ]
+      ]
+    },
+    "pipes": {
+      "q": "How do pipes work? What is the difference between anonymous and named pipes?",
+      "qsub": "How does the shell pipe operator (|) work at the OS level?",
+      "what": "<p><b>Pipe</b> is a <b>unidirectional (one-way)</b> byte stream — one process writes into it, another reads from it. Order is maintained (FIFO).</p>\n<p><b>Anonymous pipe</b>: between parent and child — this is what the shell’s <code>ls | grep</code> uses. <b>Named pipe (FIFO)</b>: appears as a file name in the filesystem, any two unrelated processes can connect.</p>\n<p>Pipes are slower because data passes through a kernel buffer (copy). But they are safe — processes have separate memory, so this is an easy way to send data.</p>",
+      "analogy": "A small <b>pipe / tube</b>: you pour water (data) in on one side, it comes out on the other. Only <b>one direction</b>. Kernel buffer = a small storage space in the middle of the tube — if it fills up, the writer must wait (block). <code>ls | grep</code> = pipe operator that connects both — one’s output becomes the other’s input.",
+      "why": "<p>Processes have separate memory — <b>direct sharing is not possible</b>. A pipe is a <b>simple, safe</b> way: data is sent through the kernel, no race conditions. It is the backbone of shell scripting — feeding one command’s output into another.</p>",
+      "pros": [
+        "Simple, safe — kernel copy, no race.",
+        "Ordered & lossless — each byte once, in order.",
+        "Core of shell scripting."
+      ],
+      "gotchas": [
+        "Just remember: <b>pipe = unidirectional byte stream, via kernel buffer; | anonymous, FIFO named.</b>",
+        "\"Broken pipe\" — the reader closed, the writer tried to write.",
+        "Interview: \"pipe vs socket\" — pipe is process-local, socket is network."
+      ],
+      "terms": [
+        [
+          "Pipe",
+          "Unidirectional byte stream — one process writes, another reads."
+        ],
+        [
+          "Anonymous pipe",
+          "Between related processes (parent-child) — shell’s <code>|</code>."
+        ],
+        [
+          "Named pipe (FIFO)",
+          "Identified by a name in the filesystem — any two processes."
+        ],
+        [
+          "Buffer",
+          "Temporary storage in the kernel for the pipe; if full, the writer blocks."
+        ],
+        [
+          "Reader/Writer",
+          "One side provides data (in), the other side receives it (out)."
+        ]
+      ],
+      "where": [
+        [
+          "Shell",
+          "<code>cmd1 | cmd2</code> — anonymous pipe."
+        ],
+        [
+          "Unix",
+          "Named pipes (mkfifo) — unrelated processes."
+        ],
+        [
+          "Interview",
+          "\"How does a pipe work?\" \"How does | work?\" \"Why one-way?\""
+        ]
+      ],
+      "visualCap": "Pipe: process A writes to the kernel buffer, B reads. One-way, ordered.",
+      "codeSwap": [
+        [
+          "// Buffer bhar to backpressure (writer pause) — pipe ka block.",
+          "// Buffer full means backpressure (writer pauses) — the pipe's block."
+        ],
+        [
+          "// ls ka output → pipe → grep ka input (shell '|' jaisa).",
+          "// ls output → pipe → grep input (like the shell '|')."
+        ],
+        [
+          "// Node: child_process pipe — parent se child ko data.",
+          "// Node: child_process pipe — data from parent to child."
+        ]
+      ],
+      "svgSwap": [
+        [
+          "One-way · ordered · kernel copy = safe par slow",
+          "One-way · ordered · kernel copy = safe but slow"
+        ]
+      ],
+      "cons": [
+        "Kernel copy → slow (vs shared memory).",
+        "One-way — two-way needs two pipes.",
+        "Small buffer → writer blocks (backpressure)."
+      ]
+    },
+    "shared-memory": {
+      "desc": "Fastest IPC — two processes map the same physical memory pages. Requires synchronization (semaphores/mutexes).",
+      "q": "How does shared memory IPC work? Why is it the fastest IPC mechanism?",
+      "what": "<p><b>Shared memory</b> — two processes map <b>the same physical memory pages</b> into their virtual space. Whatever one writes, the other can see instantly — <b>without a kernel copy</b>. Therefore this is the <b>fastest IPC</b>.</p>\n<p>But <b>explicit synchronization</b> is required: if both write simultaneously → <b>race condition</b>. Hence use a <b>mutex/semaphore</b> with the shared region. Note: like memory stack/heap, it resides on separate physical pages.</p>",
+      "analogy": "Two friends live in the same <b>house (shared memory)</b>. Items (data) are kept in the house — no copy needed (fast). But if both try to use the kitchen (same data) at the same time, a conflict (race) occurs. Hence a rule/lock (mutex) — only one can use it at a time. Shared house = super fast, but discipline is necessary.",
+      "why": "<p>A pipe performs a <b>kernel copy</b> each time — slow for large data. Shared memory provides <b>direct access</b> — no copy, no extra syscall. For high-throughput IPC (video buffers, analytics) this is required. Cost: you must manage <b>sync</b> yourself.</p>",
+      "cons": [
+        "Manual synchronization — risk of race conditions.",
+        "Manual memory management (attach/detach).",
+        "Cache-coherence overhead on multicore."
+      ],
+      "gotchas": [
+        "Just Remember: <b>shared memory = same pages, no copy = fastest; but mutex/semaphore is required.</b>",
+        "Race occurs when there is no synchronization — incorrect values.",
+        "Interview: \"shared memory vs pipe\" — pipe copies, shared does not."
+      ],
+      "terms": [
+        [
+          "Shared memory",
+          "Two (or more) processes map the same physical memory pages."
+        ],
+        [
+          "mmap / shm",
+          "Create a shared region with <code>mmap</code> or <code>shmget</code>."
+        ],
+        [
+          "Synchronization",
+          "Since data is shared, mutex/semaphore is needed to prevent races."
+        ],
+        [
+          "Race condition",
+          "If both write simultaneously, data becomes incorrect — without sync."
+        ],
+        [
+          "Fastest IPC",
+          "No kernel copy — direct memory, therefore the fastest."
+        ]
+      ],
+      "visualCap": "Two processes map the same physical RAM pages — no copy.",
+      "codeSwap": [
+        [
+          "// C: shmat()/mmap se asli shared region, memcpy nahi.",
+          "// C: a real shared region via shmat()/mmap, no memcpy."
+        ],
+        [
+          "// Concept: do objects ek hi reference point karein.",
+          "// Concept: two objects pointing at the same reference."
+        ],
+        [
+          "// turant visible",
+          "// visible immediately"
+        ],
+        [
+          " Bina mutex dono saath likhein → race (galat value).",
+          " Without a mutex, both write together → a race (wrong value)."
+        ]
+      ],
+      "svgSwap": [
+        [
+          "dono maps karte hain",
+          "both map"
+        ],
+        [
+          "+ mutex/semaphore (race rokne)",
+          "+ mutex/semaphore (to prevent races)"
+        ]
+      ],
+      "pros": [
+        "Fastest — no kernel copy, no syscall.",
+        "Large data efficient.",
+        "Bidirectional is easy (both can access)."
+      ]
+    },
+    "message-queues": {
+      "what": "<p><b>Message queue</b> — processes send <b>structured messages</b> (type + data). The sender does not wait (async), the OS keeps them in a queue. Alternatively: <b>sockets</b> — bidirectional byte connection, local (Unix domain) or network (TCP).</p>\n<p>Message queues <b>decouple</b> — producer and consumer can run at different speeds; queue acts as a buffer. Sockets are flexible — support serve-request pattern, also work over network. Shared memory is slower but safe/simple.</p>",
+      "analogy": "Office <b>mail system</b>: you put a note in a box (message queue), the receiver later comes and picks it up — you don’t wait (async). Each note has a type (e.g. \"urgent\"). Sockets = direct <b>telephone line</b> — two-way, immediate, both talk. Message queue = post office (async), socket = phone call (sync).",
+      "why": "<p>When processes have to talk in <b>structured data</b> and you don't want the hassle of managing it yourself — a message queue is ideal. When it's <b>request-response or a network</b> — sockets. This is the practical toolkit of IPC choices: speed (shared) vs convenience (message) vs flexibility (socket).</p>",
+      "pros": [
+        "Async — producer does not wait.",
+        "Decoupled — different speeds are safe.",
+        "Socket network flexible (multi-machine)."
+      ],
+      "gotchas": [
+        "Just remember: <b>message queue = async typed queue; socket = bidirectional connection (local/network).</b>",
+        "Message queue decouples (producer→queue→consumer).",
+        "Interview: \"when shared memory vs message vs socket\" — speed vs convenience vs network."
+      ],
+      "terms": [
+        [
+          "Message queue",
+          "Typed messages queue — processes push to and receive from each other."
+        ],
+        [
+          "Asynchronous",
+          "Sender does not wait — goes into the message queue."
+        ],
+        [
+          "Socket",
+          "Bidirectional connection — Unix-domain (local) or TCP/IP (network)."
+        ],
+        [
+          "Typed messages",
+          "Each message has a type/label — selective receive."
+        ],
+        [
+          "Unix domain socket",
+          "Same machine — TCP-like interface, but kernel-local and fast."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// sirf task type wala",
+          "// only the task type"
+        ],
+        [
+          " kernel queue jaisa",
+          " like a kernel queue"
+        ]
+      ],
+      "cons": [
+        "Slower than shared memory (copy).",
+        "Handling queue overflow/limits.",
+        "Socket sync setup overhead."
+      ]
+    },
+    "signals": {
+      "q": "What are signals in Unix? What is the difference between SIGTERM and SIGKILL?",
+      "what": "<p><b>Signal</b> is an <b>asynchronous notification</b> that the OS gives to a process — \"it's done\" / \"stop!\" / \"terminate\". For example <code>Ctrl+C</code> → <b>SIGINT</b>.</p>\n<p>Some signals are <b>catchable</b> — you can write a handler to clean up (<code>SIGTERM</code>). But <code>SIGKILL</code> and <code>SIGSTOP</code> are <b>not catchable</b> — the OS forces it. Important: \"kill\" does not always mean SIGKILL — <code>kill &lt;pid&gt;</code> sends SIGTERM by default.</p>",
+      "analogy": "Boss (OS) sends you (process) a <b>call/message</b>: \"are you okay?\" (SIGUSR), \"now exit gracefully\" (SIGTERM). You can handle them — cleanup, file close. But if the boss says \"exit immediately\" (SIGKILL) — you cannot do anything, you just exit. \"Stop\" (SIGSTOP) is also forced. These messages arrive asynchronously — at any time.",
+      "why": "<p>Signals allow the OS to inform a process about <b>events</b> — user presses Ctrl+C, the process consumes too much memory, or a shutdown is initiated. A graceful shutdown (SIGTERM handler) lets you <b>commit data / close connections</b> — therefore production code includes signal handlers.</p>",
+      "pros": [
+        "Lightweight — just an int notification.",
+        "Graceful shutdown possible (handler).",
+        "Simple wiring of OS events."
+      ],
+      "cons": [
+        "Async — handler can run at any time (race).",
+        "SIGKILL/SIGSTOP not catchable — forced.",
+        "Signals limited metadata (no payload)."
+      ],
+      "gotchas": [
+        "Just remember: <b>SIGTERM = graceful (catchable), SIGKILL = force (not catchable), SIGSTOP/SIGCONT = stop/start.</b>",
+        "kill defaults to SIGTERM, not SIGKILL — <code>kill -9</code> is different.",
+        "Interview: \"graceful shutdown\" — cleanup and exit in SIGTERM handler."
+      ],
+      "terms": [
+        [
+          "Signal",
+          "Notification sent to a process — hardware or software event."
+        ],
+        [
+          "SIGINT",
+          "Ctrl+C — interrupt, catchable."
+        ],
+        [
+          "SIGTERM",
+          "Graceful termination request — catchable (perform cleanup)."
+        ],
+        [
+          "SIGKILL",
+          "Forced kill — not catchable, immediate."
+        ],
+        [
+          "SIGSTOP/SIGCONT",
+          "Stop / then resume — SIGSTOP not catchable."
+        ],
+        [
+          "Handler",
+          "Function that runs on a signal (defined by you)."
+        ]
+      ],
+      "where": [
+        [
+          "Docker",
+          "<code>STOPSIGNAL</code> graceful with SIGTERM."
+        ],
+        [
+          "Systemd",
+          "kill/terminate signals manage."
+        ],
+        [
+          "Interview",
+          "\"SIGTERM vs SIGKILL?\" \"graceful shutdown?\""
+        ]
+      ],
+      "visualCap": "Kernel sends signals. SIGTERM is catchable, SIGKILL/SIGSTOP are not."
+    },
+    "blocking-nonblocking-io": {
+      "qsub": "What is the difference between non-blocking I/O, async I/O (AIO), and I/O multiplexing (select/poll/epoll)?",
+      "what": "<p><b>Blocking I/O</b>: when you call read() the thread <b>stops</b> until data arrives — simple, but one thread per request (expensive).</p>\n<p><b>Non-blocking I/O</b>: read() <b>returns immediately</b> — if data is ready it returns it, otherwise it says \"would block\". The thread is not busy.</p>\n<p><b>I/O multiplexing</b>: a single thread monitors <b>multiple fds</b> with <code>select/epoll</code> — \"which are ready?\" — and reads only the ready ones. This is the basis of high-concurrency engines (Node, Nginx) — one thread handling thousands of connections.</p>",
+      "analogy": "Restaurant <b>server</b> (thread):<br>• Blocking: server stands in front of each <b>table</b> until the order is ready — one table at a time (slow, many servers).<br>• Non-blocking + multiplexing: a server gives an order, moves to the next table immediately; whenever the kitchen signals \"table 5 ready\" (event) — it serves that table. <b>One server, many tables.</b> This is the Node/Nginx model.",
+      "why": "<p>All of them involve I/O wait — network, disk. If a thread stops on <b>wait</b>, then 10k connections = 10k threads = memory explosion. Therefore <b>non-blocking + multiplexing</b> lets the wait float on a single thread — high concurrency, fewer resources. Backpressure: when the sink is slow the source pauses — prevents buffer overflow.</p>",
+      "cons": [
+        "Blocking does not scale (threads).",
+        "Non-blocking code is complex (callbacks/async).",
+        "CPU-bound tasks block the event loop."
+      ],
+      "gotchas": [
+        "Just remember: <b>blocking = wait (thread busy), non-blocking = immediate + poll, multiplexing = one thread monitors many fds with epoll.</b>",
+        "Backpressure: slow sink → pause source, buffer does not fill.",
+        "Interview: \"why wouldn't you always use non-blocking?\" — CPU-bound + complexity."
+      ],
+      "terms": [
+        [
+          "Blocking I/O",
+          "Caller stops until I/O finishes — thread blocked."
+        ],
+        [
+          "Non-blocking I/O",
+          "Call returns <b>immediately</b> — if no data, returns error/wait, caller polls."
+        ],
+        [
+          "I/O multiplexing",
+          "A single thread can monitor many fds at once (select/poll/epoll)."
+        ],
+        [
+          "Async I/O (AIO)",
+          "OS completes the operation itself — why a callback?"
+        ],
+        [
+          "Backpressure",
+          "If the sink is slow, it signals the source to pause."
+        ]
+      ],
+      "visualCap": "Blocking: thread waits. Non-blocking: immediate return + epoll event. One thread, many I/O.",
+      "codeSwap": [
+        [
+          "// Ek event loop, hazaron ready-fds — no per-conn thread.",
+          "// One event loop, thousands of ready fds — no per-conn thread."
+        ]
+      ],
+      "svgSwap": [
+        [
+          "ready wala read — ek loop, kai conns",
+          "read when ready — one loop, many conns"
+        ],
+        [
+          "thread BLOCKED — idhar khaali",
+          "thread BLOCKED — empty here"
+        ],
+        [
+          "epoll: kaun ready?",
+          "epoll: who is ready?"
+        ]
+      ]
+    },
+    "epoll": {
+      "desc": "Monitor many file descriptors simultaneously without polling. The basis of Node.js, Nginx, Redis event loops.",
+      "qsub": "How does Node.js's libuv use epoll under the hood? Why can Node.js handle 10k concurrent connections on one thread?",
+      "what": "<p><b>epoll</b> is Linux's way to <b>monitor many file descriptors simultaneously</b> — \"which one is ready?\" The kernel knows which fds are ready, and gives you <b>only the ready ones</b>. Better than select/poll: they scan the <b>entire list each time</b> (O(n)); epoll is <b>O(1)</b> — it finds events on the kernel interest list.</p>\n<p><b>Level-triggered</b> — notifies as long as data is ready, on every epoll_wait. <b>Edge-triggered</b> — only on state change; you must read all the data (otherwise you miss it).</p>\n<p>This is the foundation of <b>libuv</b> (Node) and Nginx — a single event loop handling 10k+ connections.</p>",
+      "analogy": "Gym's <b>counter / bell</b> system: select/poll = you check every locker each minute (O(n), inefficient). epoll = you register which lockers are of interest; when one becomes ready, the OS <b>rings</b> — \"locker 5 ready!\" (O(1), event). Level = the sound continues as long as items are inside; Edge = the sound occurs only once when opened — then you must retrieve the items yourself.",
+      "why": "<p>With select/poll, 10k connections mean scanning a list of 10k fds <b>on every event</b> — slow. epoll keeps a <b>kernel-side interest list</b> and returns only ready fds — <b>better responsiveness and scalability</b>. Node, Nginx, and Redis run on this. In an interview, epoll is the answer to \"how Node handles 10k connections\".</p>",
+      "gotchas": [
+        "Just remember: <b>epoll = kernel-side interest list, ready events O(1). select/poll = scans every time O(n).</b>",
+        "Level vs edge: level notifies as long as data is present; edge notifies only once (read everything).",
+        "Interview: \"why can Node handle 10k?\" — non-blocking + epoll event loop."
+      ],
+      "terms": [
+        [
+          "epoll",
+          "Linux I/O multiplexing API — monitors many fds, O(1) events."
+        ],
+        [
+          "select/poll",
+          "Older APIs — scan the entire list on each check (O(n))."
+        ],
+        [
+          "Level-triggered",
+          "Notifies as long as data is ready."
+        ],
+        [
+          "Edge-triggered",
+          "Notifies only once on a state change — you must read the data."
+        ],
+        [
+          "libuv",
+          "Node.js's event-loop library — uses epoll (Linux)."
+        ],
+        [
+          "kqueue",
+          "macOS/BSD's epoll equivalent."
+        ]
+      ],
+      "visualCap": "select: scans the entire list each time. epoll: ready events, O(1). Level vs edge.",
+      "codeSwap": [
+        [
+          "// Isi se Node 1 thread par 10k+ conns.",
+          "// This is how Node handles 10k+ conns on 1 thread."
+        ],
+        [
+          "// data ready hai",
+          "// the data is ready"
+        ],
+        [
+          " epoll: kernel rakhta list, sirf ready deta.",
+          " epoll: the kernel keeps the list, hands over only the ready ones."
+        ]
+      ],
+      "svgSwap": [
+        [
+          "level: jab tak data notify",
+          "level: as long as the data notifies"
+        ],
+        [
+          "har baar okhoo list scan",
+          "scan the okhoo list every time"
+        ],
+        [
+          "sirf ready wale return",
+          "return only the ready ones"
+        ],
+        [
+          "edge: sirf change par",
+          "edge: only on change"
+        ],
+        [
+          "10k fds par slow",
+          "slow at 10k fds"
+        ]
+      ]
+    },
+    "os-design-web-server": {
+      "what": "<p>High-concurrency web server design = <b>OS primitives choose</b>. Three models:</p>\n<p><b>1. Multi-process (Apache prefork)</b> — Each request is a process (<code>fork</code>). <b>Isolation</b> is best but heavy — 10k conns = 10k processes (memory blast).</p>\n<p><b>2. Multi-thread (Apache worker)</b> — Each request is a thread. Lighter (shared memory) but <b>concurrency bugs</b> risk. 10k threads are also memory-heavy.</p>\n<p><b>3. Event-driven (Nginx/Io node)</b> — <b>Few threads + non-blocking I/O + epoll</b>. A single event loop handles thousands of connections with a \"ready-event\". <b>10k+ connections, low memory.</b> This is the modern answer.</p>",
+      "analogy": "Restaurant: <b>process model</b> = each table has a full kitchen (isolated but heavy, 100 tables = 100 kitchens). <b>thread</b> = each table has a cook who uses a shared pantry (lighter, but chaotic race). <b>event-driven</b> = 1–2 chefs, order note, \"ready\" bell (event) to serve — even if there are 1,000 tables, the chef doesn’t stop, just recognizes ready orders and serves repeatedly (epoll).",
+      "why": "<p>In a system-design interview, you need to choose this: <b>\"100k concurrent connections\"</b>. Process/thread per request does not scale (memory). <b>Event-driven + epoll</b> is the realistic solution. These concepts (fork, thread, epoll, non-blocking) connect OS knowledge to design — the real \"how would you build X\" answer.</p>",
+      "gotchas": [
+        "Just remember: <b>process per request = heavy isolated; thread = lighter shared; event+epoll = 1 loop, 10k connections.</b>",
+        "Typical mix: few workers + event loop (Nginx) = balance.",
+        "Interview: \"why not thread per req at 100k\" — memory & race."
+      ],
+      "terms": [
+        [
+          "Process-per-request",
+          "A new process (fork) for each request — isolated but heavy."
+        ],
+        [
+          "Thread-per-request",
+          "Each request is a thread — lighter than a process, shared memory."
+        ],
+        [
+          "Event-driven",
+          "A (few) thread non-blocking + epoll — 10k+ connections."
+        ],
+        [
+          "Apache prefork",
+          "Process-based model (isolated)."
+        ],
+        [
+          "Nginx / Node",
+          "Event-driven — low resources, high concurrency."
+        ]
+      ],
+      "svgSwap": [
+        [
+          "10k+ conns, kam RAM",
+          "10k+ conns, less RAM"
+        ]
+      ]
+    },
+    "os-boot-process": {
+      "qsub": "What is GRUB? What does the kernel do during initialization before launching the first process?",
+      "what": "<p>Power on → what happens?:</p>\n<p><b>1. Firmware (BIOS/UEFI)</b> — runs CPU boot code; performs hardware self-check; finds a bootable device.</p>\n<p><b>2. Bootloader (GRUB)</b> — loads the kernel image into RAM and hands over control (like giving control to main()).</p>\n<p><b>3. Kernel init</b> — sets up memory and paging, loads drivers, mounts the root file system.</p>\n<p><b>4. init/systemd (PID 1)</b> — first user-space process; starts the remaining services. Now you have a shell or desktop.</p>",
+      "analogy": "Running a computer = <b>project kickoff</b>:<br>1. Reception (firmware) — checks everything is OK, determines which team (device) is ready — selects the boot device.<br>2. Manager entrance (bootloader) — brings the manager (kernel) onto the stage, \"take over now.\"<br>3. Manager (kernel) — sets up departments (memory, drivers), opens the office (rootfs).<br>4. Team lead (init/systemd) — all employees (services) start. Now work (shell) runs — \"boot completed!\"",
+      "why": "<p>Understanding the boot chain = <b>the OS’s “hello world” flow</b>. In an interview, “what happens when you turn on a computer” shows the layered architecture: firmware → bootloader → kernel → user space. This clarifies concepts such as GRUB, BIOS, PID 1, and init.</p>",
+      "pros": [
+        "Layered — each layer does its own job.",
+        "Bootloader flexible (multi-OS/GRUB).",
+        "systemd starts services in parallel (fast)."
+      ],
+      "cons": [
+        "Any layer can fail (hard to debug).",
+        "Firmware/bootloader are vendor-specific.",
+        "systemd is controversial (complex)."
+      ],
+      "gotchas": [
+        "Just remember: <b>firmware → bootloader → kernel → init (PID 1) → services.</b>",
+        "Select \"boot from USB\" — chooses the boot chain.",
+        "Interview: \"What is PID 1?\" — init/systemd, the parent of everything."
+      ],
+      "terms": [
+        [
+          "BIOS/UEFI",
+          "Firmware — executed by the CPU on power-on (self-check)."
+        ],
+        [
+          "Bootloader",
+          "GRUB — loads the kernel into memory and hands over control."
+        ],
+        [
+          "Kernel init",
+          "Sets up scheduler, memory, drivers; mounts rootfs."
+        ],
+        [
+          "init/systemd",
+          "First user-space process (PID 1)."
+        ],
+        [
+          "Runlevels/targets",
+          "Startup order of services (systemd targets)."
+        ]
+      ],
+      "where": [
+        [
+          "Linux",
+          "systemd targets manage boot."
+        ],
+        [
+          "Embedded",
+          "U-Boot bootloader — kernel load."
+        ],
+        [
+          "Interview",
+          "\"from power-on to shell?\" \"GRUB?\""
+        ]
+      ],
+      "visualCap": "Boot chain: firmware → bootloader → kernel → init. PID 1 is first.",
+      "codeSwap": [
+        [
+          "// Boot = layered startup. JS mein thought-flow:",
+          "// Boot = layered startup. Thought-flow in JS:"
+        ],
+        [
+          "// PID 1 sab user-space ka parent hai.",
+          "// PID 1 is the parent of all user-space."
+        ]
+      ],
+      "svgSwap": [
+        [
+          "ab shell/desktop → boot hua",
+          "now the shell/desktop → booted"
+        ],
+        [
+          "control deta",
+          "gives control"
+        ]
+      ]
+    },
+    "os-program-execution": {
+      "q": "Explain what happens at the OS level when you run ./myprogram.",
+      "what": "<p><code>./myprogram</code> running at OS level does what:</p>\n<p><b>1. fork()</b> — creates a new process (a copy of the parent). <b>2. exec()</b> — replaces that process's image with <code>myprogram</code>. The loader reads the ELF file and maps <b>code/data into memory</b>, sets up <b>stack+heap</b>, and resolves <b>dynamic libs</b> (.so).</p>\n<p><b>3. Control goes to the entry point</b> — <code>_start</code>/<code>main()</code>. Now the program runs.</p>\n<p><code>fork + exec</code>: fork creates a new process, exec changes its image — a two-step Unix design.</p>",
+      "analogy": "Create your <b>new doppelganger</b> (fork) that is a copy of you; then <b>replace it</b> (exec) with a new career (program). Loader = HR that reads the CV (ELF) and sets up the desk (memory), paperwork (stack/heap), and the team (libraries), then calls the boss (main). Dynamic linking = “these managers share the library” — no repeated copies (saves RAM).",
+      "why": "<p>In binary execution, three major OS fundamentals appear: <b>fork vs exec</b> (process creation), <b>virtual memory mapping</b> (loader), <b>static vs dynamic linking</b>. In an interview, the question \"what happens when you run a program\" tests these deep answers. This is how you understand the behavior of the shell, ./a.out, and libraries.</p>",
+      "pros": [
+        "fork/exec modular — clean split of process creation.",
+        "Loader virtual memory re-use — fast.",
+        "Dynamic linking saves RAM/disk."
+      ],
+      "cons": [
+        "fork copies (COW reduces cost, but).",
+        "Dynamic linking startup resolve overhead.",
+        "Loader/binary format complexity."
+      ],
+      "gotchas": [
+        "Just remember: <b>fork = new process (copy), exec = replace image. Loader sets up memory + libraries, then main().</b>",
+        "Check common .so with ldd — dynamic linking effect.",
+        "Interview: \"static vs dynamic\" — static = big binary, dynamic = small + shared."
+      ],
+      "terms": [
+        [
+          "Loader",
+          "exec maps the program file into memory (ELF)."
+        ],
+        [
+          "ELF",
+          "Executable format — code, data, sections."
+        ],
+        [
+          "Stack/heap setup",
+          "Loader creates a new process context (stack, heap region)."
+        ],
+        [
+          "Dynamic linking",
+          "Shared libraries (.so) load time resolve — save memory/disk."
+        ],
+        [
+          "Entry point",
+          "Program's first instruction (main/_start) where control goes."
+        ]
+      ],
+      "visualCap": "fork → exec: creates a process and changes its image. Loader sets up memory.",
+      "codeSwap": [
+        [
+          "// exec: child ki image ko program se replace kar do",
+          "// exec: replace the child's image with a program"
+        ],
+        [
+          "// Shell ka ./myprogram = fork + exec.",
+          "// The shell's ./myprogram = fork + exec."
+        ],
+        [
+          " Real C: fork() phir execve() — two-step.",
+          " Real C: fork() then execve() — two steps."
+        ]
+      ],
+      "svgSwap": [
+        [
+          "main() chalta hai",
+          "main() runs"
+        ]
+      ]
+    },
+    "os-thrashing": {
+      "q": "What is thrashing? How does the OS detect and prevent it?",
+      "qsub": "What is the working set model? How does swappiness tuning affect server performance?",
+      "what": "<p><b>Thrashing</b> — when the combined working sets of all processes exceed RAM. Each process’s <b>page fault rate</b> rises, the OS pulls a page from disk, but the page is needed again right away → constant paging, no computation.</p>\n<p><b>Detect</b> — page fault rate is very high, CPU utilization drops. <b>Prevent</b> — <b>working set model</b>: track each process’s active pages; if the sum > RAM then <b>suspend some processes</b> (or add memory). In Linux, <b>swappiness</b> controls the tendency to swap anonymous memory versus file cache.</p>",
+      "analogy": "Overbooked <b>gym</b>: all members arrive at once (too many processes), each needs a machine (working set). If there’s no machine, everyone is <b>waiting and waiting</b> — no one is actually exercising (CPU idle), everyone is just looking for the “next machine” (faults/swap). Remedy: <b>suspend some members</b> (or expand the gym) — then the remaining can exercise (compute).",
+      "why": "<p><b>High load</b> or <b>low RAM</b> makes thrashing a real problem — the system feels like a \"brick\" (utilization drops, response stalls). Therefore understanding detection/prevention is essential: check the <b>working set</b> sum, monitor the <b>fault rate</b>, tune <b>swappiness</b>. This is a common \"OS-level performance\" interview question.</p>",
+      "pros": [
+        "Working set provides a clear model — easy to detect.",
+        "Suspend restores compute.",
+        "Swappiness knobs — tune manually."
+      ],
+      "gotchas": [
+        "Just remember: <b>thrashing = working sets sum > RAM → paging only, CPU idle. Detect via fault rate.</b>",
+        "High si/so (swap in/out) in vmstat = red flag.",
+        "Interview: \"How does the OS prevent thrashing?\" — working set model, suspend, more RAM."
+      ],
+      "terms": [
+        [
+          "Thrashing",
+          "System pages so much that more time is spent swapping than doing CPU compute — utilization drops."
+        ],
+        [
+          "Working set",
+          "Set of pages a process is actively using."
+        ],
+        [
+          "Page fault rate",
+          "Number of faults per unit time — increase signals a problem."
+        ],
+        [
+          "Swappiness",
+          "Linux: how much anonymous memory is inclined to be swapped."
+        ],
+        [
+          "Too many processes",
+          "Working sets sum > RAM → thrashing."
+        ]
+      ],
+      "where": [
+        [
+          "Observability",
+          "<code>vmstat</code> si/so (swap in/out) — fault rate."
+        ],
+        [
+          "Tuning",
+          "<code>sysctl vm.swappiness</code> — RAM vs swap."
+        ],
+        [
+          "Interview",
+          "\"What is thrashing?\" \"What is a working set?\" \"What is swappiness?\""
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// anonymous memory ko kitna swap karna hai.",
+          "// how much anonymous memory to swap."
+        ],
+        [
+          "// ya working set kam karo",
+          "// or reduce the working set"
+        ],
+        [
+          "console.log('chalo — compute possible');",
+          "console.log('go — compute possible');"
+        ]
+      ],
+      "cons": [
+        "Working set tracking overhead.",
+        "Ad hoc suspend ruins the user experience.",
+        "Swappiness tuning tricky."
+      ]
+    },
+    "os-linux-internals": {
+      "desc": "/proc filesystem, cgroups, namespaces, copy-on-write — the building blocks of containers.",
+      "qsub": "What is the /proc filesystem? What useful information can you extract from /proc/[pid]?",
+      "what": "<p>Containers (Docker) are built on Linux kernels:</p>\n<p><b>Namespaces</b> — give processes <b>separate views</b> (PID, network, mount, user...). In one container PID 1, in another also PID 1 — each has its own \"isolated system\".</p>\n<p><b>cgroups</b> — <b>resource limits</b> (CPU %, memory max). A container does not take excessive RAM.</p>\n<p><b>Copy-on-write</b> — pages are shared (fast); they are copied only when written. Fork does not need to copy the binary.</p>\n<p><b>/proc</b> — kernel's virtual info: <code>/proc/&lt;pid&gt;/</code> contains filenames, fd, memory, cmdline. <b>OverlayFS</b> — merges image layers, container-specific rootfs.</p>",
+      "analogy": "Apartment building <b>system</b>:<br>• Namespace = each flat gets its own \"own flat\" feel — everyone’s kitchen is 101 (PID 1), but they are separate (isolation). Network is also separate per flat.<br>• cgroup = property manager limits electricity/water per flat (CPU/memory quota).<br>• CoW = when moving in (fork), the furniture (pages) is not copied — only when it is modified.<br>• /proc = building’s info panel — who is where. Image = delivery blueprint.",
+      "why": "<p>These 4-5 concepts are the core of <b>containers and Linux internals</b>. In an interview, the answer to \"how does Docker isolate?\" is namespaces + cgroups; \"what is /proc?\" demonstrates practical Linux knowledge. CoW enables a performant fork. They connect modern infrastructure (containers) to the OS — high-signal interview material.</p>",
+      "pros": [
+        "Containers — lightweight vs VM (kernel shared).",
+        "CoW creates a new process fast (no binary copy).",
+        "/proc provides a live-system-like file toolkit."
+      ],
+      "cons": [
+        "Isolation is weaker than a VM — kernel shared.",
+        "cgroup limits are tricky to tune (noisy neighbor).",
+        "/proc exposes information without proper knowledge — permissions must be handled carefully."
+      ],
+      "gotchas": [
+        "Just remember: <b>namespace = isolated view, cgroup = resource limit, CoW = fast copy, /proc = live info, overlay = layers.</b>",
+        "Container != VM — same kernel, isolation via namespaces + cgroups.",
+        "Interview: \"/proc what?\" — pseudo-fs, kernel info files, live."
+      ],
+      "terms": [
+        [
+          "Namespace",
+          "Isolated view of resources (PID, net, mount) — the base of a container."
+        ],
+        [
+          "cgroup",
+          "Control group — CPU/mem/IO resource limit."
+        ],
+        [
+          "copy-on-write (CoW)",
+          "Pages are shared; they are copied when written — fork/container fast."
+        ],
+        [
+          "/proc",
+          "Virtual filesystem — kernel/runtime info files."
+        ],
+        [
+          "OverlayFS",
+          "Layered filesystem — image layers, container rootfs."
+        ]
+      ],
+      "visualCap": "Namespaces create islands, cgroups impose limits. CoW fast copy. /proc provides info.",
+      "codeSwap": [
+        [
+          "// 3. overlay: layers ko merge for rootfs",
+          "// 3. overlay: merge layers for the rootfs"
+        ],
+        [
+          "// 4. CoW: fork/processes ko fast copy",
+          "// 4. CoW: fast copy of fork/processes"
+        ],
+        [
+          "// docker run ke behind:",
+          "// behind docker run:"
+        ],
+        [
+          " /proc pseudo-FS — dikhta file, ekdam live kernel.",
+          " /proc pseudo-FS — looks like a file, but is the live kernel."
+        ]
+      ],
+      "svgSwap": [
+        [
+          "har container alag island",
+          "each container is a separate island"
+        ],
+        [
+          "likhte hi alp-copy",
+          "shallow-copy as soon as written"
+        ]
+      ]
+    },
+    "raid-levels": {
+      "q": "What is the difference between RAID 5 and RAID 6? When would you choose each?",
+      "qsub": "What is the rebuild time problem with large RAID 5 arrays? How does RAID 10 compare to RAID 5 for write-heavy workloads?",
+      "what": "<p><b>RAID</b> combines multiple disks to provide <b>either speed, safety</b> (or both). Levels differ in trade-offs:</p>\n<p><b>RAID 0</b> — distributes data in <b>stripes</b> (blocks) across all disks. I/O runs in parallel → <b>fast</b>. But <b>no redundancy</b> — if one disk fails, all data is lost.</p>\n<p><b>RAID 1</b> — stores a <b>copy</b> of each block on two disks. Fail-safe, but capacity is halved.</p>\n<p><b>RAID 5</b> — stripe plus <b>parity</b> (recovery info). Can rebuild after one disk fails. <b>RAID 6</b> — two parity blocks, tolerates two failures. <b>RAID 10</b> — stripe of mirrored pairs = speed + safety (but requires twice as many disks).</p>",
+      "analogy": "How to handle your important <b>notes</b>:<br>• RAID 0 = split the notes across two tables — both read fast, but if any table page is lost the note is half.<br>• RAID 1 = full <b>copy</b> on both tables — even if one table burns, you still have the note.<br>• RAID 5 = notes plus a \"check-sum\" note — if one table fails, the check-sum lets you reconstruct the rest.<br>• RAID 10 = two copies of each note in pairs, arranged for speed — best performance but expensive.",
+      "why": "<p>Storage decisions depend on requirements: <b>speed</b> (RAID 0), <b>safety</b> (RAID 1), <b>balance</b> (RAID 5/6), <b>best-of-both</b> (RAID 10). Rebuild time for large arrays and the write cost of parity are key considerations when choosing production storage. This is the answer for HA design.</p>",
+      "gotchas": [
+        "Just remember: <b>0=speed, 1=mirror, 5=parity (1 fail), 6=parity (2 fail), 10=mirror+stripe.</b>",
+        "Rebuild time on large RAID 5 arrays — a second failure can cause data loss.",
+        "Interview: \"Which is for write-heavy?\" — RAID 10 (no parity overhead)."
+      ],
+      "terms": [
+        [
+          "RAID",
+          "Redundant Array of Independent Disks — multiple disks together, providing performance and reliability."
+        ],
+        [
+          "RAID 0 (striping)",
+          "Data split across all disks — fast but no redundancy (one disk fails = all data lost)."
+        ],
+        [
+          "RAID 1 (mirroring)",
+          "A copy (mirror) on each disk — provides redundancy, but capacity is halved and writes are slower."
+        ],
+        [
+          "RAID 5 (parity)",
+          "Striping plus distributed parity — requires 3+ disks, can tolerate one disk failure."
+        ],
+        [
+          "RAID 6 (double parity)",
+          "Requires 4+ disks, can tolerate two disk failures."
+        ],
+        [
+          "RAID 10 (stripe of mirrors)",
+          "Pairs of RAID 1 mirrors striped like RAID 0 — offers speed and redundancy, but is expensive."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// RAID 5: har stripe par 1 parity block (recover 1 disk).",
+          "// RAID 5: 1 parity block per stripe (recovers 1 disk)."
+        ],
+        [
+          "// 2-fail (R6), best (R10) — restart par cost.",
+          "// 2-fail (R6), best (R10) — cost on restart."
+        ],
+        [
+          "// RAID 1: mirror — copy har block 2 baar.",
+          "// RAID 1: mirror — every block copied twice."
+        ],
+        [
+          "// RAID 10: mirror pairs ka stripe.",
+          "// RAID 10: a stripe of mirror pairs."
+        ]
+      ],
+      "where": [
+        [
+          "DB",
+          "RAID 10 is common (fast + durable)."
+        ],
+        [
+          "Storage arrays",
+          "RAID 5/6 — capacity + parity."
+        ],
+        [
+          "Interview",
+          "\"RAID 5 vs 10?\" \"rebuild time?\""
+        ]
+      ],
+      "cons": [
+        "RAID 0: no data safety.",
+        "RAID 1: half the capacity.",
+        "RAID 5/6: parity write slow + rebuild risk."
+      ],
+      "svgSwap": [
+        [
+          "safe · aadhi capacity",
+          "safe · half the capacity"
+        ]
+      ]
+    },
+    "mmap": {
+      "qsub": "What are the disadvantages of mmap? How does it interact with the page cache?",
+      "what": "<p><b>mmap</b> — map a file as if it were part of <b>virtual memory</b>. File read/write behaves like memory array read/write (pointer).</p>\n<p>OS <b>page cache</b> manages — file pages reside in memory, access is immediate. <b>Write-back</b>: changes are written lazily to disk (msync forces). On a <b>page fault</b> demand load — not the whole file, only the needed part.</p>\n<p>vs <b>read/write</b>: there a user-space buffer copy occurs + a syscall each time. mmap reduces copies (memory-mapped access), large files become efficient.</p>",
+      "analogy": "Reading a <b>large book</b> (file): read/write = request each page from the librarian, who provides a copy (syscall + copy). mmap = keep the book <b>open on your desk</b> (map) — read/write directly, no copy. When a page is needed (demand) — open it. Write your edits (write-back) on the book, and when you wish, use msync to \"shelve\" it (force to disk).",
+      "why": "<p>For large files / random access / shared pages mmap is <b>efficient</b> — no per-read syscall copy. Page cache is reused. Hence databases (page cache), loaders (map binary), memory-mapped I/O are common. But <b>predictability is lower</b> — page faults and memory pressure (OOM) are problematic. Interview: the nuanced answer to \"read vs mmap?\" is this.</p>",
+      "cons": [
+        "Page faults unpredictable (latency).",
+        "Write-back implicit — data loss on crash (without msync).",
+        "Memory pressure / OOM risks."
+      ],
+      "gotchas": [
+        "Just remember: <b>mmap = file memory-mapped; uses page cache; write-back lazy, msync forces, page fault demand load.</b>",
+        "read() incurs a syscall copy each time; mmap relies on page cache.",
+        "Interview: \"when mmap?\" — large/random; \"when read?\" — small/streaming."
+      ],
+      "terms": [
+        [
+          "mmap",
+          "File content mapped into memory — file I/O via virtual memory."
+        ],
+        [
+          "Page cache",
+          "Kernel cache for file reads/writes — kept in memory."
+        ],
+        [
+          "Write-back",
+          "Modified pages flushed to disk lazily — without heavy syscalls."
+        ],
+        [
+          "msync",
+          "Force the changes made via a map to flush to disk."
+        ],
+        [
+          "Page fault",
+          "Page load occurs as soon as accessed — demand paging."
+        ]
+      ],
+      "visualCap": "mmap: file → virtual memory, via page cache. msync flush. read/write: kernel copy.",
+      "codeSwap": [
+        [
+          "// vs read(): har baar kernel→user copy + syscall.",
+          "// vs read(): a kernel→user copy + syscall every time."
+        ],
+        [
+          " munmap(ptr);   // map khol do",
+          " munmap(ptr);   // unmap it"
+        ]
+      ],
+      "where": [
+        [
+          "DBs",
+          "PostgreSQL page cache works like mmap (shared_buffers)."
+        ],
+        [
+          "Loaders",
+          "dlopen / binary map, exec loader."
+        ],
+        [
+          "Interview",
+          "\"mmap vs read?\" \"write-back?\" \"msync?\""
+        ]
+      ]
+    },
+    "storage-devices": {
+      "q": "What is the difference between HDD, SSD, and NVMe at the hardware level?",
+      "what": "<p><b>HDD</b> — actual spinning disk + magnetic head. The head must move to the data track (seek) = slow ~5-10ms. <b>Sequential</b> is fast (one wave), <b>random</b> is slow (head moves each time).</p>\n<p><b>SSD</b> — NAND flash, no moving parts, no seek — <b>random also fast</b>. But <b>write amplification</b>: flash erases at page-block level, so even a small write erases a large area, adding wear.</p>\n<p><b>NVMe</b> — SSD over PCIe — 4–10× faster than SATA, multiple queues, deep queue depth. </p>\n<p><b>TRIM</b> — marks a deleted block as free (extends SSD lifespan). <b>I/O scheduler</b>: HDD needs a scheduler (SCAN), NVMe does not — none/deadline.</p>",
+      "analogy": "Library: <b>HDD</b> = a librarian who walks to the shelf for a book (seek). Nearby books (sequential) are fast; far books (random) are slow. <b>SSD</b> = books on chips where no walking is needed — any book is immediate (random fast), but writing a chapter requires erasing the whole page-block (write amplification). <b>NVMe</b> = think of a super-fast conveyor. TRIM = \"this page is free\" sign — makes writing easier.",
+      "why": "<p>Understanding modern storage choices: <b>latency</b> (NVMe <<< SSD < HDD), <b>cost/GB</b>, <b>write pattern</b>, <b>wear</b>. These drive system design, database, and caching decisions. Knowing SSD wear/write amplification is essential for selecting the right solution for write-heavy workloads (optane / log).</p>",
+      "gotchas": [
+        "Just remember: <b>HDD seek = slow random; SSD no seek but write amp; NVMe fastest (PCIe); TRIM extends lifespan.</b>",
+        "Write amplification = even a small write triggers a block erase — memory wear.",
+        "Interview: \"why is NVMe hot?\" — PCIe, more queues/parallelism, low latency."
+      ],
+      "terms": [
+        [
+          "HDD",
+          "Spinning platter + head — seek time (~5-10ms), sequential fast, random slow."
+        ],
+        [
+          "SSD (SATA)",
+          "NAND flash, no seek — random fast, write amplification."
+        ],
+        [
+          "NVMe",
+          "SSD over PCIe — very fast, low latency, high queue depth."
+        ],
+        [
+          "Write amplification",
+          "SSD even a small write causes a large erase/write — wear + slower performance."
+        ],
+        [
+          "TRIM",
+          "Marks blocks as free after delete — reduces write amplification."
+        ],
+        [
+          "I/O scheduler",
+          "HDD: SCAN-style; NVMe: none/deadline (fast, no magazine)."
+        ]
+      ]
+    },
+    "demand-paging": {
+      "qsub": "What is thrashing and how do you detect it? How does the working set model prevent thrashing?",
+      "what": "<p><b>Demand paging</b> — when a program starts, it does not load the entire memory; <b>whenever a page is accessed</b> and it is not in RAM, it is fetched from disk via a <b>page fault</b>. This <b>saves memory</b> and makes startup fast (only necessary pages).</p>\n<p>Each process’s <b>working set</b> = pages that are actively used. If the sum of all working sets exceeds RAM → <b>thrashing</b> (a fault on every access, CPU idle). The remedy is working-set control plus page replacement (LRU/Clock). Colocation/over-subscription revolve around this.</p>",
+      "analogy": "Imagine a <b>large library</b> (program) you want to read: the whole library is not brought in at once (demand paging). You look (access) at tables 3, 7, 12 — only those are fetched (page fault). The books you are currently using = <b>working set</b>. If all readers (processes) together request 100 books but the library has only 50 tables (RAM) — you have to switch tables each time (thrashing) and no one can actually read.",
+      "why": "<p>Memory is <b>limited</b> and programs are large — demand paging enables large programs on small RAM with fast startup. But over-subscription leads to thrashing — a severe performance hit. Working set + LRU/Clock + over-subscribe knobs form the core of production memory management. This answers interview questions like \"why is startup fast\" and \"what is thrashing\".</p>",
+      "pros": [
+        "Memory efficient — only necessary pages are loaded.",
+        "Startup fast — without reading everything.",
+        "Large programs on small RAM."
+      ],
+      "gotchas": [
+        "Just remember: <b>demand paging = load on access (page fault). working set = active pages. sum > RAM = thrashing.</b>",
+        "vmstat si/so high → thrashing signal.",
+        "Interview: \"startup fast?\" — lazy page load, only necessary."
+      ],
+      "terms": [
+        [
+          "Demand paging",
+          "Pages are loaded only when accessed (via a page fault) — not loaded all at once."
+        ],
+        [
+          "Page fault",
+          "The accessed page is not in RAM → the system fetches it from disk."
+        ],
+        [
+          "Working set",
+          "Pages that the process is currently using actively."
+        ],
+        [
+          "Thrashing",
+          "Working sets exceed RAM → continuous paging, computation stalls."
+        ],
+        [
+          "Page replacement",
+          "RAM is full → a page is evicted (LRU/Clock)."
+        ]
+      ],
+      "where": [
+        [
+          "Linux",
+          "malloc = virtual, loads on demand."
+        ],
+        [
+          "DB",
+          "Page cache demand-fill, buffer pool."
+        ],
+        [
+          "Interview",
+          "\"demand paging?\" \"why is startup fast?\" \"how to detect thrashing?\""
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// Working set = pages k electricity access karta hai.",
+          "// Working set = the set of pages a program is actively accessing."
+        ]
+      ],
+      "svgSwap": [
+        [
+          "ilaj: working set control · LRU/Clock evict",
+          "cure: control the working set · LRU/Clock eviction"
+        ]
+      ]
+    },
+    "posix-threads": {
+      "desc": "pthreads is the C/POSIX thread API. pthread_create, pthread_join, pthread_mutex_lock, pthread_cond_wait. Portable across Unix/Linux/macOS. Foundation for understanding OS-level threading. Java threads and Go goroutines build on OS threads which use pthreads on Unix.",
+      "q": "How do you create and join a thread using pthreads? What are the key differences from Java threads?",
+      "what": "<p><b>pthreads</b> = C's <b>POSIX thread API</b> — the standard for creating OS threads on Unix/Linux/macOS.</p>\n<p><code>pthread_create</code> — creates a thread; <code>pthread_join</code> — waits for it to finish. Sharing: threads share the same heap/code (unlike processes). Therefore a <b>mutex</b> is necessary — to prevent races on shared data.</p>\n<p><b>Condition variables</b> — a thread waits until another thread gives a \"ready\" signal (<code>pthread_cond_wait/signal</code>). <b>Spurious wakeup</b>: the wait can wake up without a signal — so always wait inside a <b>while loop</b>, not in an <code>if</code>.</p>\n<p>Java threads / Go goroutines run on internal OS threads (pthreads on Unix) — this is the foundation.</p>",
+      "analogy": "Imagine a <b>kitchen team</b>:<br>• pthread_create = hire a new cook.<br>• pthread_join = the head chef waits until the cook finishes the task.<br>• Mutex = a single stove (shared); only one cook can use it at a time — lock it so two cooks don’t burn the food (race).<br>• Cond var = the cook signals \"food ready\"; another waits — but a \"false alarm\" (spurious) can occur, so check again with a while loop to confirm the food is truly ready.",
+      "why": "<p>pthreads = <b>fundamentals of OS-thread programming</b>. Concurrency, race conditions, synchronization (mutex/condvar) all happen here. Java/Go “virtual” threads also run on OS threads — so understanding the OS thread model is essential. Interview questions often include \"what is a thread? mutex? deadlock? condvar? spurious?\" — all stem from this.</p>",
+      "gotchas": [
+        "Just Remember: <b>create = make a thread, join = wait; mutex = lock shared; condvar = wait/notify; spurious → while loop.</b>",
+        "Spurious wakeup is real — always wait in while(!cond).",
+        "Java/Go threads run on OS threads — the base is pthreads."
+      ],
+      "terms": [
+        [
+          "pthread_create",
+          "Creates a new thread (C/POSIX)."
+        ],
+        [
+          "pthread_join",
+          "Waits for the thread to finish (and obtains result/status)."
+        ],
+        [
+          "pthread_mutex_lock/unlock",
+          "Locks a critical section — prevents races."
+        ],
+        [
+          "pthread_cond_wait/signal",
+          "Condition variable — thread signals \"data ready\"."
+        ],
+        [
+          "Spurious wakeup",
+          "Thread wakes up without a signal — put the wait in a loop."
+        ],
+        [
+          "OS threads",
+          "Managed by the hardware/OS scheduler — Java threads/Go goroutines run on these (pthreads on Unix)."
+        ]
+      ],
+      "where": [
+        [
+          "C/C++",
+          "pthreads — native threading."
+        ],
+        [
+          "Java/Go",
+          "On top of OS threads (JVM/goroutines)."
+        ],
+        [
+          "Interview",
+          "\"mutex vs condvar?\" \"spurious wakeup?\" \"create/join?\""
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// pthread_join(t, NULL); // wait khatam hone ka",
+          "// pthread_join(t, NULL); // waiting for it to finish"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "mutex: ek time par ek hi critical section",
+          "mutex: only one critical section at a time"
+        ]
+      ]
+    }
+  }
+}

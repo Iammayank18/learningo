@@ -1,0 +1,2072 @@
+{
+  "lessons": {
+    "monitor-condition": {
+      "name": "Monitor & Condition Variables",
+      "desc": "A monitor combines a mutex + condition variables. A thread can wait() until a condition is true, then be signal()ed.",
+      "q": "What is a monitor? How do condition variables work? Why must you always check conditions in a while loop?",
+      "qsub": "What is a spurious wakeup? Why can they happen and how do you handle them?",
+      "what": "<p><b>Definition:</b> In a monitor, a thread can wait for a condition inside a lock (<code>wait</code>), and another thread changes the condition and performs <code>notify/signal</code>. The wait atomically releases the lock and sleeps.</p>",
+      "why": "<p>Busy-waiting burns CPU; a condition variable puts the thread to sleep, providing efficient coordination (e.g., queue empty/full cases).</p>",
+      "pros": [
+        "Efficient waiting",
+        "Safely bundled with the mutex"
+      ],
+      "cons": [
+        "Missed signal / lost wakeup ka risk",
+        "notify vs notifyAll confusion"
+      ],
+      "gotchas": [
+        "Always check the condition inside a <code>while</code> loop (spurious wakeup)",
+        "wait/notify must be called only while holding the lock",
+        "notify() wakes only one thread — it may wake the wrong thread"
+      ],
+      "terms": [
+        [
+          "Monitor",
+          "Bundle of mutex + condition variables."
+        ],
+        [
+          "wait()",
+          "Releases the lock and sleeps; on signal it reacquires the lock and wakes."
+        ],
+        [
+          "Spurious wakeup",
+          "Can wake up without a signal."
+        ]
+      ],
+      "where": [
+        [
+          "Blocking queues",
+          "Empty/full conditions."
+        ],
+        [
+          "Thread coordination",
+          "Ready/started signals."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// if nahi, WHILE",
+          "// not if, WHILE"
+        ]
+      ]
+    },
+    "rwlock": {
+      "name": "Read-Write Lock",
+      "desc": "Multiple readers can hold simultaneously. Only one writer — exclusive. Perfect for read-heavy workloads.",
+      "q": "When would you use a Read-Write Lock over a plain mutex? What are its trade-offs?",
+      "qsub": "What is writer starvation? How do some implementations prevent it?",
+      "what": "<p><b>Definition:</b> A ReadWriteLock allows multiple readers or a single writer. In a read-heavy workload (95% reads) it provides better throughput than a mutex.</p>",
+      "why": "<p>Serializing reads is wasteful when the data never changes.</p>",
+      "pros": [
+        "Read-heavy par high concurrency"
+      ],
+      "cons": [
+        "More overhead than a mutex",
+        "Writer starvation or reader starvation"
+      ],
+      "gotchas": [
+        "Upgrading a read lock to a write lock often causes deadlock",
+        "In a write-heavy workload, a mutex is faster",
+        "Choose based on understanding fair vs non-fair policy"
+      ],
+      "terms": [
+        [
+          "Shared lock",
+          "Multiple readers simultaneously."
+        ],
+        [
+          "Exclusive lock",
+          "Writer alone."
+        ],
+        [
+          "Writer starvation",
+          "If readers keep arriving, the writer may be blocked."
+        ]
+      ],
+      "where": [
+        [
+          "Config / cache reads",
+          "Read-mostly data."
+        ],
+        [
+          "Routing tables",
+          "Rare updates."
+        ]
+      ]
+    },
+    "barrier": {
+      "name": "Barrier & Latch",
+      "desc": "Barrier: all threads must reach it before any proceeds. Latch: countdown to zero then releases all waiters.",
+      "q": "What is a CyclicBarrier? What is a CountDownLatch? When would you use each?",
+      "qsub": "What is the difference between a CountDownLatch and a Semaphore?",
+      "what": "<p><b>Definition:</b> A CyclicBarrier is reusable — after each phase all threads advance together. A CountDownLatch is one-time: the main thread waits until workers call <code>countDown()</code>.</p>",
+      "why": "<p>In parallel simulations or matrix steps, the next phase needs the complete data from the previous phase.</p>",
+      "pros": [
+        "Simple coordination"
+      ],
+      "cons": [
+        "If one thread gets stuck, everyone gets stuck"
+      ],
+      "gotchas": [
+        "Latch cannot be reused",
+        "If a thread fails in a barrier, a BrokenBarrierException occurs",
+        "Perform countDown in a finally block when a worker throws an exception"
+      ],
+      "terms": [
+        [
+          "Barrier",
+          "N threads wait until all have arrived."
+        ],
+        [
+          "Latch",
+          "When the count reaches 0, it releases everyone once; cannot be reused."
+        ],
+        [
+          "Phase",
+          "Steps of a parallel algorithm that require synchronization."
+        ]
+      ],
+      "where": [
+        [
+          "Startup",
+          "Waiting for all services to be ready."
+        ],
+        [
+          "Parallel algorithms",
+          "Phase sync."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// har thread phase ke end par b.await()",
+          "// every thread calls b.await() at the end of the phase"
+        ],
+        [
+          " 3 workers khatam hone tak",
+          " until 3 workers finish"
+        ]
+      ]
+    },
+    "deadlock-conditions": {
+      "name": "Four Conditions for Deadlock",
+      "desc": "Coffman conditions: Mutual Exclusion, Hold & Wait, No Preemption, Circular Wait. All 4 must hold.",
+      "q": "What are the four necessary conditions for deadlock? To prevent deadlock, which one would you eliminate?",
+      "qsub": "Draw a resource allocation graph and show how it demonstrates a deadlock.",
+      "what": "<p><b>Definition:</b> A deadlock occurs when all four Coffman conditions hold simultaneously. Breaking any one prevents a deadlock.</p><p>Classic example: Thread 1 holds lock A and requests B; Thread 2 holds B and requests A.</p>",
+      "analogy": "<p>At an intersection, cars come from all four directions — none can move backward, each waits for the next.</p>",
+      "why": "<p>Remembering the four helps quickly devise a prevention strategy: each condition suggests a type of fix.</p>",
+      "pros": [
+        "Knowing the conditions enables systematic debugging"
+      ],
+      "cons": [
+        "Rare at runtime and hard to reproduce"
+      ],
+      "gotchas": [
+        "All four conditions must be present — break one to solve",
+        "After detecting a database deadlock, a transaction is aborted",
+        "A thread dump (jstack) shows the cycle"
+      ],
+      "terms": [
+        [
+          "Mutual exclusion",
+          "Resource has a single holder."
+        ],
+        [
+          "Hold & wait",
+          "Holding one resource while requesting another."
+        ],
+        [
+          "No preemption",
+          "Resources cannot be forcibly taken."
+        ],
+        [
+          "Circular wait",
+          "A→B→A cycle."
+        ]
+      ],
+      "where": [
+        [
+          "Databases",
+          "Row locks cause transaction deadlocks."
+        ],
+        [
+          "Services",
+          "Anything taking locks from both sides."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// Fix: dono mein pehle A phir B (lock ordering)",
+          "// Fix: in both, A first and then B (lock ordering)"
+        ]
+      ]
+    },
+    "deadlock-prevention": {
+      "name": "Deadlock Prevention & Avoidance",
+      "desc": "Prevention: eliminate one Coffman condition. Avoidance: Banker's algorithm. Detection: find cycles in RAG.",
+      "q": "Compare deadlock prevention, avoidance (Banker's algorithm), and detection. What does each cost?",
+      "qsub": "Why is the Banker's algorithm rarely used in practice? What do real OSes do instead?",
+      "what": "<p><b>Definition:</b> Prevention: lock ordering (circular wait), acquire all locks at once (hold & wait), tryLock+timeout (no preemption). Avoidance decides by looking at the system state. Detection+recovery: if a cycle is found, abort a victim.</p>",
+      "why": "<p>In production, the practical approach is lock ordering + timeouts + small critical sections.</p>",
+      "pros": [
+        "Prevents hangs"
+      ],
+      "cons": [
+        "Avoidance is practically expensive",
+        "tryLock can cause livelock"
+      ],
+      "gotchas": [
+        "Adding a timeout does not hide the cause — log it",
+        "Use random backoff in retries",
+        "Banker's algorithm is probably rarely used in real systems"
+      ],
+      "terms": [
+        [
+          "Prevention",
+          "Break one Coffman condition."
+        ],
+        [
+          "Avoidance",
+          "Banker's algorithm — allocate only in a safe state."
+        ],
+        [
+          "Detection",
+          "Find a cycle in the wait-for graph, then recover."
+        ]
+      ],
+      "where": [
+        [
+          "DB engines",
+          "Deadlock detector."
+        ],
+        [
+          "Application code",
+          "Lock ordering convention."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// fail ho to backoff + retry",
+          "// on failure, backoff + retry"
+        ]
+      ]
+    },
+    "livelock-starvation": {
+      "name": "Livelock & Starvation",
+      "desc": "Livelock: threads keep responding to each other but make no progress. Starvation: a thread never gets CPU time.",
+      "q": "What is the difference between deadlock, livelock, and starvation? Give a real-world analogy for each.",
+      "qsub": "How do you avoid livelock when implementing retry logic? What is exponential backoff?",
+      "what": "<p><b>Definition:</b> In a deadlock, threads are blocked; in a livelock they keep running but make no progress. In starvation, a thread is always left behind because of the scheduler/lock policy.</p>",
+      "analogy": "<p>In a corridor, two people keep moving aside for each other, both shifting in the same direction — both are moving, but no one makes forward progress.</p>",
+      "why": "<p>They appear in retry loops and unfair locks; CPU at 100% with zero throughput.</p>",
+      "pros": [
+        "Identifying them enables fairness design"
+      ],
+      "cons": [
+        "Diagnosing is difficult — CPU appears busy"
+      ],
+      "gotchas": [
+        "Starvation fix: fair locks, aging",
+        "A fixed retry delay keeps both synchronized",
+        "Priority inversion is a separate problem"
+      ],
+      "terms": [
+        [
+          "Livelock",
+          "Threads are active but progress is zero."
+        ],
+        [
+          "Starvation",
+          "A thread never gets the resource."
+        ],
+        [
+          "Backoff",
+          "Breaking symmetry with a random wait."
+        ]
+      ],
+      "where": [
+        [
+          "Network retries",
+          "On network retries, exponential backoff after a collision."
+        ],
+        [
+          "Priority schedulers",
+          "Low priority thread starvation."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// Randomized backoff livelock todta hai",
+          "// A randomized backoff breaks livelock"
+        ]
+      ]
+    },
+    "lock-ordering": {
+      "name": "Lock Ordering & Practical Deadlock Prevention",
+      "desc": "Acquire locks in a consistent global order across all threads — the most practical deadlock prevention technique.",
+      "q": "How does consistent lock ordering prevent deadlock? What is tryLock with timeout?",
+      "qsub": "Show a bank transfer example where two threads deadlock without lock ordering, and how to fix it.",
+      "what": "<p><b>Definition:</b> If every thread acquires locks in the same order (e.g., ascending account ID), circular wait is impossible, so no deadlock.</p>",
+      "why": "<p>If a bank transfer A→B and a transfer B→A run simultaneously, a deadlock occurs — ordering fixes it.</p>",
+      "pros": [
+        "Zero runtime overhead",
+        "Simple rule"
+      ],
+      "cons": [
+        "Determining order with dynamic locks is difficult",
+        "Requires discipline"
+      ],
+      "gotchas": [
+        "Tie-breaker lock for equal id/hash",
+        "Locks acquired inside callbacks can break the hidden order",
+        "Document the order"
+      ],
+      "terms": [
+        [
+          "Global order",
+          "A fixed rank for all locks."
+        ],
+        [
+          "Ordered acquire",
+          "Always acquire from lower rank to higher."
+        ],
+        [
+          "Identity hash",
+          "Use id/address for ordering."
+        ]
+      ],
+      "where": [
+        [
+          "Transfers",
+          "Both accounts are locked."
+        ],
+        [
+          "DB updates",
+          "Rows are updated in sorted order."
+        ]
+      ]
+    },
+    "thread-pool": {
+      "name": "Thread Pools",
+      "desc": "Pre-created pool of threads that pick up tasks from a queue. Avoids thread creation overhead, controls resource usage.",
+      "q": "Why use a thread pool instead of creating a new thread per task? How do you size a thread pool?",
+      "qsub": "What is the difference between a fixed thread pool and a cached thread pool? What is a work-stealing pool?",
+      "what": "<p><b>Definition:</b> Thread pool keeps a fixed/bounded set of threads that take tasks from a queue. It saves thread-creation cost and provides a concurrency limit.</p><p>Sizing: CPU-bound ≈ cores; I/O-bound ≈ cores × (1 + wait/compute).</p>",
+      "why": "<p>An unbounded thread-per-request model can exhaust memory under load and crash.</p>",
+      "pros": [
+        "Thread reuse",
+        "Resource bounded"
+      ],
+      "cons": [
+        "If sized incorrectly, can cause starvation",
+        "If the queue is unbounded, can cause OOM"
+      ],
+      "gotchas": [
+        "Tasks waiting on a pool inside the same pool can deadlock",
+        "An unbounded queue behaves like a memory leak",
+        "If shutdown() is forgotten, the JVM does not exit"
+      ],
+      "terms": [
+        [
+          "Worker threads",
+          "Pre-created, reused."
+        ],
+        [
+          "Task queue",
+          "Buffer of pending tasks."
+        ],
+        [
+          "Rejection policy",
+          "What to do when the queue is full."
+        ]
+      ],
+      "where": [
+        [
+          "Web servers",
+          "Request handling."
+        ],
+        [
+          "Batch jobs",
+          "Parallel tasks."
+        ]
+      ]
+    },
+    "cas-atomic": {
+      "name": "Compare-And-Swap (CAS) & Atomic Operations",
+      "desc": "Hardware-supported instruction: atomically compare memory location to expected value and swap if equal. No lock needed.",
+      "q": "How does CAS work? Implement an atomic counter using CAS. What is the ABA problem?",
+      "qsub": "What is an AtomicReference? How does it differ from a volatile reference?",
+      "what": "<p><b>Definition:</b> CAS is a CPU instruction: if the value in memory equals the expected value, write the new value; otherwise fail. Lock-free counters and stacks are built on it.</p>",
+      "why": "<p>Atomic updates without locks reduce contention and eliminate deadlocks.</p>",
+      "pros": [
+        "Non-blocking",
+        "Low overhead under light contention"
+      ],
+      "cons": [
+        "Spin waste under high contention",
+        "ABA and complexity"
+      ],
+      "gotchas": [
+        "ABA fix: version stamp (AtomicStampedReference)",
+        "LongAdder is better under heavy contention",
+        "CAS is atomic only for a single variable"
+      ],
+      "terms": [
+        [
+          "CAS",
+          "compareAndSwap(addr, expected, new) atomically."
+        ],
+        [
+          "Retry loop",
+          "If CAS fails, read again and retry."
+        ],
+        [
+          "ABA problem",
+          "Value changed from A to B and back to A, which CAS cannot detect."
+        ]
+      ],
+      "where": [
+        [
+          "Counters",
+          "AtomicLong, LongAdder."
+        ],
+        [
+          "Lock-free structures",
+          "ConcurrentLinkedQueue."
+        ]
+      ]
+    },
+    "lock-free": {
+      "name": "Lock-Free & Wait-Free Algorithms",
+      "desc": "Lock-free: system-wide progress guaranteed (at least one thread progresses). Wait-free: every thread progresses.",
+      "q": "What is a lock-free data structure? Why is it hard to implement? When would you use one?",
+      "qsub": "Is lock-free always faster than locked? What overhead does CAS have?",
+      "what": "<p><b>Definition:</b> Lock-free algorithms use CAS instead of mutexes, so a stalled or suspended thread does not block the others. Wait-free provides the strongest guarantee but is very hard to implement.</p>",
+      "why": "<p>Low-latency systems (trading, kernels) cannot tolerate lock blocking and priority inversion.</p>",
+      "pros": [
+        "No deadlock, no blocking",
+        "Scales under contention (sometimes)"
+      ],
+      "cons": [
+        "Hard to write and to prove correct",
+        "Memory reclamation (ABA, hazard pointers)"
+      ],
+      "gotchas": [
+        "Lock-free ≠ always faster",
+        "Use a proven library first; don’t write your own.",
+        "Individual threads can starve."
+      ],
+      "terms": [
+        [
+          "Lock-free",
+          "At least one thread always makes progress."
+        ],
+        [
+          "Wait-free",
+          "Each thread finishes in a bounded number of steps."
+        ],
+        [
+          "Obstruction-free",
+          "Finishes if it runs in isolation."
+        ]
+      ],
+      "where": [
+        [
+          "Queues in OS/JVM",
+          "Disruptor, ConcurrentLinkedQueue."
+        ],
+        [
+          "Logging / metrics",
+          "Hot path."
+        ]
+      ]
+    },
+    "future-promise": {
+      "name": "Futures, Promises & Async/Await",
+      "desc": "A Future represents a value not yet computed. Promise resolves it later. Async/await is syntactic sugar over Futures.",
+      "q": "What is the difference between a Future and a Promise? How does CompletableFuture in Java work?",
+      "qsub": "What is structured concurrency? How does it improve on raw threads and futures?",
+      "what": "<p><b>Definition:</b> A Future is a pending result that is resolved or rejected later. async/await creates a compiler/runtime state machine that releases the thread at await (does not block).</p>",
+      "why": "<p>Compose asynchronous work (chain, all, race) and handle errors in one place without callback hell.</p>",
+      "pros": [
+        "Composable, readable",
+        "Non-blocking"
+      ],
+      "cons": [
+        "Error handling and cancellation are subtle",
+        "A sequential await accidentally becomes serial"
+      ],
+      "gotchas": [
+        "<code>await</code> loop runs serially — use Promise.all",
+        "Future.get() blocks",
+        "An unhandled rejection can crash the process"
+      ],
+      "terms": [
+        [
+          "Future",
+          "Placeholder for a value that has not yet arrived."
+        ],
+        [
+          "Promise",
+          "Writable side that sets the value."
+        ],
+        [
+          "async/await",
+          "Sequential-looking syntax built on Futures."
+        ]
+      ],
+      "where": [
+        [
+          "API calls",
+          "Parallel fetch."
+        ],
+        [
+          "Pipelines",
+          "thenApply chains."
+        ]
+      ]
+    },
+    "actor-model": {
+      "name": "Actor Model",
+      "desc": "Concurrency without shared state — actors communicate via message passing only. Used in Erlang, Akka, Go channels.",
+      "q": "Explain the Actor model. How does it avoid race conditions without locks?",
+      "qsub": "How do Go goroutines and channels implement the Actor model? What is \"Share memory by communicating\"?",
+      "what": "<p><b>Definition:</b> In the Actor model each actor exclusively owns its state; other actors can only send messages. Messages in a mailbox are processed one at a time, so locks are not needed.</p><p>Go’s mantra: “share memory by communicating”.</p>",
+      "why": "<p>Removing shared mutable state eliminates races and naturally scales to distributed systems.</p>",
+      "pros": [
+        "No races",
+        "Distribution-friendly"
+      ],
+      "cons": [
+        "You have to think about message ordering/backpressure",
+        "Debugging the flow is hard"
+      ],
+      "gotchas": [
+        "An unbounded mailbox can cause OOM",
+        "A blocking call inside an actor stalls the entire actor",
+        "The request-reply pattern can deadlock"
+      ],
+      "terms": [
+        [
+          "Actor",
+          "Private state + mailbox; one message at a time."
+        ],
+        [
+          "Message passing",
+          "No shared memory, only messages."
+        ],
+        [
+          "Supervision",
+          "The parent actor restarts the child on failure (Erlang)."
+        ]
+      ],
+      "where": [
+        [
+          "Erlang / Elixir",
+          "Telecom, WhatsApp."
+        ],
+        [
+          "Akka",
+          "JVM microservices."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// sirf yahi goroutine c ko chhoota hai",
+          "// only this goroutine touches c"
+        ],
+        [
+          "// Go: channel se message passing",
+          "// Go: message passing via channels"
+        ]
+      ]
+    },
+    "memory-ordering": {
+      "name": "Memory Ordering — sequential consistency, acquire-release, relaxed",
+      "desc": "Memory ordering defines the order in which memory operations become visible to other threads. Sequential consistency: all threads see the same order. Acquire-release: release on write, acquire on read (synchronizes). Relaxed: no ordering guarantees (fastest). x86 is mostly TSO (Total Store Order). ARM/POWER are weakly ordered.",
+      "q": "What is the difference between sequential consistency and relaxed memory ordering?",
+      "qsub": "When would you use acquire-release vs relaxed ordering? How does the Java Memory Model define volatile?",
+      "what": "<p><b>Definition:</b> CPU/compiler instructions reorder. The memory model determines which orderings are guaranteed. SC is the safest and slowest; acquire-release is sufficient for publish patterns; relaxed is for counters.</p>",
+      "why": "<p>Lock-free code must be written correctly — a bug due to wrong ordering may appear only on certain architectures.</p>",
+      "pros": [
+        "Fine-grained performance control"
+      ],
+      "cons": [
+        "Very error-prone"
+      ],
+      "gotchas": [
+        "Keep default seq_cst until profiling suggests otherwise",
+        "Relaxed does not publish data",
+        "x86 is strong, ARM is weak — test on both"
+      ],
+      "terms": [
+        [
+          "Sequential consistency",
+          "All threads see the same global order."
+        ],
+        [
+          "Acquire/release",
+          "Writes before a release become visible to the acquiring thread."
+        ],
+        [
+          "Relaxed",
+          "Only atomicity, no ordering."
+        ]
+      ],
+      "where": [
+        [
+          "Lock-free libs",
+          "Queues, ref counts."
+        ],
+        [
+          "Language runtimes",
+          "JMM / C++ memory model."
+        ]
+      ]
+    },
+    "volatile-keyword": {
+      "name": "volatile keyword — Java, C++, JavaScript differences",
+      "desc": "Java volatile: visibility guarantee (no caching) + happens-before ordering. C++ volatile: prevents compiler optimization (NOT thread-safe, use std::atomic). JavaScript: no volatile (single-threaded). Common misconception: volatile does NOT provide atomicity in Java.",
+      "q": "What does volatile guarantee in Java? Why is it NOT sufficient for thread safety?",
+      "qsub": "What is the difference between volatile in Java and C++? Why doesn't JavaScript need volatile?",
+      "what": "<p><b>Definition:</b> In Java, a volatile variable's write is seen immediately by all threads and prevents reordering. But <code>volatile int x; x++</code> is not atomic. In C++, volatile is not for threading (use std::atomic).</p>",
+      "why": "<p>Perfect for flags (stop/ready); wrong tool for counters.</p>",
+      "pros": [
+        "Lock-free visibility, simple"
+      ],
+      "cons": [
+        "Compound ops aren't atomic"
+      ],
+      "gotchas": [
+        "volatile count++ is a race",
+        "C++ volatile ≠ Java volatile",
+        "volatile is required in double-checked singleton"
+      ],
+      "terms": [
+        [
+          "Java volatile",
+          "Visibility + happens-before; not atomic."
+        ],
+        [
+          "C++ volatile",
+          "Prevents compiler optimizations; not thread-safe."
+        ],
+        [
+          "JS",
+          "No volatile; use Atomics."
+        ]
+      ],
+      "where": [
+        [
+          "Stop flags",
+          "Single writer flag."
+        ],
+        [
+          "Safe publication",
+          "Double-checked locking."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// counter ke liye AtomicInteger, volatile int nahi",
+          "// AtomicInteger for the counter, not volatile int"
+        ]
+      ]
+    },
+    "thread-interruption": {
+      "name": "Thread Interruption — cooperative cancellation, InterruptedException, flags",
+      "desc": "Thread interruption is cooperative: interrupt sets a flag, the thread must check and respond. Java: Thread.interrupt() + InterruptedException. Python: threading.Event. Go: context.Context with cancel. Never ignore InterruptedException — either rethrow or restore interrupt flag.",
+      "q": "How does cooperative thread cancellation work? Why is it preferred over forceful termination?",
+      "qsub": "What happens if you catch InterruptedException without rethrowing? How do you implement cancellation in Go with context?",
+      "what": "<p><b>Definition:</b> Forcefully killing a thread is unsafe (locks leak). Therefore interrupt only sets a flag; the thread checks <code>isInterrupted()</code> on blocking calls and exits cleanly.</p>",
+      "why": "<p>Cancellation is required for graceful shutdowns and timeouts without leaking resources.</p>",
+      "pros": [
+        "Safe cleanup"
+      ],
+      "cons": [
+        "If the code doesn't cooperate, it can't be cancelled"
+      ],
+      "gotchas": [
+        "Do not swallow InterruptedException — restore the flag",
+        "Thread.stop deprecated/unsafe",
+        "If a CPU loop doesn't check, interrupt won't work"
+      ],
+      "terms": [
+        [
+          "Cooperative",
+          "The thread must check itself to stop."
+        ],
+        [
+          "InterruptedException",
+          "A blocking call throws this when interrupted."
+        ],
+        [
+          "Cancellation token",
+          "The equivalent in JS/C#/Go (context)."
+        ]
+      ],
+      "where": [
+        [
+          "Shutdown",
+          "Executor shutdownNow."
+        ],
+        [
+          "Timeouts",
+          "Future.cancel(true)."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// block par interrupt",
+          "// interrupt on block"
+        ]
+      ]
+    },
+    "green-threads": {
+      "name": "Green Threads vs OS Threads — fibers, coroutines, M:N scheduling",
+      "desc": "Green threads (goroutines, Kotlin coroutines, Python asyncio tasks) are multiplexed onto OS threads by a runtime. M:N model: M green threads on N OS threads. Lightweight (~2KB stack for goroutines vs ~1MB for OS threads). Scheduled by runtime, not OS. Blocked green thread yields OS thread.",
+      "q": "What is the difference between green threads and OS threads? How does M:N scheduling work?",
+      "qsub": "How do goroutines differ from Java threads? What is the stack growth strategy for goroutines?",
+      "what": "<p><b>Definition:</b> Green threads run on the runtime scheduler, not the OS. On blocking I/O the runtime parks the green thread and gives the OS thread to another green thread. Hence hundreds of thousands of concurrent tasks are possible.</p>",
+      "why": "<p>Simple thread-per-request code style, but with scalability similar to async.</p>",
+      "pros": [
+        "Very low memory",
+        "Simple blocking-style code"
+      ],
+      "cons": [
+        "CPU-bound work can starve the scheduler",
+        "Native blocking calls pin the thread"
+      ],
+      "gotchas": [
+        "Goroutine leak — ensure an exit path",
+        "Virtual threads are not for pooling",
+        "Parallelism on CPU-bound work is limited to the number of cores"
+      ],
+      "terms": [
+        [
+          "Goroutine",
+          "Go's lightweight thread (~2KB stack)."
+        ],
+        [
+          "M:N scheduling",
+          "M green threads on N OS threads."
+        ],
+        [
+          "Virtual threads",
+          "Java 21 lightweight threads."
+        ]
+      ],
+      "where": [
+        [
+          "Go servers",
+          "Goroutine per connection."
+        ],
+        [
+          "Kotlin / Java 21",
+          "Coroutines, virtual threads."
+        ]
+      ]
+    },
+    "event-loop-deep": {
+      "name": "Event Loop Deep Dive",
+      "desc": "JS is single-threaded but non-blocking via event loop: call stack + task queue + microtask queue + libuv.",
+      "q": "Explain the JS event loop in detail. What is the difference between microtasks and macrotasks?",
+      "qsub": "In what order do these run: setTimeout(0), Promise.resolve(), queueMicrotask(), setImmediate()?",
+      "what": "<p><b>Definition:</b> Loop: when the stack is empty → all microtasks are drained → one macrotask → repeat. Node has libuv phases (timers, poll, check) and <code>process.nextTick</code> runs before microtasks.</p>",
+      "why": "<p>Understanding ordering and blocking — a heavy synchronous function can freeze the entire server.</p>",
+      "pros": [
+        "No locks, simple model"
+      ],
+      "cons": [
+        "CPU-bound work blocks the loop"
+      ],
+      "gotchas": [
+        "Microtask loop (recursive then) can starve macrotasks",
+        "setTimeout(0) does not run immediately",
+        "JSON.parse on large payload blocks the loop"
+      ],
+      "terms": [
+        [
+          "Call stack",
+          "Currently executing synchronous code."
+        ],
+        [
+          "Microtask queue",
+          "Promise.then, queueMicrotask — runs first."
+        ],
+        [
+          "Macrotask",
+          "setTimeout, I/O callbacks."
+        ]
+      ],
+      "where": [
+        [
+          "Node servers",
+          "Non-blocking I/O."
+        ],
+        [
+          "Browsers",
+          "Tasks between UI rendering."
+        ]
+      ]
+    },
+    "worker-threads": {
+      "name": "Worker Threads in Node.js",
+      "desc": "Node.js Worker Threads enable true parallelism for CPU-bound work. Each worker has its own V8 and event loop.",
+      "q": "When would you use Worker Threads in Node.js? How do you communicate between them?",
+      "qsub": "What is SharedArrayBuffer? How does it enable shared memory between workers? What synchronization do you need?",
+      "what": "<p><b>Definition:</b> worker_threads remove CPU-heavy work from the main loop. Workers do not share memory (by default) — messages are copied; you can share memory with SharedArrayBuffer.</p>",
+      "why": "<p>Image resizing, hashing, parsing, etc., do not slow the API on the main thread.</p>",
+      "pros": [
+        "True parallelism",
+        "Main loop free"
+      ],
+      "cons": [
+        "Message copy cost",
+        "Startup cost"
+      ],
+      "gotchas": [
+        "Workers are not needed for I/O",
+        "Creating a new worker for each request is expensive — use a pool",
+        "Functions cannot be sent via postMessage"
+      ],
+      "terms": [
+        [
+          "Worker",
+          "Separate V8 isolate + event loop."
+        ],
+        [
+          "postMessage",
+          "Data is copied via structured clone."
+        ],
+        [
+          "SharedArrayBuffer",
+          "Zero-copy shared memory + Atomics."
+        ]
+      ],
+      "where": [
+        [
+          "Image/PDF processing",
+          "CPU-bound."
+        ],
+        [
+          "Piscina pool",
+          "Reusable workers."
+        ]
+      ]
+    },
+    "promises-internals": {
+      "name": "Promise Internals & Error Handling",
+      "desc": "Promises implement the microtask queue. Unhandled promise rejections can crash Node.js in newer versions.",
+      "q": "How do Promises work internally? What is Promise chaining vs async/await? What are the error propagation rules?",
+      "qsub": "What is Promise.all vs Promise.allSettled vs Promise.race vs Promise.any? When do you use each?",
+      "what": "<p><b>Definition:</b> Promise callbacks run in the microtask queue. The return value of then resolves the next promise; throwing converts it to a rejection.</p>",
+      "why": "<p>To understand bugs related to error propagation and ordering.</p>",
+      "pros": [
+        "Chaining + centralized errors"
+      ],
+      "cons": [
+        "Zombie promise (forgot to return)"
+      ],
+      "gotchas": [
+        "Forgetting to return in then breaks the chain",
+        "Without an async function, errors from await are not caught",
+        "Promise.all fast-rejects on the first failure — allSettled behaves differently"
+      ],
+      "terms": [
+        [
+          "States",
+          "pending → fulfilled / rejected (settled, immutable)."
+        ],
+        [
+          "then chain",
+          "Each then returns a new promise."
+        ],
+        [
+          "unhandledRejection",
+          "Node 15+ default: process crash."
+        ]
+      ],
+      "where": [
+        [
+          "Async APIs",
+          "fetch, fs.promises."
+        ],
+        [
+          "Libraries",
+          "Promise combinators."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// upar ke kisi bhi step ka error",
+          "// the error from any of the steps above"
+        ]
+      ]
+    },
+    "node-cluster": {
+      "name": "Node.js Cluster & Load Balancing",
+      "desc": "Node Cluster forks multiple worker processes (one per CPU core) sharing the same port — achieves parallelism.",
+      "q": "How does Node.js Cluster module work? How does the master process distribute connections to workers?",
+      "qsub": "What is the difference between using Cluster and running multiple Node.js instances behind a load balancer?",
+      "what": "<p><b>Definition:</b> The cluster module runs a Node process on each CPU core, all sharing the same port. Memory is not shared, so in-memory sessions/caches are not consistent across workers.</p>",
+      "why": "<p>Single-threaded Node uses only one core; clustering increases throughput across multiple cores and remaining workers keep running if one crashes.</p>",
+      "pros": [
+        "Multi-core use",
+        "Crash isolation"
+      ],
+      "cons": [
+        "State is not shared — you need Redis"
+      ],
+      "gotchas": [
+        "WebSocket requires sticky sessions",
+        "In-memory cache is separate per worker",
+        "In Kubernetes, use pod replicas instead of cluster"
+      ],
+      "terms": [
+        [
+          "Primary/worker",
+          "Master forks, workers share the port."
+        ],
+        [
+          "Round-robin",
+          "Default distribution on Linux."
+        ],
+        [
+          "PM2",
+          "Cluster manager."
+        ]
+      ],
+      "where": [
+        [
+          "Node production",
+          "PM2 cluster mode."
+        ],
+        [
+          "Containers",
+          "Usually one process per container + orchestrator."
+        ]
+      ]
+    },
+    "gil": {
+      "name": "Python GIL — what it is, why it exists, when it matters",
+      "desc": "The Global Interpreter Lock (GIL) is a mutex in CPython that allows only one thread to execute Python bytecode at a time. It exists because CPython's reference counting is not thread-safe. It affects CPU-bound code but not I/O-bound code. Removed in Python 3.13+ (free-threaded mode, opt-in).",
+      "q": "What is the Python GIL? Why does it exist and when does it matter?",
+      "qsub": "How does the GIL affect CPU-bound vs I/O-bound code? What is the free-threaded mode in Python 3.13?",
+      "what": "<p><b>Definition:</b> GIL keeps CPython's reference counting safe. CPU-bound threads do not run in parallel; I/O (sockets, files) or C extensions (NumPy) release the GIL. In Python 3.13+ the free-threaded build is experimental.</p>",
+      "why": "<p>If you choose the wrong model, speed will not increase even with 8 threads.</p>",
+      "pros": [
+        "Simple memory management"
+      ],
+      "cons": [
+        "No CPU parallelism"
+      ],
+      "gotchas": [
+        "GIL does not prevent data races (<code>x += 1</code> is a race)",
+        "NumPy/IO release the GIL",
+        "Free-threaded Python is not the default yet"
+      ],
+      "terms": [
+        [
+          "GIL",
+          "In CPython, one thread executes bytecode at a time."
+        ],
+        [
+          "CPU-bound",
+          "Threads provide no benefit."
+        ],
+        [
+          "I/O-bound",
+          "The GIL is released during I/O, so threads can work."
+        ]
+      ],
+      "where": [
+        [
+          "Python services",
+          "For CPU work, use multiprocessing."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "# ≈ 4× single, parallel nahi",
+          "# ≈ 4× single, not parallel"
+        ]
+      ]
+    },
+    "python-threads": {
+      "name": "Threading in Python — threading module, daemon threads, Thread(target=)",
+      "desc": "Python's threading module creates OS threads. Due to the GIL, threads don't help CPU-bound tasks but do help I/O-bound tasks (network, file I/O). Daemon threads die when the main thread exits. join() waits for thread completion.",
+      "q": "When would you use Python threading? Why doesn't it help with CPU-bound work?",
+      "qsub": "What is a daemon thread? How do you use Thread(target=func, args=()) and join()?",
+      "what": "<p><b>Definition:</b> <code>threading</code> is for I/O-bound concurrency. <code>Thread(target=fn, args=...)</code>, <code>start()</code>, <code>join()</code>. Daemon threads do not prevent program exit.</p>",
+      "why": "<p>Overlapping network/file waits is easiest with ThreadPoolExecutor.</p>",
+      "pros": [
+        "Simple I/O concurrency"
+      ],
+      "cons": [
+        "GIL: no CPU work"
+      ],
+      "gotchas": [
+        "Do not call f(); pass the function f to Thread(target=f)",
+        "Daemon threads are not cleaned up",
+        "Exceptions inside a thread die silently"
+      ],
+      "terms": [
+        [
+          "threading.Thread",
+          "OS thread wrapper."
+        ],
+        [
+          "daemon",
+          "Stops when the main program exits, without waiting."
+        ],
+        [
+          "Lock / Event",
+          "Sync primitives."
+        ]
+      ],
+      "where": [
+        [
+          "Scrapers",
+          "Parallel HTTP."
+        ]
+      ]
+    },
+    "python-asyncio": {
+      "name": "asyncio — event loop, coroutines, await, asyncio.gather()",
+      "desc": "asyncio provides single-threaded concurrency via an event loop. async/await defines coroutines. asyncio.gather() runs multiple coroutines concurrently. asyncio creates tasks that interleave during I/O waits. No GIL contention because single-threaded.",
+      "q": "How does asyncio work? What is the difference between asyncio.gather() and asyncio.create_task()?",
+      "qsub": "When should you use asyncio vs threading? What is the event loop and how does it schedule coroutines?",
+      "what": "<p><b>Definition:</b> asyncio performs cooperative multitasking on a single thread. When a task reaches <code>await</code>, it suspends and the loop runs another task. A blocking call (time.sleep, requests) stops the entire loop.</p>",
+      "why": "<p>Thousands of network connections use less memory—more scalable than threads.</p>",
+      "pros": [
+        "Low overhead, high concurrency"
+      ],
+      "cons": [
+        "The entire call stack must be async"
+      ],
+      "gotchas": [
+        "Use <code>asyncio.sleep</code> instead of <code>time.sleep</code>",
+        "Use <code>asyncio.to_thread</code> for blocking code",
+        "If you forget await, the coroutine never runs"
+      ],
+      "terms": [
+        [
+          "Coroutine",
+          "async def function."
+        ],
+        [
+          "await",
+          "Returns control to the event loop."
+        ],
+        [
+          "gather",
+          "Run multiple coroutines together."
+        ]
+      ],
+      "where": [
+        [
+          "FastAPI",
+          "Async endpoints."
+        ],
+        [
+          "Crawlers",
+          "High concurrency."
+        ]
+      ]
+    },
+    "python-multiprocessing": {
+      "name": "multiprocessing — bypassing the GIL, shared memory, Process(target=)",
+      "desc": "multiprocessing spawns separate processes, each with its own Python interpreter and GIL. Bypasses the GIL for CPU-bound work. Communicate via Queue, Pipe, or shared memory (Value, Array, Manager). Overhead of process creation and IPC.",
+      "q": "How does multiprocessing bypass the GIL? What are the tradeoffs vs threading?",
+      "qsub": "What is the difference between multiprocessing.Queue and queue.Queue? When would you use shared memory vs message passing?",
+      "what": "<p><b>Definition:</b> multiprocessing runs separate processes, so CPU-bound work is truly parallel. Data is transferred via pickling (overhead); shared_memory enables zero-copy sharing.</p>",
+      "why": "<p>Bypassing the GIL lets you fully utilize multiple cores.</p>",
+      "pros": [
+        "True parallelism"
+      ],
+      "cons": [
+        "Memory heavy, IPC cost"
+      ],
+      "gotchas": [
+        "Forgetting the <code>if __name__ == '__main__'</code> guard can cause infinite spawning",
+        "Lambdas/closures cannot be pickled",
+        "For small tasks, overhead can outweigh benefits"
+      ],
+      "terms": [
+        [
+          "Process",
+          "Separate interpreter + GIL."
+        ],
+        [
+          "Pool",
+          "Pool of worker processes."
+        ],
+        [
+          "Pickling",
+          "Arguments/results are serialized."
+        ]
+      ],
+      "where": [
+        [
+          "Data processing",
+          "CPU-heavy transforms."
+        ]
+      ],
+      "codeSwap": [
+        [
+          " zaroori (spawn on mac/win)",
+          " required (spawn on mac/win)"
+        ]
+      ]
+    },
+    "producer-consumer": {
+      "name": "Producer-Consumer Problem",
+      "desc": "Producers add items to a bounded buffer; consumers remove items. Synchronize to avoid overflow and underflow.",
+      "q": "Implement the Producer-Consumer problem using semaphores. Then solve it with a BlockingQueue.",
+      "qsub": "How does a message queue system like Kafka implement the producer-consumer pattern at scale?",
+      "what": "<p><b>Definition:</b> Producers add items to the queue, consumers remove them. A bounded buffer slows producers when consumers fall behind (backpressure).</p>",
+      "why": "<p>Decoupling and load smoothing — message queues, logging pipelines, worker pools are all built on this.</p>",
+      "pros": [
+        "Decoupled, backpressure"
+      ],
+      "cons": [
+        "Queue sizing and shutdown handling"
+      ],
+      "gotchas": [
+        "An unbounded queue can fill memory.",
+        "Use a poison pill or close signal for shutdown.",
+        "If a consumer is slow, the queue fills up."
+      ],
+      "terms": [
+        [
+          "Bounded buffer",
+          "Fixed-size queue — provides backpressure."
+        ],
+        [
+          "empty/full",
+          "Consumer waits when empty, producer waits when full."
+        ],
+        [
+          "BlockingQueue",
+          "Built-in thread-safe implementation."
+        ]
+      ],
+      "where": [
+        [
+          "Logging",
+          "Async log writer."
+        ],
+        [
+          "Kafka / RabbitMQ",
+          "Distributed version."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// empty ho to block",
+          "// block if empty"
+        ],
+        [
+          "// full ho to block",
+          "// block when full"
+        ]
+      ]
+    },
+    "readers-writers": {
+      "name": "Readers-Writers Problem",
+      "desc": "Multiple readers can read simultaneously. Writers need exclusive access. Variants: reader-first vs writer-first.",
+      "q": "Solve the Readers-Writers problem. Which variant prevents starvation and how?",
+      "qsub": "How does a database implement this pattern for MVCC (Multi-Version Concurrency Control)?",
+      "what": "<p><b>Definition:</b> Multiple readers can access shared data simultaneously, writer has exclusive access. Variants determine fairness. Solution: ReadWriteLock or semaphores + reader count.</p>",
+      "why": "<p>Balancing performance and fairness in read-heavy caches/configurations.</p>",
+      "pros": [
+        "Concurrent reads"
+      ],
+      "cons": [
+        "Starvation variants"
+      ],
+      "gotchas": [
+        "In reader-preference, the writer can starve.",
+        "Reader count updates also require a mutex.",
+        "Use a ready-made ReadWriteLock in production."
+      ],
+      "terms": [
+        [
+          "Reader-preference",
+          "Readers have priority — writer may starve."
+        ],
+        [
+          "Writer-preference",
+          "When the writer is waiting, new readers are blocked."
+        ],
+        [
+          "Fair",
+          "Arrival order."
+        ]
+      ],
+      "where": [
+        [
+          "Caches",
+          "Config store."
+        ],
+        [
+          "Databases",
+          "Shared/exclusive locks."
+        ]
+      ]
+    },
+    "dining-philosophers": {
+      "name": "Dining Philosophers Problem",
+      "desc": "N philosophers alternate eating/thinking, sharing N forks. Demonstrates deadlock and starvation challenges.",
+      "q": "Explain the Dining Philosophers problem. Give two different solutions to avoid deadlock.",
+      "qsub": "What does this problem teach about real-world lock acquisition patterns?",
+      "what": "<p><b>Definition:</b> Each of the N philosophers needs two forks to eat. If everyone picks up the left fork simultaneously, deadlock occurs. Fixes: fork ordering, a semaphore allowing at most N-1 philosophers at the table, or alternating odd/even ordering.</p>",
+      "why": "<p>A standard model for deadlock/starvation; a common interview example to explain lock ordering.</p>",
+      "pros": [
+        "Clarifies patterns"
+      ],
+      "cons": [
+        "Toy problem"
+      ],
+      "gotchas": [
+        "Semaphore(N-1) also works.",
+        "Ordering fix does not eliminate starvation.",
+        "Real fix = fewer locks"
+      ],
+      "terms": [
+        [
+          "Forks",
+          "Shared resources (N)."
+        ],
+        [
+          "Circular wait",
+          "All picked up the left fork → deadlock."
+        ],
+        [
+          "Resource hierarchy",
+          "Number the forks and acquire the lower-numbered one first."
+        ]
+      ],
+      "where": [
+        [
+          "Resource allocation",
+          "Multi-lock acquisition."
+        ]
+      ]
+    },
+    "thread-safe-singleton": {
+      "name": "Thread-Safe Singleton",
+      "desc": "Creating a singleton in a multi-threaded environment — naive lazy initialization is not thread-safe.",
+      "q": "What is wrong with double-checked locking for Singleton? How do you implement it correctly?",
+      "qsub": "What is the Initialization-on-Demand Holder idiom? Why is it the cleanest approach?",
+      "what": "<p><b>Definition:</b> Naive <code>if (inst==null) inst=new X()</code> can create two instances in different threads. Safe options: eager static initialization, holder class, enum, or volatile with double-checked locking.</p>",
+      "why": "<p>Reordering can expose a half-constructed object — without volatile, double-checked locking is broken.</p>",
+      "pros": [
+        "Lazy and safe"
+      ],
+      "cons": [
+        "Testing global state is difficult"
+      ],
+      "gotchas": [
+        "DCL is broken without volatile.",
+        "Different class loaders can create multiple instances.",
+        "A DI container is a better option."
+      ],
+      "terms": [
+        [
+          "Double-checked locking",
+          "First check without lock, then check inside lock."
+        ],
+        [
+          "Holder idiom",
+          "Static inner class lazy + thread-safe."
+        ],
+        [
+          "Enum singleton",
+          "The simplest safe approach in Java."
+        ]
+      ],
+      "where": [
+        [
+          "Config, loggers",
+          "Single instance."
+        ]
+      ]
+    },
+    "cpu-multitasking": {
+      "name": "How the CPU Runs Multiple Threads — Scheduling & Context Switch",
+      "desc": "A CPU core can only run one thread at a time. The OS scheduler rapidly switches between threads (context switch) — saving one thread's registers and loading another's. This happens so fast (milliseconds) it feels simultaneous. Multi-core CPUs can truly run threads in parallel.",
+      "q": "How does a single-core CPU appear to run multiple programs at once?",
+      "qsub": "What is a context switch? What data must be saved and restored? Why does context switching have a cost?",
+      "what": "<p><b>Definition:</b> A core runs only one thread at a time. The scheduler, when the time slice ends (preemption) or when a thread blocks, saves the state (registers, PC) and runs another thread — this is called a context switch.</p><p>The switch's work is not directly productive; the cache also gets cold.</p>",
+      "analogy": "<p>A chef (core) is handling several dishes — a bit of one dish, then notes it and moves to another. It looks like all dishes are being prepared together, but there is only one chef.</p>",
+      "why": "<p>This creates the illusion that thousands of threads are running together. But more threads mean more switches, which adds overhead.</p>",
+      "pros": [
+        "Multitasking even on a single core",
+        "CPU is not wasted during I/O wait"
+      ],
+      "cons": [
+        "Switch overhead and cache pollution",
+        "Unpredictable latency"
+      ],
+      "gotchas": [
+        "Voluntary switch (I/O wait) vs involuntary (time slice expiration) are different things",
+        "Thread count far greater than cores slows CPU-bound work",
+        "Process switch is more expensive than thread switch (TLB flush)"
+      ],
+      "terms": [
+        [
+          "Scheduler",
+          "OS component that decides which thread will run on the CPU next."
+        ],
+        [
+          "Context switch",
+          "Saving the state of the running thread and loading another's."
+        ],
+        [
+          "Time slice",
+          "CPU time allocated to a thread in one go (ms)."
+        ]
+      ],
+      "where": [
+        [
+          "Performance tuning",
+          "High 'cs' = signal of thread contention."
+        ],
+        [
+          "Capacity planning",
+          "Thread pool size based on the number of cores."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "# Linux par context switches dekho",
+          "# Check context switches on Linux"
+        ],
+        [
+          "# cores kitne hain",
+          "# how many cores there are"
+        ]
+      ]
+    },
+    "concurrency-vs-parallelism": {
+      "name": "Concurrency vs Parallelism",
+      "desc": "Concurrency: multiple tasks make progress (interleaving). Parallelism: multiple tasks run simultaneously (multi-core).",
+      "q": "What is the difference between concurrency and parallelism? Give a real-world analogy.",
+      "qsub": "Node.js is concurrent but not parallel. Explain what that means. How does Go achieve both?",
+      "what": "<p><b>Definition:</b> Concurrency is a structure/design property — breaking a program into independent tasks. Parallelism is an execution property — running those tasks on multiple cores simultaneously.</p><p>A concurrent program can run correctly on a single core; parallelism requires hardware. The Node.js event loop is concurrent but JavaScript code is not parallel.</p>",
+      "analogy": "<p>One cashier handling two lines (alternating) = concurrency. Two cashiers, each handling one line = parallelism.</p>",
+      "why": "<p>Concurrency is sufficient for I/O-bound work; parallelism is needed for CPU-bound work. Choosing the wrong tool hurts performance.</p>",
+      "pros": [
+        "Concurrency: simple resource usage, scalable I/O",
+        "Parallelism: real speedup on CPU-bound tasks"
+      ],
+      "cons": [
+        "Concurrency: logic is complex",
+        "Parallelism: requires hardware, synchronization, Amdahl's limit"
+      ],
+      "gotchas": [
+        "Concurrent ≠ parallel — a favorite interview point",
+        "Parallelism is always concurrent, but not the reverse",
+        "Creating threads does not guarantee parallelism (GIL, single core)"
+      ],
+      "terms": [
+        [
+          "Concurrency",
+          "Multiple tasks make progress together — interleaving, even on a single core."
+        ],
+        [
+          "Parallelism",
+          "Multiple tasks literally run at the same time — multi-core."
+        ],
+        [
+          "Rob Pike",
+          "'Concurrency is about dealing with lots of things at once; parallelism is about doing lots of things at once.'"
+        ]
+      ],
+      "where": [
+        [
+          "I/O-heavy API",
+          "Concurrency (async) is sufficient."
+        ],
+        [
+          "Video encoding / ML",
+          "Parallelism is required."
+        ]
+      ]
+    },
+    "race-condition": {
+      "name": "Race Condition",
+      "desc": "When two threads access shared data concurrently and at least one writes — result depends on execution order.",
+      "q": "What is a race condition? Write a code example that demonstrates one.",
+      "qsub": "How do you detect race conditions? What tools exist (ThreadSanitizer, Helgrind)?",
+      "what": "<p><b>Definition:</b> When two or more threads access shared data simultaneously and at least one writes, and the outcome depends on timing.</p><p><code>count++</code> is not atomic: read → add → write. Both threads read 5, both wrote 6 — one update is lost (lost update).</p>",
+      "why": "<p>Race bugs sometimes appear in production but not in tests — money or inventory can become incorrect (double booking, negative balance).</p>",
+      "pros": [
+        "(It's a bug — not a pro) Understanding it leads to better design"
+      ],
+      "cons": [
+        "Non-deterministic, hard to reproduce",
+        "Silent data corruption"
+      ],
+      "gotchas": [
+        "Check-then-act (<code>if (!exists) create</code>) is a classic race",
+        "Data race and race condition are different issues — both can occur",
+        "'It works on my machine' — races appear under load"
+      ],
+      "terms": [
+        [
+          "Race condition",
+          "Result depends on the order of thread scheduling."
+        ],
+        [
+          "Read-modify-write",
+          "<code>count++</code> actually consists of read, add, write — three steps."
+        ],
+        [
+          "Heisenbug",
+          "A non-deterministic bug that disappears when you debug."
+        ]
+      ],
+      "where": [
+        [
+          "Banking / inventory",
+          "Check-then-act races (balance check then debit)."
+        ],
+        [
+          "Web apps",
+          "Two requests updating the same row simultaneously."
+        ]
+      ]
+    },
+    "critical-section": {
+      "name": "Critical Section & Mutual Exclusion",
+      "desc": "A code region accessing shared resources. Must be executed by only one thread at a time (mutual exclusion).",
+      "q": "What is a critical section? What are the 4 requirements for a correct mutual exclusion solution?",
+      "qsub": "What is progress and bounded waiting in the context of mutual exclusion?",
+      "what": "<p><b>Definition:</b> Critical section is the code region where shared data is accessed. A correct solution has three properties: mutual exclusion, progress (if none is inside, let another enter), bounded waiting (no starvation).</p><p>It is protected with a lock or mutex; the smaller the section, the better the concurrency.</p>",
+      "why": "<p>A small critical section = less contention = higher throughput. A large lock makes all threads serial.</p>",
+      "pros": [
+        "Data consistency guarantee",
+        "Easier reasoning"
+      ],
+      "cons": [
+        "Contention reduces throughput",
+        "Incorrect lock usage can cause deadlock"
+      ],
+      "gotchas": [
+        "Do not perform slow I/O inside a lock",
+        "Lock must be released on exception — <code>try/finally</code> or <code>with</code>",
+        "Protecting the same data with different locks does not work"
+      ],
+      "terms": [
+        [
+          "Critical section",
+          "Code portion that touches a shared resource."
+        ],
+        [
+          "Mutual exclusion",
+          "Only one thread inside at a time."
+        ],
+        [
+          "Progress & bounded wait",
+          "No thread stays outside forever."
+        ]
+      ],
+      "where": [
+        [
+          "Counters / balances",
+          "Update in a critical section."
+        ],
+        [
+          "Shared caches",
+          "Lock during insert/evict."
+        ]
+      ]
+    },
+    "design-rate-limiter": {
+      "name": "Design a Thread-Safe Rate Limiter",
+      "desc": "Token bucket or leaky bucket algorithm implemented with atomic operations or locks for concurrent requests.",
+      "q": "Design a thread-safe rate limiter that allows 100 req/sec. Implement it in code.",
+      "qsub": "How would you make it distributed across multiple servers? What data store would you use?",
+      "what": "<p><b>Definition:</b> Token bucket: capacity C, refill rate r. Each request takes a token. To make it thread-safe, update (tokens, lastRefill) in a single unit using a lock or CAS.</p>",
+      "why": "<p>Prevent API abuse; because of concurrency, the limiter must correctly handle its own race conditions.</p>",
+      "pros": [
+        "Burst allow, simple"
+      ],
+      "cons": [
+        "Shared state in a distributed setup"
+      ],
+      "gotchas": [
+        "Refill and consume must be atomic",
+        "Use a monotonic clock",
+        "For multi-node use Redis Lua/atomic"
+      ],
+      "terms": [
+        [
+          "Token bucket",
+          "Tokens refill, allowing bursts."
+        ],
+        [
+          "Leaky bucket",
+          "Output at a fixed rate."
+        ],
+        [
+          "Sliding window",
+          "Count within a time window."
+        ]
+      ],
+      "where": [
+        [
+          "API gateways",
+          "Per-user limits."
+        ],
+        [
+          "Redis",
+          "Distributed via Lua script."
+        ]
+      ]
+    },
+    "design-cache": {
+      "name": "Design a Thread-Safe LRU Cache",
+      "desc": "LRU cache with concurrent reads/writes — naive locking kills throughput. Segmented locking is the solution.",
+      "q": "Implement a thread-safe LRU cache. How do you handle concurrent reads without a write lock?",
+      "qsub": "How does ConcurrentHashMap use segmented locking? What is the lock striping technique?",
+      "what": "<p><b>Definition:</b> A global lock kills throughput. Options: segmented/striped locks, or a library like Caffeine; get also reorders the list, so a read lock is not enough.</p>",
+      "why": "<p>Cache is a hot path — contention directly adds latency.</p>",
+      "pros": [
+        "Contention kam"
+      ],
+      "cons": [
+        "Global LRU order approximate"
+      ],
+      "gotchas": [
+        "Cache stampede: all threads miss on the same key → single-flight",
+        "Race between eviction and get",
+        "Ensure the cache remains memory-bounded"
+      ],
+      "terms": [
+        [
+          "LRU",
+          "HashMap + doubly linked list."
+        ],
+        [
+          "Lock striping",
+          "Separate locks per segment."
+        ],
+        [
+          "Read-through",
+          "Load and store on a miss."
+        ]
+      ],
+      "where": [
+        [
+          "Services",
+          "In-process cache."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// sirf us segment ka lock",
+          "// the lock of only that segment"
+        ]
+      ]
+    },
+    "debug-concurrency": {
+      "name": "Debugging Concurrency Bugs",
+      "desc": "Race conditions and deadlocks are non-deterministic — hardest bugs to reproduce and fix.",
+      "q": "How do you debug a deadlock in production? What tools and techniques do you use?",
+      "qsub": "What is a thread dump? How do you analyze one to find a deadlock?",
+      "what": "<p><b>Definition:</b> Approach: logs with thread-id + timestamp, thread dump (jstack) to find deadlock cycles, TSan/<code>go test -race</code>, stress with randomized delays, and a minimal reproducible case.</p>",
+      "why": "<p>Catching non-deterministic bugs without tools is almost impossible.</p>",
+      "pros": [
+        "Systematic approach"
+      ],
+      "cons": [
+        "Time-consuming"
+      ],
+      "gotchas": [
+        "Logging itself changes timing",
+        "Race detector only observes executed paths",
+        "Run stress tests even after fixing"
+      ],
+      "terms": [
+        [
+          "Thread dump",
+          "Stack snapshot of all threads."
+        ],
+        [
+          "Race detector",
+          "Go -race, ThreadSanitizer."
+        ],
+        [
+          "Stress test",
+          "Many threads, repeated runs."
+        ]
+      ],
+      "where": [
+        [
+          "Production incidents",
+          "Hang / high CPU triage."
+        ]
+      ]
+    },
+    "web-server-concurrency": {
+      "name": "Concurrency Models for Web Servers",
+      "desc": "Thread-per-request vs thread pool vs async event-driven. Each has different performance characteristics.",
+      "q": "Compare multi-threaded vs event-driven concurrency models for a web server. When does each excel?",
+      "qsub": "Why does Node.js outperform Java thread-per-request for I/O-bound tasks? When does Java win?",
+      "what": "<p><b>Definition:</b> Thread-per-request (Apache prefork) is simple but fails at 10k connections (C10K). A pool is resource-bound. Event loop is best for I/O-bound work but blocks CPU-intensive tasks. Hybrid: event loop + worker pool.</p>",
+      "why": "<p>Choose the model based on workload (I/O vs CPU, number of connections).</p>",
+      "pros": [
+        "Right model = high throughput"
+      ],
+      "cons": [
+        "Hybrid complexity"
+      ],
+      "gotchas": [
+        "A blocking call in the event loop stalls everything",
+        "Pool size is critical for latency",
+        "Little's law: concurrency = rate × latency"
+      ],
+      "terms": [
+        [
+          "Thread-per-request",
+          "Simple, blocking, memory heavy."
+        ],
+        [
+          "Thread pool",
+          "Bounded threads + queue."
+        ],
+        [
+          "Event-driven",
+          "Few threads, non-blocking (nginx, Node)."
+        ]
+      ],
+      "where": [
+        [
+          "nginx / Node",
+          "Event-driven."
+        ],
+        [
+          "Tomcat / Spring",
+          "Thread pool."
+        ]
+      ]
+    },
+    "what-is-process": {
+      "name": "What is a Process?",
+      "desc": "A process is a running program. When you open Chrome, the OS creates a process for it — gives it its own memory space, CPU time, and resources. Each process is isolated; one crashing process cannot corrupt another.",
+      "q": "What is a process? What resources does the OS give to each process?",
+      "qsub": "Why are processes isolated from each other? What would happen if they shared memory by default?",
+      "what": "<p><b>Definition:</b> Process = a program stored on disk that the OS loads into memory and runs. The OS gives it code, heap, stack, open files, and a PID.</p><p>Isolation is enforced by hardware (MMU) — one process cannot directly read/write another's memory. To communicate you need IPC (pipes, sockets, shared memory).</p>",
+      "analogy": "<p>A process is like a separate <b>apartment</b>: its own kitchen, its own electricity meter, its own door. If the neighbor's apartment catches fire, your apartment stays safe.</p>",
+      "why": "<p>Isolation prevents a buggy program from bringing down the whole system. Browsers run each tab in a separate process so that if one tab crashes, the others remain.</p>",
+      "pros": [
+        "Strong isolation — crashes or memory corruption stay contained",
+        "Security boundary (separate permissions/user)"
+      ],
+      "cons": [
+        "Creation and context switch are expensive",
+        "Sharing data via IPC — slow and complex"
+      ],
+      "gotchas": [
+        "Creating a process is much heavier than a thread",
+        "Zombie process: child has exited but the parent did not call <code>wait()</code>",
+        "Two processes do not share the same PID, but after fork memory is copy-on-write"
+      ],
+      "terms": [
+        [
+          "Process",
+          "Running program instance — its own address space, file descriptors, PID."
+        ],
+        [
+          "Address space",
+          "Each process is given virtual memory by the OS; it cannot see another process's memory."
+        ],
+        [
+          "PCB",
+          "Process Control Block — OS record: PID, state, registers, memory maps."
+        ]
+      ],
+      "where": [
+        [
+          "Browsers",
+          "Chrome gives each tab/extension a separate process."
+        ],
+        [
+          "Web servers",
+          "nginx/PM2 run multiple worker processes."
+        ]
+      ]
+    },
+    "what-is-thread": {
+      "name": "What is a Thread?",
+      "desc": "A thread is a single sequence of execution inside a process. One process can have many threads — they share the same memory (heap, code, files) but each has its own stack and CPU registers. Threads are \"lightweight processes\" — much cheaper to create.",
+      "q": "What is a thread? How is it different from a process?",
+      "qsub": "If threads share memory, what is the danger? Give a simple example of two threads corrupting shared data.",
+      "what": "<p><b>Definition:</b> A thread is the smallest unit of CPU scheduling. A process can have one or more threads that share code, heap, and file descriptors, but keep separate stacks and program counters.</p><p>Because they share memory, threads can exchange data quickly — but this is also the biggest source of bugs.</p>",
+      "analogy": "<p>A process is like a restaurant. Threads are its waiters. Everyone shares the same kitchen (heap) and menu, but each waiter has its own order notepad (stack).</p>",
+      "why": "<p>An inexpensive way to perform parallel or overlapping work in a single program: keep the UI thread responsive while a background thread handles file/network tasks.</p>",
+      "pros": [
+        "Lighter than a process — creation and switch are cheap",
+        "Shared memory makes communication fast"
+      ],
+      "cons": [
+        "Shared state leads to race conditions and deadlocks",
+        "A thread crash can bring down the entire process"
+      ],
+      "gotchas": [
+        "Calling <code>t.run()</code> does not create a new thread; it is a normal method call",
+        "Each thread's stack (≈1 MB) consumes memory — creating thousands of threads is costly",
+        "Thread output order is non-deterministic"
+      ],
+      "terms": [
+        [
+          "Thread",
+          "A sequence of execution within a process — its own stack and registers."
+        ],
+        [
+          "TID",
+          "Thread ID; the OS schedules the thread."
+        ],
+        [
+          "Shared heap",
+          "All threads in the same process see the same heap/globals."
+        ]
+      ],
+      "where": [
+        [
+          "GUI apps",
+          "UI thread + worker threads."
+        ],
+        [
+          "Servers",
+          "A thread per request or from a thread pool."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// run() nahi, start() — naya thread banta hai",
+          "// start(), not run() — it creates a new thread"
+        ],
+        [
+          "// main wait karta hai",
+          "// main waits"
+        ]
+      ]
+    },
+    "why-threads": {
+      "name": "Why Do We Need Multiple Threads?",
+      "desc": "Two reasons: (1) Responsiveness — while one thread waits for a disk read, another thread can keep the UI running. (2) Performance — on a multi-core CPU, threads can truly run in parallel, speeding up computation. Without threads, a web server could only handle one request at a time.",
+      "q": "Why do we use multiple threads? Give a real example of a program that benefits from threading.",
+      "qsub": "A web server receives 1000 simultaneous requests. How do threads help? What is a thread pool?",
+      "what": "<p><b>Definition:</b> Multiple threads have two major benefits: (1) responsiveness — blocking work runs in a separate thread, (2) parallelism — full use of a multi-core CPU.</p><p>When one thread is waiting on disk/network, the CPU can be given to another thread instead of sitting idle.</p>",
+      "why": "<p>Today's machines are multi-core; a single thread would use only one core. Servers also have to serve thousands of concurrent clients.</p>",
+      "pros": [
+        "Better CPU and I/O utilization",
+        "Responsive applications"
+      ],
+      "cons": [
+        "Synchronization overhead and bugs",
+        "More threads = context-switch overhead"
+      ],
+      "gotchas": [
+        "Threads accelerate CPU-bound work only when real cores are present (and not in Python because of the GIL)",
+        "More threads don’t always mean more speed — beyond a certain point they become slower",
+        "Amdahl’s law: the serial portion determines the upper limit of speedup"
+      ],
+      "terms": [
+        [
+          "Responsiveness",
+          "Slow work runs in the background, the UI/main flow is not blocked."
+        ],
+        [
+          "Throughput",
+          "More work done simultaneously on multi-core."
+        ],
+        [
+          "I/O overlap",
+          "One thread waits on I/O while another uses the CPU."
+        ]
+      ],
+      "where": [
+        [
+          "Web crawlers",
+          "Fetch other pages while waiting for network."
+        ],
+        [
+          "Desktop/mobile apps",
+          "Keep the UI thread free."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "# Python: I/O-bound kaam threads se overlap",
+          "# Python: I/O-bound work overlaps with threads"
+        ],
+        [
+          "# 5 requests ek saath",
+          "# 5 requests at once"
+        ]
+      ]
+    },
+    "process-vs-thread": {
+      "name": "Process vs Thread — Memory Model",
+      "desc": "Process: own code, own heap, own stack, own file descriptors — fully isolated. Thread: shared code, shared heap, shared file descriptors — but own stack and own registers. This shared heap is the source of all concurrency bugs.",
+      "q": "Draw the memory layout of a process with 3 threads. What is shared? What is private?",
+      "qsub": "Creating a new process (fork) is expensive — why? Creating a thread is cheap — why?",
+      "what": "<p><b>Definition:</b> A process has its own code, heap, stack, and file descriptors (fully isolated). A thread lives inside a process — it shares code, heap, and globals, and only its stack and registers are private.</p><table><tr><th></th><th>Process</th><th>Thread</th></tr><tr><td>Memory</td><td>Separate</td><td>Shared heap</td></tr><tr><td>Creation</td><td>Heavy</td><td>Light</td></tr><tr><td>Crash</td><td>Contained</td><td>Entire process</td></tr><tr><td>Comm.</td><td>IPC</td><td>Direct memory</td></tr></table>",
+      "why": "<p>Design choice: safety requires a process, speed and sharing require a thread. This trade-off is the most common interview question.</p>",
+      "pros": [
+        "Process: security + fault isolation",
+        "Thread: fast sharing, low overhead"
+      ],
+      "cons": [
+        "Process: heavy, IPC complex",
+        "Thread: races, a single bug can crash everything"
+      ],
+      "gotchas": [
+        "Threads have separate stacks — the heap is shared.",
+        "After fork(), the child gets a copy-on-write mapping of the parent’s memory.",
+        "Interview trap: ‘threads get a separate address space’ — incorrect."
+      ],
+      "terms": [
+        [
+          "Isolation",
+          "Process separate memory; thread shared memory."
+        ],
+        [
+          "Context switch cost",
+          "Process switch involves address-space switch + TLB flush; thread switch is cheaper."
+        ],
+        [
+          "IPC",
+          "Pipes, sockets, or shared memory for communication between processes."
+        ]
+      ],
+      "where": [
+        [
+          "Chrome",
+          "Process-per-tab — isolation."
+        ],
+        [
+          "Databases",
+          "PostgreSQL process-per-connection; MySQL thread-per-connection."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// alag process, IPC se message",
+          "// separate process, message via IPC"
+        ],
+        [
+          " same process, alag V8 isolate",
+          " same process, separate V8 isolate"
+        ]
+      ]
+    },
+    "atomicity": {
+      "name": "Atomicity",
+      "desc": "An operation that appears to happen instantaneously — no intermediate state is observable to other threads.",
+      "q": "What does atomic mean? Is i++ atomic? What about a read-modify-write on a 64-bit int on a 32-bit system?",
+      "qsub": "What is the happens-before relationship? How does it relate to the Java Memory Model?",
+      "what": "<p><b>Definition:</b> An atomic operation appears to happen in a single instant. Hardware makes some operations (aligned read/write, CAS, fetch-add) atomic; the rest require a lock or an atomic library.</p><p><code>x++</code>, <code>x = x + 1</code> are normally not atomic.</p>",
+      "why": "<p>The cheapest way to make simple counters and flags safe without using locks is to use atomics.</p>",
+      "pros": [
+        "Lock-free, fast",
+        "No risk of deadlock"
+      ],
+      "cons": [
+        "Only single-variable operations",
+        "Locks are needed for multi-variable invariants"
+      ],
+      "gotchas": [
+        "A combination of atomic ops is not atomic (check-then-act)",
+        "Atomicity is not a complete answer for visibility ordering",
+        "64-bit long/double are not atomic on some platforms"
+      ],
+      "terms": [
+        [
+          "Atomic",
+          "Operation completes entirely or not at all; no intermediate state is visible."
+        ],
+        [
+          "Indivisible",
+          "Cannot be interrupted in the middle."
+        ],
+        [
+          "Atomic types",
+          "AtomicInteger, std::atomic, Atomics (JS)."
+        ]
+      ],
+      "where": [
+        [
+          "Metrics counters",
+          "Request count, hit counter."
+        ],
+        [
+          "Flags",
+          "Shutdown/ready flags."
+        ]
+      ]
+    },
+    "memory-visibility": {
+      "name": "Memory Visibility & CPU Caches",
+      "desc": "CPUs have private caches — writes by one thread may not be visible to others without synchronization.",
+      "q": "Why can a thread read stale data even without a race condition? What is the volatile keyword for?",
+      "qsub": "What is a memory barrier? What is cache coherence (MESI protocol)?",
+      "what": "<p><b>Definition:</b> Modern CPUs and compilers reorder/cache. One thread wrote <code>flag = true</code>, but another thread may keep reading the old value from its cache — there is no guarantee without synchronization.</p><p>Locks, volatile, and atomics use memory barriers for visibility.</p>",
+      "why": "<p>This bug is a 'while(!done)' loop that never terminates — it causes subtle problems.</p>",
+      "pros": [
+        "Predictable concurrent code when you understand the rules"
+      ],
+      "cons": [
+        "Hardware-dependent surprises",
+        "Hard to catch with testing"
+      ],
+      "gotchas": [
+        "Code that runs on x86 may break on ARM",
+        "Visibility and atomicity are separate problems",
+        "Lock acquisition/release also acts as a memory barrier"
+      ],
+      "terms": [
+        [
+          "CPU cache",
+          "Each core's private L1/L2 — writes are not immediately visible to other cores."
+        ],
+        [
+          "Visibility",
+          "When a thread's write becomes visible to another thread."
+        ],
+        [
+          "Happens-before",
+          "Ordering rule that guarantees visibility."
+        ]
+      ],
+      "where": [
+        [
+          "Shutdown flags",
+          "Volatile/atomic flag."
+        ],
+        [
+          "Double-checked locking",
+          "volatile is required for singletons."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// Java: volatile ke bina loop kabhi na bhi ruke",
+          "// Java: without volatile the loop may never stop"
+        ],
+        [
+          "// ab loop ko dikhega",
+          "// now the loop will see it"
+        ],
+        [
+          " bina volatile risk",
+          " without volatile it's a risk"
+        ]
+      ]
+    },
+    "mutex": {
+      "name": "Mutex (Mutual Exclusion Lock)",
+      "desc": "A lock that only one thread can hold at a time. Thread acquires lock, enters critical section, releases lock.",
+      "q": "How does a mutex work? What is a spinlock and when is it better than a blocking mutex?",
+      "qsub": "What is a reentrant/recursive mutex? What problem does it solve?",
+      "what": "<p><b>Definition:</b> A mutex protects a critical section. The thread that acquires the lock is the only one that can release it (ownership). If the lock is held, other threads block (sleep).</p><p>A reentrant mutex allows the same thread to acquire it repeatedly (it maintains a count).</p>",
+      "why": "<p>The most basic tool for keeping shared data correct — other primitives are built on it.</p>",
+      "pros": [
+        "Simple, correct mutual exclusion",
+        "Sleeps — no CPU waste"
+      ],
+      "cons": [
+        "Contention and deadlock risk",
+        "Priority inversion"
+      ],
+      "gotchas": [
+        "Forgetting to unlock = entire system hangs",
+        "Do not run callbacks/I/O inside a lock",
+        "If a non-reentrant mutex is acquired again by the same thread, it causes self-deadlock"
+      ],
+      "terms": [
+        [
+          "Mutex",
+          "A lock with only one owner at a time."
+        ],
+        [
+          "Lock / unlock",
+          "Acquire, work, release."
+        ],
+        [
+          "Reentrant",
+          "Same thread can acquire the lock again without deadlock."
+        ]
+      ],
+      "where": [
+        [
+          "Shared maps/caches",
+          "Insert/read protect."
+        ],
+        [
+          "Resource pools",
+          "Lock for the free list."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// panic par bhi release",
+          "// release even on panic"
+        ]
+      ]
+    },
+    "semaphore": {
+      "name": "Semaphore",
+      "desc": "A counter-based synchronization primitive. Binary semaphore = mutex. Counting semaphore = limit concurrent access.",
+      "q": "What is a semaphore? How does it differ from a mutex? Implement a bounded buffer using semaphores.",
+      "qsub": "Can a thread release a semaphore it didn't acquire? How is that useful?",
+      "what": "<p><b>Definition:</b> A semaphore is a counter. <code>acquire()</code> decreases the counter (blocks if it reaches 0), <code>release()</code> increases it. This allows up to N threads to access a resource.</p><p>Difference from a mutex: any thread can release a semaphore, so it is also used for signaling.</p>",
+      "analogy": "<p>A parking lot with 5 slots: when a car arrives, take a slot; if full, wait outside; when a car leaves, a slot becomes free.</p>",
+      "why": "<p>To enforce 'max N concurrent' in connection pools, rate limiting, and producer-consumer buffers.</p>",
+      "pros": [
+        "Both resource limiting and signaling",
+        "Flexible"
+      ],
+      "cons": [
+        "No ownership — incorrect release can cause bugs",
+        "Debugging is difficult"
+      ],
+      "gotchas": [
+        "If release() is forgotten, permits leak",
+        "Semaphore(1) and a mutex are not the same thing",
+        "Too many releases can raise the count above its limit"
+      ],
+      "terms": [
+        [
+          "Counting semaphore",
+          "N permits; decreases on acquire, increases on release."
+        ],
+        [
+          "Binary semaphore",
+          "0/1 — like a mutex but without ownership."
+        ],
+        [
+          "P / V",
+          "wait() / signal() — Dijkstra's operations."
+        ]
+      ],
+      "where": [
+        [
+          "Connection pool",
+          "Max N connections."
+        ],
+        [
+          "Bounded buffer",
+          "empty/full semaphores."
+        ]
+      ]
+    }
+  }
+}

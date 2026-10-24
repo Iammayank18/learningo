@@ -11,7 +11,7 @@ import { Mascot, Confetti, type Mood } from '../components/Mascot'
 import { QuizRunner, type QuizItem, type QuizResult } from '../components/QuizRunner'
 import { StarIcon, LockIcon, CheckIcon, ChestIcon, TrophyIcon, FastIcon } from '../components/Icons'
 import type { Course, Lesson } from '../types'
-import { tr } from '../lib/i18n'
+import { t } from '../lib/i18n'
 
 const OFFSETS = [0, 46, 74, 46, 0, -46, -74, -46]
 const CHEST_EVERY = 4
@@ -43,8 +43,8 @@ export function Learn({ courseId }: { courseId: string }) {
   const [now] = useState(() => Date.now())
   const [burst, setBurst] = useState<string | null>(null)
   const [jump, setJump] = useState<number | null>(null) // unit index being tested
-  if (error) return <div className="empty">{tr('Course load nahi hua.')}</div>
-  if (loading || !course) return <div className="empty">Loading…</div>
+  if (error) return <div className="empty">{t('learn.error')}</div>
+  if (loading || !course) return <div className="empty">{t('common.loading')}</div>
 
   const hue = HUES[course.hue] ?? '#58cc02'
   const pass = passedMap(p)
@@ -63,7 +63,7 @@ export function Learn({ courseId }: { courseId: string }) {
       <header className="mb-2 flex items-center gap-4 rounded-3xl border-2 border-(--line) bg-(--card) p-4 shadow-[0_4px_0_var(--line)]">
         <div className="grid size-14 shrink-0 -rotate-3 place-items-center rounded-2xl bg-[color-mix(in_srgb,var(--hue)_18%,transparent)] text-[32px]">{course.icon}</div>
         <div className="min-w-0 flex-1">
-          <div className="truncate text-[11px] font-extrabold tracking-[.14em] text-(--muted) uppercase">{p.profile?.name ? `Hi ${p.profile.name} 👋 · ` : ''}{course.group}</div>
+          <div className="truncate text-[11px] font-extrabold tracking-[.14em] text-(--muted) uppercase">{p.profile?.name ? t('learn.greeting', { name: p.profile.name }) : ''}{course.group}</div>
           <h1 className="m-0! truncate text-[24px]! leading-tight">{course.title}</h1>
           <div className="mt-2 flex items-center gap-3">
             <div className="h-3 flex-1 overflow-hidden rounded-full bg-(--line)">
@@ -72,8 +72,8 @@ export function Learn({ courseId }: { courseId: string }) {
             <span className="shrink-0 text-[13px] font-extrabold text-(--muted)">{done}/{total} · {Math.round((done / total) * 100)}%</span>
           </div>
         </div>
-        <a href={href('courses')} title={tr('Course badlo')} className="grid size-11 shrink-0 place-items-center gap-0.5 rounded-2xl border-2 border-(--line) text-[11px] sm:size-auto sm:self-stretch sm:px-3 font-extrabold tracking-wider text-(--blue-d) uppercase no-underline shadow-[0_3px_0_var(--line)] transition-[translate,box-shadow] duration-100 hover:translate-y-[1.5px] hover:shadow-[0_1.5px_0_var(--line)] active:translate-y-[3px] active:shadow-none">
-          <span className="text-xl leading-none">⇄</span><span className="hidden sm:inline">Switch</span>
+        <a href={href('courses')} title={t('learn.changeCourse')} className="grid size-11 shrink-0 place-items-center gap-0.5 rounded-2xl border-2 border-(--line) text-[11px] sm:size-auto sm:self-stretch sm:px-3 font-extrabold tracking-wider text-(--blue-d) uppercase no-underline shadow-[0_3px_0_var(--line)] transition-[translate,box-shadow] duration-100 hover:translate-y-[1.5px] hover:shadow-[0_1.5px_0_var(--line)] active:translate-y-[3px] active:shadow-none">
+          <span className="text-xl leading-none">⇄</span><span className="hidden sm:inline">{t('learn.switch')}</span>
         </a>
       </header>
 
@@ -92,20 +92,20 @@ export function Learn({ courseId }: { courseId: string }) {
         items.push({ t: 'trophy' })
         const mid = Math.floor(items.length / 2)
         const mood: Mood = unitDone ? 'cheer' : unitLocked ? 'sleep' : 'idle'
-        const say = unitDone ? 'Unit complete! 🎉' : unitLocked ? 'Zzz…' : ui === curUnit ? tr('Chalo, shuru karo!') : ''
+        const say = unitDone ? t('learn.unitComplete') : unitLocked ? t('learn.sleep') : ui === curUnit ? t('learn.letsStart') : ''
         const next = course.units[ui + 1]
         return (
           <section key={u.id} className={'unit' + (unitLocked ? ' locked' : '') + (unitDone ? ' complete' : '')}>
             <div className="unit-banner">
               <div className="min-w-0 flex-1">
-                <div className="eyebrow">Unit {ui + 1}{u.week ? ` · ${u.week}` : ''}</div>
+                <div className="eyebrow">{u.week ? t('learn.unitWeek', { n: ui + 1, week: u.week }) : t('learn.unit', { n: ui + 1 })}</div>
                 <h2 className="truncate">{u.title}</h2>
                 <div className="mt-2 flex max-w-[260px] items-center gap-2">
                   <div className="h-2 flex-1 overflow-hidden rounded-full bg-black/20"><div className="h-full rounded-full bg-white/90" style={{ width: `${(ud / u.lessons.length) * 100}%` }} /></div>
                   <span className="text-[11px] font-extrabold text-white/85">{ud}/{u.lessons.length}</span>
                 </div>
               </div>
-              <a className="notes-btn" href={href('read', course.id, u.lessons[0].id)}>📖 Notes</a>
+              <a className="notes-btn" href={href('read', course.id, u.lessons[0].id)}>📖 {t('common.notes')}</a>
             </div>
             <div className="nodes">
               {items.map((it, k) => {
@@ -135,12 +135,12 @@ export function Learn({ courseId }: { courseId: string }) {
                           onClick={() => { if (isLocked) sfx.lock(); else sfx.tap(); setOpen(sel ? null : id) }}
                         >
                           {isLocked ? <LockIcon /> : isPlaced || isDone ? <CheckIcon /> : <StarIcon />}
-                          {isDone && card && <span title={`Crown level ${card.stage}/5`} className="absolute -top-2.5 -right-3 flex items-center gap-0.5 rounded-full border-2 border-(--bg) bg-(--yellow) px-2 py-0.5 text-[12px] leading-none font-black text-[#7a5300]"><span className="text-[13px]">👑</span>{card.stage}</span>}
+                          {isDone && card && <span title={t('learn.crownLevel', { n: card.stage })} className="absolute -top-2.5 -right-3 flex items-center gap-0.5 rounded-full border-2 border-(--bg) bg-(--yellow) px-2 py-0.5 text-[12px] leading-none font-black text-[#7a5300]"><span className="text-[13px]">👑</span>{card.stage}</span>}
                         </button>
                         {isCur && (
                           <div className="pointer-events-none absolute -top-8 left-1/2 z-10 -translate-x-1/2">
                             <div className="relative animate-[bob_1.4s_ease-in-out_infinite] rounded-xl border-2 border-(--ring) bg-(--card) px-3.5 py-1.5 text-[15px] font-extrabold uppercase leading-none tracking-wider text-(--hue)">
-                              Start
+                              {t('learn.startBubble')}
                               <span className="absolute -bottom-[7px] left-1/2 size-3 -translate-x-1/2 rotate-45 border-r-2 border-b-2 border-(--ring) bg-(--card)" />
                             </div>
                           </div>
@@ -153,16 +153,16 @@ export function Learn({ courseId }: { courseId: string }) {
                           <span aria-hidden className={'absolute -top-[9px] left-1/2 size-4 -translate-x-1/2 rotate-45 rounded-tl-[3px] border-t-2 border-l-2 ' + (isLocked ? 'border-(--ring) bg-(--card)' : 'border-transparent bg-(--hue)')} />
                           <h4 className={'m-0! text-[18px] leading-tight ' + (isLocked ? 'text-(--lock-ic)!' : 'text-white!')}>{l.name}</h4>
                           <p className={'mt-2! mb-4! text-[15px] leading-snug ' + (isLocked ? 'text-(--lock-ic)' : 'text-white/90')}>
-                            {isLocked ? tr('Upar wale lessons complete karo, tab ye khulega! Agla: “{n}”.', { n: blocker[l.id].name }) : isPlaced ? tr('Placement test se skip — chaho to practice kar lo.') : isDone && card ? (isDue ? tr('Revision due hai — chalo pakka kar lein!') : `Next revision ${fmtIn(card.due - now)}`) : l.desc ? l.desc.slice(0, 110) + '…' : tr('Chalo shuru karte hain!')}
+                            {isLocked ? t('learn.lockedHint', { n: blocker[l.id].name }) : isPlaced ? t('learn.placedHint') : isDone && card ? (isDue ? t('learn.revisionDue') : t('learn.nextRevision', { when: fmtIn(card.due - now) })) : l.desc ? l.desc.slice(0, 110) + '…' : t('learn.startLesson')}
                           </p>
                           {isLocked ? (
-                            <button disabled className="w-full cursor-not-allowed rounded-xl border-0 bg-(--ring) py-3 text-sm font-extrabold tracking-widest text-(--lock-ic) uppercase">Locked</button>
+                            <button disabled className="w-full cursor-not-allowed rounded-xl border-0 bg-(--ring) py-3 text-sm font-extrabold tracking-widest text-(--lock-ic) uppercase">{t('common.locked')}</button>
                           ) : (
                             <div className="grid gap-2.5">
                               <a href={href('lesson', course.id, l.id)} className="block rounded-xl bg-white py-3 text-center text-sm font-extrabold tracking-wide text-[color-mix(in_srgb,var(--hue)_80%,#000)] uppercase no-underline shadow-[0_4px_0_rgba(0,0,0,.2)] transition-[translate,box-shadow] duration-100 hover:translate-y-[2px] hover:shadow-[0_2px_0_rgba(0,0,0,.2)] active:translate-y-[4px] active:shadow-none">
-                                {isDone ? 'Practice' : 'Start'} +25 XP
+                                {isDone ? t('learn.practiceXp') : t('learn.startXp')}
                               </a>
-                              <a href={href('read', course.id, l.id)} className="block rounded-xl border-2 border-white/45 py-2.5 text-center text-sm font-extrabold tracking-wide text-white uppercase no-underline hover:bg-white/10">Read notes</a>
+                              <a href={href('read', course.id, l.id)} className="block rounded-xl border-2 border-white/45 py-2.5 text-center text-sm font-extrabold tracking-wide text-white uppercase no-underline hover:bg-white/10">{t('learn.readNotes')}</a>
                             </div>
                           )}
                         </div>
@@ -176,7 +176,7 @@ export function Learn({ courseId }: { courseId: string }) {
                   return (
                     <div key={it.key} className="node-wrap" style={{ transform: `translateX(${off}px)` }}>
                       {mascot}
-                      <button className={'chest' + (ready && !opened ? ' ready' : '') + (opened ? ' opened' : '')} aria-label="Reward chest"
+                      <button className={'chest' + (ready && !opened ? ' ready' : '') + (opened ? ' opened' : '')} aria-label={t('learn.rewardChest')}
                         onClick={() => {
                           if (!ready) { sfx.lock(); return }
                           if (!opened) { openChest(it.key, 15); sfx.goal(); setBurst(it.key); setTimeout(() => setBurst(null), 2200) }
@@ -191,7 +191,7 @@ export function Learn({ courseId }: { courseId: string }) {
                 return (
                   <div key="trophy" className="node-wrap" style={{ transform: `translateX(${off}px)` }}>
                     {mascot}
-                    <button className={'trophy' + (unitDone ? ' won' : '')} aria-label="Unit trophy" onClick={() => unitDone ? sfx.goal() : sfx.lock()}>
+                    <button className={'trophy' + (unitDone ? ' won' : '')} aria-label={t('learn.unitTrophy')} onClick={() => unitDone ? sfx.goal() : sfx.lock()}>
                       <TrophyIcon size={64} dim={!unitDone} />
                     </button>
                   </div>
@@ -201,8 +201,8 @@ export function Learn({ courseId }: { courseId: string }) {
             {next && !unitDone && ui === curUnit && !unlockAll && (
               <div className="jump-wrap">
                 <div className="jump-line"><span>{next.title}</span></div>
-                <div className="start-bubble jump-bubble">JUMP HERE?</div>
-                <button className="jump-btn" aria-label={`Jump to ${next.title}`} onClick={() => { sfx.tap(); setJump(ui + 1) }}><FastIcon /></button>
+                <div className="start-bubble jump-bubble">{t('learn.jumpHere')}</div>
+                <button className="jump-btn" aria-label={t('learn.jumpTo', { title: next.title })} onClick={() => { sfx.tap(); setJump(ui + 1) }}><FastIcon /></button>
               </div>
             )}
           </section>
@@ -245,19 +245,19 @@ function JumpTest({ course, unitIndex, onClose }: { course: Course; unitIndex: n
     return (
       <div className="overlay"><div className="done-screen">
         {res.ok && <Confetti count={70} />}
-        <Mascot mood={res.ok ? 'cheer' : 'sad'} size={120} say={res.ok ? tr('Perfect! Seedha aage!') : tr('Abhi nahi — pehle yahi pakka karo')} />
-        <h1>{res.ok ? tr('Jump! {n} lessons skip', { n: res.skipped }) : tr('Thoda aur practice')}</h1>
-        <p className="muted">{res.ok ? tr('Ab "{t}" se shuru.', { t: unit.title }) : tr('Jump ke liye saare sawal sahi hone chahiye.')}</p>
-        <button className="btn btn-green" onClick={onClose}>Continue</button>
+        <Mascot mood={res.ok ? 'cheer' : 'sad'} size={120} say={res.ok ? t('learn.perfectJump') : t('learn.notYet')} />
+        <h1>{res.ok ? t('learn.jumpSkipped', { n: res.skipped }) : t('learn.morePractice')}</h1>
+        <p className="muted">{res.ok ? t('learn.jumpStartFrom', { t: unit.title }) : t('learn.jumpNeedAll')}</p>
+        <button className="btn btn-green" onClick={onClose}>{t('learn.continue')}</button>
       </div></div>
     )
   }
-  if (!items.length) return <div className="overlay"><div className="done-screen"><p className="muted">{tr('Is unit ke liye test available nahi.')}</p><button className="btn btn-green" onClick={onClose}>{tr('Wapas')}</button></div></div>
+  if (!items.length) return <div className="overlay"><div className="done-screen"><p className="muted">{t('learn.noJumpTest')}</p><button className="btn btn-green" onClick={onClose}>{t('common.back')}</button></div></div>
   return <div className="overlay"><QuizRunner items={items} onExit={onClose} onFinish={finish} /></div>
 }
 
 function fmtIn(ms: number) {
   const d = Math.round(ms / DAY)
-  if (d <= 0) return 'today'
-  return d === 1 ? 'tomorrow' : `in ${d} days`
+  if (d <= 0) return t('common.today')
+  return d === 1 ? t('common.tomorrow') : t('common.inDays', { n: d })
 }

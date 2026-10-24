@@ -1,0 +1,2381 @@
+{
+  "lessons": {
+    "l0_0": {
+      "name": "Tree — UI is basically a tree",
+      "desc": "Every HTML page is a nested structure, and a nested object can create exactly that shape.",
+      "what": "<p>A <b>tree</b> means: something inside something else, and more inside that. That's it.</p>\n<p>Look at your HTML — a <code>&lt;div&gt;</code> containing a <code>&lt;h1&gt;</code> and a <code>&lt;ul&gt;</code>, and the <code>&lt;ul&gt;</code> containing three <code>&lt;li&gt;</code>. This is a tree. The topmost element is the <b>root</b>, the inner ones are <b>children</b>, and the ones with nothing inside are <b>leaf</b>.</p>\n<div class=\"analogy\">Analogy: a cupboard with 3 drawers, each drawer with 2 boxes, each box with items. cupboard = root, drawer = children, items = leaf.</div>\n<p>Now we can create the same shape with a JS object. And this is the <b>foundation of the entire library</b> — because we will create <b>objects</b> instead of writing HTML, and later generate real HTML from those objects.</p>",
+      "why": "<p>If UI is an object, then comparing, copying, modifying UI becomes purely <b>data work</b>, not DOM work. Manipulating data is 100 times cheaper than manipulating the DOM. React’s entire speed comes from this idea.</p>\n<p><b>How to do it:</b></p><p>A node should have two things: what it <b>is</b> (type), and what is <b>inside it</b> (children). Any extra info — class, id, onClick — put it in props.</p><p>Keep every node’s shape the same. Same shape means a single function can handle everything. This is a design decision, not a constraint — and it will cut your work in half.</p>",
+      "gotchas": [
+        "Don’t just log and assume you understand. Draw the tree on paper — who is whose parent. It will take 5 minutes and will help throughout the library.",
+        "Always keep children as an array, even if there is only one child. Switching between array and single object would require extra if statements in every function."
+      ],
+      "visualCap": "Left: what appears in the browser. Right: the same thing as a plain JS object. Both have exactly the same shape.",
+      "codeSwap": [
+        [
+          "// Sawaal khud se pucho: is object mein kitne node hain?",
+          "// Ask yourself: how many nodes does this object have?"
+        ],
+        [
+          "// Answer nikalne ka tarika = recursion (agli lesson)",
+          "// The way to get the answer = recursion (next lesson)"
+        ],
+        [
+          "// Ye ek \"UI tree\" hai — sirf object, koi DOM nahi",
+          "// This is a \"UI tree\" — just objects, no DOM"
+        ],
+        [
+          "// Console mein khelo:",
+          "// Play in the console:"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "root ke andar children, children ke andar children",
+          "children inside the root, children inside children"
+        ]
+      ]
+    },
+    "l0_1": {
+      "name": "Recursion — a function that calls itself",
+      "desc": "The natural way to work with trees. Forget the base case and the stack will explode.",
+      "what": "<p><b>Recursion</b> means a function that calls itself inside its own body.</p>\n<p>It is used when the problem can be broken into \"smaller versions of the same problem\". A tree is exactly that: process the whole tree = process the root + <b>the same work for each child</b>.</p>\n<div class=\"analogy\">Analogy: you need to empty a cupboard. You say \"empty every drawer\". Emptying a drawer means \"empty every box\". Emptying a box means \"remove the items\". One instruction repeated at every level.</div>\n<p>There are two parts: <b>base case</b> (when to stop) and <b>recursive case</b> (how to reduce). Forgetting the base case means the function never stops and the browser will throw <code>Maximum call stack size exceeded</code>.</p>",
+      "why": "<p>Our <code>render()</code> function will be recursive — the whole thing in Stage A. Later, the biggest lesson in Stage C will be that <b>you cannot stop recursion</b>. Therefore, understanding recursion from the inside is essential, not just \"it works\".</p>\n<p><b>How to do it:</b></p><p>Think like this: <b>assume the function already works</b>. Just write what to do \"for one node\" and \"call yourself for the children\". Don’t think about the whole tree — think about a single node.</p><p>And yes — the browser stores each recursive call in a <b>call stack</b>. The deeper the tree, the taller the stack.</p>",
+      "gotchas": [
+        "Write the base case first, and only then the recursive call. Writing them in reverse can sometimes accidentally create an infinite loop.",
+        "Placing await/return in the wrong place inside a for loop causes only the first child to be processed. The result is incomplete but no error is thrown — therefore always verify the output by counting.",
+        "A very deep tree (10,000 levels) will crash with plain recursion. This is the real reason for Stage C."
+      ],
+      "visualCap": "Call stack: each inner call climbs on top. No call finishes until the deepest call returns — therefore pausing recursion in the middle is impossible.",
+      "codeSwap": [
+        [
+          "// Ab isko badlo: sabhi node ke \"type\" ka array banao.",
+          "// Now change it: build an array of every node's \"type\"."
+        ],
+        [
+          "// Ye exactly wahi shape hai jo hamara render() lega.",
+          "// This is exactly the shape our render() will take."
+        ],
+        [
+          "// har child ke liye wahi kaam",
+          "// the same work for each child"
+        ],
+        [
+          "// Ped mein kitne node hain?",
+          "// How many nodes are in the Ped?"
+        ],
+        [
+          "// khud ko gino",
+          "// count yourself"
+        ],
+        [
+          " How many nodes are in the Ped?",
+          " How many nodes are in the Tree?"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "CALL STACK — sabse gehri call sabse upar",
+          "CALL STACK — the deepest call is on top"
+        ],
+        [
+          "walk(div)  — abhi wait kar raha hai",
+          "walk(div)  — waiting right now"
+        ],
+        [
+          "walk(ul)   — abhi wait kar raha hai",
+          "walk(ul)   — waiting right now"
+        ],
+        [
+          "aata hai",
+          "arrives"
+        ],
+        [
+          "Base case bhool gaye = stack badhta rahega = \"Maximum call stack size exceeded\"",
+          "Forget the base case = the stack keeps growing = \"Maximum call stack size exceeded\""
+        ],
+        [
+          "walk(li)   — base case, ye return karega",
+          "walk(li)   — base case, this will return"
+        ],
+        [
+          "neeche",
+          "below"
+        ]
+      ]
+    },
+    "l0_2": {
+      "name": "Closure — a function’s private box",
+      "desc": "A function remembers variables from its outer scope. useState is built on exactly this.",
+      "what": "<p>When you create a function inside another function, the inner function <b>remembers</b> the outer function’s variables — even after the outer function has finished executing. This is called a <b>closure</b>.</p>\n<p class=\"analogy\">Analogy: you entered a room, wrote a number on a slip, and closed the room. Now you have a small window through which you can read and modify that slip. No one else can see the slip. That window = closure.</p>\n<p><b>Definition:</b> A closure is a function bundled together with references to the variables from the scope in which it was created.</p>",
+      "why": "<p>The whole magic of <code>useState</code> is this. The component function runs repeatedly, but the state remains \"remembered\" outside, and <code>setState</code> is a small function that has a window to that memory. Understanding closures makes hooks click in 10 minutes.</p>\n<p><b>How to do it:</b></p><p>The most common pattern: a \"factory\" function that creates some variables and returns small functions that can touch them. The outside only receives those small functions — not the variable directly.</p><p>This is <b>encapsulation</b> — hiding data and exposing only controlled paths. The oldest and most useful approach in library design.</p>",
+      "gotchas": [
+        "If you use var inside a loop, all closures will capture the same variable. Use let — each iteration gets its own variable.",
+        "A closure does not \"freeze\" the old value; it points to the variable. If the variable changes, the closure sees the new value. This is the root of stale-state bugs."
+      ],
+      "codeSwap": [
+        [
+          "// Ye 6 line hi asli useState hai. Baaki sab plumbing hai.",
+          "// These 6 lines ARE the real useState. Everything else is plumbing."
+        ],
+        [
+          "// AB YE SOCHO (hooks ka pura raaz isi mein hai):",
+          "// NOW THINK ABOUT THIS (the whole secret of hooks is in here):"
+        ],
+        [
+          "// khidki: yahan se count badal sakte ho",
+          "// window: you can change the count from here"
+        ],
+        [
+          "// undefined -- bahar se dikhta hi nahi",
+          "// undefined -- not visible from outside at all"
+        ],
+        [
+          "// pehli baar hi initial lagta hai",
+          "// only seems \"initial\" the first time"
+        ],
+        [
+          "// ye variable \"chhupa\" hua hai",
+          "// this variable is \"hidden\""
+        ],
+        [
+          "// closure: \"i\" yaad hai",
+          "// closure: it remembers \"i\""
+        ],
+        [
+          "// is call ka apna slot",
+          "// this call's own slot"
+        ]
+      ]
+    },
+    "l0_3": {
+      "name": "The 7 DOM functions we will use repeatedly",
+      "desc": "The entire library builds the DOM using only these calls. No magic.",
+      "what": "<p>Browser provides some simple functions that let you create and modify page elements. React uses these — just thoughtfully and very sparingly.</p>\n<p>Our entire library will operate with only these 7:</p>\n<ul class=\"gotchas-list\" style=\"margin-top:8px\">\n<li><code>document.createElement(\"div\")</code> — create a new element</li>\n<li><code>document.createTextNode(\"hi\")</code> — node with only text</li>\n<li><code>parent.appendChild(child)</code> — insert inside</li>\n<li><code>parent.removeChild(child)</code> — remove</li>\n<li><code>parent.replaceChild(naya, purana)</code> — replace</li>\n<li><code>el.addEventListener / removeEventListener</code> — click etc.</li>\n<li><code>el.setAttribute / removeAttribute</code> — class, id etc.</li>\n</ul>",
+      "why": "<p>Knowing that \"the DOM only has these tools\" gives you confidence. When you read React’s source, you will see only these 7 calls. There is no hidden API.</p>\n<p><b>How to do it:</b></p><p>An important point: <b>attributes</b> and <b>properties</b> are different. <code>setAttribute(\"value\", \"hi\")</code> writes to the HTML; <code>el.value = \"hi\"</code> changes the actual live value. For inputs you need the property, otherwise the user’s typed text will be reset.</p>\n<p>Similarly, <code>class</code> exists in HTML but the JS property name is <code>className</code> — because <code>class</code> is a reserved word in JS. React adopted that name, so we will use it as well.</p>",
+      "gotchas": [
+        "Don’t use setAttribute(\"value\", x) for inputs. Use el.value = x, otherwise whatever the user is typing will disappear.",
+        "removeEventListener works only when you pass exactly the same function reference that was given to addEventListener. Creating a new arrow function will cause remove to silently fail.",
+        "Creating DOM with innerHTML seems fast but it rebuilds everything each time — focus, scroll, event listeners all disappear. This entire project exists to solve that problem."
+      ],
+      "codeSwap": [
+        [
+          "// Hamara kaam isko declarative banana hai: \"mujhe ye chahiye\" -> library baaki kare.",
+          "// Our job is to make it declarative: \"I want this\" -> the library does the rest."
+        ],
+        [
+          "// Ab dekho ye kitna imperative hai: \"ye banao, wo jodo, phir wo jodo\".",
+          "// Now see how imperative this is: \"make this, attach that, then attach that\"."
+        ],
+        [
+          "// Poora \"framework\" bina framework ke — 8 line:",
+          "// A whole \"framework\" without a framework — 8 lines:"
+        ]
+      ]
+    },
+    "l0_4": {
+      "name": "Reference vs copy — and immutability",
+      "desc": "Changing an object versus creating a new object — they are worlds apart.",
+      "what": "<p>In JS an object is a <b>reference</b> — meaning the variable holds not the object itself, but its \"address\". Two variables can point to the same object.</p>\n<p><b>Mutation</b> = modify the same object (<code>obj.x = 5</code>). <b>Immutability</b> = leave the old one, create a new object (<code>{...obj, x: 5}</code>).</p>\n<div class=\"analogy\">Analogy: mutation means overwriting on the same page of a book. Immutability means writing on a new page while keeping the old page unchanged. The old page will remain so you can <b>compare</b> what changed.</div>",
+      "why": "<p>Our reconciler will compare the old tree and the new tree. If we mutate the old tree, there is nothing left to compare — both will look the same and no update will occur. This is the trickiest bug in Stage B and it happens <b>silently</b>, without an error.</p>\n<p><b>How to do it:</b></p><p>Remember two cheap checks:</p><p><b>Object.is / ===</b> compare two references, not the inner content. That is why creating a new object lets React immediately know that \"something changed\".</p><p><b>Shallow compare</b> means looking only one level deep. The <code>useEffect</code> deps array performs a shallow compare — so if you put a new object in the deps on every render, the effect will run each time.</p>",
+      "gotchas": [
+        "Array methods come in two types: push/splice/sort modify the existing array, map/filter/concat return a new one. Always use the latter for UI.",
+        "If you copy a nested object with {...obj}, only the top level is copied — inner objects are still shared."
+      ],
+      "codeSwap": [
+        [
+          "// Shallow compare (deps ke liye):",
+          "// Shallow compare (for deps):"
+        ],
+        [
+          "// 99  <- dono ek hi object hain",
+          "// 99  <- both are the same object"
+        ],
+        [
+          "// Isliye ye galat hai:",
+          "// That's why this is wrong:"
+        ],
+        [
+          "// Aur ye sahi hai:",
+          "// And this is correct:"
+        ],
+        [
+          " ab dono same object -- compare bekaar",
+          " now both are the same object -- compare is useless"
+        ],
+        [
+          " ya har render pe fresh tree banao",
+          " or build a fresh tree on every render"
+        ],
+        [
+          " false -- naye object, naye pate",
+          " false -- new object, new address"
+        ],
+        [
+          " false <- alag pate",
+          " false <- different address"
+        ]
+      ]
+    },
+    "l1_0": {
+      "name": "Imperative vs Declarative",
+      "desc": "Old approach: specify every step. New approach: specify the destination.",
+      "what": "<p><b>Imperative</b> means you tell the browser every step: \"find this div, change its text, remove this button's class, add this li.\"</p>\n<p><b>Declarative</b> means you only specify how the <b>screen should look right now</b>. How to get there is the library's responsibility.</p>\n<div class=\"analogy\">Analogy: imperative = telling a taxi driver every turn (\"turn left here, now right, now straight\"). Declarative = just giving the address. Giving the address is better because when traffic changes you don't have to do anything.</div>",
+      "why": "<p>Bugs appear in imperative code because you have to handle every <b>possible transition</b>. With 3 states there are 6 transitions. With 5 states there are 20. In declarative code you only write 5 \"how the screen should look\" specifications — the library derives the transitions. The place for bugs disappears.</p>\n<p><b>How to do it:</b></p><p>To make it declarative, the library must know both the <b>current screen</b> and the <b>desired screen</b> so it can compute the difference. This is called <b>reconciliation</b> — and it is the heart of the whole project.</p><p>In other words, the cost of declarative UI is that the library has to remember the previous UI. Remember this trade-off — memory is spent to reduce code complexity.</p>",
+      "gotchas": [
+        "Declarative does not mean \"slow\". It is slow only when the library rebuilds everything on each update — fixing that is the job of Stage B.",
+        "Imperative bugs can still creep into declarative code if you reach into the DOM with document.querySelector and manipulate it. There should be a single owner of the DOM."
+      ],
+      "visualCap": "One task, two mindsets. In the lower part the transitions library handles it — so there is no room for bugs in your code.",
+      "codeSwap": [
+        [
+          "// \"Purani state se nayi state tak kaise pahuchein\" -- ye ab hamari library ka kaam hai.",
+          "// \"How to get from the old state to the new state\" -- that's now our library's job."
+        ],
+        [
+          "// ...aur setError() jo har cheez ko wapas ulta karega. Ek bhi line bhooli = bug.",
+          "// ...and setError() which will reverse everything. Forget a single line = bug."
+        ],
+        [
+          "// DECLARATIVE -- ek hi function, saari states",
+          "// DECLARATIVE -- one function, all the states"
+        ],
+        [
+          "// IMPERATIVE -- 3 state, aur pehle se hi ugly",
+          "// IMPERATIVE -- 3 states, and already ugly"
+        ],
+        [
+          "// aur ab focus gaya",
+          "// and now focus is gone"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "Transitions kaun sambhalega? Library. Tum sirf 4 function likhte ho, 0 arrows.",
+          "Who handles the transitions? The library. You only write 4 functions, 0 arrows."
+        ],
+        [
+          "IMPERATIVE — har transition khud likhni padti hai",
+          "IMPERATIVE — you have to write every transition yourself"
+        ],
+        [
+          "DECLARATIVE — sirf \"kaisa dikhe\" likho",
+          "DECLARATIVE — just write \"how it should look\""
+        ],
+        [
+          "6 jagah bug",
+          "bug in 6 places"
+        ]
+      ]
+    },
+    "l1_1": {
+      "name": "UI = f(state)",
+      "desc": "A formula that is the contract of the entire library.",
+      "what": "<p>One line: <b>what is displayed on the screen is only a function of the data.</b></p>\n<p>That means if you give me your state object, I can tell exactly how the screen will look. The screen should not have any hidden memory.</p>\n<p><b>Definition:</b> UI = f(state) means the rendered output is a pure function of application state — same state in, same UI out, no hidden memory in the DOM.</p>",
+      "why": "<p>This contract makes everything possible. Because of it, time-travel debugging, server rendering, hot reload, testing — all become possible. And because of it you can change state without fear, as the library will correctly re-render the screen.</p>\n<p><b>How to do it:</b></p><p>This simply means our library’s <b>public API has only two things</b>: a way to describe the UI (<code>createElement</code>) and a way to change state (<code>setState</code>). Everything else is internal.</p>\n<p>And there is a hidden rule: <code>f</code> must be <b>pure</b> — same state yields same output, and no side effects in between (fetch, timer, DOM manipulation). Side effects need a separate place — that’s why <code>useEffect</code> exists.</p>",
+      "gotchas": [
+        "Don’t place fetch, setTimeout or document.title = … inside a component. That makes the function impure and it will run twice if the render happens twice.",
+        "Don’t treat the DOM as state. \"What is typed in an input\" should be in state, not read from the DOM."
+      ],
+      "codeSwap": [
+        [
+          "// Library ka asli kaam: naye tree ko dekh kar SIRF ZAROORI DOM chhuna.",
+          "// The library's real job: look at the new tree and touch ONLY THE NECESSARY DOM."
+        ],
+        [
+          "// Ye bekaar nahi hai -- tree banana sasta hai. DOM chhuna mehnga hai.",
+          "// This isn't wasteful -- building the tree is cheap. Touching the DOM is expensive."
+        ],
+        [
+          "// Sirf \"count ye hai to screen aisi dikhegi\" likha hai.",
+          "// It only says \"if count is this, the screen looks like this\"."
+        ],
+        [
+          "// Notice: kahin bhi \"count ko update karo\" nahi likha.",
+          "// Notice: nowhere does it say \"update the count\"."
+        ],
+        [
+          "// Isliye har render \"poora tree dobara banata hai\".",
+          "// That's why every render \"rebuilds the whole tree\"."
+        ],
+        [
+          "// Poora contract, 3 line mein:",
+          "// The whole contract, in 3 lines:"
+        ]
+      ]
+    },
+    "l1_2": {
+      "name": "Our library’s 4 layers",
+      "desc": "The blueprint of the whole project — look at it now, then each phase will find its place.",
+      "what": "<p>People think of React as a single thing, but it actually consists of <b>four separate layers</b>, one on top of another. We will build the same four, in that order.</p>\n<p><b>1. Element layer</b> — <code>createElement</code>. Describes the UI as a plain object. It has no knowledge of the DOM.<br>\n<b>2. Renderer layer</b> — <code>render</code>. Turns the object tree into the real DOM. Browser-specific.<br>\n<b>3. Reconciler layer</b> — compares old vs new and derives the minimal changes. This is the most brainy part.<br>\n<b>4. Scheduler layer</b> — breaks work into small chunks so the browser doesn’t get blocked.</p>",
+      "why": "<p>Keeping them separate is not just for cleanliness — <b>that’s why React Native exists</b>. Layers 1, 3 and 4 stay the same; only layer 2 changes (DOM replaced by native views). This is the biggest lesson of the architecture: <b>separate what can change</b>.</p>\n<p><b>How to do it:</b></p><p>We will deliberately build in three stages, so you can feel the <b>need for each next layer</b> yourself:</p>\n<p><b>Stage A</b> = layers 1 + 2 (createElement + render). It works, but everything is rebuilt on each update.<br>\n<b>Stage B</b> = add layer 3 (reconciler + hooks). Now only the necessary DOM changes, and state is available.<br>\n<b>Stage C</b> = add layer 4 (Fiber + scheduler). Even large trees won’t block the page.</p>\n<p>At the end of each stage there is a phase called \"wall\" — there we will <b>deliberately break things</b> to show where the current stage fails. That will be your answer to \"why the requirement arose\".</p>",
+      "gotchas": [
+        "Don’t put everything in one file. Keep each layer in a separate file, even if the file is small — the real lesson is knowing which layer knows what.",
+        "The app folder should not import internal parts of the library. If you need to, your public API is incomplete."
+      ],
+      "visualCap": "The blueprint of the whole project. Each stage adds a new layer, and the \"wall\" phase in between shows why that layer was needed.",
+      "codeSwap": [
+        [
+          "// 14 phase baad ye file tumhare project ka sabse keemti hissa hogi.",
+          "// after 14 phases this file will be the most valuable part of your project."
+        ],
+        [
+          "// Format: \"Kya socha | Kya chuna | Kya chhoda | Kyu\"",
+          "// Format: \"What I thought | What I chose | What I left out | Why\""
+        ],
+        [
+          "// Sabse important file: decisions.md",
+          "// The most important file: decisions.md"
+        ],
+        [
+          "mini-react.js     <- LAYER 1 + 2 (Stage A mein sirf yahi)",
+          "mini-react.js     <- LAYER 1 + 2 (only this in Stage A)"
+        ],
+        [
+          "App.js            <- tumhara demo app, library ka user",
+          "App.js            <- your demo app, the library's user"
+        ],
+        [
+          "decisions.md      <- HAR design decision yahan likho",
+          "decisions.md      <- write EVERY design decision here"
+        ],
+        [
+          "reconciler.js     <- LAYER 3 (Stage B mein banega)",
+          "reconciler.js     <- LAYER 3 (will be built in Stage B)"
+        ],
+        [
+          "scheduler.js      <- LAYER 4 (Stage C mein banega)",
+          "scheduler.js      <- LAYER 4 (will be built in Stage C)"
+        ],
+        [
+          "index.html          <- ek hi page, koi build nahi",
+          "index.html          <- a single page, no build"
+        ],
+        [
+          "hooks.js          <- Stage B mein banega",
+          "hooks.js          <- will be built in Stage B"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "beech mein browser ko saans do",
+          "let the browser breathe in between"
+        ],
+        [
+          "bade tree pe page atakta hai",
+          "on a big tree the page freezes"
+        ],
+        [
+          "kaam ko tukdon mein todo",
+          "break the work into pieces"
+        ],
+        [
+          "har update pe sab dobara",
+          "redo everything on every update"
+        ],
+        [
+          "UI ko object banao",
+          "Turn the UI into an object"
+        ],
+        [
+          "object se asli DOM",
+          "real DOM from the object"
+        ],
+        [
+          "sirf zaroori DOM chhuo",
+          "touch only the necessary DOM"
+        ],
+        [
+          "DEEWAR (Ph 10)",
+          "THE WALL (Ph 10)"
+        ],
+        [
+          "DEEWAR (Ph 5)",
+          "THE WALL (Ph 5)"
+        ]
+      ]
+    },
+    "l2_0": {
+      "name": "Element object — only three things",
+      "desc": "type, props, children. That's it. And children live inside props.",
+      "what": "<p><b>Virtual DOM element</b> is a plain object that says \"this thing should be here\". It is not the actual DOM node — it is just a <b>note</b>.</p>\n<p><b>Definition:</b> A virtual DOM element is a lightweight plain-object description of a piece of UI. It is a description, not a thing.</p>\n<div class=\"analogy\">Analogy: architect's blueprint vs actual house. Making a blueprint costs 10 rupees, building a house costs 1,000,000. So you can make 20 blueprints and discard them — no problem. Don't build the house 20 times. React does exactly this: blueprint is cheap, house is expensive.</div>\n<p>Shape will be: <code>{ type, props }</code> where <code>props.children</code> is an array. Keeping children inside props is a deliberate decision — it gives the component children as a regular prop.</p>",
+      "why": "<p>This object is the thing we will <b>compare</b> in Stage B and process in <b>chunks</b> in Stage C. Keeping its shape simple and uniform later saves thousands of lines of complexity.</p>\n<p><b>How to do it:</b></p><p><code>createElement(type, props, ...children)</code>. With the rest parameter (<code>...children</code>) you can provide as many children as you want. <code>props</code> can be null — in that case create an empty object.</p>\n<p>And a small but important decision: if a child is a <b>string or number</b>, also turn it into an element whose type is <code>\"TEXT_ELEMENT\"</code>. This makes every child's shape identical.</p>",
+      "gotchas": [
+        "children.flat() is necessary. When you pass an array via items.map(...) it becomes an array-inside-array, and flat() flattens it.",
+        "typeof null === \"object\" (a legacy JavaScript quirk). Therefore you need a separate check that child !== null.",
+        "props becomes null when you write createElement(\"h1\", null, ...). {...null} yields an empty object — this works, but write it consciously."
+      ],
+      "visualCap": "Nested createElement calls automatically build a tree — because the inner calls run first and their results become the children of the outer call.",
+      "svgSwap": [
+        [
+          "· \"Hi\" bhi ek element ban gaya (TEXT_ELEMENT)",
+          "· \"Hi\" became an element too (TEXT_ELEMENT)"
+        ],
+        [
+          "· har node ka shape bilkul same hai",
+          "· every node has exactly the same shape"
+        ],
+        [
+          "· DOM ko abhi tak chhua bhi nahi",
+          "· the DOM hasn't been touched yet"
+        ],
+        [
+          "// andar wale PEHLE chalte hain",
+          "// the inner ones run FIRST"
+        ],
+        [
+          "YE OBJECT BANTA HAI",
+          "THIS OBJECT IS BUILT"
+        ],
+        [
+          "TUM YE LIKHTE HO",
+          "YOU WRITE THIS"
+        ],
+        [
+          "DHYAAN DO",
+          "PAY ATTENTION"
+        ]
+      ],
+      "codeSwap": [
+        [
+          "\"seedha text bhi chalega\"",
+          "\"plain text works too\""
+        ]
+      ]
+    },
+    "l2_1": {
+      "name": "TEXT_ELEMENT — turning text into an element",
+      "desc": "A small decision that saves four \"if\" statements later.",
+      "what": "<p>The simplest approach is: leave a string in children as-as, and during render check \"if it is a string, create a text node\".</p>\n<p>We won't do that. We will also turn a string into an <b>element object</b> with type <code>\"TEXT_ELEMENT\"</code>. Now render, reconcile, commit — all receive the same shape.</p>",
+      "why": "<p>This is called a <b>uniform representation</b>, and it is the biggest practical lesson in library design: <b>by creating an extra object you avoid special-case branches in 10 places.</b> Every special case is a spot where a bug can hide. React's actual code handles text slightly differently (for performance), but we will choose simplicity — and document this trade-off in decisions.md.</p>\n<p><b>How to do it:</b></p><p>The name <code>nodeValue</code> is chosen deliberately — it is also the name of the DOM text node’s property. This lets us copy props directly in render without any mapping.</p><p>Also always keep <code>children: []</code>, even if text never has children. Because <code>node.props.children.map(...)</code> will run everywhere without a check.</p>",
+      "gotchas": [
+        "Do not turn false, null, or undefined into TEXT_ELEMENT — React does not render them. {cond && <div/>} should not print \"false\" on the screen. Filter them out.",
+        "Do not filter out 0! In {count && <div/>} when count is 0, React prints \"0\". When doing falsy checks, preserve 0 and \"\"."
+      ],
+      "codeSwap": [
+        [
+          "// Teen if. Teen jagah bug. Aur chauthi jagah tum bhool jaoge.",
+          "// Three ifs. A bug in three places. And you'll forget a fourth."
+        ],
+        [
+          "// TEXT_ELEMENT ke saath -- ek hi if, sirf DOM banate waqt:",
+          "// With TEXT_ELEMENT -- a single if, only when creating the DOM:"
+        ],
+        [
+          "// Baaki poora code ek hi raasta chalta hai.",
+          "// The rest of the code takes a single path."
+        ],
+        [
+          "// BINA TEXT_ELEMENT ke -- har jagah ek if:",
+          "// WITHOUT TEXT_ELEMENT -- an if everywhere:"
+        ]
+      ]
+    },
+    "l2_2": {
+      "name": "Why this function does not touch the DOM",
+      "desc": "Purity and separation — layer 1 should not even know about the browser.",
+      "what": "<p><code>createElement</code> is a <b>pure function</b>: given the same input it returns the same output, and it changes nothing in the world. No DOM, no global variables.</p>\n<p><b>Definition:</b> A pure function returns the same output for the same input and produces no side effects.</p>",
+      "why": "<p>It has three major benefits, and all are used in the real world:</p>\n<p><b>1. Testing becomes trivial</b> — no browser needed, just compare objects.<br>\n<b>2. It can run on the server</b> — server-side rendering is possible because of this. There is no DOM on the server.<br>\n<b>3. React Native becomes possible</b> — same createElement, different renderer.</p>\n<p>The small reward for maintaining purity is that your library can run <b>anywhere</b>.</p>\n<p><b>How to do it:</b></p><p>The way to enforce this: in the element part of <code>src/mini-react.js</code> never write <code>document</code> even once. If you feel the need to, that code belongs to the wrong layer.</p>\n<p>This is a good self-check. At the end of each phase grep: <code>grep -n \"document\\.\" src/mini-react.js</code>. Layer 1 should return zero results.</p>",
+      "gotchas": [
+        "Some people extract the key inside createElement and remove it from props. Don't do that yet — keys will arrive in Phase 7, then decide.",
+        "Do not mutate the element object later (e.g., el.props.x = 5). Elements from the previous tree may be the same object, and mutating breaks comparison."
+      ],
+      "codeSwap": [
+        [
+          "// Agar kuch mila, to tumne layer 1 aur layer 2 mila diye hain.",
+          "// If you find anything, you've mixed layer 1 and layer 2."
+        ],
+        [
+          "// Layer 1 ka test -- browser bilkul nahi chahiye:",
+          "// Layer 1's test -- no browser needed at all:"
+        ],
+        [
+          "// Aur ye chalao -- zero output aana chahiye:",
+          "// And run this -- the output should be zero:"
+        ],
+        [
+          " false -- alag object",
+          " false -- a different object"
+        ]
+      ]
+    },
+    "l3_0": {
+      "name": "render() — building the DOM with recursion",
+      "desc": "Think only about what to do for a node, and call yourself for its children.",
+      "what": "<p><code>render(element, container)</code> performs three steps: create a DOM node, apply props, then call itself for each child and insert the result inside.</p>\n<p>This differs from the Phase 0 <code>toDom</code> in only one way: the type can now be <code>\"TEXT_ELEMENT\"</code>, which requires <code>createTextNode</code>.</p>",
+      "why": "<p>This function is the engine for the entire Stage A. And — note this now — <b>this recursion will break in Stage C</b>. Understand it well today so that when we replace it with a linked-list traversal you know what we are changing.</p>\n<p><b>How to do it:</b></p><p>Order matters: create the DOM node first, then apply props, then children. If you handle children first there is no parent to insert them into.</p>\n<p>Design question: should we <code>appendChild</code> to the container or replace it? For now append — in Stage A we will clear the container each time and insert new content, which will become the wall for Phase 5.</p>",
+      "gotchas": [
+        "Call appendChild at the very end. Doing it earlier can force the browser to lay out each child separately (as long as the tree is not attached, no layout occurs — this is a free optimization).",
+        "If you run render() twice you will see two copies, because it appends instead of replaces. This is the familiar behavior of Stage A."
+      ],
+      "codeSwap": [
+        [
+          "// 4. parent mein daalo",
+          "// 4. put it in the parent"
+        ],
+        [
+          " 1. DOM node banao",
+          " 1. build the DOM node"
+        ],
+        [
+          " 2. props lagao",
+          " 2. apply the props"
+        ],
+        [
+          " Chalao:",
+          " Run it:"
+        ]
+      ]
+    },
+    "l3_1": {
+      "name": "Applying props — the real complexity is here",
+      "desc": "Attribute, property, event, style, children — five different kinds of props.",
+      "what": "<p>\"Apply props\" sounds like one line, but props come in five types and each requires different handling:</p>\n<p><b>1. children</b> — this is not a prop, skip it.<br>\n<b>2. Events</b> (<code>onClick</code>) — <code>addEventListener(\"click\", fn)</code>.<br>\n<b>3. style object</b> — <code>{color:\"red\"}</code> should become <code>dom.style.color = \"red\"</code>.<br>\n<b>4. Live properties</b> (<code>value</code>, <code>checked</code>) — <code>dom.value = x</code>, not setAttribute.<br>\n<b>5. Everything else</b> (<code>className</code>, <code>id</code>) — property assignment.</p>",
+      "why": "<p>In React’s source there is a whole file for this (<code>DOMPropertyOperations</code>), and the reason is that the mapping between HTML/DOM is not clear. Understanding that “a large part of React’s complexity is handling the browser’s legacy” is a real architectural insight — <b>the library’s complexity often mirrors the world’s complexity</b>.</p>\n<p><b>How to do it:</b></p><p>Write a single function <code>updateDom(dom, prevProps, nextProps)</code> that <b>still works now and in Phase 6</b>. In Stage A pass an empty object for <code>prevProps</code>. In Stage B the same function will be used again with the previous props — without changing a line.</p>\n<p>This is a <b>forward-compatible design</b>: today’s simple case becomes a special case of tomorrow’s complex case. Finding and handling such places is good library design.</p>",
+      "gotchas": [
+        "removeEventListener requires exactly the same function reference. Therefore keep the old handler in prevProps; otherwise listeners will silently accumulate and a single click will trigger the handler five times.",
+        "Calling onClick.toLowerCase().slice(2) gives \"click\" — correct. But onDoubleClick yields \"doubleclick\", which is wrong (the real event is \"dblclick\"). You need to keep a small mapping table.",
+        "style can also be provided as a string. Decide and document it in decisions.md — we will only allow objects."
+      ],
+      "visualCap": "A prop’s journey. Five paths, each using a different DOM API. This is the file where the most browser-specific code lives in real React.",
+      "codeSwap": [
+        [
+          "// 2. gayab ho chuke props hatao",
+          "// 2. remove props that are gone"
+        ],
+        [
+          " 1. purane/badle hue event listeners hatao",
+          " 1. remove the old/changed event listeners"
+        ],
+        [
+          " 3. naye ya badle hue props lagao",
+          " 3. apply the new or changed props"
+        ],
+        [
+          " 4. naye event listeners lagao",
+          " 4. attach the new event listeners"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "updateDom(dom, prevProps, nextProps) — Stage A mein prev khaali hai, Stage B mein wahi function bina badle chalega.",
+          "updateDom(dom, prevProps, nextProps) — in Stage A prev is empty, in Stage B this same function runs unchanged."
+        ],
+        [
+          "setAttribute(\"value\", x) input ki live value nahi badalta. Typing reset ho jaati hai. Hamesha dom.value = x karo.",
+          "setAttribute(\"value\", x) doesn't change the input's live value. Typing gets reset. Always do dom.value = x."
+        ],
+        [
+          "ek prop: [key, value]",
+          "one prop: [key, value]"
+        ],
+        [
+          "⚠ Sabse aam bug",
+          "⚠ The most common bug"
+        ],
+        [
+          "\"on\" se shuru",
+          "starts with \"on\""
+        ],
+        [
+          "skip karo",
+          "skip"
+        ],
+        [
+          "baaki sab",
+          "everything else"
+        ]
+      ]
+    },
+    "l3_2": {
+      "name": "First working app — and its limits",
+      "desc": "It works. But on every update the whole tree is rebuilt.",
+      "what": "<p>Now you have Stage A complete. Write an app, run it, be happy — <b>and then break it</b>.</p>\n<p>In Stage A an update means: empty the container, render a completely new tree. This is called a <b>full re-render</b> or <b>blow away and rebuild</b>.</p>",
+      "why": "<p>Creating this “stupid” version is necessary, not something to skip. Because every later design decision (reconciler, keys, fiber) will only make sense after you have <b>seen the shortcomings yourself</b>. In interviews the difference shows up between people who say “React is fast” and those who say “I measured focus loss in Stage A”.</p>\n<p><b>How to do it:</b></p><p>Create a small <code>rerender()</code> that clears the container with <code>root.innerHTML = \"\"</code> and renders again. For state, keep a simple module-level variable for now — the real <code>useState</code> arrives in Phase 8.</p>\n<p>And definitely: <b>measure numbers</b>. Use <code>performance.now()</code> to record render time for 100, 1,000, 5,000 nodes. These numbers will be useful repeatedly in Phases 5, 10, and 14.</p>",
+      "gotchas": [
+        "<code>innerHTML = \"\"</code> also removes event listeners — that’s good (no memory leak), but it means all listeners are re-attached on every render.",
+        "Don’t think you can fix focus loss with \"just CSS\". It’s an architectural problem, not cosmetic. The only fix is to keep the DOM node alive."
+      ],
+      "visualCap": "A prop’s journey. Five paths, each using a different DOM API. This is the file where the most browser-specific code lives in real React.",
+      "codeSwap": [
+        [
+          "// Ye bug nahi hai -- ye Stage A ke design ka seedha nateeja hai.",
+          "// This isn't a bug -- it's a direct result of Stage A's design."
+        ],
+        [
+          "// input mein type karo. Har akshar pe focus udd jaayega.",
+          "// type in the input. Focus will jump away on every letter."
+        ],
+        [
+          "// <-- Stage A ka poora dukh isi line mein hai",
+          "// <-- all of Stage A's pain is in this one line"
+        ],
+        [
+          "// app/App.js -- Stage A ka pehla asli app",
+          "// app/App.js -- the first real app of Stage A"
+        ],
+        [
+          "// AB TRY KARO:",
+          "// NOW TRY:"
+        ]
+      ]
+    },
+    "l4_0": {
+      "name": "What JSX actually is",
+      "desc": "Just syntax sugar. The compiler turns it into createElement calls. That's all.",
+      "what": "<p>JSX is not part of JavaScript. The browser does not understand JSX at all. A <b>compiler</b> (Babel, esbuild, swc) reads it and converts it into normal function calls — <b>before your code runs</b>.</p>\n<p><b>Definition:</b> JSX is a syntax extension that a compiler transforms into plain function calls before the code ever runs.</p>\n<div class=\"analogy\">Analogy: JSX works like a translator that converts your Hindi into English for the boss to hear. The boss (browser) has never heard Hindi. It only knows English.</div>",
+      "why": "<p>Understanding this is the biggest “aha” moment of the whole project. When you look at JSX in its compiled form, every “magic” of React disappears. <code>&lt;App /&gt;</code> means <code>createElement(App)</code> — and App is just a function.</p>\n<p><b>How to do it:</b></p><p>You need to tell the compiler which function to use. The old way: add a <code>/** @jsx h */</code> pragma at the top of the file. The new way: set <code>jsxFactory: \"h\"</code> in the build config.</p>\n<p>Remember two rules: <b>lower-case tags become strings</b> (<code>&lt;div&gt;</code> → <code>\"div\"</code>) and <b>upper-case tags become variables</b> (<code>&lt;App&gt;</code> → <code>App</code>). Therefore a component’s name must start with a capital letter — this rule belongs to the compiler, not the library.</p>",
+      "gotchas": [
+        "If a component’s name starts with a lower-case letter, the compiler will turn it into a string and the browser will create an unknown <mycomponent> tag. No error — just nothing will appear.",
+        "In JSX you write className instead of class, and htmlFor instead of for — because class and for are reserved words in JavaScript.",
+        "JSX must return a single root element. That’s why the Fragment (<>...</>) concept exists. For now we can get by with a wrapper div."
+      ],
+      "visualCap": "Exactly the same thing, two forms. Your code becomes the right-hand side after compilation — and the browser only sees the right-hand side.",
+      "codeSwap": [
+        [
+          "// Dekha? {items.map(...)} ek ARRAY deta hai, ek child ki jagah.",
+          "// See? {items.map(...)} gives an ARRAY, in place of a single child."
+        ],
+        [
+          "// Isiliye Phase 2 mein humne children.flat() lagaya tha.",
+          "// That's why we used children.flat() in Phase 2."
+        ],
+        [
+          "// Ye chaaron JSX lines, aur unka compiled roop:",
+          "// These four JSX lines, and their compiled form:"
+        ],
+        [
+          "// Aur ye wala sabse zaroori hai:",
+          "// And this one is the most important:"
+        ],
+        [
+          " Khud dekho:",
+          " See for yourself:"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "isliye component capital se shuru hona chahiye",
+          "that's why a component must start with a capital letter"
+        ],
+        [
+          "BROWSER YE DEKHTA HAI (plain JS)",
+          "WHAT THE BROWSER SEES (plain JS)"
+        ],
+        [
+          "HTML tag ki tarah treat hota hai",
+          "Treated like an HTML tag"
+        ],
+        [
+          "TUM YE LIKHTE HO (JSX)",
+          "YOU WRITE THIS (JSX)"
+        ],
+        [
+          "RULE 1 — chhota akshar = string",
+          "RULE 1 — lowercase = string"
+        ],
+        [
+          "RULE 2 — bada akshar = variable",
+          "RULE 2 — uppercase = variable"
+        ]
+      ]
+    },
+    "l4_1": {
+      "name": "Without tooling — h(), tagged templates, htm",
+      "desc": "You won’t get JSX syntax but you’ll get all the features. And zero build time.",
+      "what": "<p>There are three ways without JSX:</p>\n<p><b>1. Write <code>h()</code> directly.</b> Zero setup. It looks a bit bracket-heavy but it’s completely clear what’s happening.<br>\n<b>2. Create small helpers</b> — <code>const div = (p, ...c) => h(\"div\", p, ...c)</code>. Now you can write <code>div({}, h1({}, \"hi\"))</code>.<br>\n<b>3. Tagged template literals</b> — the <code>htm</code> library (3 KB) lets you write <code>html<code>&lt;div&gt;&lt;/div&gt;</code></code> in the browser without a build step.</p>",
+      "why": "<p>It’s important to know that <b>tooling is optional</b>. Many people think React requires webpack/Vite “by default”. It does not. Tooling is a <b>convenience</b> that has its own cost — and you’ll only decide when that cost is justified after you have stood on both sides yourself.</p>\n<p><b>How to do it:</b></p><p>The biggest advantage of zero-tooling: <b>the file you write is the file the browser runs</b>. Debugging in DevTools is trivial, no source maps, no “where did this line come from”. It’s excellent for learning.</p>\n<p>The biggest drawback: each import triggers a separate network request, and a 50-file app will feel slow in development. And you won’t get the comfort of JSX.</p>",
+      "gotchas": [
+        "htm parses at runtime, meaning each render incurs a small cost (it caches, but the cost isn’t zero). JSX happens at compile time — zero runtime cost.",
+        "Helper tags (div, h1) take up many names in the global namespace. Keep them in an object and destructure.",
+        "Without a bundler, the .js extension is mandatory in imports. If you copy code that relies on a bundler, the import will break."
+      ],
+      "visualCap": "Exactly the same thing, two forms. Your code becomes the right-hand side after compilation — and the browser only sees the right-hand side.",
+      "codeSwap": [
+        [
+          "// JSX jaisa dikhta hai, par ye asli JavaScript hai. Browser khud parse karta hai.",
+          "// JSX looks like it, but this is real JavaScript. The browser parses it itself."
+        ],
+        [
+          "// TARIKA 3 -- htm, browser mein seedha (koi build nahi)",
+          "// WAY 3 -- htm, straight in the browser (no build)"
+        ],
+        [
+          "// TARIKA 2 -- chhote helpers (10 line ka file)",
+          "// WAY 2 -- small helpers (a 10-line file)"
+        ],
+        [
+          "// Kaafi padhne laayak hai, aur zero build.",
+          "// Quite readable, and zero build."
+        ],
+        [
+          "// TARIKA 1 -- seedha h()",
+          "// WAY 1 -- call h() directly"
+        ]
+      ]
+    },
+    "l7_1": {
+      "name": "Keyed reconciliation — create a map and match",
+      "desc": "Create a key→element map of the old children, then apply it to the DOM in the new order.",
+      "what": "<p>The algorithm is straightforward, three steps:</p>\n<p><b>1.</b> Create a map of the old children: <code>key → oldChild</code>.<br>\n<b>2.</b> Loop over the new children. For each, find the old one from the map. If found, UPDATE (and reuse the DOM node); if not found, ADD.<br>\n<b>3.</b> Remove any old children that remain (still in the map).</p>\n<p>And a fourth thing: <b>fix the order</b>. Reused nodes are at their old positions — they need to be moved to the correct place using <code>insertBefore</code>.</p>",
+      "why": "<p>This is <code>O(n)</code> — one map and one loop. Without keys, correct matching would be <code>O(n²)</code> (compare each new with each old). A Map data structure reduces the algorithm's complexity by one class — this is a classic practical use of CS.</p>\n<p><b>How to do it:</b></p><p>Cheap way to fix the order: iterate the new children from front to back and place each node with <code>parent.insertBefore(node, nextSibling)</code> at the right spot. If the node is already in the correct place, skip <code>insertBefore</code> (otherwise it's a wasted DOM operation).</p>\n<p>React's actual algorithm is a bit smarter (it tracks a \"last placed index\" to minimize moves), but the idea is exactly the same. We'll write a simple version and note in <code>decisions.md</code> what React adds.</p>",
+      "gotchas": [
+        "Don't call insertBefore on every node indiscriminately. It removes the node and re-inserts it, which can disrupt focus and animations. First check whether the node is already in the correct place.",
+        "If you forget to do oldByKey.delete(key), step 3 will delete the node you just reused.",
+        "Duplicate keys will leave only one entry in the map and silently discard the rest. Ensure a duplicate key warning is emitted in development mode."
+      ],
+      "codeSwap": [
+        [
+          "// Agar kisi bhi bachche ke paas key nahi hai -> purana index-wala tarika",
+          "// If no child has a key -> the old index-based way"
+        ],
+        [
+          "// 4. order theek karo -- peeche se aage",
+          "// 4. fix the order -- from back to front"
+        ],
+        [
+          "// 1. purane bachon ka map",
+          "// 1. map of the old children"
+        ],
+        [
+          " 2. naye bachon pe loop -- match ya create",
+          " 2. loop over the new children -- match or create"
+        ],
+        [
+          " 3. jo bach gaye purane -- hata do",
+          " 3. remove the old ones that are left over"
+        ],
+        [
+          " ise bacha liya",
+          " saved it"
+        ]
+      ]
+    },
+    "l7_2": {
+      "name": "key is not a prop",
+      "desc": "It is for the reconciler, not for the component. This small design decision is significant.",
+      "what": "<p>In React, the <code>key</code> never reaches the component. <code>props.key</code> is undefined. It is removed from the props at <code>createElement</code> time and stored separately on the element.</p>\n<p>The same applies to <code>ref</code>. Both are \"meta props\" — for the library, not for the component.</p>",
+      "why": "<p>Why? Because <code>key</code> is an <b>identity hint</b>, not data. If it were a prop, changing it would count as a \"props change\" and trigger a re-render — whereas the purpose of a key is to indicate whether <b>this is the same element or a new one</b>. These are two completely different levels.</p>\n<p>This is a good general lesson: <b>keep the library's own metadata separate from user data</b>, otherwise they will blend together and become impossible to separate later.</p>\n<p><b>How to do it:</b></p><p>We are currently using <code>props.key</code> (simple), but we should fix this: extract the key from props in <code>createElement</code> and store it as <code>element.key</code>.</p>\n<p>This is a small refactor, but do it — because it is your first chance to change your own decision, and writing in decisions.md \"Revised D6 because...\" is a real engineering journal.</p>",
+      "gotchas": [
+        "After the refactor, leftover <code>props.key</code> may remain in old code. Grep and fix all usages, otherwise keys will silently stop working.",
+        "Both numbers and strings are allowed as keys, but in a map 1 and \"1\" are different keys. Stay consistent — either always convert the key to a string."
+      ],
+      "codeSwap": [
+        [
+          "// Ab reconciler mein el.props.key ki jagah el.key use karo.",
+          "// Now use el.key instead of el.props.key in the reconciler."
+        ],
+        [
+          "// undefined  <- component ko dikhti hi nahi",
+          "// undefined  <- the component never sees it"
+        ],
+        [
+          "// createElement ko update karo:",
+          "// update createElement:"
+        ],
+        [
+          "// Aur ek dev warning add karo:",
+          "// And add a dev warning:"
+        ],
+        [
+          "// <-- alag, props se bahar",
+          "// <-- separate, outside props"
+        ]
+      ]
+    },
+    "l8_0": {
+      "name": "Function components — type can also be a function now",
+      "desc": "If element.type is a function, call it and render its result.",
+      "what": "<p>Until now, <code>element.type</code> was always a string (e.g., <code>\"div\"</code>). Now it can also be a function.</p>\n<p><code>createElement(Counter, {start: 5})</code> means: \"Insert the component named Counter here, and give it props <code>{start: 5}</code>.\"</p>\n<p>The reconciler needs to understand a new rule: if the type is a function, it has no DOM node of its own. Call it, and render the element it returns. A component is a \"wrapper\" that has no own DOM footprint.</p>",
+      "why": "<p>This is a big deal: your element tree now contains <b>two kinds of nodes</b> — host nodes (which produce DOM) and composite nodes (which only produce other elements). Every renderer has this two-type distinction, and it becomes even more important in Stage C.</p>\n<p><b>How to do it:</b></p><p>At the top of <code>reconcile</code>, add a check: <code>if (typeof newEl.type === \"function\")</code>.</p>\n<p>In that case: set up the hooks context, call <code>newEl.type(newEl.props)</code>, and pass the returned element to <code>reconcile</code> — <b>with the same parent and the same index</b>. Because the component has no DOM of its own, it does not occupy a spot in the parent; its child does.</p>",
+      "gotchas": [
+        "Do not instantiate the component with new. It is a plain function call — new Counter() is wrong (that was the old way for class components).",
+        "If you forget to store oldEl.rendered, the component's previous output will be lost on each update and the entire subtree will be rebuilt.",
+        "Start the component name with a capital letter — JSX enforces this rule, and even without JSX you should follow the convention."
+      ],
+      "codeSwap": [
+        [
+          "// Component ek \"pass-through\" hai -- uska apna koi DOM nahi.",
+          "// The component is a \"pass-through\" -- it has no DOM of its own."
+        ],
+        [
+          "// Notice: parentDom aur index wahi ke wahi.",
+          "// Notice: parentDom and index stay exactly the same."
+        ],
+        [
+          "// ƒ Counter  <- function hai, string nahi",
+          "// ƒ Counter  <- it's a function, not a string"
+        ],
+        [
+          "// yaad rakho (agle diff ke liye)",
+          "// remember (for the next diff)"
+        ],
+        [
+          "// reconcile mein sabse upar:",
+          "// at the top of reconcile:"
+        ],
+        [
+          "// component call karo",
+          "// call the component"
+        ]
+      ]
+    },
+    "l8_1": {
+      "name": "useState — the magic of array + index",
+      "desc": "Each component's hooks live in an array, and a pointer advances forward. That's it.",
+      "what": "<p>The question is: the component function runs again on every render, so where does the state persist?</p>\n<p>Answer: <b>outside the component</b>. Each component instance has an associated array — <code>hooks = []</code>. And a pointer <code>hookIndex</code> that increments on each <code>useState</code> call.</p>\n<p>The first <code>useState</code> → slot 0. The second → slot 1. The third → slot 2. On the next render the pointer starts again at 0, and <b>in the same order</b> the same slots are used.</p>",
+      "why": "<p><b>Now you have the answer to the \"rules of hooks\".</b> Hooks cannot be placed inside <code>if</code> statements or loops because the entire system relies on <b>call order</b>. If one render runs three hooks and the next runs two, the state from slot 1 will end up in slot 0 — and everything will silently break.</p>\n<p>This rule is not an arbitrary React quirk; it is a direct consequence of the design. The design was chosen because the alternative (naming every piece of state) would make the API heavy.</p>\n<p><b>How to do it:</b></p><p><code>setState</code> is a closure that remembers its <code>index</code> and its <code>fiber</code>. It does three things: write the new value into the slot, and schedule a re-render.</p>\n<p>Another essential point: <code>setState(value)</code> should work alongside <code>setState(prev => prev + 1)</code> — because when two updates arrive together, an update based on the previous value gives the correct result.</p>",
+      "gotchas": [
+        "If you check with <code>hooks[i] === undefined</code>, <code>useState(undefined)</code> will never initialize. Use the <code>in</code> operator: <code>!(i in instance.hooks)</code>.",
+        "An <code>Object.is</code> check is necessary — without it, <code>setState(sameValue)</code> would still trigger a re-render, making infinite loops easy.",
+        "If you forget to carry the instance from oldEl, a new hooks array will be created on every render and the state will reset. This is the most common Phase 8 bug."
+      ],
+      "visualCap": "Hooks array + pointer. The pointer starts at 0 on each render and slots are assigned by call order — changing the order breaks everything.",
+      "codeSwap": [
+        [
+          "// Aur reconcile ke function-component wale hisse mein:",
+          "// And in the function-component part of reconcile:"
+        ],
+        [
+          "// abhi kaunsa component render ho raha hai",
+          "// which component is rendering right now"
+        ],
+        [
+          "// hooks.js -- poora useState 20 line mein",
+          "// hooks.js -- the whole useState in 20 lines"
+        ],
+        [
+          "// kuch nahi badla -> re-render mat karo",
+          "// nothing changed -> don't re-render"
+        ],
+        [
+          "// library ko batao",
+          "// tell the library"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "Number wali state string ban jaayegi. Koi error nahi — bas chup-chaap galat. Rule library ki manmani nahi, design ka nateeja hai.",
+          "A numeric state would silently become a string. No error — just quietly wrong. The rule isn't the library's whim, it's a result of the design."
+        ],
+        [
+          "useState ko naam ki zarurat nahi — position hi naam hai. Isliye API itna halka hai: bas useState(0).",
+          "useState doesn't need a name — the position is the name. That's why the API is so light: just useState(0)."
+        ],
+        [
+          "if (x) { useState(0); }   useState(\"hi\");   // x false hua to \"hi\" ko slot 0 mil jaayega",
+          "if (x) { useState(0); }   useState(\"hi\");   // if x becomes false, \"hi\" gets slot 0"
+        ],
+        [
+          "RENDER #2 — pointer phir 0 se. Same order = same slots. Sab theek. ✓",
+          "RENDER #2 — pointer starts from 0 again. Same order = same slots. All good. ✓"
+        ],
+        [
+          "Keemat: order badla to sab kuch ulta ho jaayega.",
+          "Cost: if the order changes, everything reverses."
+        ],
+        [
+          "⚠ Isliye hooks if ke andar nahi",
+          "⚠ That's why hooks don't go inside an if"
+        ],
+        [
+          "RENDER #1 — pointer 0 se shuru",
+          "RENDER #1 — pointer starts from 0"
+        ],
+        [
+          "fiber.hooks — ek array",
+          "fiber.hooks — an array"
+        ],
+        [
+          "← hookIndex 0, phir 1",
+          "← hookIndex 0, then 1"
+        ],
+        [
+          "← 1, phir 2",
+          "← 1, then 2"
+        ],
+        [
+          "← 2, phir 3",
+          "← 2, then 3"
+        ]
+      ]
+    },
+    "l8_2": {
+      "name": "setState re-render — and batching",
+      "desc": "Don't render immediately. Do it once in a microtask.",
+      "what": "<p>The simplest <code>scheduleUpdate</code> does this: run <code>update(App())</code> immediately. That works, but there's a problem.</p>\n<p>If you call <code>setState</code> three times in a click handler, three full re-renders will happen. That's wasteful.</p>",
+      "why": "<p><b>Batching</b> means: collect all setState calls in the same \"turn\" and perform a single re-render. React does this by default (everywhere since React 18). The benefit is straightforward — three times less work. It’s also a very common architectural pattern: <b>don’t do work immediately, put it in a queue and execute it together later.</b></p>\n<p><b>How to do it:</b></p><p>The simplest batching: keep a flag and use <code>queueMicrotask</code>.</p>\n<p><code>queueMicrotask</code> means \"run right after the current synchronous code finishes, but before the browser paints\". This is better than <code>setTimeout(fn, 0)</code> because that waits until the next frame.</p>\n<p>In Stage C we will improve this — the scheduler will also consider priority.</p>",
+      "gotchas": [
+        "If you read a state variable immediately after setState, you’ll get the old value. It’s \"frozen\" for the render. This isn’t a bug, it’s by design — the solution is a functional update.",
+        "If an error occurs inside queueMicrotask, it can silently disappear. Wrap it in try/catch and console.error.",
+        "With batching a new issue appears: if setState runs during a re-render, it can create an infinite loop. Add a depth counter and throw an error after 50 (React does the same)."
+      ],
+      "codeSwap": [
+        [
+          "// Pehle wale mein dono baar \"a\" wahi purani value hai (closure!).",
+          "// In the first one, \"a\" is the same old value both times (closure!)."
+        ],
+        [
+          "// Functional update har baar taazi value se kaam karta hai.",
+          "// A functional update always works from the fresh value."
+        ],
+        [
+          "// Ek counter laga do render() ke andar aur khud gino.",
+          "// Put a counter inside render() and count it yourself."
+        ],
+        [
+          "// Bina batching: 3 re-renders. Batching ke saath: 1.",
+          "// Without batching: 3 re-renders. With batching: 1."
+        ],
+        [
+          "// AUR YE BUG DEKHO (bahut zaroori hai):",
+          "// AND LOOK AT THIS BUG (very important):"
+        ],
+        [
+          "// pehle se schedule hai",
+          "// already scheduled"
+        ],
+        [
+          "// a: 0 -> 1  (2 nahi!)",
+          "// a: 0 -> 1  (not 2!)"
+        ],
+        [
+          "// ek hi re-render",
+          "// just one re-render"
+        ],
+        [
+          "// Test karo:",
+          "// Test it:"
+        ]
+      ]
+    },
+    "l9_0": {
+      "name": "Why effect runs after render",
+      "desc": "During render the DOM is incomplete. Effect needs the full DOM.",
+      "what": "<p><b>Definition:</b> A side effect is any work that reaches outside the component — network requests, timers, subscriptions, direct DOM measurement, logging.</p>\n<p><code>useEffect(fn, deps)</code> says: \"Don't run <code>fn</code> now. Run it after the full render is committed and the DOM is ready.\"</p>",
+      "why": "<p>Two reasons:</p>\n<p><b>1. The DOM must be ready.</b> If you need to measure an element’s height or set focus, that element isn’t in the DOM during render.<br>\n<b>2. The render should stay pure.</b> If you fetch during render it will run on every render, and in Stage C — where a render can run <b>twice</b> or be cancelled in between — it will cause disaster.</p>\n<p>This second reason is deeper. React’s insistence on \"keep render pure\" exists so that it can <b>pause, discard, and replay</b> a render. That is the whole foundation of Phase 11.</p>\n<p><b>How to do it:</b></p><p>The implementation is straightforward: <code>useEffect</code> itself does not run the effect — it puts it into a <b>queue</b>. After reconciliation finishes, we run the queue.</p>\n<p>This \"don’t run now, enqueue, run later\" pattern appears for the third time in this project (batching, effects, and Stage C’s commit phase). Recognize this pattern — you’ll find it in every large system.</p>",
+      "gotchas": [
+        "Don’t run effects inside reconciliation. The DOM is incomplete at that time and if the effect calls setState you’ll get into recursion.",
+        "An effect can call setState inside flushEffects, which will schedule a new render. That’s fine — but clear the queue first (q = effectQueue; effectQueue = []) otherwise the list will keep changing while you’re looping over it."
+      ],
+      "codeSwap": [
+        [
+          "// Aur update() ke aakhir mein:",
+          "// And at the end of update():"
+        ],
+        [
+          "// purana saaf karo",
+          "// clear the old one"
+        ],
+        [
+          " naya chalao",
+          " run the new one"
+        ]
+      ]
+    },
+    "l9_1": {
+      "name": "Deps array — when to run again",
+      "desc": "Shallow compare. And this is the spot where infinite loops are created.",
+      "what": "<p>The deps array means: \"run the effect again only if one of these values changed.\"</p>\n<p>There are three forms, and all are different:</p>\n<p><code>useEffect(fn)</code> — after <b>every render</b><br>\n<code>useEffect(fn, [])</code> — only <b>once</b> (on mount)<br>\n<code>useEffect(fn, [a, b])</code> — when <code>a</code> or <code>b</code> changes</p>",
+      "why": "<p>The comparison is <b>shallow</b> — using <code>Object.is</code> on each element. The direct consequence: if a dep is an object, array, or function that is <b>new on every render</b>, it will always appear \"changed\" and the effect will run each time.</p>\n<p>If that effect calls setState, you get a new render, a new object, the effect again, setState… <b>infinite loop</b>. This is the most common React bug and now you know why it happens.</p>\n<p><b>How to do it:</b></p><p>Why not deep compare? Because it would have to walk the entire object tree on every render — expensive and unpredictable. Shallow compare is O(deps.length) and always cheap.</p>\n<p>This is a classic trade-off: <b>cheap and predictable, at the cost of requiring the developer to think a bit</b>. React chose this, and <code>useMemo</code>/<code>useCallback</code> are the direct result of that choice — they <b>exist</b> so you can keep references stable.</p>",
+      "gotchas": [
+        "Changing the length of the deps array between renders will break everything — just like hook order. The deps array size must be constant.",
+        "Using a function as a dep has the same problem — arrow functions are new on every render. That’s why useCallback exists.",
+        "Omitting the deps array (useEffect(fn) without an array) isn’t wrong, but it will run on every render. Do it intentionally, not by accident."
+      ],
+      "visualCap": "The full cycle of the most common React bug. The root is: the dep is a new object each render, and shallow compare always reports it as \"changed\".",
+      "codeSwap": [
+        [
+          "// SAHI -- object ko stable banao",
+          "// CORRECT -- make the object stable"
+        ],
+        [
+          "// Ek detector likho (dev mode):",
+          "// Write a detector (dev mode):"
+        ],
+        [
+          "// number, Object.is se stable",
+          "// number, stable via Object.is"
+        ],
+        [
+          " GALAT -- infinite loop",
+          " WRONG -- infinite loop"
+        ],
+        [
+          " SAHI -- primitive dep",
+          " CORRECT -- primitive dep"
+        ],
+        [
+          " hamesha \"badla hua\"",
+          " always \"changed\""
+        ],
+        [
+          "if (effectRuns > 100) console.error(\"Effect 100+ baar chala. Deps check karo.\");",
+          "if (effectRuns > 100) console.error(\"Effect ran 100+ times. Check the deps.\");"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "✓ [limit] do, ya useMemo se object stable rakho",
+          "✓ pass [limit], or keep the object stable with useMemo"
+        ],
+        [
+          "✗ dep ek naya object = hamesha \"badla\"",
+          "✗ a dep that is a new object = always \"changed\""
+        ],
+        [
+          "aur chakra phir shuru",
+          "and the cycle starts again"
+        ],
+        [
+          "chalta hai",
+          "works"
+        ],
+        [
+          "effect chala",
+          "the effect ran"
+        ]
+      ]
+    },
+    "l9_2": {
+      "name": "Cleanup — stop what you started",
+      "desc": "If an effect returns a function, it runs before the next effect and on unmount.",
+      "what": "<p>If an effect \"starts\" something — a timer, event listener, subscription, WebSocket — it must also be stopped. Otherwise you get <b>memory leaks</b> or <b>ghost updates</b> (setState on an unmounted component).</p>\n<p>The <code>useEffect</code> contract: if you return a function, the library will run it in two places — <b>right before the next effect</b>, and <b>when the component unmounts</b>.</p>",
+      "why": "<p>The \"before the next effect\" part is the one most people miss. Imagine: <code>userId</code> changes, the effect runs again. The previous user’s subscription must be stopped first, otherwise two subscriptions will keep running and accumulate.</p>\n<p>This is a classic <b>resource lifecycle</b> problem — anything you acquire must be released. Every system has this: file handles, DB connections, locks. React turned it into a simple contract: \"what you return is how to clean it up.\"</p>\n<p><b>How to do it:</b></p><p>Order matters: <b>run the old cleanup first, then the new effect.</b> Reversing that will cause both run together.</p>\n<p>You also need to handle the unmount case: when the reconciler REMOVE a component, iterate over all its hooks and run each cleanup — and do the same for its child components (recursively).</p>",
+      "gotchas": [
+        "Don’t make the cleanup async. <code>useEffect(async () => {...})</code> is wrong — an async function returns a Promise, not a cleanup function. Create an async function inside and call it.",
+        "Forgetting to run cleanup on unmount is the most hidden bug. Timers keep running and you get \"setState on unmounted component\" warnings. This gradually slows the whole app.",
+        "The cleanup receives the values from the closure at that time, not the latest values. That’s correct — you need to stop the exact resource you opened."
+      ],
+      "codeSwap": [
+        [
+          "// Unmount pe cleanup -- reconciler ke REMOVE case mein:",
+          "// Cleanup on unmount -- in the reconciler's REMOVE case:"
+        ],
+        [
+          "// Cleanup ka classic example",
+          "// The classic example of cleanup"
+        ],
+        [
+          "// userId badle to dobara",
+          "// if userId changes, again"
+        ],
+        [
+          "// purane user ka band",
+          "// the old user's closed"
+        ],
+        [
+          " <-- cleanup pehle",
+          " <-- cleanup first"
+        ],
+        [
+          " sirf mount pe",
+          " on mount only"
+        ]
+      ]
+    },
+    "l11_1": {
+      "name": "performUnitOfWork — a node's work",
+      "desc": "Create the DOM (if it doesn't exist), create child fibers, return the next node.",
+      "what": "<p>A \"unit of work\" has three tasks:</p>\n<p><b>1.</b> If the fiber doesn't have a DOM node, create it (do not append yet!).<br>\n<b>2.</b> Create fibers for its children and link them into the chain.<br>\n<b>3.</b> Return the next fiber — the child, or the sibling, or climb up.</p>",
+      "why": "<p>Each unit is small and <b>bounded</b> — it does the work of a single node, no matter how large the tree is. Therefore the loop can pause after any unit. This provides <b>predictable granularity</b>, which lets the scheduler do its job.</p>\n<p><b>How to do it:</b></p><p>An essential change: <b>Create the DOM but do not append it.</b> Because if we pause midway and some DOM gets appended, the user will see an incomplete UI — which was the R3 issue in Phase 10.</p>\n<p>So when will the append happen? <b>After all work is finished, all at once.</b> That is the commit phase of Phase 12. For now we will keep creating and remember one place.</p>",
+      "gotchas": [
+        "Forgetting to append the DOM is now a feature, not a bug — but if you forget to write commitRoot the screen will stay blank and you'll waste hours. Write a dummy commitRoot first.",
+        "render() no longer renders anything — it only schedules work. The name now feels a bit misleading; React has the same confusion.",
+        "You must re-register requestIdleCallback(workLoop) inside the loop, otherwise it will run only once."
+      ],
+      "codeSwap": [
+        [
+          "// 3. agla kaunsa? -- child, sibling, ya upar chadh ke",
+          "// 3. which one next? -- child, sibling, or climb up"
+        ],
+        [
+          "// 1. DOM banao (append NAHI)",
+          "// 1. Build the DOM (do NOT append)"
+        ],
+        [
+          "// 2. bachon ke fibers banao",
+          "// 2. create fibers for the children"
+        ]
+      ]
+    },
+    "l11_2": {
+      "name": "Work loop — pause and resume",
+      "desc": "The entire position is stored in a variable. Pause, give control to the browser, then resume from the same spot.",
+      "what": "<p>Now see the magic: <code>nextUnitOfWork</code> is a variable that holds <b>our entire position</b>. The loop can pause, the function can return, the browser can do whatever — and when we come back, work will resume from that variable.</p>\n<p>This is called <b>resumable computation</b>. It is the whole point of Fibers — everything else (priority, suspense, concurrent) is built on this single property.</p>",
+      "why": "<p>Once you have resumable work, a lot becomes possible:</p>\n<p>• If <b>more important work</b> comes in the middle, do it first (priority)<br>\n• <b>Throw the work away</b> if it has gone stale (the user typed more)<br>\n• <b>Hold a piece of work back</b> until the data arrives (Suspense)</p>\n<p>We won't build any of these — but now you can say <b>how</b> they are possible. And that is exactly what gets asked in interviews.</p>\n<p><b>How to do it:</b></p><p>One small but important detail: we keep a <code>wipRoot</code> (work in progress root) and a <code>currentRoot</code> (what is on the screen right now). Work happens on <code>wipRoot</code>, the screen shows <code>currentRoot</code>.</p>\n<p>Having these <b>two separate trees</b> is the foundation of Phase 12. And it's a well-known pattern — in graphics it is called <b>double buffering</b>: write to one buffer, show the other, then swap.</p>",
+      "gotchas": [
+        "If pause is 0, it means your tree is so small that it finishes within a single idle period. Try with 10,000+ nodes and apply CPU throttling.",
+        "The deadline for requestIdleCallback depends on the browser's state. Sometimes you get 50 ms, sometimes 1 ms. This is normal — the code should handle both.",
+        "Don't place console.log on every unit — it is slow enough to ruin measurements."
+      ],
+      "codeSwap": [
+        [
+          "// Ye pehla moment hai jab Stage C ka faayda aankhon se dikhta hai.",
+          "// This is the first moment where the payoff of Stage C is visible to the eye."
+        ],
+        [
+          "// AUR SPINNER AB CHALTA RAHEGA. Wahi Phase 10 wala spinner.",
+          "// AND THE SPINNER KEEPS RUNNING NOW. The same spinner from Phase 10."
+        ],
+        [
+          "// Har pause ke beech browser ne paint kiya, click sune.",
+          "// Between every pause the browser painted and heard clicks."
+        ],
+        [
+          "// 10000 nodes render karo. Console mein dikhega:",
+          "// render 10000 nodes. The console will show:"
+        ],
+        [
+          "// Sabit karo ki kaam sach mein ruk raha hai:",
+          "// Prove that the work really is pausing:"
+        ]
+      ]
+    },
+    "l12_0": {
+      "name": "alternate — two trees, and swap",
+      "desc": "Each fiber has its previous version. Work happens on the new one, the old one is displayed.",
+      "what": "<p>Each fiber has an <code>alternate</code> pointer that references <b>the same fiber from the previous render</b>.</p>\n<p>There are two trees: the <b>current tree</b> (currently on screen) and the <b>work-in-progress tree</b> (being built). At commit time we simply set <code>currentRoot = wipRoot</code> — and the roles of the two trees swap.</p>\n<p><b>Definition:</b> Double buffering means keeping two versions of a structure — one being displayed, one being written — and swapping them atomically when the new one is complete.</p>",
+      "why": "<p>Three big benefits:</p>\n<p><b>1. Comparison is free</b> — the old fiber is just a pointer away, no search needed.<br>\n<b>2. Cancellation is free</b> — discard the wipRoot and the screen won't notice.<br>\n<b>3. Memory reuse</b> — React reuses alternate fibers instead of creating new ones, because allocating thousands of objects each render is expensive.</p>\n<p><b>How to do it:</b></p><p>When we create fibers for a fiber's children, we simultaneously compare them with the <b>previous children</b> (by walking <code>wipFiber.alternate.child</code>). This is the Stage B reconciliation — now it happens on the fiber tree.</p>\n<p>The comparison result becomes an <code>effectTag</code>: <code>PLACEMENT</code> (new), <code>UPDATE</code> (props changed), or <code>DELETION</code> (no longer needed).</p>",
+      "gotchas": [
+        "DELETION fibers do not exist in the wip tree (because they are not in the new tree). Therefore they must be stored in a separate deletions array, otherwise the commit will never see them.",
+        "Link the alternate both ways (wip.alternate = old, and after commit old.alternate = wip) — otherwise the old tree won't be reachable on the third render.",
+        "Clear the deletions array at the start of each new render. If you forget, old deletions will run again."
+      ],
+      "visualCap": "Two trees, one swap. Work happens on the WIP tree (can pause or be discarded); the screen shows the current tree. At a single line in commit, their roles switch.",
+      "codeSwap": [
+        [
+          "// reconcileChildren -- ab purane fibers se compare bhi karta hai",
+          "// reconcileChildren -- now also compares with the old fibers"
+        ],
+        [
+          "// alag list mein",
+          "// in a separate list"
+        ],
+        [
+          " <-- DOM reuse (Phase 6 wali line!)",
+          " <-- DOM reuse (the line from Phase 6!)"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "Ye poora block bina ruke chalta hai — isliye user ko kabhi adhoori UI nahi dikhti.",
+          "This whole block runs without stopping — so the user never sees a half-built UI."
+        ],
+        [
+          "· phenk bhi sakte hain — screen ko pata nahi chalega",
+          "· can even be thrown away — the screen won't know"
+        ],
+        [
+          "COMMIT — sab kaam khatam hone ke baad, ek saath",
+          "COMMIT — after all the work is done, all at once"
+        ],
+        [
+          "· adhoora ho sakta hai — koi baat nahi",
+          "· can be half-done — no problem"
+        ],
+        [
+          "CURRENT TREE — ye screen pe hai",
+          "CURRENT TREE — this is on the screen"
+        ],
+        [
+          "· hamesha poora aur consistent",
+          "· always complete and consistent"
+        ],
+        [
+          "WIP TREE — ye ban raha hai",
+          "WIP TREE — this is being built"
+        ],
+        [
+          "· user ye dekh raha hai",
+          "· what the user is looking at"
+        ],
+        [
+          "1. saare DOM changes lagao",
+          "1. apply all the DOM changes"
+        ],
+        [
+          "3. effects chalao",
+          "3. run the effects"
+        ]
+      ]
+    },
+    "l12_1": {
+      "name": "commitRoot — everything at once",
+      "desc": "A recursive walk, three effectTags, and the DOM changes in a single pass.",
+      "what": "<p>The commit phase is straightforward: walk the fiber tree and act based on each fiber's <code>effectTag</code>.</p>\n<p><code>PLACEMENT</code> → <code>parentDom.appendChild(fiber.dom)</code><br>\n<code>UPDATE</code> → <code>updateDom(fiber.dom, alternate.props, fiber.props)</code><br>\n<code>DELETION</code> → run cleanup, then <code>parentDom.removeChild</code></p>",
+      "why": "<p>And do it <b>using recursion</b> — this is intentional. The commit must not pause. If the commit stops midway, the user will see an incomplete UI, which defeats the design.</p>\n<p>This is a key insight: <b>Fiber did not eliminate recursion entirely — it only removed it where pausing was required.</b> The commit is small and fast (because it only contains changes, not the whole tree), so recursion is perfectly fine there.</p>\n<p><b>How to do it:</b></p><p>A small but real detail: finding the parent DOM. Function components have no DOM of their own, so <code>fiber.return.dom</code> can be null. Climb upward until you find a fiber with a DOM.</p>\n<p>The same applies to deletion — if the fiber being deleted has no DOM (it is a component), descend into its children until you find a DOM.</p>",
+      "gotchas": [
+        "In the DELETION case you must return — otherwise you will keep traversing the deleted subtree.",
+        "If you forget the domParentFiber loop, children of function components will be appended in the wrong place (or cause a crash).",
+        "PLACEMENT always uses appendChild, so inserting in the middle can produce the wrong order. For reordering with keys you need insertBefore — this is a known limitation; document it in decisions.md."
+      ],
+      "codeSwap": [
+        [
+          "// DOM wala parent dhundo (components ka apna DOM nahi hota)",
+          "// Find the parent that has a DOM (components have no DOM of their own)"
+        ],
+        [
+          "// effects commit ke baad",
+          "// effects after commit"
+        ],
+        [
+          "// bachon mein mat jao",
+          "// don't go into the children"
+        ],
+        [
+          " component -- neeche dekho",
+          " component -- see below"
+        ],
+        [
+          " pehle deletions",
+          " deletions first"
+        ]
+      ]
+    },
+    "l10_0": {
+      "name": "One thread, and its 16 ms budget",
+      "desc": "The browser has 16.7 ms per frame. Your JavaScript consumes some of that.",
+      "what": "<p>60 fps means 60 frames per second — i.e., one frame is <code>1000/60 = 16.7ms</code>.</p>\n<p>In that 16.7 ms the browser must do everything: run your JavaScript, recalculate styles, layout, paint, composite. If your JavaScript alone takes 100 ms, then <b>6 frames are lost</b>. The user sees a <b>jerk</b> or <b>freeze</b>.</p>\n<p><b>Definition:</b> A \"long task\" is any single JavaScript task that occupies the main thread for more than 50 ms. During a long task the page cannot respond to input at all.</p>",
+      "why": "<p>And the worst part: during that time <b>the click also sits in the queue</b>. The user clicks the button, nothing happens, clicks again. When the JavaScript finishes, both clicks run together. That’s the \"app has hung\" feeling.</p>\n<p>This is not just a performance issue — it’s about <b>user trust</b>. An app that reacts in 100 ms feels \"fast\"; one that takes 300 ms feels \"broken\".</p>\n<p><b>How to do it:</b></p><p>Two ways to measure:</p>\n<p><b>1. DevTools > Performance</b> — record, and find the red-triangle \"Long Task\" blocks. Hover each block to see its duration.<br>\n<b>2. PerformanceObserver</b> — capture long tasks directly from code. This also works for production monitoring.</p>",
+      "gotchas": [
+        "The longtask entry only captures tasks longer than 50 ms. 30 ms tasks also consume two frames but won’t appear here.",
+        "On a fast laptop the problem stays hidden. Apply 4×–6× CPU throttling in DevTools — then you’ll see what your users see.",
+        "Measuring total time isn’t enough. Measure the largest single task — that’s what the user feels."
+      ],
+      "visualCap": "A frame’s budget is 16.7 ms. The top illustration shows a single long task — 6 frames lost, click heard after 100 ms. The bottom illustration shows the same work broken into small chunks — each frame paints and the click is heard immediately.",
+      "codeSwap": [
+        [
+          "// Spinner ruk jayega. worstGap dekho -- 16.7 se kitna zyada hai?",
+          "// The spinner will stop. Check worstGap -- how far above 16.7 is it?"
+        ],
+        [
+          "// 3. Aur ye test sabse convincing hai -- responsiveness naapo:",
+          "// 3. And this test is the most convincing -- measure responsiveness:"
+        ],
+        [
+          "// Console mein \"LONG TASK: 180 ms\" jaisa kuch dikhega.",
+          "// The console will show something like \"LONG TASK: 180 ms\"."
+        ],
+        [
+          "// Ek spinner bhi chala do (CSS animation).",
+          "// Run a spinner too (CSS animation)."
+        ],
+        [
+          "// 1. Long tasks ko code se pakdo",
+          "// 1. Catch long tasks from code"
+        ],
+        [
+          "// Phir bada update trigger karo.",
+          "// Then trigger the big update."
+        ],
+        [
+          "// 2. Ab bada mount karo",
+          "// 2. Now mount a big one"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "✓ har frame paint hua   ✓ click turant suna gaya   ✓ total time thoda zyada, par app zinda mehsoos hota hai",
+          "✓ every frame painted   ✓ click heard immediately   ✓ total time a bit longer, but the app feels alive"
+        ],
+        [
+          "STAGE B — ek lamba blocking task (100ms)",
+          "STAGE B — one long blocking task (100ms)"
+        ],
+        [
+          "reconcile() — recursion, ruk nahi sakti",
+          "reconcile() — recursion, can't pause"
+        ],
+        [
+          "STAGE C — wahi kaam, chhote tukdon mein",
+          "STAGE C — the same work, in small pieces"
+        ],
+        [
+          "MAIN THREAD — waqt bayein se dayein",
+          "MAIN THREAD — time goes left to right"
+        ],
+        [
+          "✗ 6 frames gaye",
+          "✗ 6 frames dropped"
+        ]
+      ]
+    },
+    "l10_1": {
+      "name": "Why you can’t pause recursion",
+      "desc": "The call stack is a pile. If you jump out in the middle you’ll lose everything.",
+      "what": "<p>Imagine you want to pause in the middle of recursion — out of 5,000 nodes you’ve processed 2,000, and now you need to give the browser a frame.</p>\n<p>You can’t. Because the whole \"where were we\" record is stored in the <b>call stack</b>. If you unwind the stack that record is lost. JavaScript has no way to save the stack and resume later.</p>\n<div class=\"analogy\">Analogy: you have opened 10 drawers in a deep cabinet and are now inside the innermost box. You only know \"which drawer you came from\" because you are standing there right now. If you leave the house you’ll have to come back and find the exact spot again.</div>",
+      "why": "<p>That’s why Fiber dropped recursion. It’s the biggest architectural insight of the whole project: <b>if you need to pause work, keep the \"where are we\" record with you, not on the call stack.</b></p>\n<p><b>How to do it:</b></p><p>Solution: structure the tree so that <b>the next node can be derived from any node</b> — without a stack. In other words each node must know: who its first child is, who its next sibling is, and who its parent is.</p>\n<p>These three pointers — <code>child</code>, <code>sibling</code>, <code>return</code> — together turn a tree into a <b>traversable list</b>. That is the <b>Fiber</b>.</p>\n<p>Now \"where you are\" is just a variable: <code>nextUnitOfWork</code>. Keep it, pause, and later resume from the same spot. That’s it.</p>",
+      "gotchas": [
+        "Generators (function*) can also pause, and React tried this early on. It was dropped because a generator can only resume from its own position — you can’t change priority or throw work away midway. Knowing this looks good in an interview.",
+        "Web Workers could offload the main thread — but they can’t touch the DOM. So that path is closed."
+      ],
+      "codeSwap": [
+        [
+          "// Fiber isse bhi aage jaata hai -- usko alag stack array bhi nahi chahiye,",
+          "// Fiber goes even further -- it doesn't even need a separate stack array,"
+        ],
+        [
+          "// Ab \"kahan the\" = stack array. RUK SAKTE HAIN!",
+          "// Now \"where we were\" = the stack array. WE CAN PAUSE!"
+        ],
+        [
+          "// \"kahan the\" = ek hi variable: nextUnitOfWork",
+          "// \"where we were\" = a single variable: nextUnitOfWork"
+        ],
+        [
+          "// kyunki har node ke andar hi pointers hain:",
+          "// because the pointers live inside each node:"
+        ],
+        [
+          "// \"kahan the\" = call stack. Ruk nahi sakte.",
+          "// \"where we were\" = the call stack. Can't pause."
+        ],
+        [
+          "// Ye Phase 11 ka poora content hai.",
+          "// This is the entire content of Phase 11."
+        ],
+        [
+          "   fiber.child   -> pehla bachcha",
+          "   fiber.child   -> first child"
+        ],
+        [
+          "   fiber.sibling -> agla bhai",
+          "   fiber.sibling -> next sibling"
+        ],
+        [
+          "   fiber.return  -> baap",
+          "   fiber.return  -> parent"
+        ],
+        [
+          " AB YE SOCHO:",
+          " NOW THINK ABOUT THIS:"
+        ]
+      ]
+    },
+    "l10_2": {
+      "name": "Shape of the solution — units of work",
+      "desc": "Break the work into small chunks, after each chunk ask \"any time left?\"",
+      "what": "<p>The new model will be:</p>\n<p><b>1.</b> The whole work breaks into small \"units\" — one unit = the work of one node.<br>\n<b>2.</b> A loop runs that processes one unit, then asks \"does the browser need to do something?\"<br>\n<b>3.</b> If yes, the loop stops. The browser paints, listens for clicks.<br>\n<b>4.</b> As soon as the browser is free, the loop resumes from where it left off.</p>\n<p>This is called <b>cooperative scheduling</b> — the work voluntarily yields control periodically.</p>",
+      "why": "<p><b>Total time will increase</b> — yielding has its own cost. But the app will feel <b>alive</b>. This is a deep trade-off: <b>throughput vs responsiveness</b>.</p>\n<p>This also underpins React’s entire \"concurrent\" story. It’s a design philosophy: a 100 ms freeze feels bad to the user, while a smooth 120 ms operation feels good — even if it actually takes a bit longer.</p>\n<p><b>How to do it:</b></p><p>There are two APIs that answer \"does the browser need to do something?\":</p>\n<p><b><code>requestIdleCallback(cb)</code></b> — the browser calls you when it’s idle, and <code>deadline.timeRemaining()</code> tells you how much time is left. Perfect fit — but not supported in Safari and timing isn’t predictable.</p>\n<p><b><code>MessageChannel</code></b> — a way to schedule a \"next immediate task\", faster than <code>setTimeout(0)</code> (which has a minimum 4 ms clamp). React uses this and keeps its own 5 ms budget.</p>\n<p>We will start with <code>requestIdleCallback</code> (easier to understand), and as a stretch goal build a MessageChannel-based scheduler.</p>",
+      "gotchas": [
+        "requestIdleCallback is not available in Safari. You’ll need a small polyfill (based on setTimeout) or implement a MessageChannel scheduler.",
+        "Calling timeRemaining() after every unit is also a bit expensive. React checks not after every unit but after several units.",
+        "If a single unit itself takes 16 ms (a very heavy component), yielding provides no benefit. Therefore units must stay small — one node per unit."
+      ],
+      "visualCap": "A frame’s budget is 16.7 ms. The top illustration shows a single long task — 6 frames lost, click heard after 100 ms. The bottom illustration shows the same work broken into small chunks — each frame paints and the click is heard immediately.",
+      "codeSwap": [
+        [
+          "// performUnitOfWork = ek node ka kaam + agla node kaun hai wo return karo.",
+          "// performUnitOfWork = do one node's work + return who the next node is."
+        ],
+        [
+          "// Agar hum beech mein ruk gaye aur adha DOM update ho chuka hai,",
+          "// If we stopped halfway and half the DOM has been updated,"
+        ],
+        [
+          "// nextUnitOfWork = \"hum kahan hain\" -- ek variable, stack nahi.",
+          "// nextUnitOfWork = \"where we are\" -- a variable, not a stack."
+        ],
+        [
+          "// Isliye Stage C mein DOM ko turant chhuna BAND karna padega.",
+          "// That's why in Stage C we'll have to STOP touching the DOM immediately."
+        ],
+        [
+          "// to user ko ADHOORI UI dikhegi. Ye Stage B se bhi bura hai.",
+          "// then the user will see a HALF-BUILT UI. That's even worse than Stage B."
+        ],
+        [
+          "// Ab har unit ke beech mein browser ghus sakta hai.",
+          "// Now a browser can sneak in between any units."
+        ],
+        [
+          "// Poori library ka naya dil yahi 6 line hai.",
+          "// These 6 lines are the new heart of the entire library."
+        ],
+        [
+          "// EK BADI PROBLEM (Phase 12 solve karega):",
+          "// ONE BIG PROBLEM (Phase 12 will solve it):"
+        ],
+        [
+          "// Naya model, poora 12 line mein:",
+          "// A new model, in 12 lines total:"
+        ],
+        [
+          "// ek chhota tukda",
+          "// a small piece"
+        ],
+        [
+          "// baad mein phir",
+          "// later again"
+        ],
+        [
+          " waqt khatam?",
+          " time over?"
+        ]
+      ]
+    },
+    "l11_0": {
+      "name": "Fiber node — shape and three pointers",
+      "desc": "Extra information needed to work with an element. And a new relationship.",
+      "what": "<p>A fiber node contains:</p>\n<p><code>type</code>, <code>props</code> — from the element<br>\n<code>dom</code> — the actual DOM node for this fiber (if it’s a host fiber)<br>\n<code>child</code> — the <b>first</b> child (not all, just the first)<br>\n<code>sibling</code> — the next sibling<br>\n<code>return</code> — the parent (called \"return\" because when work is done we “return” here)<br>\n<code>alternate</code> — the same fiber from the previous render (Phase 12)<br>\n<code>effectTag</code> — what to do: PLACEMENT / UPDATE / DELETION</p>",
+      "why": "<p>Instead of storing all children of a node in an array, keep only the <b>first child</b> and link the rest as a <b>sibling chain</b> — that’s the trick. This lets you find the next node from any node using a fixed rule, without an array index or a stack.</p>\n<p>And that’s what makes it \"pausable\": the entire position collapses into a single pointer.</p>\n<p><b>How to do it:</b></p><p><b>Definition:</b> A fiber is a plain object representing one unit of work, holding both the element’s data and the links needed to traverse the tree without recursion.</p>\n<p>Remember: <b>the fiber tree is the same element tree, just connected differently.</b> The data is the same — only the shape of the relationships changes. Once you get this, the fear of Fiber disappears.</p>",
+      "gotchas": [
+        "The name \"return\" can seem confusing but it is the parent. React chose this name because when work is finished we \"return\" here — just like a call stack, but explicit.",
+        "wipFiber.child points only to the FIRST child. If you try to store all children there, the pointer chain will break.",
+        "If you forget to update prevSibling on each iteration, only two children will be linked and the rest will disappear silently."
+      ],
+      "visualCap": "Same tree, two forms. Left: parent → children array. Right: parent → first child, and children linked via sibling chain. Numbers show the traversal order — which is exactly the order that recursion gives.",
+      "codeSwap": [
+        [
+          "// Element se fiber banana -- ek loop, saare bachon ko chain mein jodo",
+          "// Build a fiber from an element -- one loop, chain all the children together"
+        ],
+        [
+          "// Aur agla node dhundhne ka niyam -- POORI TRAVERSAL 10 line mein:",
+          "// And the rule for finding the next node -- the WHOLE TRAVERSAL in 10 lines:"
+        ],
+        [
+          "// Koi recursion nahi. Koi stack nahi. Sirf pointers.",
+          "// No recursion. No stack. Just pointers."
+        ],
+        [
+          "// baaki bhai ki chain mein",
+          "// the rest are in the sibling's chain"
+        ],
+        [
+          "// 2. bhai ke paas jao",
+          "// 2. go to the sibling"
+        ],
+        [
+          " root aa gaya, kaam khatam",
+          " reached the root, work done"
+        ],
+        [
+          " 3. baap pe chadho",
+          " 3. climb up to the parent"
+        ],
+        [
+          " 1. neeche jao",
+          " 1. go down"
+        ],
+        [
+          " pehla bachcha",
+          " first child"
+        ],
+        [
+          " baap",
+          " parent"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "(5 li ka koi sibling nahi tha → ul pe chadhe → ul ka sibling btn mila)",
+          "(5 li had no sibling → went up to ul → found ul's sibling btn)"
+        ],
+        [
+          "3. nahi? return pe chadho, uska sibling dekho (root tak)",
+          "3. no? climb to the return, look at its sibling (up to the root)"
+        ],
+        [
+          "Agla node dhundhne ka niyam — teen line, koi stack nahi",
+          "The rule for finding the next node — three lines, no stack"
+        ],
+        [
+          "- - - return: sibling nahi mila, to baap pe chadho",
+          "- - - return: no sibling found, so climb up to the parent"
+        ],
+        [
+          "PEHLE — children array (recursion chahiye)",
+          "FIRST — the children array (needs recursion)"
+        ],
+        [
+          "2. nahi? sibling hai?  → wahi jao",
+          "2. no? has a sibling?  → go there"
+        ],
+        [
+          "1. child hai?  → wahi jao",
+          "1. has a child?  → go there"
+        ]
+      ]
+    },
+    "l14_0": {
+      "name": "Event delegation and synthetic events",
+      "desc": "Listener on each node vs a single listener on the root. And what React chose and why.",
+      "what": "<p>Until now we attach a direct <code>addEventListener</code> to every DOM node. It works, but there are three problems:</p>\n<p><b>1.</b> 1000 buttons = 1000 listeners = memory usage.<br>\n<b>2.</b> On every update remove the old one and add a new one — works.<br>\n<b>3.</b> In older browsers event behavior was different.</p>\n<p><b>Event delegation</b> means: attach a single listener on the root. The event will bubble up there, and <code>event.target</code> will reveal which element was actually the source.</p>",
+      "why": "<p>Before React 17, React attached all listeners to the <code>document</code>; now it attaches them to the <b>root container</b>. This changed because a page can host two React apps, and document-level delegation would cause them to clash.</p>\n<p>This is a good lesson: <b>architectural decisions change when the context changes.</b> What was correct in React 16 became incorrect in React 17 — because the world changed, not the code.</p>\n<p><b>How to do it:</b></p>\n<p><b>Synthetic event</b> is a wrapper object built on top of the browser's native event so that behavior is the same across browsers.</p>\n<p>We will build a simple version: listeners on the root, a map <code>domNode → handlers</code>, and we will simulate bubbling ourselves (climb from the target up and run each parent’s handler).</p>\n<p>And write honestly in decisions.md: this trade-off <b>was not required for our project</b> — we built it to learn. The real trade-off appears when there are thousands of nodes.</p>",
+      "gotchas": [
+        "Some events do not bubble — focus, blur, mouseenter, mouseleave. React uses focusin/focusout for them or listens in the capture phase.",
+        "Use WeakMap, not Map — otherwise deleted DOM nodes will remain in memory (memory leak).",
+        "stopPropagation now works on two levels: your synthetic bubbling and the native DOM. Handle both or the behavior will be surprising."
+      ],
+      "visualCap": "Two approaches. Left: a listener on each node — simple but heavy. Right: a single listener on the root, reaching the target via bubbling — a bit more complex, but O(1) memory and updates.",
+      "codeSwap": [
+        [
+          "// updateDom mein addEventListener ki jagah setEventHandler use karo.",
+          "// in updateDom use setEventHandler instead of addEventListener."
+        ],
+        [
+          "// target se upar chalte jao -- khud bubbling",
+          "// keep walking up from the target -- bubbling yourself"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "Pehle listeners document pe the, ab root container pe — kyunki ek page pe do React apps takra jaate the. Context badla, faisla badla.",
+          "Listeners used to be on document, now on the root container — because two React apps on one page used to clash. The context changed, the decision changed."
+        ],
+        [
+          "Event bubble hokar root tak. e.target se pata chala kaun.",
+          "The event bubbles up to the root. e.target tells you which one."
+        ],
+        [
+          "🔔 = ek addEventListener. n nodes = n listeners.",
+          "🔔 = one addEventListener. n nodes = n listeners."
+        ],
+        [
+          "Simple. Par update pe har baar add/remove.",
+          "Simple. But add/remove on every update."
+        ],
+        [
+          "DELEGATED — React ka tarika",
+          "DELEGATED — React's way"
+        ],
+        [
+          "React 17 ka badlav",
+          "The React 17 change"
+        ],
+        [
+          "root 🔔 (sirf ek)",
+          "root 🔔 (only one)"
+        ],
+        [
+          "1 listener, chahe 10000 nodes hon.",
+          "1 listener, even with 10000 nodes."
+        ],
+        [
+          "DIRECT — hamara Stage A/B tarika",
+          "DIRECT — our Stage A/B way"
+        ]
+      ]
+    },
+    "l14_1": {
+      "name": "Context — passing data down",
+      "desc": "Store the provider value on the fiber, and let the consumer climb the return chain upward to find it.",
+      "what": "<p>Problem: to pass a theme or user five levels down you have to pass a prop at every level — <b>prop drilling</b>.</p>\n<p>Context’s answer: a <code>Provider</code> stores a value in the tree, and any component below it can take that value <b>directly</b>.</p>",
+      "why": "<p>The implementation has a beauty: we already have a <code>return</code> pointer that links each fiber to its parent. So the consumer only needs to <b>climb upward</b> until it finds a matching provider.</p>\n<p>This is a good example of how a solid data structure makes later features easy. We built fibers for scheduling — and context came for free.</p>\n<p><b>How to do it:</b></p>\n<p><code>createContext(defaultValue)</code> returns an object that contains a <code>Provider</code> component.</p>\n<p>In <code>useContext(ctx)</code>: start from <code>wipFiber</code> and climb the <code>return</code> chain upward; when a fiber’s <code>type === ctx.Provider</code>, return its <code>props.value</code>. If none is found, return the default.</p>\n<p>And write an honest note: <b>our context will re-render the entire tree</b> when the value changes, because our setState re-renders the whole root. React also actually re-renders only the consumers, but it needs a subscription mechanism for that. This \"known limitation\" should be documented.</p>",
+      "gotchas": [
+        "If the provider’s value is an object, a new one will be created on every render, causing consumers to re-render each time. Keep it stable with useMemo — the same dependency-array issue.",
+        "Don’t use context as a \"global state\". It is for dependency injection (theme, locale, auth), not for high-frequency data.",
+        "Our implementation climbs the return chain on every render — O(depth). React maintains a stack that is O(1). Document this limitation."
+      ],
+      "codeSwap": [
+        [
+          "// 3 level neeche, koi prop nahi",
+          "// 3 levels down, no props"
+        ],
+        [
+          " upar chadho",
+          " climb up"
+        ]
+      ]
+    },
+    "l14_2": {
+      "name": "Architecture review — what will scale",
+      "desc": "Look back. Count the layers, write the limits, and suggest the next step.",
+      "what": "<p>Now you have built a library. The final task is to <b>understand it</b> — to view your own work from the outside.</p>\n<p>Answer four questions:</p>\n<p><b>1.</b> Which layer knows what, and what it doesn’t know?<br>\n<b>2.</b> Which part will work with a different renderer, and which won’t?<br>\n<b>3.</b> Where are there O(n) operations and where is there a risk of O(n²)?<br>\n<b>4.</b> What will the next three features be and which layer will they belong to?</p>",
+      "why": "<p>This is not just documentation. It is the work that distinguishes a <b>senior engineer from a junior engineer</b>. A junior explains what they built. A senior explains what they chose, what they left out, and when a decision might become wrong.</p>\n<p>Practically, this document will be the most read part of your project.</p>\n<p><b>How to do it:</b></p>\n<p>Run a scalability checklist. For each item include a measured number or an honest \"don’t know\":</p>\n<p>• Mount and update time on 100 / 1,000 / 10,000 nodes<br>\n• Deeply nested tree (500 levels) — does it crash?<br>\n• Reversing a 10,000-item list — how many DOM moves?<br>\n• Memory: how much RAM do 10,000 fibers use?<br>\n• Bundle size (minified + gzip)<br>\n• How many public API functions are there? (fewer = better)</p>",
+      "gotchas": [
+        "The commit phase is still recursive — on a tree deeper than 500 levels it can cause a stack overflow. This is a real known limitation; document it and, if possible, make it iterative.",
+        "Don’t claim \"it scales\" until you have measured it. Include a number with each claim or write \"don’t know\".",
+        "<code>performance.memory</code> exists only in Chrome and is approximate. Don’t rely on it heavily."
+      ],
+      "visualCap": "The final diagram of the whole library. Each layer lists what it knows — and this list shows what can be changed and what cannot.",
+      "codeSwap": [
+        [
+          "// Fiber ke baad ye pass hona chahiye. Recursion wale commit phase pe fail ho sakta hai!",
+          "// This should pass after Fiber. The recursive commit phase can fail it!"
+        ],
+        [
+          "// (React ka bhi yahi hota hai bina memo ke -- ye normal hai, par jaanna zaroori hai.)",
+          "// (React does the same without memo -- this is normal, but you need to know it.)"
+        ],
+        [
+          "// Agar badhta hai to tumhara reconciler abhi bhi poora tree chal raha hai.",
+          "// If it grows, your reconciler is still walking the whole tree."
+        ],
+        [
+          "// Dekho: update time nodes ke saath badhta hai ya constant hai?",
+          "// Look: does the update time grow with the nodes or stay constant?"
+        ],
+        [
+          "// Theoretical minimum kya hai? Tumhara kitna hai?",
+          "// What is the theoretical minimum? What is yours?"
+        ],
+        [
+          "// 1. Mount aur update scaling",
+          "// 1. Mount and update scaling"
+        ],
+        [
+          " Scalability checklist -- numbers bharo",
+          " Scalability checklist -- fill in the numbers"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "jaanta hai: purana vs naya, kya badla. NAHI jaanta: DOM kaise banta hai (layer 2 se puchta hai), kab chalna hai (layer 4 batata hai).",
+          "knows: old vs new, what changed. Does NOT know: how the DOM is built (it asks layer 2), when to run (layer 4 tells it)."
+        ],
+        [
+          "jaanta hai: waqt, deadline, kab rukna hai. NAHI jaanta: kaam kya hai — usko sirf \"ek unit karo\" wala function milta hai.",
+          "knows: time, the deadline, when to pause. Does NOT know: what the work is — it just gets a function that \"does one unit\"."
+        ],
+        [
+          "Niyam: har layer sirf apne neeche wali ko jaanti hai. Upar wali ko kabhi nahi. Ye ek line poore design ko sambhalti hai.",
+          "Rule: each layer knows only the one below it. Never the one above. This one line holds up the whole design."
+        ],
+        [
+          "jaanta hai: createElement, render, hooks. Aur kuch nahi. Library ke andar ka kuch bhi import nahi karta.",
+          "knows: createElement, render, hooks. Nothing else. Imports nothing from inside the library."
+        ],
+        [
+          "jaanta hai: DOM APIs, attribute/property ka farak, event delegation. NAHI jaanta: diffing, hooks.",
+          "knows: DOM APIs, the attribute/property difference, event delegation. Does NOT know: diffing, hooks."
+        ],
+        [
+          "jaanta hai: object shape. NAHI jaanta: DOM, browser, scheduling, hooks.",
+          "knows: the object shape. Does NOT know: DOM, browser, scheduling, hooks."
+        ],
+        [
+          "→ SIRF YE layer badalne se React Native jaisa alag target ban jaata hai",
+          "→ changing ONLY this layer gives you a different target like React Native"
+        ],
+        [
+          "→ sabse bada aur sabse dimagi hissa. Yahi asli \"React\" hai.",
+          "→ the biggest and most brainy part. This is the real \"React\"."
+        ],
+        [
+          "→ isliye Node pe test hota hai, server pe chal sakta hai",
+          "→ that's why it's tested on Node, and can run on the server"
+        ],
+        [
+          "→ isi ki wajah se priority aur Suspense mumkin hain",
+          "→ this is what makes priority and Suspense possible"
+        ],
+        [
+          "APP CODE — tumhara demo app",
+          "APP CODE — your demo app"
+        ]
+      ]
+    },
+    "l12_2": {
+      "name": "Why the render phase should be pure",
+      "desc": "This phase can pause, be cancelled, or run twice. Therefore the rules are strict.",
+      "what": "<p>Now you can see why React is so insistent:</p>\n<p>• \"Don’t perform side effects during render\"<br>\n• \"Don’t mutate props or state\"<br>\n• \"Components render twice in StrictMode\"</p>\n<p>Because in the render phase your component function <b>can run multiple times</b>, and its work <b>can be discarded</b>. If it performed a fetch or changed a global, it would run twice or be incomplete.</p>",
+      "why": "<p>This is the deepest lesson of the entire library: <b>a performance feature (interruptibility) imposed a constraint (purity) on the API.</b></p>\n<p>And this is a general truth — architectural decisions always surface at the top level. You choose something in one layer, and its cost appears in the user-facing API. It cannot be hidden, only well explained.</p>\n<p><b>How to do it:</b></p><p>Create a small <b>StrictMode</b> in your library: in dev mode call each component function <b>twice</b> and compare the results. Issue a warning if they differ.</p>\n<p>It’s about 10 lines and it becomes the most \"senior\" feature of your project — because it shows that you understand not just the feature, but <b>its cost</b> as well.</p>",
+      "gotchas": [
+        "Rendering twice will halve performance in development. That’s fine — keep the flag off in production.",
+        "If you compare with JSON.stringify, functions (event handlers) won’t match. You’ll need to sanitize (remove) them.",
+        "StrictMode also runs effects twice (React 18) — to catch cleanup mistakes. This is a stretch goal."
+      ],
+      "codeSwap": [
+        [
+          "// Isse ye pakde jaate hain:",
+          "// This is what it catches:"
+        ],
+        [
+          "// Aur ye pass hote hain:",
+          "// And these pass:"
+        ],
+        [
+          "// hooks phir se 0 se",
+          "// hooks start from 0 again"
+        ],
+        [
+          "// effect mein ✓",
+          "// in the effect ✓"
+        ],
+        [
+          "// ek baar ✓",
+          "// once ✓"
+        ],
+        [
+          " StrictMode -- 10 line, bahut asar",
+          " StrictMode -- 10 lines, huge impact"
+        ],
+        [
+          " har render pe alag ✗",
+          " different on every render ✗"
+        ],
+        [
+          "console.warn(\"Component impure hai (do render, do alag output):\", fiber.type.name);",
+          "console.warn(\"Component is impure (two renders, two different outputs):\", fiber.type.name);"
+        ]
+      ]
+    },
+    "l13_0": {
+      "name": "Move hooks onto the fiber",
+      "desc": "wipFiber.hooks, and old hooks from alternate. Exactly the same pattern.",
+      "what": "<p>Now hooks will live on the fiber: <code>fiber.hooks = []</code>. And where do the old hooks come from? From <code>fiber.alternate.hooks</code>.</p>\n<p>Look — this is exactly the pattern we have seen <b>three times</b>:</p>\n<p>Phase 6: <code>newEl.dom = oldEl.dom</code><br>\nPhase 8: <code>newEl.instance = oldEl.instance</code><br>\nPhase 13: <code>fiber.hooks</code> ← <code>fiber.alternate.hooks</code></p>",
+      "why": "<p>One idea, three forms: <b>“pass the old thing to the new node.”</b> When you see the same pattern in three places, it’s not a pattern — it’s <b>architecture</b>. That’s worth mentioning in an interview.</p>\n<p><b>How to do it:</b></p><p>A new task also appears: the function component’s fiber will now be handled by <code>updateFunctionComponent</code>, which sets the hooks context before calling the component.</p>\n<p>And <code>setState</code> will no longer update directly. It will <b>create a new wipRoot</b> and set <code>nextUnitOfWork</code>. The work loop will pick it up automatically. This is one level above Stage B — state updates and rendering are now completely separate.</p>",
+      "gotchas": [
+        "The queue design feels odd at first, but it’s necessary: setState does not change state immediately; it enqueues an action that runs in the next render. This gives you free functional updates and batching.",
+        "Create a new array for wipFiber.hooks on each render; don’t reuse the old one — otherwise old and new hooks will mix.",
+        "When creating wipRoot inside setState, use currentRoot.props, not a component’s — we are re-rendering the entire tree."
+      ],
+      "codeSwap": [
+        [
+          "// purane render se jo actions aaye the, unhe ab lagao",
+          "// apply the actions that came from the old render now"
+        ]
+      ]
+    },
+    "l13_1": {
+      "name": "useRef, useMemo, useCallback — all the same thing",
+      "desc": "A slot that persists across renders. Just different forms of the same thing.",
+      "what": "<p>Now see how small the other hooks are:</p>\n<p><b>useRef</b> = a slot containing an object <code>{current: x}</code> that never changes.<br>\n<b>useMemo</b> = a slot with a value and deps. If deps are the same, return the previous value; otherwise recalculate.<br>\n<b>useCallback</b> = <code>useMemo(() => fn, deps)</code>. That’s it.<br>\n<b>useReducer</b> = <code>useState</code> where you provide the way to turn an action into new state.</p>",
+      "why": "<p>When you implement these four hooks yourself, the entire hooks API will start to feel like <b>a small consistent primitive</b>. And that’s a core library-design lesson: <b>build one primitive, and put everything else on top of it</b>.</p>\n<p>React itself has only two primitives — <code>useState</code> (which is essentially <code>useReducer</code>) and <code>useEffect</code>. Everything else is a combination of these two.</p>\n<p><b>How to do it:</b></p><p>Keep the shape of every hook the same: <code>{ ...data, deps }</code>. Write a small helper <code>getHook()</code> that extracts the previous hook and creates a new slot. This reduces each hook to 5–6 lines.</p>",
+      "gotchas": [
+        "In useRef, return the existing hook object; don’t create a new one — otherwise ref.current resets on every render and defeats the purpose.",
+        "The function passed to useMemo runs during render, so don’t put side effects in it. That’s the purity rule.",
+        "useCallback doesn’t call the function; it only remembers it. In useMemo(() => fn), the arrow function returns fn without calling it."
+      ],
+      "visualCap": "The entire hooks API stands on two primitives. After seeing this pyramid, any new hook will show you “how it should be built” on its own.",
+      "codeSwap": [
+        [
+          "// Ek line. Dono hooks asal mein ek hi cheez the.",
+          "// One line. Both hooks were really the same thing."
+        ],
+        [
+          "// Aur ab useState ko useReducer ke upar likho:",
+          "// And now write useState on top of useReducer:"
+        ],
+        [
+          "// Ek helper -- har hook isi se shuru hota hai",
+          "// A helper -- every hook starts with this"
+        ],
+        [
+          "// <-- kabhi replace nahi hota",
+          "// <-- never gets replaced"
+        ],
+        [
+          " literally itna hi",
+          " literally just this"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "Ek chhota primitive banao aur baaki sab uske upar. Kam surface area, kam bugs, aur user ke liye ek hi mental model.",
+          "Build one small primitive and put everything else on top of it. Less surface area, fewer bugs, and a single mental model for the user."
+        ],
+        [
+          "fiber.hooks[i], alternate se carry hota hua",
+          "fiber.hooks[i], carried over via alternate"
+        ],
+        [
+          "EK SLOT jo render ke beech bacha rahe",
+          "A SLOT that survives the render"
+        ],
+        [
+          "Library design ka sabak",
+          "A library-design lesson"
+        ],
+        [
+          "{current} jo kabhi na badle",
+          "{current} which never changes"
+        ]
+      ]
+    },
+    "l13_2": {
+      "name": "Effects on the fiber — and after commit",
+      "desc": "Effect list lives on the fiber, and flushes together after the commit phase.",
+      "what": "<p>The effect logic is the same as Stage B, only two things change:</p>\n<p><b>1.</b> The effect hook lives on the fiber and comes from the previous <code>alternate</code>.<br>\n<b>2.</b> Effects run <b>after the commit phase</b>, because that’s when the DOM is ready.</p>\n<p>And a new detail: <b>when to run cleanup</b>. The previous cleanup should run during commit (before the DOM is removed), and the new effect runs after commit.</p>",
+      "why": "<p>Now you can implement the difference between <code>useEffect</code> and <code>useLayoutEffect</code> yourself:</p>\n<p><b>useLayoutEffect</b> — runs immediately after commit, <b>synchronously</b>, before the browser paints. This lets you measure the DOM and modify it in the same frame without flicker.<br>\n<b>useEffect</b> — runs after commit, but <b>asynchronously</b> (after paint). This does not block painting.</p>\n<p>This is a two-line code difference, but a huge difference for the user. And now you will demonstrate that difference <b>by building it</b>, not by memorizing.</p>\n<p><b>How to do it:</b></p><p>At the end of commit, run two queues: first layout effects (sync), then passive effects via <code>queueMicrotask</code> or <code>requestIdleCallback</code>.</p>",
+      "gotchas": [
+        "Don’t do heavy work in useLayoutEffect — it blocks painting, which is exactly the problem we fixed in Phase 10.",
+        "Run cleanup during commit, and the effect after commit. Doing it the other way round will let the old resource linger with the new one for a while.",
+        "Don’t forget to handle the ref prop — in createDom set ref.current = dom as soon as the DOM node is created, otherwise useRef won’t work for DOM elements."
+      ],
+      "codeSwap": [
+        [
+          "// useLayoutEffect(() => { ref.current.style.left = \"300px\"; }); // flicker nahi",
+          "// useLayoutEffect(() => { ref.current.style.left = \"300px\"; }); // no flicker"
+        ],
+        [
+          "// commitRoot ke aakhir mein:",
+          "// at the end of commitRoot:"
+        ],
+        [
+          "// SYNC -- paint se pehle",
+          "// SYNC -- before paint"
+        ],
+        [
+          "// Farak dekhne ka demo:",
+          "// A demo to see the difference:"
+        ],
+        [
+          "// paint ke baad",
+          "// after paint"
+        ],
+        [
+          " flicker dikhega",
+          " flicker will be visible"
+        ]
+      ]
+    },
+    "l4_2": {
+      "name": "With tooling — what you get, what you lose",
+      "desc": "Add Vite/esbuild and honestly write the accounting on both sides.",
+      "what": "<p>A bundler (Vite, esbuild, webpack) does three things: <b>transform</b> (JSX → JS), <b>bundle</b> (50 file → 1 file), and <b>dev server</b> (HMR, fast reload).</p>",
+      "why": "<p><b>What you get:</b> the comfort of JSX; a single network request; a smaller bundle through minify + tree-shaking; HMR, which reloads code while keeping state; imports from node_modules (without writing a URL); TypeScript, CSS modules, images — everything.</p>\n<p><b>What you give up:</b> your code and the browser's code are now different — you need source maps for debugging; one more config file that will break; 200MB in node_modules; build time; and the biggest thing — <b>one more thing you'll have to understand</b>.</p>\n<p><b>How to do it:</b></p><p>This decision isn't mechanical, it's situational. A small learning project, one or two files, for learning → zero tooling is better, because you see exactly what is running. A big app, a team, TypeScript, 50+ files → the cost of tooling is paid back.</p>\n<p>This question comes up in interviews. The right answer isn't \"use Vite\" — the right answer is \"what is this giving me in exchange for what, and which matters more in my case\".</p>",
+      "gotchas": [
+        "If you forget to set jsxFactory, esbuild will give \"React is not defined\" — because the default factory is React.createElement.",
+        "Don’t treat HMR as a \"reload\". Reload discards state, while HMR only replaces the changed module and preserves state. This is the real productivity difference.",
+        "Measure bundle size from a production build, not from dev. The dev bundle is intentionally larger and unminified."
+      ],
+      "visualCap": "Two paths, one destination. Tooling doesn’t unlock a feature — it only provides convenience and, in return, adds a layer of indirection.",
+      "codeSwap": [
+        [
+          "# naapo: pehla paint kitne ms mein, kitni network requests, total KB",
+          "# measure: first paint in how many ms, how many network requests, total KB"
+        ],
+        [
+          "# HMR try karo -- counter badhao, code edit karo, count bacha?",
+          "# Try HMR -- increment the counter, edit the code, did the count survive?"
+        ],
+        [
+          "# | debug: jo likha wahi chal raha? | haan | source map se |",
+          "# | debug: is what I wrote what's running? | yes | via source map |"
+        ],
+        [
+          "# | HMR (state bachta)? |     nahi     |    haan  |",
+          "# | HMR (state survives)? |     no       |    yes   |"
+        ],
+        [
+          "# | JSX?                |     nahi     |    haan  |",
+          "# | JSX?                  |     no       |    yes   |"
+        ],
+        [
+          "# EK HI APP, DO BAAR. Do folder banao.",
+          "# ONE APP, TWICE. Make two folders."
+        ],
+        [
+          "# HISAAB TABLE README mein likho:",
+          "# WRITE THE TRADE-OFF TABLE in the README:"
+        ],
+        [
+          "# dist/ ka size dekho",
+          "# check the size of dist/"
+        ],
+        [
+          " app-plain/index.html + app.js, sirf h() calls",
+          " app-plain/index.html + app.js, just h() calls"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "− jo likha wo nahi chal raha (source maps)",
+          "− what you wrote isn't what's running (source maps)"
+        ],
+        [
+          "− ek aur config, ek aur cheez sikhne ko",
+          "− one more config, one more thing to learn"
+        ],
+        [
+          "− npm packages import karna mushkil",
+          "− importing npm packages is hard"
+        ],
+        [
+          "+ jo file likhi wahi debug hoti hai",
+          "+ the file you wrote is the one you debug"
+        ],
+        [
+          "bundle.js — browser ye chalata hai",
+          "bundle.js — the browser runs this"
+        ],
+        [
+          "browser — seedha chalta hai",
+          "browser — runs it directly"
+        ],
+        [
+          "− JSX nahi milega",
+          "− no JSX"
+        ],
+        [
+          "+ minify + tree-shake = chhota bundle",
+          "+ minify + tree-shake = small bundle"
+        ],
+        [
+          "+ HMR — state bachte hue reload",
+          "+ HMR — reload while keeping state"
+        ]
+      ]
+    },
+    "l5_0": {
+      "name": "Identity — why a DOM node must stay alive",
+      "desc": "Focus, scroll, selection, animation, video playback — all live inside the node, not in your state.",
+      "what": "<p>A DOM node is not just \"what is displayed\". Inside it there is a lot of <b>hidden state</b> that isn’t present anywhere in your JS:</p>\n<ul class=\"gotchas-list\" style=\"margin-top:8px\">\n<li>Which element has focus</li>\n<li>Where the text selection starts and ends</li>\n<li>The scroll position</li>\n<li>Which frame a CSS transition/animation is on</li>\n<li>Which second a <video> is playing</li>\n<li>What the user typed in an uncontrolled input</li>\n</ul>\n<p>All of this disappears as soon as the node is deleted. Creating a new node does not bring it back.</p></video>",
+      "why": "<p>This is called <b>identity</b>: \"is this the same node or a new one\". It is the real purpose of the entire reconciliation. People think the reconciler exists for <b>speed</b> — it does not. Speed is a bonus. The real reason is <b>correctness</b>: a DOM node must stay alive or the app breaks.</p>\n<p>This is a great interview point because most people recite the \"virtual DOM is fast\" mantra.</p>\n<p><b>How to do it:</b></p><p>The solution is simple: <b>remember the old tree</b>, compare it with the new one, and do not touch any node that is the same — just update its changed props.</p>\n<p>Therefore the first step of Stage B is not code, it is <b>data</b>: we need a place to store the relationship between the old tree and its DOM nodes.</p>",
+      "gotchas": [
+        "Don’t try to fix focus by \"refocusing after render\". It will break cursor position, selection, and IME (Hindi/Chinese typing).",
+        "This problem isn’t limited to inputs. Third-party libraries (chart, map, editor) that hold onto a DOM node break completely."
+      ],
+      "codeSwap": [
+        [
+          "//    ek scrollable list banao, neeche scroll karo, phir count badhao.",
+          "//    make a scrollable list, scroll down, then increment the count."
+        ],
+        [
+          "//    ek CSS transition wala box banao. Beech mein rerender karo.",
+          "//    make a box with a CSS transition. Rerender in the middle."
+        ],
+        [
+          "//    kuch text select karo, phir rerender. Selection udd gaya.",
+          "//    select some text, then rerender. The selection is gone."
+        ],
+        [
+          "// Ek line mein: humein \"before === after\" ko true banana hai.",
+          "// In one line: we need to make \"before === after\" true."
+        ],
+        [
+          "//    input mein type karo. Har keystroke pe focus jaata hai.",
+          "//    type in the input. Focus is lost on every keystroke."
+        ],
+        [
+          "// 5. YE SABSE ACHHA HAI -- node identity khud dekho:",
+          "// 5. THIS IS THE BEST ONE -- check node identity yourself:"
+        ],
+        [
+          "// Ye khud reproduce karo -- padhna kaafi nahi hai.",
+          "// Reproduce this yourself -- reading is not enough."
+        ],
+        [
+          "//    List wapas upar. Kyunki naya <ul> node hai.",
+          "//    The list jumps back to the top. Because it's a new <ul> node."
+        ],
+        [
+          "//    Animation shuru se chalu ho jaayega.",
+          "//    The animation will start from the beginning."
+        ],
+        [
+          "// false  <- YAHI poori problem hai",
+          "// false  <- THIS IS THE WHOLE PROBLEM"
+        ],
+        [
+          "    Reason: purana <input> node delete, naya bana.",
+          "    Reason: the old <input> node is deleted, a new one is built."
+        ]
+      ]
+    },
+    "l5_1": {
+      "name": "Performance — how much work is wasted",
+      "desc": "Rebuilding 5,000 nodes for a single character change. Measure, don’t guess.",
+      "what": "<p>In Stage A each update does work proportional to <b>the size of the tree</b>, no matter how small the change. A counter going from 0 to 1 rebuilds the entire tree.</p>\n<p>Creating DOM is far more expensive than creating JS objects, because every <code>createElement</code> forces the browser to build internal structures, and after <code>appendChild</code> it must perform <b>layout</b> and <b>paint</b> again.</p>",
+      "why": "<p>Without numbers it’s just a feeling. With numbers it becomes <b>engineering</b>. And the habit — \"measure first, then optimize\" — is the biggest lesson from this whole project.</p>\n<p><b>How to do it:</b></p><p>Measure milliseconds with <code>performance.now()</code>, and record in Chrome DevTools’ Performance tab. Look for two things: <b>Scripting</b> (JS) and <b>Rendering + Painting</b> (browser work).</p>\n<p>An essential observation: if your update takes more than 16 ms, you cannot achieve 60 fps — the browser has only 16.7 ms per frame. Remember this number; it will become the whole story in Phase 10.</p>",
+      "gotchas": [
+        "Don’t draw a conclusion from a single measurement. The first run is always slow (JIT hasn’t warmed up). Run a warm-up pass separately.",
+        "console.log itself is slow. Don’t log inside the loop; only log at the end.",
+        "Keeping DevTools open changes timings. Close it and measure again."
+      ],
+      "visualCap": "A tiny change, but work equal to the whole tree. The green nodes were exactly the same — breaking and rebuilding them was 100% wasted effort.",
+      "codeSwap": [
+        [
+          "//   - aur ismein se kitna kaam ZAROORI tha? (jawab: kareeb 0.02%)",
+          "//   - and how much of this work was NECESSARY? (answer: about 0.02%)"
+        ],
+        [
+          "//   - agar zyada hai, to har update pe frame drop ho raha hai",
+          "//   - if it's high, every update drops frames"
+        ],
+        [
+          "//   - 5000 nodes ka time kitna hai? 16ms se zyada?",
+          "//   - How long do 5000 nodes take? more than 16ms?"
+        ],
+        [
+          "// Naapne ka dhang -- 20 baar chalao, average lo:",
+          "// How to measure -- run it 20 times, take the average:"
+        ],
+        [
+          "// Ab ye sawaal pucho aur README mein likho:",
+          "// Now ask these questions and write them in the README:"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "STATE: count 0 → 1 (sirf ek text badla)",
+          "STATE: count 0 → 1 (only one text changed)"
+        ],
+        [
+          "STAGE A — poora dobara banta hai",
+          "STAGE A — rebuilt completely"
+        ],
+        [
+          "bacha raha",
+          "survived"
+        ],
+        [
+          "STAGE B — sirf jo badla wahi chhuo",
+          "STAGE B — touch only what changed"
+        ],
+        [
+          "1 (sirf text update)",
+          "1 (only a text update)"
+        ],
+        [
+          "gaya",
+          "gone"
+        ]
+      ]
+    },
+    "l5_2": {
+      "name": "Shape of the solution — diffing",
+      "desc": "Remember the old, compare with the new, find the differences. And do it in O(n).",
+      "what": "<p>The problem statement is now clear: <b>given an old tree and a new tree, tell what needs to change in the DOM.</b></p>\n<p>This is a well-known computer-science problem — <b>tree diffing</b>. And the bad news is that the best general tree-diff algorithm is <b>O(n³)</b>. 1,000 nodes = 1,000,000,000 operations. Wasteful.</p>",
+      "why": "<p>React made this <b>O(n)</b>, but not for free — it assumes two <b>assumptions</b>. This is the biggest architectural lesson of the whole project: <b>when the exact solution is expensive, shrink the problem — thoughtfully, in code.</b></p>\n<p><b>How to do it:</b></p><p>React’s two assumptions:</p>\n<p><b>1. Different type = different tree.</b> If the old element was <code>&lt;div&gt;</code> and the new one is <code>&lt;p&gt;</code>, don’t compare — discard the whole subtree and create a new one. This holds true in about 99% of cases.<br>\n<b>2. Identity comes from the key.</b> In a list, identify children by <code>key</code> instead of position. (Phase 7)</p>\n<p>This is a <b>heuristic</b> — not always optimal, but practically sufficient. Stating that \"this is a heuristic, not an algorithm\" will set you apart from everyone else.</p>",
+      "gotchas": [
+        "These assumptions are not \"React’s shortcomings\" — they are deliberate trade-offs. If you change a <div> to a <span>, the entire subtree is rebuilt, and you should know that.",
+        "The purpose of diffing is correctness (identity) before speed. This point is often forgotten."
+      ],
+      "codeSwap": [
+        [
+          "//   (a) element object pe dom field rakh do   -- simple, par element mutate hota hai",
+          "//   (a) put a dom field on the element object   -- simple, but the element gets mutated"
+        ],
+        [
+          "// Hum (a) chunenge (React ka fiber bhi asal mein yahi hai, bas alag tree pe).",
+          "// We'll pick (a) (this is really what React's fiber is, just on a different tree)."
+        ],
+        [
+          "// Aur hume ek nayi cheez chahiye: purane element ke saath uska DOM node.",
+          "// And we need one new thing: the old element along with its DOM node."
+        ],
+        [
+          "//   (b) alag \"instance tree\" banao            -- saaf, par ek aur tree",
+          "//   (b) build a separate \"instance tree\"        -- clean, but one more tree"
+        ],
+        [
+          "// decisions.md mein likhna: kya chuna aur kya chhoda.",
+          "// write in decisions.md: what you chose and what you left out."
+        ],
+        [
+          "// Bas. Poora Stage B isi table se nikalta hai.",
+          "// That's it. The whole of Stage B comes out of this table."
+        ],
+        [
+          "// Reconciler ka contract, ek line mein:",
+          "// The reconciler's contract, in one line:"
+        ],
+        [
+          "// Chaar cases, aur bas chaar:",
+          "// Four cases, and only four:"
+        ],
+        [
+          "   old = null,  new = kuch   ->  ADD      (naya DOM banao, append)",
+          "   old = null,  new = something   ->  ADD      (create a new DOM node, append)"
+        ],
+        [
+          "   old.type !== new.type     ->  REPLACE  (poora subtree naya)",
+          "   old.type !== new.type     ->  REPLACE  (the whole subtree is new)"
+        ],
+        [
+          "   old = kuch,  new = null   ->  REMOVE   (removeChild)",
+          "   old = something,  new = null   ->  REMOVE   (removeChild)"
+        ],
+        [
+          " Do tarike:",
+          " Two ways:"
+        ]
+      ]
+    },
+    "l6_0": {
+      "name": "Remember the old tree with the DOM",
+      "desc": "Element object has a dom field. Simple, and this will become the fiber later.",
+      "what": "<p>To compare we need two things: <b>the old element tree</b>, and the <b>actual DOM node</b> for each old element.</p>\n<p>The simplest way: when we create the DOM, attach it directly to the element object — <code>element.dom = domNode</code>. Now reaching from the old tree to the DOM is free.</p>",
+      "why": "<p>This \"old tree + its DOM nodes\" concept has a name — <b>instance tree</b> (React called it instances before, now <b>fiber tree</b>). In this phase what you are building is essentially a <b>small, recursive version</b> of the fiber. In Stage C we will turn this tree into fiber nodes — the data stays the same, only the traversal changes.</p>\n<p><b>How to do it:</b></p><p>Keep a module-level variable: <code>let currentTree = null</code>. On the first <code>mount()</code>, and then on every <code>update()</code>:</p>\n<p><code>update(newTree)</code> = <code>reconcile(container, currentTree, newTree, 0)</code> then <code>currentTree = newTree</code>.</p>\n<p>A small but important question: where does the new element get its DOM? Answer — when the UPDATE case runs, we set <code>newEl.dom = oldEl.dom</code>. <b>The DOM node is passed from the old element to the new element.</b> This is the mechanism that preserves identity.</p>",
+      "gotchas": [
+        "Adding element.dom is a mutation — and we said in Phase 0 not to mutate. This exception is intentional (React does the same on fiber). But because of that, do not reuse an element object in two places.",
+        "Forgetting to update currentTree with the new tree is the most common bug. Then the next reconcile will compare against the stale tree and nothing will update."
+      ],
+      "visualCap": "The DOM node is \"passed\" from the old element to the new element. Element objects are created fresh on each render (cheap), the DOM node stays the same (expensive). This is the core trick of the whole library.",
+      "codeSwap": [
+        [
+          "// createDom = wahi purana render(), par append nahi karta, sirf banata hai",
+          "// createDom = the same old render(), but it doesn't append, it only creates"
+        ],
+        [
+          " <-- yaad rakha",
+          " <-- remembered"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "Element objects sasta kachra hain — har render pe naye bano, phenk do. DOM node keemti hai — usko har haal mein bachao.",
+          "Element objects are cheap garbage — build new ones on every render, throw them away. DOM nodes are valuable — protect them at all costs."
+        ],
+        [
+          "wahi node, naye element ko mil gaya",
+          "the same node, the new element got it"
+        ],
+        [
+          "· purane element ab garbage hain",
+          "· the old elements are garbage now"
+        ],
+        [
+          "· DOM node kabhi delete nahi hua",
+          "· a DOM node was never deleted"
+        ],
+        [
+          "· focus bacha, scroll bacha",
+          "· focus survives, scroll survives"
+        ],
+        [
+          "· sirf badle hue props lage",
+          "· only the changed props were applied"
+        ],
+        [
+          "newEl (bilkul naya object)",
+          "newEl (a brand new object)"
+        ],
+        [
+          "ASLI DOM NODE",
+          "REAL DOM NODE"
+        ],
+        [
+          "Yaad rakho",
+          "Remember"
+        ],
+        [
+          "NATEEJA",
+          "RESULT"
+        ]
+      ]
+    },
+    "l6_1": {
+      "name": "reconcile() — four cases",
+      "desc": "ADD, REMOVE, REPLACE, UPDATE. The whole function comes from this table.",
+      "what": "<p>Function signature: <code>reconcile(parentDom, oldEl, newEl, index)</code>. <code>index</code> is needed because we must know which child this is inside the parent (<code>parentDom.childNodes[index]</code>).</p>\n<p>Four cases, check them in this order:</p>\n<p><b>1. <code>!oldEl</code></b> → ADD: create a new DOM, <code>parentDom.appendChild</code><br>\n<b>2. <code>!newEl</code></b> → REMOVE: <code>parentDom.removeChild(parentDom.childNodes[index])</code><br>\n<b>3. <code>oldEl.type !== newEl.type</code></b> → REPLACE: create a new one, <code>replaceChild</code><br>\n<b>4. same type</b> → UPDATE: pass the DOM, update props, recurse children</p>",
+      "why": "<p>These four cases are <b>exhaustive</b> — there is no fifth case. This is a hallmark of good library design: shrink the state space so you can write all cases and prove that none are missed.</p>\n<p><b>How to do it:</b></p><p>In the UPDATE case there are three steps, in this order:</p>\n<p>1. <code>newEl.dom = oldEl.dom</code> — pass the DOM node forward.<br>\n2. <code>updateDom(dom, oldEl.props, newEl.props)</code> — the Phase 3 function, unchanged.<br>\n3. Loop over children: go up to <code>Math.max(oldChildren.length, newChildren.length)</code>, and for each index call <code>reconcile(dom, oldChildren[i], newChildren[i], i)</code>.</p>\n<p><code>Math.max</code> is used because the number of children can change — undefined on either side will automatically become an ADD or REMOVE case. This is a small elegance.</p>",
+      "gotchas": [
+        "When removing, iterate backwards (i = n-1 down to 0), otherwise removing a node shifts later indexes and the wrong node gets deleted.",
+        "parentDom.childNodes[index] remains valid only as long as you haven't added or removed any nodes inside the loop. Therefore performing REMOVE separately, after the loop, is safer.",
+        "Forgetting to set newEl.dom — in the next render oldEl.dom will be undefined and everything will silently break."
+      ],
+      "visualCap": "The full decision tree of reconcile. These four paths are the entire logic of Stage B — there is no fifth case.",
+      "codeSwap": [
+        [
+          "// kyunki DOM text node ki property ka naam bhi nodeValue hai. (Phase 2 ka decision.)",
+          "// because the DOM text node's property is also named nodeValue. (Phase 2's decision.)"
+        ],
+        [
+          "// TEXT_ELEMENT ke liye: updateDom mein nodeValue prop apne aap set ho jaayega,",
+          "// For TEXT_ELEMENT: the nodeValue prop is set automatically in updateDom,"
+        ],
+        [
+          "// identity yahan bachti hai",
+          "// identity is preserved here"
+        ],
+        [
+          " CASE 3 -- REPLACE (type badal gaya)",
+          " CASE 3 -- REPLACE (the type changed)"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "undefined apne aap ADD/REMOVE case ban jaata hai — extra code nahi",
+          "undefined automatically becomes an ADD/REMOVE case — no extra code"
+        ],
+        [
+          "3. har child ke liye reconcile() — recursion",
+          "3. reconcile() for each child — recursion"
+        ],
+        [
+          "UPDATE ke teen kadam (ussi order mein)",
+          "The three steps of UPDATE (in that order)"
+        ],
+        [
+          "type alag hai",
+          "the type is different"
+        ],
+        [
+          "type same hai",
+          "the type is the same"
+        ],
+        [
+          "new nahi hai",
+          "there's no new"
+        ],
+        [
+          "old nahi hai",
+          "there's no old"
+        ],
+        [
+          "Children loop — Math.max kyu?",
+          "Children loop — why Math.max?"
+        ]
+      ]
+    },
+    "l6_2": {
+      "name": "The cost of recursion — and a warning",
+      "desc": "It works, it's fast, but once it starts it cannot stop.",
+      "what": "<p>Your reconciler is now fast and correct. But it has a property that you won't see yet: <b>it is not interruptible.</b></p>\n<p>As soon as <code>update()</code> is called, it will recurse over the entire tree. It will not stop in the middle. JS is single-threaded, meaning that while this function is running, the browser <b>cannot do anything</b> — it cannot listen to clicks, cannot paint, cannot scroll.</p>",
+      "why": "<p>In small apps this is perfectly fine — 100 nodes finish in 1 ms. But with 10,000 nodes it becomes a 200 ms “long task” and the user will see the app <b>freeze</b>. This is the wall of Phase 10, and Fiber was born from this exact problem.</p>\n<p><b>How to do it:</b></p><p>Do nothing for now. Just write in <code>notes/</code>: <b>\"reconcile uses recursion, so once it starts it cannot stop. To stop it you must unwind the call stack.\"</b></p>\n<p>Make this a habit — whenever you notice a design limitation, write it down immediately, even if you’re not solving it yet. This “known limitations” list is the most valuable document in production systems.</p>",
+      "gotchas": [
+        "MutationObserver is async — its callback runs in a microtask, so console.log will not appear immediately. This is normal.",
+        "If added/removed are still happening a lot, a type is probably changing somewhere (for example, conditional rendering alternating between null and an element)."
+      ],
+      "codeSwap": [
+        [
+          "// Ab Phase 5 wale demos dobara chalao. Ye sab true aane chahiye:",
+          "// Now rerun the Phase 5 demos. These should all come out true:"
+        ],
+        [
+          "// Stage A mein 5000+ tha. Ab hona chahiye: 0 added, 0 removed.",
+          "// In Stage A it was 5000+. Now it should be: 0 added, 0 removed."
+        ],
+        [
+          "// Ye ek hi lambi call hai. Is beech browser bilkul jam hai.",
+          "// This is a single long call. The browser is completely frozen in the meantime."
+        ],
+        [
+          "// Ab ye naapo aur note karo (Phase 10 ke liye):",
+          "// Now measure this and note it down (for Phase 10):"
+        ],
+        [
+          "// Aur DOM operations ginne ke liye:",
+          "// And to count DOM operations:"
+        ],
+        [
+          "// pehla mount, koi purana tree nahi",
+          "// first mount, no old tree"
+        ],
+        [
+          "// Scroll bhi bachna chahiye:",
+          "// Scroll should survive too:"
+        ]
+      ]
+    },
+    "l7_0": {
+      "name": "When matching by position breaks",
+      "desc": "Insert an item in the middle of a list — everything shifts by one position.",
+      "what": "<p>Imagine the list is <code>[B, C]</code> and the new list is <code>[A, B, C]</code>. If you compare by position:</p>\n<p>index 0: old <code>B</code> vs new <code>A</code> → change the text<br>\nindex 1: old <code>C</code> vs new <code>B</code> → change the text<br>\nindex 2: nothing vs new <code>C</code> → create a new one</p>\n<p>Result: <b>all three rows were touched</b>, even though only one row was actually added. And if the rows contained inputs, their focus and typed text moved to the wrong row.</p>",
+      "why": "<p>This is not just a performance issue — it is a <b>correctness</b> issue. In a todo list a checkbox will be ticked on the wrong item. In a chat the input text will stick to the wrong message. That’s why React’s “Each child should have a unique key” warning is a serious warning, not a nuisance.</p>\n<p><b>How to do it:</b></p><p>The fix is to change the basis of matching. Instead of position, use a stable identifier — <code>key</code>. Now the reconciler says: “Which element in the old list had key = B? Match it with the new element that also has key = B, even if it is now at position 1.”</p>",
+      "gotchas": [
+        "Using the index as a key is equivalent to not providing keys — the index is still a position. It is only safe when the list never reorders, inserts, or deletes.",
+        "Do not use Math.random() or Date.now() as a key. A new key on every render means everything is new on every render — worse than Stage A.",
+        "Keys do not need to be globally unique — they only need to be unique among their siblings."
+      ],
+      "visualCap": "An item was added in the middle. Without keys all three rows were touched. With keys only two rows were untouched — only one new node was created.",
+      "codeSwap": [
+        [
+          "// KHUD DEKHO -- ye Stage B ka sabse chaunkane wala demo hai:",
+          "// SEE FOR YOURSELF -- this is the most startling demo in Stage B:"
+        ],
+        [
+          "// Ab \"B\" wale input mein \"hello\" type karo. Phir ye chalao:",
+          "// Now type \"hello\" into the \"B\" input. Then run this:"
+        ],
+        [
+          "// Kyunki index 0 wala DOM node reuse hua, aur ab wo A hai.",
+          "// Because the DOM node at index 0 was reused, and now it is A."
+        ],
+        [
+          "// Ye bug hai. Aur ye bina keys ke theek nahi ho sakta.",
+          "// This is a bug. And it can't be fixed without keys."
+        ],
+        [
+          "// Dekho: \"hello\" ab A ki row mein baitha hai.",
+          "// Look: \"hello\" is now sitting in A's row."
+        ],
+        [
+          "// is input mein type karo",
+          "// type in this input"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "Sahi: item ki apni id (item.id). Galat: array index, Math.random(), ya har render pe naya banaya hua number.",
+          "Right: the item's own id (item.id). Wrong: array index, Math.random(), or a number made fresh on every render."
+        ],
+        [
+          "KEYS KE SAATH — key se milaya",
+          "WITH KEYS — matched by key"
+        ],
+        [
+          "BINA KEYS — index se milaya",
+          "WITHOUT KEYS — matched by index"
+        ],
+        [
+          "B ke input ka focus:",
+          "Focus of B's input:"
+        ],
+        [
+          "ab A ki row pe!",
+          "now on A's row!"
+        ],
+        [
+          "B pe hi hai ✓",
+          "Stays on B ✓"
+        ],
+        [
+          "PURANI LIST: [B, C]   →   NAYI LIST: [A, B, C]",
+          "OLD LIST: [B, C]   →   NEW LIST: [A, B, C]"
+        ],
+        [
+          "wahi node, sirf khisak gaya",
+          "the same node, it just slid"
+        ],
+        [
+          "Key kaise chuno",
+          "How to choose a key"
+        ],
+        [
+          "B→A text badla",
+          "B→A text changed"
+        ],
+        [
+          "C→B text badla",
+          "C→B text changed"
+        ]
+      ]
+    }
+  },
+  "units": {
+    "p0": {
+      "title": "Foundation — The JS you need to build a library"
+    },
+    "p3": {
+      "title": "render — From blueprint to real house"
+    },
+    "p4": {
+      "title": "JSX & Tooling — Without a build, and with one"
+    },
+    "p5": {
+      "title": "The wall of Stage A — Everything again, every time",
+      "week": "The wall"
+    },
+    "p9": {
+      "title": "useEffect — Side effects and cleanup"
+    },
+    "p10": {
+      "title": "The wall of Stage B — One thread, and 16ms",
+      "week": "The wall"
+    },
+    "p11": {
+      "title": "Fiber — Make the tree walkable"
+    },
+    "p13": {
+      "title": "Hooks on Fiber — And the rest of the hooks"
+    },
+    "p14": {
+      "title": "Events & Review — Context, delegation, and an accounting of the architecture"
+    },
+    "p1": {
+      "title": "Mental Model — UI is a function"
+    },
+    "p6": {
+      "title": "Reconciler — Remember the old, find the difference"
+    },
+    "p7": {
+      "title": "Keys — The real exam of lists"
+    }
+  }
+}

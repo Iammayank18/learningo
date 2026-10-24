@@ -4,7 +4,7 @@ import { href } from '../lib/router'
 import { sfx } from '../lib/sound'
 import { Flame } from './Flame'
 import { BoltIcon, ChestIcon } from './Icons'
-import { tr } from '../lib/i18n'
+import { t } from '../lib/i18n'
 
 export function Ring({ value, size = 64, light = false, children }: { value: number; size?: number; light?: boolean; children?: React.ReactNode }) {
   const r = (size - 10) / 2
@@ -33,23 +33,23 @@ export function Rail() {
   const week = Array.from({ length: 7 }, (_, i) => ({ label: 'MTWTFSS'[i], on: (p.days[dayKey(now + (i - dow) * DAY)] ?? 0) > 0, today: i === dow }))
 
   const quests = [
-    { id: 'xp', label: tr('Aaj {g} XP kamao', { g: p.goal }), now: today, goal: p.goal, reward: 10, icon: <BoltIcon size={34} /> },
-    { id: 'lessons', label: tr('2 lessons complete karo'), now: acts.l, goal: 2, reward: 15, icon: <span className="q-emoji">📘</span> },
-    { id: 'review', label: tr('3 topics revise karo'), now: acts.r, goal: 3, reward: 10, icon: <span className="q-emoji">🔁</span> },
+    { id: 'xp', label: t('rail.questXp', { g: p.goal }), now: today, goal: p.goal, reward: 10, icon: <BoltIcon size={34} /> },
+    { id: 'lessons', label: t('rail.questLessons'), now: acts.l, goal: 2, reward: 15, icon: <span className="q-emoji">📘</span> },
+    { id: 'review', label: t('rail.questReview'), now: acts.r, goal: 3, reward: 10, icon: <span className="q-emoji">🔁</span> },
   ]
 
   return (
     <aside className="rail">
       <div className="stat-bar">
-        <span className={'sb fire' + (s.todayDone ? ' on' : '')} title="Streak"><Flame size={20} dim={!s.todayDone} /> {s.current}</span>
-        <span className="sb xp" title="Total XP"><BoltIcon size={20} /> {p.xp}</span>
-        <span className="sb lvl" title="Level">Lv {lv.level}</span>
+        <span className={'sb fire' + (s.todayDone ? ' on' : '')} title={t('rail.streak')}><Flame size={20} dim={!s.todayDone} /> {s.current}</span>
+        <span className="sb xp" title={t('rail.totalXp')}><BoltIcon size={20} /> {p.xp}</span>
+        <span className="sb lvl" title={t('rail.level')}>{t('nav.levelShort', { n: lv.level })}</span>
       </div>
-      <div className="lvl-bar" title={`${lv.need - lv.into} XP to Level ${lv.level + 1}`}><div style={{ width: `${(lv.into / lv.need) * 100}%` }} /></div>
+      <div className="lvl-bar" title={t('rail.xpToLevel', { x: lv.need - lv.into, l: lv.level + 1 })}><div style={{ width: `${(lv.into / lv.need) * 100}%` }} /></div>
 
       <div className="card streak-card">
         <div className="streak-card-top">
-          <div><h4>{tr('{n} din ka streak', { n: s.current })}</h4><p className="muted small">{s.todayDone ? tr('Aaj ka streak safe ✓') : tr('Aaj ek lesson karo — streak bachao!')}</p></div>
+          <div><h4>{t('common.dayStreak', { n: s.current })}</h4><p className="muted small">{s.todayDone ? t('rail.streakSafe') : t('rail.streakDo')}</p></div>
           <Flame size={44} dim={!s.todayDone} />
         </div>
         <div className="week-mini">
@@ -58,7 +58,7 @@ export function Rail() {
       </div>
 
       <div className="card quests">
-        <div className="quests-head"><h4>Daily Quests</h4><span className="muted small">{quests.filter((q) => q.now >= q.goal).length}/3</span></div>
+        <div className="quests-head"><h4>{t('rail.dailyQuests')}</h4><span className="muted small">{quests.filter((q) => q.now >= q.goal).length}/3</span></div>
         {quests.map((q) => {
           const complete = q.now >= q.goal
           const claimed = !!p.claimed[`${k}:${q.id}`]
@@ -69,7 +69,7 @@ export function Rail() {
                 <b>{q.label}</b>
                 <div className="q-bar"><div style={{ width: `${Math.min(100, (q.now / q.goal) * 100)}%` }} /><span>{Math.min(q.now, q.goal)} / {q.goal}</span></div>
               </div>
-              <button className={'q-chest' + (complete && !claimed ? ' ready' : '')} disabled={!complete || claimed} aria-label={claimed ? 'Claimed' : `Claim +${q.reward} XP`}
+              <button className={'q-chest' + (complete && !claimed ? ' ready' : '')} disabled={!complete || claimed} aria-label={claimed ? t('common.claimed') : t('rail.claimAria', { n: q.reward })}
                 onClick={() => { claimQuest(q.id, q.reward); sfx.goal() }}>
                 {claimed ? <span className="q-done">✓</span> : <ChestIcon size={40} open={complete} dim={!complete} />}
               </button>
@@ -81,8 +81,8 @@ export function Rail() {
       <a className={'card review-card' + (due ? ' due' : '')} href={href('review')}>
         <div className="review-ico">{due ? '⏰' : '✅'}</div>
         <div>
-          <h4>{due ? `${due} revision due` : 'Revision clear'}</h4>
-          <p className="muted small">{due ? tr('Spaced repetition — abhi karo, yaad rahega') : tr('Jo seekha wo apne time pe wapas aayega')}</p>
+          <h4>{due ? t('rail.revisionDue', { n: due }) : t('rail.revisionClear')}</h4>
+          <p className="muted small">{due ? t('rail.spaced') : t('rail.learned')}</p>
         </div>
       </a>
     </aside>

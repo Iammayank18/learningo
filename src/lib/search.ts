@@ -1,4 +1,5 @@
 import { loadSearchIndex } from '../data/load'
+import { getLang } from './i18n'
 import type { SearchEntry } from '../types'
 
 export interface Hit { e: SearchEntry; score: number; field: 'name' | 'text' }
@@ -7,9 +8,12 @@ const norm = (s: string) => s.toLowerCase().normalize('NFKD').replace(/[^\p{L}\p
 type Pre = { e: SearchEntry; n: string; t: string; x: string }
 let pre: Pre[] = []
 let loading: Promise<void> | null = null
+let loadedLang = ''
 
 /** Loads the (large) search index on first use so it stays out of the main bundle. */
 export function ensureSearch(): Promise<void> {
+  const lang = getLang()
+  if (lang !== loadedLang) { loadedLang = lang; pre = []; loading = null; names = null }
   loading ??= loadSearchIndex().then((idx) => { pre = idx.map((e) => ({ e, n: norm(e.n), t: norm(e.t), x: norm(e.x) })) })
   return loading
 }

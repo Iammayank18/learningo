@@ -14,12 +14,12 @@ import { sfx } from '../lib/sound'
 import { usePrefs } from '../lib/prefs'
 import { lockedIds } from '../lib/unlock'
 import type { Course } from '../types'
-import { tr } from '../lib/i18n'
+import { t } from '../lib/i18n'
 
 export function LessonPage({ courseId, lessonId }: { courseId: string; lessonId: string }) {
   const { course, loading, error } = useCourse(courseId)
-  if (error) return <div className="empty">{tr('Lesson load nahi hua.')}</div>
-  if (loading || !course) return <div className="empty">Loading…</div>
+  if (error) return <div className="empty">{t('lesson.error')}</div>
+  if (loading || !course) return <div className="empty">{t('common.loading')}</div>
   return <Gate key={courseId + lessonId} course={course} lessonId={lessonId} />
 }
 
@@ -33,11 +33,11 @@ function Gate({ course, lessonId }: { course: Course; lessonId: string }) {
     return (
       <div className="done-screen">
         <Mascot mood="sad" size={110} />
-        <h1>{tr('🔒 Ye lesson abhi locked hai')}</h1>
-        <p className="muted">{tr('Pehle')} <b>{blocked.name}</b> {tr('complete karo — phir agla khulega.')}</p>
+        <h1>{t('lesson.lockedTitle')}</h1>
+        <p className="muted">{t('lesson.lockedPre')} <b>{blocked.name}</b> {t('lesson.lockedPost')}</p>
         <div className="done-actions">
-          <a className="btn btn-outline" href={href('read', course.id, lessonId)}>{tr('Sirf notes padho')}</a>
-          <a className="btn btn-green" href={href('lesson', course.id, blocked.id)}>{tr('Wahi lesson shuru karo')}</a>
+          <a className="btn btn-outline" href={href('read', course.id, lessonId)}>{t('lesson.readNotesOnly')}</a>
+          <a className="btn btn-green" href={href('lesson', course.id, blocked.id)}>{t('lesson.startThat')}</a>
         </div>
       </div>
     )
@@ -55,7 +55,7 @@ function Runner({ course, lessonId }: { course: Course; lessonId: string }) {
   const [result, setResult] = useState<CelebrationData | null>(null)
   const exit = () => go()
 
-  if (!loc) return <div className="empty">{tr('Lesson nahi mila.')}</div>
+  if (!loc) return <div className="empty">{t('lesson.notFound')}</div>
   const { lesson, ui, li } = loc
   const nextLesson = course.units[ui].lessons[li + 1] ?? course.units[ui + 1]?.lessons[0]
 
@@ -63,9 +63,9 @@ function Runner({ course, lessonId }: { course: Course; lessonId: string }) {
     return (
       <div className="done-screen">
         <Celebration data={result} actions={<>
-          <a className="btn btn-outline" href={href('read', course.id, lessonId)}>{tr('Notes dekho')}</a>
-          {nextLesson && <a className="btn btn-outline" href={href('lesson', course.id, nextLesson.id)}>Next lesson →</a>}
-          <button className="btn btn-green" onClick={exit}>Continue</button>
+          <a className="btn btn-outline" href={href('read', course.id, lessonId)}>{t('lesson.viewNotes')}</a>
+          {nextLesson && <a className="btn btn-outline" href={href('lesson', course.id, nextLesson.id)}>{t('lesson.nextLesson')}</a>}
+          <button className="btn btn-green" onClick={exit}>{t('lesson.continue')}</button>
         </>} />
       </div>
     )
@@ -78,7 +78,7 @@ function Runner({ course, lessonId }: { course: Course; lessonId: string }) {
     completeLesson(course.id, lessonId, xp, perfect)
     const next = snap()
     setResult({
-      title: 'Lesson complete!', subtitle: lesson.name, xp, perfect, prev, next, steps: stepsBetween(prev, next),
+      title: t('lesson.completeTitle'), subtitle: lesson.name, xp, perfect, prev, next, steps: stepsBetween(prev, next),
       accuracy: Math.round((r.correct / Math.max(1, r.total)) * 100), seconds: (Date.now() - startedAt) / 1000,
     })
   }
@@ -94,8 +94,8 @@ function Runner({ course, lessonId }: { course: Course; lessonId: string }) {
         </div>
         <footer className="qfooter idle">
           <div className="qfooter-in">
-            <button className="btn btn-outline" disabled={step === 0} onClick={() => { sfx.back(); setStep(step - 1) }}>Back</button>
-            <button className="btn btn-green" onClick={() => { sfx.tap(); setStep(step + 1) }} autoFocus>{last ? tr('Practice shuru karo') : 'Continue'}</button>
+            <button className="btn btn-outline" disabled={step === 0} onClick={() => { sfx.back(); setStep(step - 1) }}>{t('lesson.back')}</button>
+            <button className="btn btn-green" onClick={() => { sfx.tap(); setStep(step + 1) }} autoFocus>{last ? t('lesson.startPractice') : t('common.continue')}</button>
           </div>
         </footer>
       </div>

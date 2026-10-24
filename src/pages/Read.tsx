@@ -4,15 +4,15 @@ import { sectionKinds } from '../lib/sections'
 import { href } from '../lib/router'
 import { lid, useProgress } from '../lib/store'
 import { LessonSection } from '../components/LessonSection'
-import { tr } from '../lib/i18n'
+import { t } from '../lib/i18n'
 
 export function Read({ courseId, lessonId }: { courseId: string; lessonId: string }) {
   const { course, loading, error } = useCourse(courseId)
   const p = useProgress()
-  if (error) return <div className="empty">{tr('Load nahi hua.')}</div>
-  if (loading || !course) return <div className="empty">Loading…</div>
+  if (error) return <div className="empty">{t('read.error')}</div>
+  if (loading || !course) return <div className="empty">{t('common.loading')}</div>
   const loc = locate(course, lessonId)
-  if (!loc) return <div className="empty">{tr('Lesson nahi mila.')}</div>
+  if (!loc) return <div className="empty">{t('read.notFound')}</div>
   const { lesson, ui, li } = loc
   const unit = course.units[ui]
   const prev = unit.lessons[li - 1] ?? course.units[ui - 1]?.lessons.at(-1)
@@ -23,8 +23,8 @@ export function Read({ courseId, lessonId }: { courseId: string; lessonId: strin
       <div className="crumbs"><a href={href()}>{course.icon} {course.title}</a> › {unit.title}</div>
       <h1>{lesson.name}</h1>
       <div className="read-actions">
-        <a className="btn btn-green" href={href('lesson', course.id, lesson.id)}>{tr('Practice karo · +25 XP')}</a>
-        {card && <span className="chip">Crown {card.stage}/5</span>}
+        <a className="btn btn-green" href={href('lesson', course.id, lesson.id)}>{t('read.practiceXp')}</a>
+        {card && <span className="chip">{t('read.crown', { n: card.stage })}</span>}
       </div>
       {sectionKinds(lesson, true).map((k) => <LessonSection key={k} lesson={lesson} kind={k} />)}
       <nav className="pager">

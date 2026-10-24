@@ -2,7 +2,7 @@ import { courseIndex } from '../data/load'
 import { HUES } from '../lib/sections'
 import { setActiveCourse, useProgress } from '../lib/store'
 import { go } from '../lib/router'
-import { tr } from '../lib/i18n'
+import { t } from '../lib/i18n'
 
 export function Courses() {
   const p = useProgress()
@@ -10,8 +10,8 @@ export function Courses() {
   const doneIn = (id: string) => Object.keys(p.done).filter((k) => k.startsWith(id + '/')).length
   return (
     <div className="page">
-      <h1>Courses</h1>
-      <p className="muted">{tr('Ek course chuno — path usi se chalega. Progress har course ki alag save hoti hai.')}</p>
+      <h1>{t('courses.title')}</h1>
+      <p className="muted">{t('courses.intro')}</p>
       {groups.map((g) => (
         <section key={g}>
           <h3 className="group-title">{g}</h3>
@@ -23,10 +23,10 @@ export function Courses() {
                   onClick={() => { setActiveCourse(c.id); go() }}>
                   <div className="course-ico">{c.icon}</div>
                   <h4>{c.title}</h4>
-                  <div className="muted small">{c.units} units · {c.lessons} lessons</div>
+                  <div className="muted small">{t('courses.unitsLessons', { units: c.units, lessons: c.lessons })}</div>
                   <div className="pbar slim"><div className="pbar-fill" style={{ width: `${(d / c.lessons) * 100}%` }} /></div>
-                  <div className="small">{d}/{c.lessons} done</div>
-                  {c.hasDeep && <span className="tag">Full lessons</span>}
+                  <div className="small">{t('courses.doneCount', { done: d, total: c.lessons })}</div>
+                  {c.hasDeep && <span className="tag">{t('courses.fullLessons')}</span>}
                 </button>
               )
             })}

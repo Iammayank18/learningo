@@ -1,0 +1,1125 @@
+{
+  "lessons": {
+    "sef1": {
+      "desc": "Confidentiality, integrity, availability — the three pillars every security control maps back to. Includes defense in depth, least privilege, and fail secure.",
+      "q": "Explain the CIA triad. How does each principle apply to a real-world system you have designed?",
+      "qsub": "How do defense in depth and least privilege complement the CIA triad? When would you choose fail secure over fail open?",
+      "what": "<p><b>Definition:</b> The CIA triad consists of three security pillars. Each control protects one of them. Along with: <b>defense in depth</b> (multiple layers), <b>least privilege</b> (minimum access), <b>fail secure</b> (denies access on failure).</p>",
+      "why": "<p>In a design review, ask: which C/I/A risk is present? This determines the priority of controls.</p>",
+      "cons": [
+        "Trade-offs: higher confidentiality can sometimes reduce availability"
+      ],
+      "gotchas": [
+        "Availability is also a security property (DoS)",
+        "Fail open is used only in safety-critical cases (e.g., fire doors)",
+        "A single control does not cover all three"
+      ],
+      "terms": [
+        [
+          "Confidentiality",
+          "Only authorized people can view the data (encryption, access control)."
+        ],
+        [
+          "Integrity",
+          "Data cannot be changed without authorization (hash, signature, checksums)."
+        ],
+        [
+          "Availability",
+          "Service runs when needed (redundancy, DDoS protection)."
+        ]
+      ],
+      "where": [
+        [
+          "Architecture reviews",
+          "Framework for identifying threats."
+        ],
+        [
+          "Compliance",
+          "SOC2/ISO controls map to the CIA."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// error par bhi deny",
+          "// deny on error too"
+        ]
+      ]
+    },
+    "sef4": {
+      "q": "Explain how the TLS certificate chain works. What happens when a certificate is revoked?",
+      "what": "<p><b>Definition:</b> In PKI, the browser trusts root CAs; the server sends the leaf certificate and intermediates. The certificate includes the domain, public key, expiration, and the CA’s signature.</p>",
+      "why": "<p>Expired or misconfigured certificates are a major cause of outages; automation (ACME/Let's Encrypt) is essential.</p>",
+      "cons": [
+        "Risk of CA compromise, burden of renewals"
+      ],
+      "gotchas": [
+        "If the intermediate chain is missing, some clients fail",
+        "Monitor certificate expiry",
+        "Never store the private key in a repository or logs"
+      ],
+      "terms": [
+        [
+          "CA",
+          "Trusted authority that signs certificates."
+        ],
+        [
+          "Chain of trust",
+          "Leaf → intermediate → root."
+        ],
+        [
+          "Revocation",
+          "Certificate revocation via CRL / OCSP."
+        ]
+      ]
+    },
+    "sef2": {
+      "q": "What is the difference between authentication and authorization? Why do engineers confuse them?",
+      "what": "<p><b>Definition:</b> AuthN first (password, MFA, token), AuthZ after that on every request (RBAC, ABAC, ownership check). Both are implemented on separate layers.</p>",
+      "why": "<p>Most breaches happen not from authN bypass, but from <b>authZ missing</b> (IDOR/BOLA).</p>",
+      "cons": [
+        "AuthZ logic becomes scattered"
+      ],
+      "gotchas": [
+        "Logging in does not equal getting access",
+        "Client-side checks are not authZ",
+        "Authorization is required on every request, not just after login"
+      ],
+      "terms": [
+        [
+          "Authentication (AuthN)",
+          "Who you are — identity verification."
+        ],
+        [
+          "Authorization (AuthZ)",
+          "What you can do — permissions."
+        ],
+        [
+          "401 vs 403",
+          "401 = identity unknown; 403 = known but not allowed."
+        ]
+      ],
+      "where": [
+        [
+          "APIs",
+          "Both on every endpoint."
+        ],
+        [
+          "Microservices",
+          "Gateway handles authN, service handles authZ."
+        ]
+      ]
+    },
+    "sef3": {
+      "what": "<p><b>Definition:</b> Encrypts symmetric data; for asymmetric key exchange and signatures; for hash integrity. Use a slow hash (bcrypt/argon2) with salt for passwords, not SHA-256.</p>",
+      "why": "<p>Never write your own crypto — use vetted libraries and safe defaults.</p>",
+      "gotchas": [
+        "Never reuse IV/nonce (catastrophic in GCM)",
+        "Do not use ECB mode",
+        "MD5/SHA1 are broken"
+      ],
+      "terms": [
+        [
+          "Symmetric",
+          "Single key: AES-256-GCM (fast, bulk data)."
+        ],
+        [
+          "Asymmetric",
+          "Public/private key: RSA, ECDSA, Ed25519."
+        ],
+        [
+          "Hash vs encrypt",
+          "Hash one-way; encryption reversible."
+        ]
+      ],
+      "cons": [
+        "Key management is the real difficulty"
+      ]
+    },
+    "sef5": {
+      "q": "How do you perform threat modeling on a new system? Walk through the STRIDE framework.",
+      "what": "<p><b>Definition:</b> Threat modeling at the design stage asks: What are we building? What could go wrong? What will we do? Did we do it right? Create a DFD, mark trust boundaries, apply STRIDE to each element.</p>",
+      "why": "<p>Fixing in design is much cheaper than fixing in code.</p>",
+      "cons": [
+        "Time and expertise needed"
+      ],
+      "gotchas": [
+        "Not a one-time document — update when design changes",
+        "Not only attackers, also insider threats",
+        "Assign an owner and ticket to mitigation"
+      ],
+      "terms": [
+        [
+          "STRIDE",
+          "Spoofing, Tampering, Repudiation, Info disclosure, DoS, Elevation of privilege."
+        ],
+        [
+          "Trust boundary",
+          "Where data moves from one trust level to another."
+        ],
+        [
+          "DFD",
+          "Data flow diagram — the basis of the threat model."
+        ]
+      ],
+      "where": [
+        [
+          "Design review",
+          "Before a new feature."
+        ],
+        [
+          "Payment flow",
+          "High-risk areas."
+        ]
+      ]
+    },
+    "wse1": {
+      "desc": "The most critical web application security risks: Broken Access Control, Cryptographic Failures, Injection, Insecure Design, Security Misconfiguration, and more.",
+      "q": "Name the current OWASP Top 10. Which three are most common in modern web applications?",
+      "what": "<p><b>Definition:</b> The OWASP Top 10 is the list of the most common risks for web applications (Broken Access Control, Cryptographic Failures, Injection, Insecure Design, Misconfiguration, Vulnerable Components, Auth Failures, Integrity Failures, Logging Failures, SSRF).</p>",
+      "why": "<p>Common vocabulary for interviews and audits; serves as a checklist during code reviews.</p>",
+      "cons": [
+        "The Top 10 does not give the full picture"
+      ],
+      "gotchas": [
+        "The order changes with each edition",
+        "There is a separate OWASP API Top 10 for APIs",
+        "Memorizing only the list is not enough — know the remediation patterns"
+      ],
+      "codeSwap": [
+        [
+          "- Secrets env/vault mein?",
+          "- Secrets in env/vault?"
+        ]
+      ]
+    },
+    "wse2": {
+      "q": "Explain the three types of XSS. How does Content Security Policy prevent each?",
+      "what": "<p><b>Definition:</b> In XSS, the attacker’s JavaScript runs in the victim’s browser on your site’s origin — it can steal cookies/tokens. Fix: output encoding, framework auto-escape, CSP, HttpOnly cookies.</p>",
+      "why": "<p>XSS = full account takeover; the origin’s trust is in the attacker’s hands.</p>",
+      "pros": [
+        "Frameworks perform default escaping."
+      ],
+      "gotchas": [
+        "In React, <code>dangerouslySetInnerHTML</code> and <code>href=javascript:</code> are risky.",
+        "HttpOnly prevents cookie theft, not XSS.",
+        "Blacklist filters don’t work — encode instead."
+      ],
+      "terms": [
+        [
+          "Stored XSS",
+          "Payload saved in DB, triggers for everyone."
+        ],
+        [
+          "Reflected XSS",
+          "URL parameter reflected immediately on the page."
+        ],
+        [
+          "CSP",
+          "Informs the browser which scripts are allowed."
+        ]
+      ],
+      "cons": [
+        "Deploying CSP is hard"
+      ]
+    },
+    "wse3": {
+      "what": "<p><b>Definition:</b> Browser cookies are sent automatically, so a POST from evil.com to bank.com can occur. Defense: SameSite=Lax/Strict, anti-CSRF tokens, Origin/Referer check, custom header for APIs.</p>",
+      "why": "<p>Critical for state-changing endpoints (transfer, password change).</p>",
+      "pros": [
+        "SameSite handles it automatically to a large extent"
+      ],
+      "gotchas": [
+        "Don’t cause state changes with GET",
+        "APIs that use a Bearer token header are not vulnerable to CSRF",
+        "If XSS occurs, the CSRF token can also be stolen"
+      ],
+      "terms": [
+        [
+          "CSRF",
+          "Attacker triggers an authenticated request from the victim’s browser."
+        ],
+        [
+          "SameSite",
+          "Cookie does not go on cross-site requests (Lax/Strict)."
+        ],
+        [
+          "CSRF token",
+          "Unpredictable per-session token."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// server: token session se match karo",
+          "// server: match the token against the session"
+        ]
+      ]
+    },
+    "wse4": {
+      "desc": "SQLi injects malicious SQL through input fields — UNION-based, error-based, blind. NoSQLi targets MongoDB/Couchbase with $where and $regex. Parameterized queries are the fix.",
+      "what": "<p><b>Definition:</b> When a query is built by string concatenation, an attacker can insert <code>' OR 1=1 --</code> to change the logic. Fix: prepared statements/ORM parameters, least-privilege DB user, input validation.</p>",
+      "why": "<p>Data breach is a classic and still a common path.</p>",
+      "pros": [
+        "Parameterization is simple and effective"
+      ],
+      "cons": [
+        "Parameters do not work on dynamic identifiers"
+      ],
+      "gotchas": [
+        "Parameterization is better than escaping",
+        "Risk also exists in ORM raw queries",
+        "Whitelist table/column names"
+      ],
+      "terms": [
+        [
+          "SQLi",
+          "The query structure changes from input."
+        ],
+        [
+          "Parameterized query",
+          "Data and code are separate."
+        ],
+        [
+          "NoSQLi",
+          "<code>{\"$ne\": null}</code> operators are injected."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// object ko string banao",
+          "// turn the object into a string"
+        ]
+      ]
+    },
+    "wse5": {
+      "desc": "SSRF makes the server fetch internal resources (cloud metadata endpoints). IDOR lets attackers access resources by changing IDs. Both require server-side validation and authorization checks.",
+      "what": "<p><b>Definition:</b> In SSRF, the server sends a request to internal services/metadata (AWS IMDS). Fix: URL allowlist, block private IPs, IMDSv2, egress filtering. IDOR: ownership check missing.</p>",
+      "why": "<p>Capital One breach occurred due to SSRF — cloud credentials leaked.</p>",
+      "cons": [
+        "Redirects and DNS rebinding are tricky"
+      ],
+      "gotchas": [
+        "Following redirects can bypass the allowlist",
+        "Changing predictable IDs to UUIDs is not a fix — an ownership check is needed",
+        "Enforce IMDSv2"
+      ],
+      "terms": [
+        [
+          "SSRF",
+          "Having the server make a request to the URL supplied by the attacker."
+        ],
+        [
+          "Metadata endpoint",
+          "169.254.169.254 — cloud credentials."
+        ],
+        [
+          "IDOR",
+          "Changing the ID to access someone else’s data."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// DNS rebinding ke liye resolve ke baad check",
+          "// Check after resolve, for DNS rebinding"
+        ]
+      ]
+    },
+    "xxe": {
+      "qsub": "What is the difference between XML external entity and XML internal entity? How do you disable XXE in Java and Python?",
+      "what": "<p><b>Definition:</b> XXE occurs when the XML parser resolves external entities. An attacker can read local files, perform SSRF, or cause DoS (billion laughs).</p>",
+      "why": "<p>XML/SOAP/SAML/SVG/docx uploads all parse XML — a hidden attack surface.</p>",
+      "pros": [
+        "Fix with a single config"
+      ],
+      "cons": [
+        "Parser defaults are unsafe in older libraries"
+      ],
+      "gotchas": [
+        "Even if it is a JSON API, XML can be parsed via a Content-Type switch",
+        "Not just external entities, disable DTD entirely",
+        "SVG upload is also XML"
+      ],
+      "terms": [
+        [
+          "External entity",
+          "In XML <code>&lt;!ENTITY x SYSTEM \"file:///etc/passwd\"&gt;</code>."
+        ],
+        [
+          "DTD",
+          "Document Type Definition where entities are defined."
+        ],
+        [
+          "Mitigation",
+          "Disable DTD/external entities in the parser."
+        ]
+      ]
+    },
+    "ssti": {
+      "q": "What is SSTI and how do you detect it? What is the impact of SSTI in Jinja2?",
+      "qsub": "What is the difference between SSTI and XSS? How do you sandbox a template engine?",
+      "what": "<p><b>Definition:</b> If you concatenate user input into a template string and render it (<code>render_template_string(\"Hello \" + name)</code>), the attacker can send <code>{{7*7}}</code> and achieve code execution.</p>",
+      "why": "<p>SSTI is often direct RCE — the server is fully compromised.</p>",
+      "pros": [
+        "Fix: never put user input into a template"
+      ],
+      "gotchas": [
+        "Auto-escape does not stop SSTI (it stops XSS)",
+        "Keep user-editable templates in a logic-less engine (Mustache)",
+        "Do not fully trust the sandbox"
+      ],
+      "terms": [
+        [
+          "Template injection",
+          "User input becomes template code."
+        ],
+        [
+          "Auto-escape",
+          "Output HTML-encode."
+        ],
+        [
+          "Sandbox",
+          "Template engine in a restricted environment."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "# Probe: {{7*7}} -> 49 ho jaye to vulnerable",
+          "# Probe: if {{7*7}} gives 49 -> vulnerable"
+        ],
+        [
+          "# Good: data context mein pass karo",
+          "# Good: pass the data through context"
+        ]
+      ]
+    },
+    "directory-traversal": {
+      "desc": "Directory traversal uses ../ sequences to access files outside the web root. Bypasses: URL encoding (%2e%2e%2f), null bytes (%00), double encoding. Mitigation: validate paths against whitelist, use chroot/jail, never use user input in file paths directly.",
+      "qsub": "How do you prevent directory traversal in Node.js and Python? What is the null byte attack?",
+      "what": "<p><b>Definition:</b> <code>/download?file=../../etc/passwd</code> so the attacker can read files outside the web root. Fix: map the filename to an ID, or resolve it and verify the base directory prefix.</p>",
+      "why": "<p>Config files, keys, and source code can leak.</p>",
+      "cons": [
+        "Be careful with symlinks"
+      ],
+      "gotchas": [
+        "Perform the check after decoding, not before",
+        "Zip-slip: also validate archive entry names",
+        "Allowlist / ID mapping is the safest"
+      ],
+      "terms": [
+        [
+          "../",
+          "Parent directory sequence."
+        ],
+        [
+          "Encoding bypass",
+          "%2e%2e%2f, double encoding, null byte."
+        ],
+        [
+          "Canonicalize",
+          "Resolve the path and check that it stays within the base."
+        ]
+      ]
+    },
+    "open-redirect": {
+      "qsub": "How do you prevent open redirects while still allowing legitimate redirects? What is the OAuth state parameter for?",
+      "what": "<p><b>Definition:</b> After login, blindly redirecting on <code>?returnTo=</code> lets the attacker create a phishing link from a trusted domain and provides a path for token leakage in OAuth/SSO flows.</p>",
+      "why": "<p>It looks like a small bug, but it is used in phishing and OAuth code theft chains.</p>",
+      "gotchas": [
+        "<code>//evil.com</code> and <code>/\\evil.com</code> bypass",
+        "startsWith('trusted.com') is not enough (trusted.com.evil.com)",
+        "Keep OAuth redirect_uri an exact match"
+      ],
+      "terms": [
+        [
+          "Open redirect",
+          "?next=https://evil.com redirect."
+        ],
+        [
+          "Phishing",
+          "Trusted domain link, evil destination."
+        ],
+        [
+          "Allowlist",
+          "Only known paths/hosts."
+        ]
+      ],
+      "codeSwap": [
+        [
+          " sirf same-site relative path",
+          " only same-site relative paths"
+        ]
+      ]
+    },
+    "insecure-deserialization": {
+      "qsub": "What is the difference between serialization and deserialization? How do you secure Java deserialization?",
+      "what": "<p><b>Definition:</b> Loading untrusted data with a native deserializer (Java ObjectInputStream, Python pickle, PHP unserialize) allows an attacker to create objects or invoke methods — often resulting in RCE.</p>",
+      "why": "<p>A major source of bugs like Log4Shell and Java/Python RCEs.</p>",
+      "cons": [
+        "Legacy systems often still use native serialization"
+      ],
+      "gotchas": [
+        "Never use pickle on untrusted data",
+        "Verify signatures before deserializing, not after",
+        "Class allowlist (look-ahead deserialization)"
+      ],
+      "terms": [
+        [
+          "Deserialization",
+          "Bytes → object."
+        ],
+        [
+          "Gadget chain",
+          "Existing classes combined to achieve code execution."
+        ],
+        [
+          "Safe format",
+          "JSON + schema validation."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "# Agar zaroori ho: signed payload (HMAC) verify karke hi deserialize",
+          "# If needed: deserialize only after verifying the signed payload (HMAC)"
+        ]
+      ]
+    },
+    "clickjacking": {
+      "qsub": "What is the difference between X-Frame-Options and CSP frame-ancestors? Why is JavaScript frame-busting not recommended?",
+      "what": "<p><b>Definition:</b> Attacker loads your site in a transparent iframe and places it over a button on their page; the user clicks \"free gift\" but actually presses \"delete account\".</p>",
+      "why": "<p>One-click sensitive actions (payments, follow, delete) are at risk.</p>",
+      "pros": [
+        "Fixed with a single header"
+      ],
+      "cons": [
+        "Legitimate embedding is limited"
+      ],
+      "gotchas": [
+        "JS frame-busting is bypassable — use a header",
+        "SameSite cookies also block sessions in cross-site iframes",
+        "If embedding is needed, allow specific origins"
+      ],
+      "terms": [
+        [
+          "UI redressing",
+          "Getting the user to click on an invisible iframe."
+        ],
+        [
+          "X-Frame-Options",
+          "DENY / SAMEORIGIN."
+        ],
+        [
+          "frame-ancestors",
+          "CSP's modern replacement."
+        ]
+      ],
+      "where": [
+        [
+          "Admin panels",
+          "Sensitive actions."
+        ],
+        [
+          "Embeds",
+          "Whitelist for widgets."
+        ]
+      ]
+    },
+    "aut1": {
+      "q": "Compare session-based and token-based authentication. What are the trade-offs for scalability and security?",
+      "what": "<p><b>Definition:</b> Sessions store state server-side (Redis), allowing immediate logout/revoke. JWT is stateless, scales easily but revocation is difficult — requires short expiry + refresh token.</p>",
+      "why": "<p>For browser apps, an HttpOnly cookie session is often simple and safer; for microservices/mobile, tokens are used.</p>",
+      "cons": [
+        "Session: shared store",
+        "Token: revocation and size"
+      ],
+      "gotchas": [
+        "Storing JWT in localStorage is an XSS risk",
+        "Session fixation: rotate ID on login",
+        "'JWT is always better' — wrong"
+      ],
+      "terms": [
+        [
+          "Session",
+          "Server state + session ID in cookie."
+        ],
+        [
+          "Stateless token",
+          "JWT: claims reside on the client."
+        ],
+        [
+          "Revocation",
+          "Session easy; JWT difficult."
+        ]
+      ]
+    },
+    "aut2": {
+      "q": "Explain the alg=none attack on JWTs. How do you prevent algorithm confusion attacks?",
+      "what": "<p><b>Definition:</b> JWT = header.payload.signature (base64url). Payload is not encrypted, it is only signed. When verifying, pin the algorithm and check exp, iss, aud.</p>",
+      "why": "<p>JWT misuse is a common path for auth bypass.</p>",
+      "gotchas": [
+        "Do not store secrets in the payload",
+        "<code>decode</code> ≠ <code>verify</code>",
+        "A weak HS256 secret can be brute-forced"
+      ],
+      "terms": [
+        [
+          "alg=none",
+          "Signature skip attack."
+        ],
+        [
+          "Algorithm confusion",
+          "Turning an RS256 public key into an HS256 secret."
+        ],
+        [
+          "exp / aud / iss",
+          "Claims that should be verified."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// Galat: jwt.decode(token) ko trust karna",
+          "// Wrong: trusting jwt.decode(token)"
+        ],
+        [
+          " Sahi",
+          " Correct"
+        ]
+      ],
+      "cons": [
+        "Hard to revoke, payload visible"
+      ]
+    },
+    "aut3": {
+      "q": "Walk through the OAuth 2.0 Authorization Code Flow with PKCE. Why is PKCE necessary?",
+      "qsub": "What is the difference between an access token and an ID token? Why was the Implicit Flow deprecated?",
+      "what": "<p><b>Definition:</b> Authorization Code + PKCE flow: the app sends the user to the IdP → receives a code → backend/SPA exchanges code + verifier for a token. OAuth is for authorization; OIDC ID token is for login.</p>",
+      "why": "<p>Third-party login and API delegation standard; implicit flow is now deprecated.</p>",
+      "pros": [
+        "Password is not shared"
+      ],
+      "cons": [
+        "Flows and misconfiguration are complex"
+      ],
+      "gotchas": [
+        "If you don’t check state, you get CSRF",
+        "redirect_uri exact match",
+        "Access token ≠ identity; validate the ID token"
+      ],
+      "terms": [
+        [
+          "OAuth 2.0",
+          "Delegated authorization (access token)."
+        ],
+        [
+          "OIDC",
+          "Authentication on top of OAuth (ID token)."
+        ],
+        [
+          "PKCE",
+          "Prevents authorization code interception."
+        ]
+      ]
+    },
+    "aut4": {
+      "q": "How does SP-initiated SAML SSO work? What are the security risks in SAML assertions?",
+      "what": "<p><b>Definition:</b> SAML enterprise SSO: user is redirected from SP to IdP, logs in, IdP sends a signed assertion, SP verifies the signature and creates a session.</p>",
+      "why": "<p>B2B customers' common requirement.</p>",
+      "gotchas": [
+        "Signature wrapping attacks — use a maintained library",
+        "Clock skew NotOnOrAfter",
+        "Disable XXE parsers"
+      ],
+      "terms": [
+        [
+          "IdP",
+          "Identity Provider (Okta, Azure AD)."
+        ],
+        [
+          "SP",
+          "Service Provider (your app)."
+        ],
+        [
+          "Assertion",
+          "Signed XML containing the user identity."
+        ]
+      ]
+    },
+    "aut5": {
+      "q": "How does WebAuthn work at a technical level? Why are passkeys considered the future of authentication?",
+      "qsub": "Compare TOTP, SMS, push notifications, and WebAuthn for MFA. Why is SMS the weakest option?",
+      "what": "<p><b>Definition:</b> In WebAuthn the private key stays on the device, and the server stores only the public key — phishing-resistant because it is bound to the credential’s origin. TOTP/SMS are weak, and push suffers from fatigue risk.</p>",
+      "why": "<p>Passwords get leaked or phished; passkeys eliminate them.</p>",
+      "gotchas": [
+        "SMS OTP breaks due to SIM-swap attacks",
+        "The recovery path can become the weakest link",
+        "Challenge is server-side random and one-time"
+      ],
+      "terms": [
+        [
+          "WebAuthn/FIDO2",
+          "Public-key authentication using the browser or OS authenticator."
+        ],
+        [
+          "Passkey",
+          "Synced WebAuthn credential."
+        ],
+        [
+          "MFA",
+          "Something you know + something you have + something you are."
+        ]
+      ]
+    },
+    "ase1": {
+      "qsub": "Compare SAST, DAST, and IAST. When would you use each? What are the limitations of static analysis?",
+      "what": "<p><b>Definition:</b> SDL: requirements → threat model → secure coding + SAST → DAST/pen-test → release gate → monitoring. Automated checks in CI.</p>",
+      "why": "<p>Bug fixes in production are 10-100× more expensive.</p>",
+      "gotchas": [
+        "Triage tool alerts or they will be ignored",
+        "Start the gate only on high severity",
+        "Training is also part of SDL"
+      ],
+      "terms": [
+        [
+          "Shift left",
+          "Bring security into early phases."
+        ],
+        [
+          "SAST / DAST / SCA",
+          "Code scan / running app scan / dependency scan."
+        ],
+        [
+          "Security champion",
+          "The team's security point person."
+        ]
+      ]
+    },
+    "ase2": {
+      "qsub": "What is envelope encryption in Vault? How does just-in-time access reduce the blast radius of credential compromise?",
+      "what": "<p><b>Definition:</b> No secrets in code/git/Docker images. At runtime, inject from Vault, access via IAM role, rotate, audit. If a leak occurs, revoke immediately.</p>",
+      "why": "<p>On GitHub, leaked keys are exploited by bots within minutes.</p>",
+      "gotchas": [
+        "Environment variables can leak in logs or crash dumps",
+        "Deleting from Git history is not safe",
+        "Each environment has its own secret"
+      ],
+      "codeSwap": [
+        [
+          "# leak hua? git history se hatane se kaafi nahi — secret rotate karo",
+          "# leaked? Removing it from git history isn't enough — rotate the secret"
+        ]
+      ],
+      "terms": [
+        [
+          "Vault / Secrets Manager",
+          "Central encrypted secrets store."
+        ],
+        [
+          "Rotation",
+          "Change secrets regularly."
+        ],
+        [
+          "Dynamic secrets",
+          "Short-lived DB creds on demand."
+        ]
+      ]
+    },
+    "ase3": {
+      "what": "<p><b>Definition:</b> Minimal base image, non-root user, read-only filesystem, capabilities drop, no privileged containers, signed images and registry scanning.</p>",
+      "why": "<p>Container escape and vulnerable packages are common attack paths.</p>",
+      "gotchas": [
+        "Docker socket mount = host takeover",
+        "Latest tag is not pinned — use digest",
+        "Secrets remain in image layers"
+      ],
+      "pros": [
+        "Small attack surface"
+      ],
+      "cons": [
+        "Debugging distroless is hard"
+      ]
+    },
+    "ase4": {
+      "desc": "Authenticate every request, authorize every operation, validate every input, rate limit per client. CORS restricts cross-origin access. APIs are the #1 modern attack vector.",
+      "what": "<p><b>Definition:</b> Every request authentication, every operation authorization, input schema validation, rate limit, TLS, proper error messages (no stack traces), logging.</p>",
+      "why": "<p>APIs are now the primary attack surface (OWASP API Top 10).</p>",
+      "gotchas": [
+        "GraphQL introspection/depth limits",
+        "Mass assignment — fields allowlist",
+        "CORS * should not be used with credentials"
+      ],
+      "terms": [
+        [
+          "Rate limiting",
+          "Request caps."
+        ],
+        [
+          "Input validation",
+          "Strict check based on schema."
+        ],
+        [
+          "Least data",
+          "Only necessary fields in response."
+        ]
+      ],
+      "cons": [
+        "Consistent enforcement is hard"
+      ]
+    },
+    "ase5": {
+      "desc": "SCA scans dependencies for CVEs. SBOM (CycloneDX/SPDX) inventories all components. Artifact signing (cosign) and SLSA levels secure the build pipeline against attacks like SolarWinds.",
+      "what": "<p><b>Definition:</b> Dependencies contain CVEs, typosquatting, malicious updates. Defense: lockfiles, SCA, SBOM, signed artifacts (Sigstore), minimal deps, private registry.</p>",
+      "why": "<p>Log4Shell, event-stream like incidents originated from the supply chain.</p>",
+      "gotchas": [
+        "Transitive dependencies also pose risk",
+        "Handle postinstall scripts carefully",
+        "Package names double-check (typosquatting)"
+      ],
+      "terms": [
+        [
+          "SCA",
+          "Software Composition Analysis."
+        ],
+        [
+          "SBOM",
+          "List of components (CycloneDX/SPDX)."
+        ],
+        [
+          "Lockfile",
+          "Exact versions pin."
+        ]
+      ]
+    },
+    "cis1": {
+      "what": "<p><b>Definition:</b> IAM identities (users, roles, service accounts) are assigned policies. Avoid wildcard <code>*</code>, assume roles, use MFA, set permission boundaries, and conduct access reviews.</p>",
+      "why": "<p>An over-permissioned role can turn a bug into a full cloud takeover.</p>",
+      "gotchas": [
+        "Do not use the root account",
+        "Delete unused access keys",
+        "Test with the policy simulator"
+      ],
+      "terms": [
+        [
+          "Least privilege",
+          "Minimum permissions."
+        ],
+        [
+          "Role vs user",
+          "Use service roles, not long-lived keys."
+        ],
+        [
+          "Condition",
+          "IP/MFA/time based policy."
+        ]
+      ],
+      "pros": [
+        "Small blast radius"
+      ]
+    },
+    "cis2": {
+      "what": "<p><b>Definition:</b> DBs in a private subnet, only the load balancer is public. SG least-open, NAT egress, VPC endpoints, WAF, flow logs.</p>",
+      "why": "<p>Network segmentation prevents lateral movement.</p>",
+      "gotchas": [
+        "0.0.0.0/0 on ports 22/3389/DB ports",
+        "SG stateful, NACL stateless",
+        "Network alone is not enough (zero trust)"
+      ],
+      "codeSwap": [
+        [
+          "0.0.0.0/0 inbound sirf ALB:443",
+          "0.0.0.0/0 inbound only ALB:443"
+        ]
+      ]
+    },
+    "cis3": {
+      "what": "<p><b>Definition:</b> Data classification, encryption at rest (KMS keys) and in transit, backups encrypted, tokenization PII, retention policies.</p>",
+      "why": "<p>When a breach occurs, encrypted data becomes useless (if the keys are safe).</p>",
+      "gotchas": [
+        "Key and data have separate access",
+        "Encryption ≠ access control",
+        "PII leak in logs"
+      ]
+    },
+    "cis4": {
+      "qsub": "What is the difference between SOC2 Type I and Type II? How do you handle GDPR right to erasure in a distributed system?",
+      "what": "<p><b>Definition:</b> Compliance frameworks controls and evidence require: access reviews, logging, change management, incident response, data retention, right to erasure (GDPR).</p>",
+      "why": "<p>Enterprise sales and legal requirements.</p>",
+      "gotchas": [
+        "Compliant ≠ secure",
+        "Keep scope small (isolate card data)",
+        "Collect evidence continuously"
+      ]
+    },
+    "cis5": {
+      "what": "<p><b>Definition:</b> Detect → triage severity → contain (isolate, revoke credentials) → eradicate (root cause) → recover → postmortem. Preserve evidence, maintain a communication plan.</p>",
+      "why": "<p>With preparation, response happens in minutes, not hours.</p>",
+      "cons": [
+        "Drills take time"
+      ],
+      "gotchas": [
+        "Contain first, then investigate",
+        "Ensure logs are not overwritten",
+        "Do tabletop exercises"
+      ],
+      "terms": [
+        [
+          "IR phases",
+          "Prepare, Detect, Contain, Eradicate, Recover, Lessons."
+        ],
+        [
+          "Runbook",
+          "Step-by-step playbook."
+        ],
+        [
+          "Blameless postmortem",
+          "System fix, no blame."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "2. CloudTrail se use dekho",
+          "2. Look at its usage through CloudTrail"
+        ]
+      ]
+    },
+    "sad1": {
+      "what": "<p><b>Definition:</b> The perimeter model broke (remote work, cloud). In zero trust every request is authenticated + authorized, mTLS, device health, least privilege.</p>",
+      "why": "<p>If an attacker gets inside, the flat network opens everything.</p>",
+      "pros": [
+        "Prevents lateral movement"
+      ],
+      "gotchas": [
+        "VPN ≠ zero trust",
+        "Identity provider is a single point of failure",
+        "Gradual migration"
+      ],
+      "terms": [
+        [
+          "Never trust, always verify",
+          "Do not trust based on network location."
+        ],
+        [
+          "Micro-segmentation",
+          "Small isolated zones."
+        ],
+        [
+          "Continuous verification",
+          "Identity + device posture for every request."
+        ]
+      ]
+    },
+    "sad2": {
+      "qsub": "How does \"fail secure\" differ from \"fail open\"? When would you choose one over the other in a distributed system?",
+      "what": "<p><b>Definition:</b> Part of security architecture: minimize attack surface, least privilege, separation of duties, safe defaults, at the input validation boundary.</p>",
+      "why": "<p>Bolt-on security is fragile.</p>",
+      "gotchas": [
+        "Security vs usability balance",
+        "Remove default passwords",
+        "Complexity itself is a risk"
+      ],
+      "terms": [
+        [
+          "Secure by default",
+          "Safe configuration out of box."
+        ],
+        [
+          "Defense in depth",
+          "Multiple layers."
+        ],
+        [
+          "Fail secure",
+          "Deny on error."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "- Sensitive data kahan flow karta hai?",
+          "- Where does sensitive data flow?"
+        ],
+        [
+          "- Failure mode kya (open/closed)?",
+          "- What is the failure mode (open/closed)?"
+        ],
+        [
+          "- Auth boundary kahan?",
+          "- Where is the auth boundary?"
+        ]
+      ]
+    },
+    "sad3": {
+      "q": "Explain the TLS 1.3 handshake. How does it improve security and performance over TLS 1.2?",
+      "what": "<p><b>Definition:</b> TLS 1.3 only includes strong cipher suites and provides forward secrecy with ECDHE. Practical: HSTS, certificate automation, internal mTLS, disable TLS 1.0/1.1.</p>",
+      "why": "<p>Misconfiguration (weak ciphers, missing HSTS) is common in the real world.</p>",
+      "gotchas": [
+        "Outages caused by certificate pinning",
+        "0-RTT replay risk",
+        "Both HTTP→HTTPS redirect and HSTS"
+      ],
+      "terms": [
+        [
+          "TLS 1.3",
+          "1-RTT handshake, forward secrecy."
+        ],
+        [
+          "AEAD",
+          "Encryption + integrity (GCM, ChaCha20-Poly1305)."
+        ],
+        [
+          "HSTS",
+          "Header that forces HTTPS."
+        ]
+      ]
+    },
+    "sad4": {
+      "what": "<p><b>Definition:</b> Auth logs, CloudTrail, app logs in one place; rules (impossible travel, many failed logins, new admin) provide alerts; triage and runbooks.</p>",
+      "why": "<p>If not detected, a breach can last for months.</p>",
+      "gotchas": [
+        "Sensitive data is not in logs",
+        "Use immutable storage to prevent log tampering",
+        "Tune rules regularly"
+      ],
+      "terms": [
+        [
+          "SIEM",
+          "Logs aggregate, correlate, alert."
+        ],
+        [
+          "SOAR",
+          "Response automation."
+        ],
+        [
+          "Detection rule",
+          "Alert for a suspicious pattern."
+        ]
+      ]
+    },
+    "owasp1": {
+      "desc": "BOLA (formerly IDOR) is the #1 API vulnerability. Attacker accesses objects by manipulating IDs in API calls (e.g., /api/users/123 → /api/users/456). Server doesn't verify ownership. Most common in REST APIs.",
+      "qsub": "What is the difference between BOLA and broken function level authorization? How do row-level security policies help?",
+      "what": "<p><b>Definition:</b> <code>GET /orders/123</code> changed to 124 and you receive another user's order, that's BOLA. Fix: perform a user-ownership/policy check on every object access.</p>",
+      "why": "<p>API Top 10 #1 — the most common and impactful.</p>",
+      "cons": [
+        "Remember it on every endpoint"
+      ],
+      "gotchas": [
+        "UUID is not secret",
+        "Also check bulk/list endpoints",
+        "Consider information leakage when choosing 404 vs 403"
+      ],
+      "terms": [
+        [
+          "BOLA",
+          "Changing the object ID to access another's object."
+        ],
+        [
+          "Ownership check",
+          "On every object access."
+        ],
+        [
+          "Unpredictable IDs",
+          "UUID helps but does not fix it."
+        ]
+      ]
+    },
+    "owasp2": {
+      "qsub": "What is the difference between session fixation and session hijacking? How does MFA mitigate credential stuffing?",
+      "why": "<p>Account takeover directly hits users.</p>",
+      "terms": [
+        [
+          "Credential stuffing",
+          "Replay of leaked passwords."
+        ],
+        [
+          "Session fixation",
+          "Attacker's session ID on the victim."
+        ],
+        [
+          "Rate limit login",
+          "Per IP + per account."
+        ]
+      ],
+      "gotchas": [
+        "Keep login errors generic (user enumeration)",
+        "Password reset tokens one-time + short",
+        "JWT exp short"
+      ],
+      "pros": [
+        "MFA is very effective"
+      ]
+    },
+    "owasp3": {
+      "desc": "Mass assignment: API accepts all fields from request body, allowing attackers to set unintended properties (e.g., isAdmin: true). Excessive data exposure: API returns more fields than the client needs.",
+      "qsub": "How does field filtering (DTOs, GraphQL selection sets) prevent excessive data exposure? What is the principle of least data?",
+      "what": "<p><b>Definition:</b> <code>User.update(req.body)</code> allows an attacker to send <code>isAdmin:true</code>. The response includes password hash/internal fields.</p>",
+      "why": "<p>Privilege escalation without any complex exploit.</p>",
+      "gotchas": [
+        "ORM auto-bind fields",
+        "Nested objects as well",
+        "GraphQL fields per-field authZ"
+      ],
+      "terms": [
+        [
+          "Mass assignment",
+          "All fields from the request body go into the model."
+        ],
+        [
+          "Excessive data exposure",
+          "Too many fields in the response."
+        ],
+        [
+          "DTO",
+          "Allowlisted fields."
+        ]
+      ]
+    },
+    "owasp4": {
+      "q": "How do you implement rate limiting for a public API? What are the tradeoffs between different rate limiting algorithms?",
+      "qsub": "What is the difference between fixed window, sliding window, and token bucket rate limiting? How do you rate limit GraphQL queries?",
+      "what": "<p><b>Definition:</b> APIs without limits are vulnerable to DoS and bill shock: huge page size, expensive queries, large uploads, SMS/email spam.</p>",
+      "why": "<p>Risk to both availability and cloud cost.</p>",
+      "cons": [
+        "Tuning for legitimate bursts"
+      ],
+      "gotchas": [
+        "Both per-user and per-IP",
+        "GraphQL query depth/complexity limit",
+        "Separate tight limits on expensive endpoints"
+      ],
+      "terms": [
+        [
+          "Rate limit",
+          "Maximum requests in a time window."
+        ],
+        [
+          "Pagination limit",
+          "Max page size."
+        ],
+        [
+          "Cost control",
+          "Timeouts, payload limits, query depth."
+        ]
+      ]
+    },
+    "owasp5": {
+      "qsub": "How do RBAC and ABAC differ for function-level authorization? What is the risk of exposing admin endpoints in a microservices architecture?",
+      "what": "<p><b>Definition:</b> Normal user <code>/api/admin/users</code> or <code>DELETE</code> method call because the UI was only hidden. Fix: server-side role/permission check in a central middleware.</p>",
+      "why": "<p>UI hiding is not security.</p>",
+      "gotchas": [
+        "HTTP methods (PUT/DELETE) need separate checks",
+        "Hidden/undocumented endpoints as well",
+        "Call with a low-privileged user in tests"
+      ],
+      "terms": [
+        [
+          "BFLA",
+          "Function-level authZ missing."
+        ],
+        [
+          "Vertical escalation",
+          "User → admin functions."
+        ],
+        [
+          "Deny by default",
+          "Role check on every function."
+        ]
+      ]
+    }
+  }
+}

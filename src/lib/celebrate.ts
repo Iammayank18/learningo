@@ -1,3 +1,4 @@
+import type { MessageKey } from './i18n'
 import { dayKey, getProgress, levelOf, streakOf } from './store'
 
 export interface Snap { streak: number; todayDone: boolean; goalMet: boolean; level: number }
@@ -18,13 +19,13 @@ export function stepsBetween(a: Snap, b: Snap): Step[] {
   return out
 }
 
-export const MILESTONES: Record<number, string> = {
-  3: 'Teen din! Habit ban rahi hai',
-  7: 'Poora ek hafta!',
-  14: 'Do hafte lagataar!',
-  30: 'Ek mahina — unstoppable!',
-  50: '50 din — kya baat hai!',
-  100: '100 din — legend!',
-  200: '200 din — machine!',
-  365: 'Ek poora saal!',
+export const MILESTONES: Record<number, MessageKey> = {
+  3: 'celebration.milestone.3',
+  7: 'celebration.milestone.7',
+  14: 'celebration.milestone.14',
+  30: 'celebration.milestone.30',
+  50: 'celebration.milestone.50',
+  100: 'celebration.milestone.100',
+  200: 'celebration.milestone.200',
+  365: 'celebration.milestone.365',
 }

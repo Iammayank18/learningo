@@ -1,31 +1,38 @@
-// Choices shared by onboarding and settings. Strings are Hinglish keys — translate with tr() when rendering.
+import type { MessageKey } from './i18n'
+
+// Choices shared by onboarding and settings. Values are stored in progress; labels live in the i18n catalogs.
 export const WHY = [
-  ['💼', 'Job switch', 'Nayi job ke liye interviews crack karne hain'],
-  ['🚀', 'Next level / promotion', 'Senior ya staff role ki taraf badhna hai'],
-  ['🎓', 'Fresher / campus', 'Pehli job ya placements ki taiyari'],
-  ['🧠', 'Skills sharpen karna', 'Concepts pakke karne hain, jaldi nahi'],
-  ['🎯', 'Specific interview aa raha hai', 'Time kam hai, focus chahiye'],
-] as const
+  ['💼', 'Job switch', 'options.why.switch', 'options.why.switchDesc'],
+  ['🚀', 'Next level / promotion', 'options.why.promotion', 'options.why.promotionDesc'],
+  ['🎓', 'Fresher / campus', 'options.why.fresher', 'options.why.fresherDesc'],
+  ['🧠', 'Sharpening my skills', 'options.why.sharpen', 'options.why.sharpenDesc'],
+  ['🎯', 'I have a specific interview coming up', 'options.why.specific', 'options.why.specificDesc'],
+] as const satisfies readonly (readonly [string, string, MessageKey, MessageKey])[]
 
 export const LEVELS = [
-  ['Bilkul naya hoon', 'Basics se shuru karna hai', 1],
-  ['Thoda-bahut aata hai', 'Kuch concepts pata hain', 2],
-  ['Kaafi aata hai', 'Interview-level revise karna hai', 3],
-  ['Expert', 'Sirf gaps dhoondhne hain', 4],
-] as const
+  ['options.level.new', 'options.level.newDesc', 1],
+  ['options.level.some', 'options.level.someDesc', 2],
+  ['options.level.lots', 'options.level.lotsDesc', 3],
+  ['options.level.expert', 'options.level.expertDesc', 4],
+] as const satisfies readonly (readonly [MessageKey, MessageKey, number])[]
 
 export const WHEN = [
-  ['🔥', 'Is hafte mein', 'week'],
-  ['📅', '1 mahine ke andar', 'month'],
-  ['🗓️', '2-3 mahine mein', 'quarter'],
-  ['🤷', 'Abhi pata nahi', 'none'],
-] as const
+  ['🔥', 'options.when.week', 'week'],
+  ['📅', 'options.when.month', 'month'],
+  ['🗓️', 'options.when.quarter', 'quarter'],
+  ['🤷', 'options.when.none', 'none'],
+] as const satisfies readonly (readonly [string, MessageKey, string])[]
 
 export const GOALS = [
-  [20, 'Casual', '~3 min / din'],
-  [30, 'Regular', '~5 min / din'],
-  [50, 'Serious', '~8 min / din'],
-  [100, 'Intense', '~15 min / din'],
-] as const
+  [20, 'options.goal.casual', 'options.goal.casualDesc'],
+  [30, 'options.goal.regular', 'options.goal.regularDesc'],
+  [50, 'options.goal.serious', 'options.goal.seriousDesc'],
+  [100, 'options.goal.intense', 'options.goal.intenseDesc'],
+] as const satisfies readonly (readonly [number, MessageKey, MessageKey])[]
 
-export const REMIND = [['🌅', 'Subah', 8], ['☀️', 'Dopahar', 13], ['🌆', 'Shaam', 19], ['🌙', 'Raat', 22]] as const
+export const REMIND = [
+  ['🌅', 'options.remind.morning', 8],
+  ['☀️', 'options.remind.afternoon', 13],
+  ['🌆', 'options.remind.evening', 19],
+  ['🌙', 'options.remind.night', 22],
+] as const satisfies readonly (readonly [string, MessageKey, number])[]

@@ -7,15 +7,15 @@ import { setPref, usePrefs } from '../lib/prefs'
 import { sfx } from '../lib/sound'
 import { BooksIcon, BrainIcon, ChartIcon, HomeIcon, GearIcon, MapIcon, MoonIcon, SearchIcon, SpeakerIcon, SunIcon } from './NavIcons'
 import { Flame } from './Flame'
-import { tr } from '../lib/i18n'
+import { t, type MessageKey } from '../lib/i18n'
 import { BoltIcon } from './Icons'
 
-const NAV = [
-  { id: '', Icon: HomeIcon, label: 'Learn' },
-  { id: 'review', Icon: BrainIcon, label: 'Review' },
-  { id: 'roadmaps', Icon: MapIcon, label: 'Roadmaps' },
-  { id: 'courses', Icon: BooksIcon, label: 'Courses' },
-  { id: 'stats', Icon: ChartIcon, label: 'Progress' },
+const NAV: { id: string; Icon: typeof HomeIcon; labelKey: MessageKey }[] = [
+  { id: '', Icon: HomeIcon, labelKey: 'nav.learn' },
+  { id: 'review', Icon: BrainIcon, labelKey: 'nav.review' },
+  { id: 'roadmaps', Icon: MapIcon, labelKey: 'nav.roadmaps' },
+  { id: 'courses', Icon: BooksIcon, labelKey: 'nav.courses' },
+  { id: 'stats', Icon: ChartIcon, labelKey: 'nav.progress' },
 ]
 
 export function Shell({ route, onSearch, children }: { route: string; onSearch: () => void; children: React.ReactNode }) {
@@ -28,41 +28,41 @@ export function Shell({ route, onSearch, children }: { route: string; onSearch: 
   return (
     <div className="shell">
       <nav className="side">
-        <a className="brand" href={href()}><Owl size={36} /><span>Prep</span></a>
+        <a className="brand" href={href()}><Owl size={36} /><span>{t('nav.brand')}</span></a>
         {NAV.map((n) => (
           <a key={n.id} href={n.id ? href(n.id) : href()} className={'nav-item' + (route === n.id ? ' active' : '')}>
-            <span className="nav-ico"><n.Icon /></span><span className="nav-label">{n.label}</span>
+            <span className="nav-ico"><n.Icon /></span><span className="nav-label">{t(n.labelKey)}</span>
             {n.id === 'review' && due > 0 && <span className="badge">{due}</span>}
           </a>
         ))}
         <button className="nav-item search-btn" onClick={onSearch}>
-          <span className="nav-ico"><SearchIcon /></span><span className="nav-label">Search</span>
+          <span className="nav-ico"><SearchIcon /></span><span className="nav-label">{t('nav.search')}</span>
           <kbd>{mac ? '⌘' : 'Ctrl'} K</kbd>
         </button>
         <div className="side-spacer" />
         <a href={href('settings')} className={'nav-item' + (route === 'settings' ? ' active' : '')}>
-          <span className="nav-ico"><GearIcon /></span><span className="nav-label">{tr('Settings')}</span>
+          <span className="nav-ico"><GearIcon /></span><span className="nav-label">{t('common.settings')}</span>
         </a>
         <button className="nav-item" onClick={() => { setPref('sound', !prefs.sound); if (!prefs.sound) setTimeout(sfx.correct, 30) }}>
-          <span className="nav-ico"><SpeakerIcon on={prefs.sound} /></span><span className="nav-label">Sound {prefs.sound ? 'on' : 'off'}</span>
+          <span className="nav-ico"><SpeakerIcon on={prefs.sound} /></span><span className="nav-label">{prefs.sound ? t('nav.soundOn') : t('nav.soundOff')}</span>
         </button>
         <button className="nav-item" onClick={() => { sfx.tap(); toggleTheme() }}>
-          <span className="nav-ico">{theme === 'dark' ? <SunIcon /> : <MoonIcon />}</span><span className="nav-label">{theme === 'dark' ? tr('Light mode') : tr('Dark mode')}</span>
+          <span className="nav-ico">{theme === 'dark' ? <SunIcon /> : <MoonIcon />}</span><span className="nav-label">{theme === 'dark' ? t('nav.lightMode') : t('nav.darkMode')}</span>
         </button>
       </nav>
       <div className="mobile-top">
         <span className={'chip fire' + (s.current ? ' on' : '')}><Flame size={20} dim={!s.current} /> {s.current}</span>
         <span className="chip xp"><BoltIcon size={18} /> {p.xp}</span>
-        <span className="chip lvl">Lv {levelOf(p.xp).level}</span>
-        <button className="icon-btn" aria-label={prefs.sound ? 'Mute' : 'Unmute'} onClick={() => setPref('sound', !prefs.sound)}><SpeakerIcon size={28} on={prefs.sound} /></button>
-        <a className="icon-btn" aria-label={tr('Settings')} href={href('settings')}><GearIcon size={28} /></a>
-        <button className="icon-btn" aria-label="Search" onClick={onSearch}><SearchIcon size={28} /></button>
+        <span className="chip lvl">{t('nav.levelShort', { n: levelOf(p.xp).level })}</span>
+        <button className="icon-btn" aria-label={prefs.sound ? t('nav.mute') : t('nav.unmute')} onClick={() => setPref('sound', !prefs.sound)}><SpeakerIcon size={28} on={prefs.sound} /></button>
+        <a className="icon-btn" aria-label={t('common.settings')} href={href('settings')}><GearIcon size={28} /></a>
+        <button className="icon-btn" aria-label={t('nav.search')} onClick={onSearch}><SearchIcon size={28} /></button>
       </div>
       <main className="main">{children}</main>
       <Rail />
       <nav className="bottom">
         {NAV.map((n) => (
-          <a key={n.id} href={n.id ? href(n.id) : href()} className={'bnav' + (route === n.id ? ' active' : '')} aria-label={n.label}>
+          <a key={n.id} href={n.id ? href(n.id) : href()} className={'bnav' + (route === n.id ? ' active' : '')} aria-label={t(n.labelKey)}>
             <n.Icon size={34} />{n.id === 'review' && due > 0 && <span className="badge">{due}</span>}
           </a>
         ))}

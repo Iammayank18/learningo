@@ -1,3 +1,5 @@
+import { t } from '../lib/i18n'
+
 export type OwlMood = 'idle' | 'happy' | 'sad' | 'cheer' | 'sleep'
 
 /** Original owl mascot drawn in SVG so it can change pose/expression. */
@@ -8,7 +10,7 @@ export function Owl({ mood = 'idle', size = 96 }: { mood?: OwlMood; size?: numbe
   const cheer = mood === 'cheer'
   const ink = '#3b4658'
   return (
-    <svg className={'owl owl-' + mood} width={size} height={size} viewBox="0 0 200 200" role="img" aria-label="Owl mascot">
+    <svg className={'owl owl-' + mood} width={size} height={size} viewBox="0 0 200 200" role="img" aria-label={t('common.owlMascot')}>
       {/* wings (behind body when down, raised when cheering) */}
       {cheer ? (
         <>

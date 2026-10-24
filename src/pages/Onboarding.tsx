@@ -13,23 +13,23 @@ import { sfx } from '../lib/sound'
 import { HUES } from '../lib/sections'
 import { importState, lid, placeLessons, setActiveCourse, setGoal, setProfile, setTrack, getProgress } from '../lib/store'
 import type { Course } from '../types'
-import { getLang, setLang, tr } from '../lib/i18n'
+import { getLang, setLang, t, type MessageKey } from '../lib/i18n'
 import { WHY, LEVELS, WHEN, GOALS, REMIND } from '../lib/options'
 import { downloadReminder } from '../lib/ics'
 
 type StepId = 'welcome' | 'name' | 'why' | 'track' | 'level' | 'placement' | 'when' | 'goal' | 'plan' | 'ready'
 
-const SAY: Record<StepId, [string, Mood]> = {
-  welcome: ['Hi! Main Prep hoon — tumhara interview-prep buddy!', 'cheer'],
-  name: ['Pehle batao — tumhe kya bulaun?', 'idle'],
-  why: ['Tum interview prep kyun kar rahe ho?', 'idle'],
-  track: ['Tumhara target role kya hai? Main wahi roadmap banaunga.', 'idle'],
-  level: ['Is track ka tumhe abhi kitna aata hai?', 'idle'],
-  placement: ['Chalo, ek chhota test — dekhte hain kitna aata hai!', 'happy'],
-  when: ['Interview kab tak hai?', 'idle'],
-  goal: ['Roz kitna time de sakte ho?', 'idle'],
-  plan: ['Ruko, tumhare liye plan bana raha hoon…', 'idle'],
-  ready: ['Plan ready! Chalo shuru karte hain 🔥', 'cheer'],
+const SAY: Record<StepId, [MessageKey, Mood]> = {
+  welcome: ['onboarding.say.welcome', 'cheer'],
+  name: ['onboarding.say.name', 'idle'],
+  why: ['onboarding.say.why', 'idle'],
+  track: ['onboarding.say.track', 'idle'],
+  level: ['onboarding.say.level', 'idle'],
+  placement: ['onboarding.say.placement', 'happy'],
+  when: ['onboarding.say.when', 'idle'],
+  goal: ['onboarding.say.goal', 'idle'],
+  plan: ['onboarding.say.plan', 'idle'],
+  ready: ['onboarding.say.ready', 'cheer'],
 }
 
 const sampleIdx = (n: number) => Array.from({ length: 6 }, (_, i) => Math.min(n - 1, Math.floor((i * 0.6 * n) / 6)))
@@ -95,8 +95,8 @@ export function Onboarding() {
     sfx.complete()
   }
 
-  const importFile = (f?: File) => f?.text().then((t) => {
-    try { importState(t); setProfile({ onboarded: true }); go() } catch { alert('Invalid file') }
+  const importFile = (f?: File) => f?.text().then((text) => {
+    try { importState(text); setProfile({ onboarded: true }); go() } catch { alert(t('common.invalidFile')) }
   })
 
   const finish = async () => {
@@ -126,7 +126,7 @@ export function Onboarding() {
     (step === 'why' && !!why) || (step === 'track' && !!track) || (step === 'level' && level >= 0) ||
     step === 'placement' || (step === 'when' && !!when) || (step === 'goal' && goal > 0) || step === 'ready'
 
-  const [say, mood] = step === 'placement' && testDone ? [placed.length ? tr('Zabardast! {n} lessons skip kar diye 🎉', { n: placed.length }) : tr('Koi baat nahi — shuru se hi pakka karenge!'), placed.length ? 'cheer' as Mood : 'happy' as Mood] : [tr(SAY[step][0]), SAY[step][1]]
+  const [say, mood] = step === 'placement' && testDone ? [placed.length ? t('onboarding.excellentPlaced', { n: placed.length }) : t('onboarding.noProblem'), placed.length ? 'cheer' as Mood : 'happy' as Mood] : [t(SAY[step][0]), SAY[step][1]]
 
   const totalLessons = rm ? [...new Set(rm.stages.flatMap((s) => s.courses))].reduce((n, c) => n + (metaOf(c)?.lessons ?? 0), 0) : 0
   const perDay = Math.max(0.5, (goal || recGoal) / 45)
@@ -138,7 +138,7 @@ export function Onboarding() {
 
   const welcome = step === 'welcome'
   const showFoot = step !== 'plan' && !(step === 'placement' && !testDone) && !welcome
-  const cta = step === 'ready' ? (busy ? 'Loading…' : tr('Pehla lesson shuru karo')) : step === 'name' && !name.trim() ? 'Skip' : 'Continue'
+  const cta = step === 'ready' ? (busy ? t('common.loading') : t('onboarding.ctaFirstLesson')) : step === 'name' && !name.trim() ? t('onboarding.skip') : t('onboarding.continue')
   const onCta = () => {
     if (step === 'goal' && !goal) setG(recGoal)
     if (step === 'ready') void finish()
@@ -150,8 +150,8 @@ export function Onboarding() {
       <div className="flex min-h-screen flex-col bg-(--bg)">
         <header className="mx-auto flex w-full max-w-[1000px] items-center gap-2 px-5 pt-5">
           <Owl size={34} /><span className="font-display text-[26px] font-semibold text-(--green)" style={{ fontFamily: 'var(--font-display)' }}>Prep</span>
-          <div className="ml-auto flex gap-1 rounded-2xl border-2 border-(--line) bg-(--card) p-1" role="group" aria-label="Language">
-            {(['hi', 'en'] as const).map((l) => (
+          <div className="ml-auto flex gap-1 rounded-2xl border-2 border-(--line) bg-(--card) p-1" role="group" aria-label={t('onboarding.languageAria')}>
+            {(['en', 'hi'] as const).map((l) => (
               <button key={l} onClick={() => { if (getLang() !== l) { sfx.tap(); setLang(l) } }}
                 className={'cursor-pointer rounded-xl border-0 px-3 py-1.5 text-[13px] font-extrabold ' + (getLang() === l ? 'bg-(--blue) text-white' : 'bg-transparent text-(--muted) hover:bg-(--bg2)')}>
                 {l === 'hi' ? 'Hinglish' : 'English'}
@@ -175,11 +175,11 @@ export function Onboarding() {
             <div className="relative animate-[pop_.5s_ease-out]"><Mascot mood="cheer" size={190} /></div>
           </div>
           <div className="text-center md:text-left">
-            <h1 className="m-0! text-[32px]! leading-[1.15]! sm:text-[44px]!" style={{ fontFamily: 'var(--font-display)' }}>{tr('Interview prep ka sabse')} <span className="text-(--green)">{tr('mazedaar')}</span> {tr('tareeka.')}</h1>
-            <p className="mt-3! mb-7! text-[17px] text-(--muted)">{tr('Chhote lessons, roz ki streak, aur revision jo yaad rakhwata hai — Duolingo style.')}</p>
+            <h1 className="m-0! text-[32px]! leading-[1.15]! sm:text-[44px]!" style={{ fontFamily: 'var(--font-display)' }}>{t('onboarding.welcomeLead')} <span className="text-(--green)">{t('onboarding.welcomeHighlight')}</span> {t('onboarding.welcomeTail')}</h1>
+            <p className="mt-3! mb-7! text-[17px] text-(--muted)">{t('onboarding.welcomeSub')}</p>
             <div className="mx-auto flex max-w-[360px] flex-col gap-3 md:mx-0">
-              <button className="btn btn-green w-full py-4" onClick={next}>{tr('Shuru karo')}</button>
-              <label className="btn btn-outline w-full py-4">{tr('Mera progress import karo')}<input type="file" accept="application/json" hidden onChange={(e) => importFile(e.target.files?.[0])} /></label>
+              <button className="btn btn-green w-full py-4" onClick={next}>{t('common.start')}</button>
+              <label className="btn btn-outline w-full py-4">{t('onboarding.importProgress')}<input type="file" accept="application/json" hidden onChange={(e) => importFile(e.target.files?.[0])} /></label>
             </div>
           </div>
         </main>
@@ -192,7 +192,7 @@ export function Onboarding() {
       <header className="sticky top-0 z-10 bg-(--bg)">
         <div className="mx-auto flex w-full max-w-[640px] items-center gap-4 px-5 pt-5 pb-2">
           {step !== 'plan' && step !== 'ready'
-            ? <button className="grid size-9 cursor-pointer place-items-center rounded-xl border-0 bg-transparent text-2xl text-(--muted) hover:bg-(--bg2)" aria-label="Back" onClick={back}>←</button>
+            ? <button className="grid size-9 cursor-pointer place-items-center rounded-xl border-0 bg-transparent text-2xl text-(--muted) hover:bg-(--bg2)" aria-label={t('onboarding.back')} onClick={back}>←</button>
             : <span className="size-9" />}
           <div className="pbar"><div className="pbar-fill" style={{ width: `${Math.max(6, (idx / (steps.length - 1)) * 100)}%` }} /></div>
         </div>
@@ -208,26 +208,26 @@ export function Onboarding() {
         </div>
 
         {step === 'name' && (
-          <input className="w-full rounded-2xl border-2 border-(--line) bg-(--bg2) px-5 py-4 text-xl font-bold text-(--head) outline-none focus:border-(--blue)" autoFocus placeholder={tr('Tumhara naam (optional)')} value={name} maxLength={24}
+          <input className="w-full rounded-2xl border-2 border-(--line) bg-(--bg2) px-5 py-4 text-xl font-bold text-(--head) outline-none focus:border-(--blue)" autoFocus placeholder={t('onboarding.namePlaceholder')} value={name} maxLength={24}
             onChange={(e) => setName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') next() }} />
         )}
 
         {step === 'why' && (
           <div className="grid gap-3">
-            {WHY.map(([ico, t, d]) => <Opt key={t} sel={why === t} ico={ico} title={t} desc={d} onClick={() => setWhy(t)} />)}
+            {WHY.map(([ico, value, labelKey, descKey]) => <Opt key={value} sel={why === value} ico={ico} title={t(labelKey)} desc={t(descKey)} onClick={() => setWhy(value)} />)}
           </div>
         )}
 
         {step === 'track' && (
           <div className="grid gap-3 sm:grid-cols-2">
-            {roadmaps.map((r) => <Opt key={r.id} sel={track === r.id} ico={r.icon} title={r.title} desc={tr(r.tagline)} hue={HUES[r.hue]} onClick={() => setTr(r.id)} />)}
+            {roadmaps.map((r) => <Opt key={r.id} sel={track === r.id} ico={r.icon} title={t(r.titleKey)} desc={t(r.taglineKey)} hue={HUES[r.hue]} onClick={() => setTr(r.id)} />)}
           </div>
         )}
 
         {step === 'level' && (
           <div className="grid gap-3">
-            {LEVELS.map(([t, d, bars], i) => (
-              <Opt key={t} sel={level === i} title={t} desc={d} onClick={() => setLevel(i)}
+            {LEVELS.map(([labelKey, descKey, bars], i) => (
+              <Opt key={labelKey} sel={level === i} title={t(labelKey)} desc={t(descKey)} onClick={() => setLevel(i)}
                 ico={<span className="flex h-8 items-end gap-[3px]" aria-hidden>{[1, 2, 3, 4].map((b) => <i key={b} className={'w-[7px] rounded-[3px] ' + (b <= bars ? 'bg-(--blue)' : 'bg-(--line)')} style={{ height: 6 + b * 6 }} />)}</span>} />
             ))}
           </div>
@@ -235,36 +235,36 @@ export function Onboarding() {
 
         {step === 'placement' && !testDone && (
           <div className="grid gap-3">
-            <Opt sel ico="📝" title={busy ? 'Loading…' : 'Placement test lo (2 min)'} desc="6 sawal — jo aata hai wo lessons skip ho jayenge" onClick={() => { if (!busy) void startPlacement() }} />
-            <Opt sel={false} ico="🌱" title="Shuru se hi karunga" desc="Pehle lesson se, bina skip ke" onClick={() => { setPlaced([]); setStep('when') }} />
+            <Opt sel ico="📝" title={busy ? t('common.loading') : t('onboarding.placementTitle')} desc={t('onboarding.placementDesc')} onClick={() => { if (!busy) void startPlacement() }} />
+            <Opt sel={false} ico="🌱" title={t('onboarding.startFresh')} desc={t('onboarding.startFreshDesc')} onClick={() => { setPlaced([]); setStep('when') }} />
           </div>
         )}
         {step === 'placement' && testDone && (
           <div className="rounded-3xl border-2 border-(--line) bg-(--card) p-6 text-center shadow-[0_4px_0_var(--line)]">
             <div className="text-[44px] font-semibold text-(--green)" style={{ fontFamily: 'var(--font-display)' }}>{testDone.passed}/{testDone.total}</div>
-            <div className="mb-1 text-sm font-extrabold tracking-widest text-(--muted) uppercase">{tr('sahi jawab')}</div>
-            <p className="m-0! text-(--text)">{placed.length ? tr('Tumhare pehle {n} lessons skip ho gaye — direct aage se shuru hoge.', { n: placed.length }) : tr('Shuru se hi chalenge — jaldi aage badh jaoge.')}</p>
+            <div className="mb-1 text-sm font-extrabold tracking-widest text-(--muted) uppercase">{t('onboarding.correctAnswers')}</div>
+            <p className="m-0! text-(--text)">{placed.length ? t('onboarding.placedN', { n: placed.length }) : t('onboarding.startFromBeginning')}</p>
           </div>
         )}
 
         {step === 'when' && (
           <div className="grid gap-3 sm:grid-cols-2">
-            {WHEN.map(([ico, t, v]) => <Opt key={v} sel={when === v} ico={ico} title={t} onClick={() => { setWhen(v); setG(0) }} />)}
+            {WHEN.map(([ico, labelKey, v]) => <Opt key={v} sel={when === v} ico={ico} title={t(labelKey)} onClick={() => { setWhen(v); setG(0) }} />)}
           </div>
         )}
 
         {step === 'goal' && (
           <div className="overflow-hidden rounded-2xl border-2 border-(--line) bg-(--card)">
-            {GOALS.map(([xp, t, d], i) => {
+            {GOALS.map(([xp, labelKey, descKey], i) => {
               const on = goal === xp
               return (
                 <button key={xp} onClick={() => { sfx.select(); setG(xp) }}
                   className={'flex w-full cursor-pointer items-center gap-4 border-0 px-5 py-4 text-left transition-colors ' + (i ? 'border-t-2 border-(--line) ' : '') + (on ? 'bg-(--sel-bg)' : 'bg-transparent hover:bg-(--bg2)')}>
                   <span className={'w-16 shrink-0 whitespace-nowrap text-lg font-extrabold sm:w-20 ' + (on ? 'text-(--blue-d)' : 'text-(--yellow-d)')}>⚡ {xp}</span>
-                  <span className={'flex-1 text-[17px] font-extrabold ' + (on ? 'text-(--blue-d)' : 'text-(--head)')}>{t}
-                    {xp === recGoal && <span className="mt-1 block w-fit rounded-full sm:ml-2 sm:mt-0 sm:inline bg-(--green) px-2 py-0.5 align-middle text-[10px] font-extrabold tracking-wider text-white uppercase">Recommended</span>}
+                  <span className={'flex-1 text-[17px] font-extrabold ' + (on ? 'text-(--blue-d)' : 'text-(--head)')}>{t(labelKey)}
+                    {xp === recGoal && <span className="mt-1 block w-fit rounded-full sm:ml-2 sm:mt-0 sm:inline bg-(--green) px-2 py-0.5 align-middle text-[10px] font-extrabold tracking-wider text-white uppercase">{t('onboarding.recommended')}</span>}
                   </span>
-                  <span className="shrink-0 whitespace-nowrap text-xs font-bold text-(--muted) sm:text-sm">{tr(d)}</span>
+                  <span className="shrink-0 whitespace-nowrap text-xs font-bold text-(--muted) sm:text-sm">{t(descKey)}</span>
                 </button>
               )
             })}
@@ -273,9 +273,9 @@ export function Onboarding() {
 
         {step === 'plan' && (
           <ul className="m-0 grid list-none gap-4 rounded-3xl border-2 border-(--line) bg-(--card) p-5">
-            {[tr('{t} roadmap chuna', { t: rm?.title ?? 'Track' }), tr('{s} stages · {l} lessons arrange kiye', { s: rm?.stages.length ?? 0, l: totalLessons }), tr('Daily goal {g} XP set kiya', { g: goal || recGoal })].map((t, i) => (
-              <li key={t} className={'flex items-center gap-3 text-[17px] font-bold transition-all duration-500 ' + (tick > i ? 'text-(--head) opacity-100' : 'text-(--muted) opacity-40')}>
-                <span className={'grid size-8 shrink-0 place-items-center rounded-full border-[3px] text-sm font-black text-white transition-all ' + (tick > i ? 'scale-110 border-(--green) bg-(--green)' : 'border-(--line)')}>{tick > i ? '✓' : ''}</span>{t}
+            {[t('onboarding.planTrack', { t: rm ? t(rm.titleKey) : t('onboarding.trackFallback') }), t('onboarding.planStages', { s: rm?.stages.length ?? 0, l: totalLessons }), t('onboarding.planGoal', { g: goal || recGoal })].map((label, i) => (
+              <li key={label} className={'flex items-center gap-3 text-[17px] font-bold transition-all duration-500 ' + (tick > i ? 'text-(--head) opacity-100' : 'text-(--muted) opacity-40')}>
+                <span className={'grid size-8 shrink-0 place-items-center rounded-full border-[3px] text-sm font-black text-white transition-all ' + (tick > i ? 'scale-110 border-(--green) bg-(--green)' : 'border-(--line)')}>{tick > i ? '✓' : ''}</span>{label}
               </li>
             ))}
           </ul>
@@ -288,17 +288,17 @@ export function Onboarding() {
               <div className="relative flex items-center gap-3.5">
                 <div className="grid size-14 shrink-0 -rotate-6 place-items-center rounded-2xl bg-white text-[30px] shadow-[0_4px_0_rgba(0,0,0,.18)]">{rm.icon}</div>
                 <div className="min-w-0">
-                  <div className="text-[10px] font-extrabold tracking-[.16em] text-white/75 uppercase">{tr('Tumhari track')}</div>
-                  <div className="text-[21px] leading-tight font-semibold" style={{ fontFamily: 'var(--font-display)' }}>{rm.title}</div>
-                  <div className="text-[13px] font-bold text-white/85">{rm.stages.length} stages · {totalLessons - placed.length} lessons</div>
+                  <div className="text-[10px] font-extrabold tracking-[.16em] text-white/75 uppercase">{t('onboarding.readyTrack')}</div>
+                  <div className="text-[21px] leading-tight font-semibold" style={{ fontFamily: 'var(--font-display)' }}>{t(rm.titleKey)}</div>
+                  <div className="text-[13px] font-bold text-white/85">{t('onboarding.readyStages', { stages: rm.stages.length, lessons: totalLessons - placed.length })}</div>
                 </div>
               </div>
             </div>
             <div className="grid grid-cols-3 gap-3">
               {[
-                [<Flame size={30} key="f" />, `${goal || recGoal} XP`, tr('roz ka goal')],
-                ['🏁', tr('~{n} hafte', { n: stage1Weeks }), tr('pehla stage')],
-                ['🏆', weeks >= 8 ? tr('~{n} mahine', { n: Math.round(weeks / 4.3) }) : tr('~{n} hafte', { n: weeks }), tr('poora roadmap')],
+                [<Flame size={30} key="f" />, `${goal || recGoal} XP`, t('onboarding.readyDailyGoal')],
+                ['🏁', t('onboarding.weeks', { n: stage1Weeks }), t('onboarding.readyFirstStage')],
+                ['🏆', weeks >= 8 ? t('onboarding.months', { n: Math.round(weeks / 4.3) }) : t('onboarding.weeks', { n: weeks }), t('onboarding.readyFullRoadmap')],
               ].map(([ic, v, l], i) => (
                 <div key={i} className="grid justify-items-center gap-1 rounded-2xl border-2 border-(--line) bg-(--card) px-2 py-3 text-center shadow-[0_3px_0_var(--line)]">
                   <span className="grid h-8 place-items-center text-[26px] leading-none">{ic}</span>
@@ -308,19 +308,19 @@ export function Onboarding() {
               ))}
             </div>
             <div className="rounded-2xl border-2 border-(--line) bg-(--card) p-4">
-              <div className="mb-3 text-[15px] font-extrabold text-(--head)">{tr('📅 Daily reminder')} <span className="font-bold text-(--muted)">{tr('— calendar mein repeat hoga')}</span></div>
+              <div className="mb-3 text-[15px] font-extrabold text-(--head)">{t('onboarding.reminder')} <span className="font-bold text-(--muted)">{t('onboarding.reminderRepeat')}</span></div>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {REMIND.map(([ico, t, h]) => {
+                {REMIND.map(([ico, labelKey, h]) => {
                   const on = remind === h
                   return (
                     <button key={h} onClick={() => { sfx.select(); setRemind(on ? null : h) }}
                       className={'cursor-pointer rounded-xl border-2 border-b-4 px-2 py-2.5 text-sm font-extrabold transition-colors ' + (on ? 'border-(--blue) bg-(--sel-bg) text-(--blue-d)' : 'border-(--line) bg-(--card) text-(--text) hover:bg-(--bg2)')}>
-                      <span className="mr-1">{ico}</span>{tr(t)} · {h > 12 ? h - 12 : h}{h >= 12 ? 'pm' : 'am'}
+                      <span className="mr-1">{ico}</span>{t(labelKey)} · {h > 12 ? h - 12 : h}{h >= 12 ? 'pm' : 'am'}
                     </button>
                   )
                 })}
               </div>
-              {remind !== null && <button className="btn btn-outline mt-3 w-full" onClick={() => downloadReminder(remind)}>📥 Calendar file (.ics) download</button>}
+              {remind !== null && <button className="btn btn-outline mt-3 w-full" onClick={() => downloadReminder(remind)}>{t('onboarding.reminderDownload')}</button>}
             </div>
           </div>
         )}
@@ -347,8 +347,8 @@ function Opt({ sel, ico, title, desc, hue, onClick }: { sel: boolean; ico?: Reac
         <span className={'grid size-12 shrink-0 place-items-center rounded-xl text-[28px] ' + (hue ? 'bg-[color-mix(in_srgb,var(--hue)_16%,transparent)]' : 'bg-(--bg2)')}>{ico}</span>
       )}
       <span className="min-w-0 flex-1">
-        <b className={'block text-[17px] leading-tight ' + (sel ? 'text-(--blue-d)' : 'text-(--head)')}>{tr(title)}</b>
-        {desc && <span className="mt-0.5 block text-[13.5px] leading-snug text-(--muted)">{tr(desc)}</span>}
+        <b className={'block text-[17px] leading-tight ' + (sel ? 'text-(--blue-d)' : 'text-(--head)')}>{title}</b>
+        {desc && <span className="mt-0.5 block text-[13.5px] leading-snug text-(--muted)">{desc}</span>}
       </span>
       {sel && <span className="absolute -top-2 -right-2 grid size-6 place-items-center rounded-full bg-(--blue) text-xs font-black text-white shadow-[0_2px_0_var(--blue-d)]">✓</span>}
     </button>

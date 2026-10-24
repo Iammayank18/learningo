@@ -1,0 +1,1479 @@
+{
+  "lessons": {
+    "net-devices": {
+      "desc": "Hub broadcasts data to all devices (dumb). Switch sends data only to the target device (smart, uses MAC address). Router connects different networks together (uses IP address). Modem converts digital to analog.",
+      "q": "What are the different types of network devices and what does each do? When would you use a switch vs a router?",
+      "qsub": "What layer does a switch operate at vs a router? What is the difference between Layer 2 and Layer 3 networking?",
+      "what": "<p>Different devices in a network perform different <b>functions</b>. <b>Hub</b> is the simplest — it receives data and <b>broadcasts it on every port</b>. <b>Switch</b> is smarter — it looks at the MAC address and sends data only to the <b>correct device</b>. <b>Router</b> is the smartest — it connects two different networks and, based on the IP address, gives the packet the <b>correct route</b>.</p>\n<p>Hub = tell everyone, Switch = send to the exact one, Router = the bridge between two networks that creates a path using the routing table.</p>",
+      "analogy": "<b>Hub</b> is like the biggest square where sound goes everywhere. <b>Switch</b> opens a direct door to the specific room. <b>Router</b> is a big traffic police that sends each vehicle onto the correct highway.",
+      "why": "<p>Each device operates at its own <b>layer</b>: Hub/Switch <b>Layer-2</b> (MAC), Router <b>Layer-3</b> (IP routing). In interviews, the distinction \"hub vs switch vs router\" is asked very commonly — understanding the granularity of each is essential.</p>",
+      "pros": [
+        "Switch reduces collisions compared to a hub",
+        "Router scales networks and adds security",
+        "All layers are clearly defined"
+      ],
+      "cons": [
+        "Hub is dumb — bandwidth waste",
+        "Switch floods when the MAC is unknown",
+        "Router configuration can be complex"
+      ],
+      "gotchas": [
+        "Just remember: <b>Hub broadcast, Switch unicast (MAC), Router routes (IP)</b>. The layer increases, intelligence increases.",
+        "A router also includes a LAN switch in a house — everything combined in one device.",
+        "A switch can also perform L3 routing with VLANs (multilayer switch)."
+      ],
+      "terms": [
+        [
+          "Hub",
+          "Simple device — broadcasts data on every port."
+        ],
+        [
+          "Switch",
+          "Looks at MAC address — sends data only to the correct device."
+        ],
+        [
+          "Router",
+          "Connects two different networks, performs IP routing."
+        ],
+        [
+          "MAC address",
+          "Physical unique address of each device (Layer-2)."
+        ]
+      ],
+      "where": [
+        [
+          "Switch",
+          "Connects devices in each rack (L2 fabric)."
+        ],
+        [
+          "Router",
+          "Connects two VLANs / cloud subnets."
+        ],
+        [
+          "Load balancer stack",
+          "In production, Nginx/LB + routers."
+        ]
+      ],
+      "visualCap": "Hub broadcasts, switch sends to a specific device, router connects two networks.",
+      "codeSwap": [
+        [
+          "// switch ki tarah - MAC table se exact port par bhejo",
+          "// like a switch - send to the exact port from the MAC table"
+        ],
+        [
+          "// router ki tarah - route table se next hop",
+          "// like a router - next hop from the route table"
+        ]
+      ]
+    },
+    "net-ip": {
+      "name": "IP Address — the unique address of every device on the internet",
+      "q": "What is an IP address and what is the difference between IPv4 and IPv6? What role do ports play?",
+      "what": "<p>Every device on a network needs an <b>IP address</b> — like a home address. <b>IPv4</b> is 32-bit, in 4 octets (192.168.1.1), and provides about 4.3 billion addresses — they are exhausted. <b>IPv6</b> is 128-bit, in hex (2001:db8::1), with a very large address space.</p>\n<p><b>Port</b> is the identifier for a specific service inside a device — like 80 (HTTP), 443 (HTTPS), 22 (SSH). The IP finds the device, the port points to the specific application. IP + port is called a <b>socket</b>, which creates a unique connection.</p>",
+      "analogy": "<b>Apartment address</b> = IP (building address), <b>apartment number</b> = port (which room). The IP packet is sent to the building, the port delivers it to the correct room. IPv4 is the old city layout, IPv6 is the new, larger city.",
+      "why": "<p>The IP address is the basis of routing, and ports differentiate services. Without an IP, packets cannot reach a destination; without a port, the server cannot know which application the request is for. IP/port fundamentals are always asked in networking interviews.</p>",
+      "pros": [
+        "Universal addressing — every device is unique",
+        "Ports = multiple services on one IP",
+        "IPv6 future-proof"
+      ],
+      "cons": [
+        "IPv4 address shortage",
+        "Port conflicts (two services cannot share the same port)",
+        "IP can change (dynamic), NAT complicates"
+      ],
+      "gotchas": [
+        "Just remember: <b>IP = device address, Port = app address, Socket = IP:Port</b>.",
+        "IPv4's ~4 billion addresses are exhausted — NAT and IPv6 are the solutions.",
+        "Port range is only 0-65535, and 0-1023 are privileged."
+      ],
+      "terms": [
+        [
+          "IP address",
+          "The network address of every device — like a home address."
+        ],
+        [
+          "IPv4",
+          "32-bit address, 4 octets — 192.168.1.1."
+        ],
+        [
+          "IPv6",
+          "128-bit address, hex — 2001:db8::1."
+        ],
+        [
+          "Port",
+          "Specific service inside a device — 80 HTTP, 443 HTTPS."
+        ]
+      ],
+      "where": [
+        [
+          "localhost",
+          "127.0.0.1 — the local machine."
+        ],
+        [
+          "Browsing",
+          "DNS looks up the IP, the browser uses port 443."
+        ],
+        [
+          "Ports",
+          "80 HTTP, 443 HTTPS, 22 SSH, 3306 MySQL."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// node mein IP/port par listen karna",
+          "// listening on an IP/port in node"
+        ]
+      ]
+    },
+    "net-types": {
+      "desc": "LAN: your home or office network — fast, private. MAN: city-wide network. WAN: crosses cities/countries — the internet is a WAN. PAN: personal area (Bluetooth between devices).",
+      "q": "What are the different types of computer networks? How do they differ in scale, speed, and ownership?",
+      "what": "<p>Networks size and <b>geography</b> according to categories. <b>PAN</b> — a person's devices, such as phone and Bluetooth earphone. <b>LAN</b> — inside a building/office, like home Wi-Fi. <b>MAN</b> — covers a city. <b>WAN</b> — very large, across countries, and <b>internet is a WAN</b>.</p>\n<p>Easy to remember: <b>PAN (self), LAN (home), MAN (city), WAN (world)</b>. Distance increases, latency and complexity also increase.</p>",
+      "analogy": "<b>Tea order system</b> — PAN = from your phone to your Bluetooth, LAN = staff walkie-talkie inside a café, MAN = courier between two cafés in a city, WAN = train between two cities in a country. Distance increases, delay and coordination also.",
+      "why": "<p>Classification tells you what <b>latency, bandwidth, cost</b> to expect. Cross-region requests on a WAN are slow, so CDNs/edges are used. In interviews, LAN vs WAN, and the fact that VPN is a WAN-based concept, are common.</p>",
+      "pros": [
+        "Scale is clear (what latency to expect)",
+        "Cost planning easy (WAN expensive)",
+        "Fundamental taxonomy of architecture"
+      ],
+      "cons": [
+        "Overlap exists (VLAN is inside a LAN)",
+        "WAN relies on third-party ISP",
+        "Rough boundaries — design specific"
+      ],
+      "gotchas": [
+        "Just remember: <b>PAN (self), LAN (home), MAN (city), WAN (world)</b>.",
+        "VLAN is inside a LAN — don't confuse WAN/VLAN.",
+        "WAN latency is highest — therefore use CDN/edge and multi-region deployment."
+      ],
+      "terms": [
+        [
+          "PAN",
+          "Personal Area Network — a person's devices, Bluetooth."
+        ],
+        [
+          "LAN",
+          "Local Area Network — inside an office/building."
+        ],
+        [
+          "MAN",
+          "Metropolitan Area Network — a city."
+        ],
+        [
+          "WAN",
+          "Wide Area Network — across countries — the internet."
+        ]
+      ],
+      "where": [
+        [
+          "Office LAN",
+          "Ethernet switch + wifi, low latency."
+        ],
+        [
+          "Cloud region",
+          "In a single region = LAN-like, cross-region = WAN."
+        ],
+        [
+          "VPN",
+          "Connects two WAN sites with a secure tunnel."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// roughly scale ka andaaza (ms round-trip)",
+          "// rough sense of scale (ms round-trip)"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "Distance &amp; latency &rarr; badhti hai",
+          "Distance &amp; latency &rarr; grows"
+        ],
+        [
+          "duniya",
+          "world"
+        ],
+        [
+          "shahar",
+          "city"
+        ],
+        [
+          "ghar",
+          "house"
+        ]
+      ]
+    },
+    "net-what": {
+      "desc": "A computer network is two or more devices (computers, phones, servers, printers) connected together to share data and resources. The internet is the largest network — billions of devices all connected.",
+      "q": "What is a computer network? What are the essential components that make up a network?",
+      "what": "<p><b>Computer network</b> is a group of two or more devices that are connected to each other to share data. Each device is called a <b>node</b>, and the medium that connects them is called a <b>link</b>.</p>\n<p>Data breaks into <b>small packets</b> as it moves from one place to another, and each packet follows certain rules (protocols) that decide how the data is sent, routed, and received. This whole thing is called the <b>internet</b> when millions of networks connect to each other.</p>",
+      "analogy": "<b>WhatsApp group</b> is like — each member (node) can chat, and messages (packets) go from one to another. Without a network each device is an <b>island</b>, mobile data or wifi provides a <b>bridge</b> to connect that island.",
+      "why": "<p>Without a network you cannot send files, send messages, or browse the web. Every modern system — microservices, load balancers, databases, CDN — all run on a <b>network</b>. This is the foundational answer for the interview question \"what is a network\".</p>",
+      "pros": [
+        "Resources are shared (files, printer, internet)",
+        "It is the foundation of distributed systems",
+        "Scalable — add and grow nodes"
+      ],
+      "cons": [
+        "Cost of setup + maintenance",
+        "Security risk — attack surface",
+        "Failures propagate if a link goes down"
+      ],
+      "gotchas": [
+        "Just remember: <b>network = nodes + links + packets + protocols</b>. Nothing moves without a protocol.",
+        "The internet is just a \"network of networks\" — not a single monolithic system.",
+        "At each hop a packet gets new framing or routing — the path of two packets can change."
+      ],
+      "terms": [
+        [
+          "Node",
+          "A device in the network — computer, phone, server, router."
+        ],
+        [
+          "Link",
+          "The medium that connects two nodes — cable, wifi, fiber."
+        ],
+        [
+          "Packet",
+          "A small piece of data that is sent over the network."
+        ],
+        [
+          "Protocol",
+          "Rules for communication — e.g., HTTP, TCP."
+        ]
+      ],
+      "where": [
+        [
+          "Home LAN",
+          "Phones and laptops connect to a wifi router, forming a LAN."
+        ],
+        [
+          "Datacenter",
+          "Thousands of servers connected via a switch/router fabric."
+        ],
+        [
+          "Internet",
+          "Networks of networks — the backbone of ISPs."
+        ]
+      ],
+      "visualCap": "4 nodes + links = a small network. Data packets travel between the nodes.",
+      "codeSwap": [
+        [
+          "// node ko represent karne wala simple object (mind map)",
+          "// a simple object representing a node (mind map)"
+        ]
+      ]
+    },
+    "net-cidr": {
+      "desc": "CIDR notation: 192.168.1.0/24 means the first 24 bits are the network, last 8 bits are for hosts → 256 addresses. /16 = 65,536 addresses. Subnetting divides a large network into smaller sub-networks for security.",
+      "what": "<p><b>Subnetting</b> is the process of dividing an IP address space into smaller networks. <b>CIDR</b> (Classless Inter-Domain Routing) notation writes the IP with a prefix length — for example <code>192.168.1.0/24</code>. <code>/24</code> means the first 24 bits are for the network, the remaining 8 bits are for hosts, i.e., 256 addresses (254 usable).</p>\n<p><code>/32</code> = single address, <code>/24</code> = 256, <code>/16</code> = 65536. This prefix alone decides which part is the \"network id\" and which is the \"host id\". The network and host bits together form the rest of the address space.</p>",
+      "analogy": "<b>Building lift system</b> — divide an entire building (IP space) into floors (subnets). Each floor has its own wing (sub-subnet). CIDR is a shorthand — like saying \"floor /16 to /20\". Compact and scalable address division.",
+      "why": "<p>Subnetting makes routing efficient — without /24 you would have to create a separate route for each IP. In the cloud, subnets inside a VPC are created from CIDR blocks. Calculating IP ranges (usable hosts, block size) is common in interviews.</p>",
+      "pros": [
+        "Efficient routing (aggregate a single entry)",
+        "Address space controlled division",
+        "Standard — all cloud vendors use it"
+      ],
+      "cons": [
+        "Waste occurs (network + broadcast + gap)",
+        "Wrong prefix = overlap bug",
+        "IPv6 CIDR behaves slightly differently (host bits huge)"
+      ],
+      "gotchas": [
+        "Just remember: <b>prefix /n = n network bits, the remaining (32-n) host bits</b>. Usable = 2^(32-n) – 2.",
+        "The first and last addresses of an IP range are not assignable (network + broadcast).",
+        "In CIDR calculations you subtract 2 from the host bits — a common small confusion fix."
+      ],
+      "terms": [
+        [
+          "Subnetting",
+          "Dividing an IP space into smaller networks."
+        ],
+        [
+          "CIDR",
+          "IP plus prefix notation, e.g., 192.168.1.0/24."
+        ],
+        [
+          "Prefix /24",
+          "First 24 bits are the network portion, the remaining are host bits."
+        ],
+        [
+          "Network/Broadcast",
+          "Subnet's first (network) and last (broadcast) addresses."
+        ]
+      ],
+      "where": [
+        [
+          "VPC subnets",
+          "CIDR block like 10.0.1.0/24 in AWS."
+        ],
+        [
+          "Route tables",
+          "Routes match based on CIDR prefix."
+        ],
+        [
+          "ACL rules",
+          "Allow 10.0.0.0/16 = entire block."
+        ]
+      ]
+    },
+    "nwf1": {
+      "q": "Explain the OSI model and the TCP/IP stack. How do they compare and why is understanding layers important?",
+      "qsub": "What is encapsulation? Walk through what happens to HTTP data as it moves down the TCP/IP stack. What is each PDU called at each layer?",
+      "what": "<p><b>OSI model</b> explains networking in 7 layers: 1 Physical, 2 Data Link, 3 Network, 4 Transport, 5 Session, 6 Presentation, 7 Application. <b>TCP/IP stack</b> condenses it: Link, Internet, Transport, Application.</p>\n<p><b>Encapsulation</b> — each layer adds <b>its header</b> to the data (an envelope inside an envelope). <b>PDU</b> is the data unit for each layer: Layer-4 = segment, L3 = packet, L2 = frame, L1 = bits. Each layer treats the layer above it as transparent. The receiver opens them in reverse (de-encapsulation).</p>",
+      "analogy": "<b>Gift packaging</b> — inside the gift (data), card (L7), envelope (L4), postage address (L3), truck label (L2), road (L1). Each layer added its own label and the receiver opens them in reverse (de-encapsulation). This is the core idea of the stack.",
+      "why": "<p>Layers provide <b>modularity</b> — you can use TCP with HTTP or with UDP. Switch operates at layer 2, router at layer 3, load balancer at L4/L7. For interviews you should firmly remember the names of the 7 layers plus the encapsulation story.</p>",
+      "pros": [
+        "Modularity — each layer independent",
+        "Universal vocabulary (interview + jobs)",
+        "Troubleshooting layer-wise easy"
+      ],
+      "cons": [
+        "7 layers are somewhat redundant (5-7 merge)",
+        "The real Internet TCP/IP follows 4/5 layers",
+        "OSI is theoretical, TCP/IP is practical"
+      ],
+      "gotchas": [
+        "Just remember: <b>OSI 7 layers, TCP/IP 4 layers, each layer adds a header (encapsulation)</b>.",
+        "Layers 5-7 (Session, Presentation, Application) are mostly merged in useful coding.",
+        "Secret phrase: \"Please Do Not Throw Sausage Pizza Away\" — you’ll remember the 7 layers from the bottom side."
+      ],
+      "terms": [
+        [
+          "OSI model",
+          "Theoretical model that explains networking in 7 layers."
+        ],
+        [
+          "TCP/IP stack",
+          "Practical 4/5-layer model used by the Internet."
+        ],
+        [
+          "Encapsulation",
+          "Each layer adds its own header to the data."
+        ],
+        [
+          "PDU",
+          "Protocol Data Unit — the data unit for each layer (segment/packet/frame)."
+        ]
+      ],
+      "where": [
+        [
+          "Load balancer",
+          "L4 (IP:port) vs L7 (URL) routing."
+        ],
+        [
+          "Wireshark",
+          "Layers are clearly visible when viewing packets."
+        ],
+        [
+          "Troubleshooting",
+          "Identify which layer is failing."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// receiver ulta unpack karta hai (de-encapsulation)",
+          "// the receiver unpacks it in reverse (de-encapsulation)"
+        ],
+        [
+          "// encapsulation ka PDU per layer",
+          "// the PDU of encapsulation per layer"
+        ]
+      ]
+    },
+    "nwf2": {
+      "q": "Explain the TCP 3-way handshake. How does TCP ensure reliable delivery and prevent congestion?",
+      "what": "<p><b>TCP (Transmission Control Protocol)</b> is a <b>reliable, ordered, connection-oriented</b> protocol. To establish a connection, a <b>3-way handshake</b> is used: SYN, SYN-ACK, ACK. Every segment has an <b>acknowledgement</b>, and <b>sequence numbers</b> are used for ordering.</p>\n<p>There are two flow controls: <b>Flow control</b> manages the receiver’s buffer capacity (window size), and <b>congestion control</b> manages the network’s capacity (slow start, congestion avoidance) — so that the network does not overload and the receiver buffer does not overflow.</p>",
+      "analogy": "<b>In a video call, \"hello? hello?\"</b> — SYN, SYN-ACK, ACK confirm that both parties are talking. Each time the receiver says \"yes received\" (ACK); if not received, the sender retransmits. Slow start = gradually increase speed until the network can handle it.",
+      "why": "<p>TCP is the backbone of reliable delivery — HTTP, databases, and file transfer all run over TCP. Understanding connection setup, congestion window (cwnd), and retransmission makes your answers to network and distributed system interview questions strong. Both HTTP/2 and HTTPS run on TCP.</p>",
+      "pros": [
+        "Reliable — data order + no loss",
+        "Congestion control keeps the network stable",
+        "Connection state enables fast retry"
+      ],
+      "gotchas": [
+        "Just remember: <b>TCP = reliable ordered, 3-way handshake, flow + congestion control</b>.",
+        "Flow control is about the receiver, congestion control is about the network — they are separate.",
+        "SYN flood attack exploits the handshake without ACK (half-open connections)."
+      ],
+      "terms": [
+        [
+          "3-way handshake",
+          "Connection setup: SYN, SYN-ACK, ACK."
+        ],
+        [
+          "Flow control",
+          "Receiver’s buffer capacity — window size."
+        ],
+        [
+          "Congestion control",
+          "Network’s capacity — cwnd, slow start."
+        ],
+        [
+          "Sequence number",
+          "Used to track data order."
+        ]
+      ],
+      "where": [
+        [
+          "HTTP/HTTPS",
+          "Web traffic — reliable."
+        ],
+        [
+          "Databases",
+          "Postgres/MySQL TCP connections."
+        ],
+        [
+          "File transfer",
+          "FTP/SSH — reliability is required."
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// node mein TCP server + handshake concept",
+          "// the TCP server + handshake concept in node"
+        ]
+      ]
+    },
+    "nwf3": {
+      "what": "<p><b>UDP (User Datagram Protocol)</b> is a <b>connectionless, unreliable, fast</b> protocol. No 3-way handshake, no ACK, no ordering guarantee. You just send data (datagram) and if a packet is lost, <b>you don't know</b>.</p>\n<p>This is perfect for <b>low latency</b> and <b>real-time</b> use cases: video calls, live gaming, DNS, VoIP. In these cases, if a frame is lost, replaying it is irrelevant — move on, freshness matters.</p>",
+      "analogy": "<b>Voice note (TCP) vs live call (UDP)</b> — a voice note must deliver every thought completely (retry). In a live call, if a word is lost, move on, don’t wait for the previous one. The live experience wants flexibility, not reliability.",
+      "why": "<p>The advantage of UDP is <b>speed</b> — no handshake, no ACK overhead, small header. Real-time apps use UDP. In interviews, the TCP vs UDP comparison is classic — explaining the trade-off is essential.</p>",
+      "pros": [
+        "Very fast — no handshake/ACK",
+        "Low overhead (8-byte header)",
+        "Good for real-time + broadcast"
+      ],
+      "cons": [
+        "Unreliable — packets may drop/duplicate",
+        "No ordering — the app must handle it",
+        "No built-in congestion control"
+      ],
+      "gotchas": [
+        "Just remember: <b>UDP = fast, connectionless, unreliable; TCP = reliable, connected</b>.",
+        "UDP guarantees: no delivery, no ordering, but it is fast.",
+        "HTTP/3’s QUIC runs on UDP, but it gets TCP-like reliability from (UDT)."
+      ],
+      "terms": [
+        [
+          "Datagram",
+          "UDP’s data unit — fast, no acknowledgment."
+        ],
+        [
+          "Connectionless",
+          "No handshake/state — fire and forget."
+        ],
+        [
+          "Unreliable",
+          "Packet may drop, you don’t know."
+        ],
+        [
+          "Low overhead",
+          "Only an 8-byte header vs TCP 20+."
+        ]
+      ],
+      "where": [
+        [
+          "DNS",
+          "Resolver prefers UDP :53 (fast)."
+        ],
+        [
+          "Games/VoIP",
+          "Real-time low latency."
+        ],
+        [
+          "HTTP/3 QUIC",
+          "Transport built on UDP."
+        ]
+      ],
+      "visualCap": "TCP: handshake + ACK for each segment. UDP: fire-and-forget datagram.",
+      "codeSwap": [
+        [
+          "// node mein UDP datagram bhejna",
+          "// sending a UDP datagram in node"
+        ]
+      ]
+    },
+    "nwf4": {
+      "qsub": "What are the key DNS record types and their purposes? How does TTL affect caching and DNS propagation?",
+      "what": "<p><b>DNS (Domain Name System)</b> converts a domain name (google.com) into an <b>IP address</b>. The browser first queries DNS for the IP, then sends the request to that IP.</p>\n<p>Resolver tree: <b>Root</b> servers — <b>TLD</b> servers (.com) — <b>Authoritative</b> name servers. Record types: <b>A</b> (IPv4), <b>AAAA</b> (IPv6), <b>CNAME</b> (alias), <b>MX</b> (mail), <b>TXT</b>. <b>Caching</b> occurs at the browser and resolver level — <b>TTL</b> decides how long to cache. <b>CDN</b> makes DNS geolocation-aware and sends the user to the nearest edge.</p>",
+      "analogy": "<b>Phone contact book</b> — \"Rohan\" (name) is searched to get his number (IP). If the number changes, just update the contact book. DNS does the same — resolve a name to an address. TTL = how long to remember the number (IP) in memory.",
+      "why": "<p>Without DNS we cannot remember IPs. CDN uses DNS geolocation to optimize requests. DNS is the first step of every web request — understanding latency, caching, and record types is essential.</p>",
+      "pros": [
+        "Names are easy to remember vs IP",
+        "Caching reduces latency",
+        "CDN/geolocation routing possible"
+      ],
+      "cons": [
+        "DNS cache can become stale",
+        "DNS hijack/spoof risk",
+        "DNS lookup adds first-time latency"
+      ],
+      "gotchas": [
+        "Just Remember: <b>DNS name → IP, tree: root, TLD, authoritative, TTL decides cache</b>.",
+        "CNAME on apex (root domain) is not allowed — use ALIAS or A record.",
+        "Test DNS with dig, flush cache with flushdns, healthy DNS = low TTL on A records."
+      ],
+      "terms": [
+        [
+          "Resolver/resolver tree",
+          "Root, TLD, Authoritative servers — lookup hierarchy."
+        ],
+        [
+          "A / AAAA",
+          "A = IPv4 record, AAAA = IPv6 record."
+        ],
+        [
+          "CNAME",
+          "Domain alias (example.com -> cdn.net)."
+        ],
+        [
+          "TTL",
+          "Cache time-to-live — how long the lookup is remembered."
+        ]
+      ],
+      "where": [
+        [
+          "Every browser request",
+          "First DNS lookup occurs."
+        ],
+        [
+          "CDN routing",
+          "DNS geolocation to nearest edge."
+        ],
+        [
+          "Service discovery",
+          "Internal DNS / Consul / k8s CoreDNS."
+        ]
+      ]
+    },
+    "nwf5": {
+      "q": "How does HTTP/1.1 work? What was the motivation for creating HTTP/2?",
+      "what": "<p><b>HTTP/1.1</b> is the most widely used version of the web. A <b>request-response</b> cycle: the client sends a request (method + uri + headers), the server sends a response (status + headers + body). Methods: GET, POST, PUT, DELETE, PATCH.</p>\n<p>Initially each request required a new TCP connection — slow. HTTP/1.1 added <b>keep-alive</b> (multiple requests on a persistent connection) and <b>pipelining</b> (multiple requests without waiting, but responses in order — this causes <b>HOL blocking</b>). Response size is identified by <b>Content-Length</b> or <b>Transfer-Encoding: chunked</b>.</p>",
+      "analogy": "<b>Grocery counter</b> — originally a new line (connection) for each item — slow. Keep-alive = all items on the same counter, one after another. Pipelining = give the whole order at once, but until the first item is ready, the rest wait — this is called HOL blocking.",
+      "why": "<p>HTTP/1.1 is an important baseline — without understanding the request/response model you cannot explain the differences in HTTP/2/3. The direct answer to the interview question \"how does HTTP work\" is based on this. Methods and status codes are essential.</p>",
+      "cons": [
+        "HOL blocking in pipelining",
+        "Multiple connections for parallelism",
+        "Text headers = large overhead"
+      ],
+      "gotchas": [
+        "Just remember: <b>HTTP/1.1 = request/response, keep-alive, pipelining has HOL blocking</b>.",
+        "GET should be idempotent/safe; POST changes state — the interviewer notices this.",
+        "Remember status codes: 200, 201, 301, 400, 401, 403, 404, 500, 503."
+      ],
+      "terms": [
+        [
+          "Request/response",
+          "Client sends method+URI, server returns status+body."
+        ],
+        [
+          "Keep-alive",
+          "Multiple requests on a single TCP connection (persistent)."
+        ],
+        [
+          "Pipelining",
+          "Multiple requests without waiting, but responses in order."
+        ],
+        [
+          "HOL blocking",
+          "The slow first response blocks the remaining responses."
+        ]
+      ],
+      "where": [
+        [
+          "Classic REST",
+          "Most APIs run on HTTP/1.1."
+        ],
+        [
+          "curl / clients",
+          "Default when HTTP/2 is not available."
+        ],
+        [
+          "CDN/legacy",
+          "Most servers still use 1.1."
+        ]
+      ],
+      "visualCap": "Keep-alive: multiple req/res on one connection. Pipelining has HOL blocking."
+    },
+    "hpp1": {
+      "desc": "HTTP/2 is binary, multiplexed: multiple streams over one TCP connection. HPACK compresses headers. Server push sends resources before the client asks.",
+      "q": "What are the key features of HTTP/2? How does binary framing improve performance over HTTP/1.1?",
+      "what": "<p><b>HTTP/2</b> came to solve HTTP/1.1's problems. Key features: <b>multiplexing</b> (parallel streams on a single connection), <b>binary framing</b> (data in binary frames, carried through streams), <b>HPACK</b> (header compression), and <b>server push</b> (server proactively sends resources).</p>\n<p>Each request is now a <b>stream</b>, and many streams can run in parallel on one connection — this eliminates connection-level HOL blocking. Note: logical HOL can still exist inside TCP (a packet loss can stall the entire connection). HTTP/2 still runs on top of TCP.</p>",
+      "analogy": "<b>Highway one lane vs many lanes</b> — HTTP/1.1 is a single lane, cars follow one after another (HOL). HTTP/2 uses a single toll (single connection) with many lanes (streams) — requests run in parallel. HPACK = each car doesn't carry its full business card, it uses a common business card folder.",
+      "why": "<p>Web apps need many resources (CSS, JS, images). HTTP/1.1 required 6+ connections for parallelism. HTTP/2 delivers everything over a single connection — lower latency and better utilization. Browsers, Nginx, and CDNs all support HTTP/2.</p>",
+      "gotchas": [
+        "Just remember: <b>HTTP/2 = multiplexing + binary framing + HPACK + server push (on TCP)</b>.",
+        "HTTP/2 practically runs only under TLS (h2 over TLS).",
+        "Ghost: multiplexing eliminates HOL at the connection level, but packet-level HOL still remains in TCP."
+      ],
+      "terms": [
+        [
+          "Multiplexing",
+          "Parallel requests/responses on a single TCP connection."
+        ],
+        [
+          "Binary framing",
+          "Headers/body in binary frames, within streams."
+        ],
+        [
+          "HPACK",
+          "Header compression — repeated headers compressed."
+        ],
+        [
+          "Server push",
+          "Server can send resources before the client asks."
+        ]
+      ]
+    },
+    "hpp2": {
+      "what": "<p><b>HTTP/3</b> and <b>QUIC</b> moved the transport to UDP. <b>QUIC</b> is a transport protocol that combines TCP + TLS + HTTP and runs on top of UDP. This enables a <b>0-RTT</b> connection to be established — data from a cached session can be sent with the first packet.</p>\n<p>The biggest feature: <b>connection migration</b> — switch from Wi-Fi to mobile data, the IP changes, but the QUIC connection stays alive (via connection ID). Each stream is independent, so packet loss in one stream does not block another — <b>no HOL blocking</b>.</p>",
+      "analogy": "<b>VIP gate pass</b> — TCP requires a new queue (handshake) for every visit. QUIC is a VIP card that passes through the watermark gate instantly (0-RTT). If you change the hotel (network), you use the same room with the VIP card (connection ID) — migration!",
+      "why": "<p>In mobile networks the IP changes constantly, and TCP/HTTP/2 stalls there. QUIC migration + 0-RTT + independent streams = smooth experience for poor mobile users. Google, Meta, and Cloudflare use HTTP/3 at massive scale.</p>",
+      "gotchas": [
+        "Just remember: <b>HTTP/3 = QUIC + UDP, 0-RTT, connection migration, no HOL</b>.",
+        "0-RTT is a replay risk — never send sensitive POSTs over 0-RTT.",
+        "HTTP/3 runs on UDP, so many corporate firewalls (allow only TCP) block it."
+      ],
+      "terms": [
+        [
+          "QUIC",
+          "Google's UDP-based transport — TCP+TLS integrated."
+        ],
+        [
+          "0-RTT",
+          "Sending data from a cached session before the handshake, without extra handshake."
+        ],
+        [
+          "Connection migration",
+          "Connection stays alive when IP changes (via connection ID)."
+        ],
+        [
+          "No HOL",
+          "Each stream is independent — loss in one does not block another."
+        ]
+      ]
+    },
+    "hpp3": {
+      "q": "How does a TLS 1.3 handshake work? What is the difference between TLS 1.2 and 1.3?",
+      "qsub": "What is a certificate chain and how does the browser validate it? What is ALPN and why is it important?",
+      "what": "<p><b>HTTPS</b> = HTTP + TLS (Transport Layer Security). <b>TLS handshake</b>: client and server negotiate cipher suites, the server shows its <b>certificate</b>, the client verifies it, then a <b>shared session key</b> exchange occurs (RSA or ECDHE), and after that data is <b>encrypted</b>.</p>\n<p>Certificate chain: <b>Root CA</b> → <b>Intermediate CA</b> → <b>Server cert</b>. The browser trusts the root CA, so the server certificate is verified. <b>Cipher suite</b> decides which algorithms will be used (e.g., TLS_AES_128_GCM_SHA256).</p>",
+      "analogy": "<b>Locked diary with seal</b> — TLS handshake first creates a secure line: server “verify my identity with this seal (certificate) and exchange this lock (cipher)”. After that the diary (data) is locked and only both parties have the key. The trust in that key (the chain) is checked first.",
+      "why": "<p>Without HTTPS every packet can be read on the wire (MITM). HTTPS provides data confidentiality, integrity, and authentication. Understanding \"how TLS works\" along with certificate chains and cipher suites is essential for interviews.</p>",
+      "gotchas": [
+        "Just remember: <b>TLS = handshake (cipher + cert + key exchange) then encrypted channel; chain = Root → Inter → Server</b>.",
+        "Self-signed cert = browser warning (no root trust).",
+        "Expired/revoked cert = 526/SSL error — certificate monitoring is necessary."
+      ],
+      "terms": [
+        [
+          "TLS handshake",
+          "Cipher neg + cert verify + shared key exchange."
+        ],
+        [
+          "Certificate chain",
+          "Root CA → Intermediate → Server cert."
+        ],
+        [
+          "Cipher suite",
+          "Which encryption/hash will be used."
+        ],
+        [
+          "mTLS",
+          "Both sides verify (client + server cert)."
+        ]
+      ],
+      "where": [
+        [
+          "All web traffic",
+          "HTTPS default for everything."
+        ],
+        [
+          "mTLS service-to-service",
+          "Both sides verify."
+        ],
+        [
+          "CDN/edge",
+          "TLS terminate at edge."
+        ]
+      ]
+    },
+    "hpp4": {
+      "what": "<p><b>WebSocket</b> and <b>SSE (Server-Sent Events)</b> are for real-time communication. WebSocket is a <b>full-duplex</b> channel — both client and server can send messages. An <b>upgrade handshake</b> (HTTP GET with <code>Upgrade: websocket</code>) turns HTTP into a persistent WebSocket connection, then data flows over low-overhead frames.</p>\n<p><b>SSE</b> is only a <b>server-to-client</b> one-way stream (<code>text/event-stream</code>). Use WebSocket for chats/real-time games, SSE for notification feeds or streaming updates (which only come from the server).</p>",
+      "analogy": "<b>Walkie-talkie vs radio broadcast</b> — WebSocket is like a walkie-talkie full-duplex: both sides talk. SSE is just a radio broadcast: one direction (server to client). If updates only come from the server (notifications), SSE is simpler and lighter.",
+      "why": "<p>In classic HTTP the client has to ask (polling). For real-time apps (chat, notifications, dashboards) the server should initiate. WebSocket/SSE enables low-latency push — no live app runs without it.</p>",
+      "gotchas": [
+        "Just remember: <b>WebSocket = full-duplex, SSE = one-way server push; both eliminate polling</b>.",
+        "WebSocket needs an Upgrade header + proxy HTTP/1.1 support; load balancers must be configured.",
+        "Heartbeat/ping-pong is required so idle connections don’t get dropped."
+      ],
+      "terms": [
+        [
+          "Upgrade handshake",
+          "HTTP GET with Upgrade: websocket."
+        ],
+        [
+          "Full-duplex",
+          "Client and server both send messages."
+        ],
+        [
+          "SSE",
+          "Server-Sent Events — only server-to-client stream."
+        ],
+        [
+          "Frames",
+          "WebSocket messages via binary/text frames."
+        ]
+      ]
+    },
+    "hpp5": {
+      "q": "What is gRPC and how does it compare to REST? What are the advantages of Protocol Buffers over JSON?",
+      "what": "<p><b>gRPC</b> is a modern RPC framework that runs on <b>HTTP/2</b> and uses <b>Protocol Buffers (protobuf)</b> for serialization. You define service and message types in a <b>.proto</b> file, and the compiler (protoc) generates typed client/server code.</p>\n<p>Four RPC types: unary, server-streaming, client-streaming, bidirectional-streaming. Because of HTTP/2 multiplexing, multiple streaming calls share a single connection. Small binary payload + strong typing + codegen = perfect for microservices.</p>",
+      "analogy": "<b>Order form with fixed fields</b> — REST is like a free-form email (JSON, flexible), gRPC is like a printed order form (protobuf, structured, efficient). Define the form (proto) once and printing (codegen) is automatic — a typed version in every language. Then the form is small and fast (binary) when delivered.",
+      "why": "<p>Microservices need repeated, structured, low-latency communication with each other. JSON parsing is slow and error-prone. With gRPC’s binary format, streaming, and codegen, service-to-service calls are fast and safe — Google runs internally on this.</p>",
+      "gotchas": [
+        "Just remember: <b>gRPC = protobuf + HTTP/2 + codegen; 4 RPC types</b>.",
+        "Field numbers in proto are permanent — never reuse or reorder them.",
+        "gRPC status codes (OK, DeadlineExceeded, Unavailable) are different from HTTP codes."
+      ],
+      "terms": [
+        [
+          "protobuf",
+          "Google's efficient binary serialization format."
+        ],
+        [
+          ".proto file",
+          "Schema for defining service and message types."
+        ],
+        [
+          "Codegen",
+          "Typed client/server generated by protoc."
+        ],
+        [
+          "Streaming RPC",
+          "Unary, server, client, and bidirectional streaming."
+        ]
+      ],
+      "where": [
+        [
+          "Microservices",
+          "Service-to-service RPC."
+        ],
+        [
+          "Polyglot systems",
+          "Codegen in every language."
+        ],
+        [
+          "Streaming workloads",
+          "Telemetry, event feed."
+        ]
+      ]
+    },
+    "lbp1": {
+      "q": "What is the difference between L4 and L7 load balancing? When would you use each?",
+      "what": "<p><b>Load balancing</b> distributes incoming traffic across multiple servers so that no server becomes overloaded. <b>L4 (Layer 4)</b> balancer only looks at IP + port — fast, opaque forwarding. <b>L7 (Layer 7)</b> balancer works at the HTTP layer — routes smartly based on URL, headers, cookies.</p>\n<p>L4: fast, but no smart routing. L7: path/host based routing, TLS, caching — but more CPU. Nginx, HAProxy, AWS ALB = L7; AWS NLB, k8s kube-proxy = L4.</p>",
+      "analogy": "<b>Restaurant manager</b> — L4 only counts \"how many people arrived\" (IP:port) and assigns a counter, without looking at the order. L7 manager looks at the order (URL: \"/pizza\", \"/healthy\") and sends it to the appropriate kitchen (server). L7 is smarter, but slower.",
+      "why": "<p>Based on capability: use L7 when you need URL-based routing, sticky sessions, TLS termination; use L4 for raw TCP/UDP fast forwarding. \"Why L4 vs L7\" is a classic interview question.</p>",
+      "cons": [
+        "L4: no HTTP-aware routing",
+        "L7: more CPU/latency",
+        "Session affinity is hard without proper handling"
+      ],
+      "gotchas": [
+        "Just remember: <b>L4 = IP:port (fast), L7 = HTTP aware (smart)</b>.",
+        "Algorithms: round-robin, least-connections, IP-hash, consistent hashing.",
+        "Health checks + connection draining are mandatory in production load balancers."
+      ],
+      "terms": [
+        [
+          "Load balancer",
+          "Traffic distributed across multiple servers."
+        ],
+        [
+          "L4",
+          "Layer 4 — looks at IP + port, fast, opaque."
+        ],
+        [
+          "L7",
+          "Layer 7 — smart routing based on HTTP URL/headers."
+        ],
+        [
+          "Sticky session",
+          "Always send a user to the same backend."
+        ]
+      ]
+    },
+    "lbp2": {
+      "qsub": "How would you configure Nginx as a reverse proxy? What is the purpose of proxy_set_header directives?",
+      "what": "<p><b>Reverse proxy</b> is a gateway between the client and the backend — the client talks to the proxy, the proxy talks to the backend. These are tools like <b>Nginx, Envoy, HAProxy</b>. Functions: load balancing, <b>TLS termination</b>, caching, gzip, request modification, and hiding the backend from the client.</p>\n<p>A forward proxy serves the client (for internet access), while a reverse proxy sits <b>in front of the server</b> (handling incoming traffic). A reverse proxy can also serve static files, handle rate limiting, circuit breaking, and more.</p>",
+      "analogy": "<b>Security guard at building gate</b> — all visitors (clients) meet the guard (reverse proxy), the guard sends them to the correct floor (backend service). Visitors don’t know the actual floor layout (backends hidden). The guard is uniformed (TLS), checks bags (auth), and manages crowd control (rate limit).",
+      "why": "<p>With a single entry point you control security, TLS, caching, routing, gzip—all in one place. The backend stays simple. In production, every system sits behind a reverse proxy (Nginx/Envoy).</p>",
+      "gotchas": [
+        "Just remember: <b>Reverse proxy = in front of the server, forward proxy = in front of the client</b>.",
+        "The X-Forwarded-For header is spoofable — trust it only from a trusted proxy, otherwise rate limiting can be bypassed.",
+        "To avoid a single point of failure, you need a proxy cluster with health checks."
+      ],
+      "terms": [
+        [
+          "Reverse proxy",
+          "Gateway between the client and the backend."
+        ],
+        [
+          "TLS termination",
+          "Proxy handles HTTPS, backend receives HTTP."
+        ],
+        [
+          "Forward proxy",
+          "Provides internet access for the client."
+        ],
+        [
+          "Offloading",
+          "TLS/gzip/cache handled by the proxy — backend stays lightweight."
+        ]
+      ]
+    },
+    "lbp3": {
+      "what": "<p><b>API Gateway</b> is a single entry point that exposes all backend APIs to the client. It is a reverse proxy + extra features: <b>routing</b> (path→service), <b>authentication</b> (JWT/OAuth check), <b>rate limiting</b> (per-client quota), and <b>aggregation</b> (multiple service calls combined into one response — BFF pattern).</p>\n<p>Also: protocol translation, transformation, caching, monitoring. Examples: Kong, AWS API Gateway, Nginx. The gateway hides backend orchestration from the client.</p>",
+      "analogy": "<b>Airport main desk</b> — all check-in (auth), security (validation), baggage (rate limit), flight assignment (routing) in one place. If data from 3 services is needed, the desk calls all and provides a single packet (aggregation). Without the desk each traveler goes to every counter themselves.",
+      "why": "<p>In microservices, it is difficult for the client to keep track of each service's URL, authentication, and rate limit. The gateway manages everything centrally: one API key, one URL, all policies in one place. Both security and developer experience improve.</p>",
+      "gotchas": [
+        "Just remember: <b>Gateway = reverse proxy + auth + rate-limit + aggregation (BFF)</b>.",
+        "Aggregation can turn N calls into 1 — but you need to handle timeouts or stale partial responses.",
+        "Do not put business logic in the gateway — only cross-cutting concerns."
+      ],
+      "terms": [
+        [
+          "API Gateway",
+          "Single entry point for all backend APIs."
+        ],
+        [
+          "BFF",
+          "Backend-for-Frontend — aggregation pattern."
+        ],
+        [
+          "Rate limit",
+          "Per-client request quota."
+        ],
+        [
+          "Authn/Authz",
+          "JWT/OAuth verification before forwarding."
+        ]
+      ]
+    },
+    "lbp4": {
+      "desc": "CDN caches content at edge servers close to users. Origin shield is a single intermediary cache that shields the origin from edge misses. CDNs absorb DDoS traffic at the edge.",
+      "q": "How does a CDN work? What is the difference between edge caching and origin shield?",
+      "what": "<p><b>CDN (Content Delivery Network)</b> static content (images, CSS, JS, video) is cached on <b>edge servers</b> across the world, so that the user receives content from the nearest server (low latency). The DNS request is routed to the nearest edge based on the user's location.</p>\n<p>Key concepts: <b>edge caching</b>, <b>origin shield</b> (edge→shield→origin which reduces origin traffic), and <b>DDoS protection</b> (absorbing traffic to protect the origin). Cache invalidation <b>purge</b> occurs via <code>Cache-Control</code> headers.</p>",
+      "analogy": "<b>Local chai stall vs central tea factory</b> — each neighborhood has stalls (edge) that keep copies and serve, so the factory (origin) is not called each time. Users get speed (low latency). When there is a big rush, stalls (CDN) handle it and the factory (origin) stays safe.",
+      "why": "<p>Network latency increases with distance (RTT). CDN brings content closer to the user — improving page load, video streaming, and the experience of worldwide users. Without a CDN, cross-region access is slow and the origin becomes overloaded.</p>",
+      "gotchas": [
+        "Just remember: <b>CDN = edge cache + origin shield, DNS routes to nearest edge</b>.",
+        "Incorrect Cache-Control headers can cache private data (security bug).",
+        "Purge is expensive — design URLs versioned (immutable hashes) instead."
+      ],
+      "terms": [
+        [
+          "Edge server",
+          "CDN server located near the user."
+        ],
+        [
+          "Origin shield",
+          "Edge → shield → origin hierarchy."
+        ],
+        [
+          "Purge",
+          "Cache invalidation — removing a specific URL."
+        ],
+        [
+          "Cache-Control",
+          "Headers that control freshness (max-age)."
+        ]
+      ]
+    },
+    "lbp5": {
+      "what": "<p><b>Service mesh</b> manages all network traffic between microservices. Each service gets a <b>sidecar proxy</b> (e.g., Envoy) that intercepts traffic — without changing application code. Features: <b>mTLS</b>, <b>traffic splitting</b> (canary/blue-green), retries, timeouts, tracing, observability.</p>\n<p>Architecture: <b>control plane</b> (configuration + certificate management) and <b>data plane</b> (sidecars). Popular: Istio (Envoy), Linkerd, Consul Connect.</p>",
+      "analogy": "<b>Couriers outside each service</b> — the service mesh places a courier (sidecar) next to each service that handles all traffic. The app only does its work; the courier handles security (mTLS), routing (traffic split), retries. The boss (control plane) sends new rules to the couriers.",
+      "why": "<p>In microservices, adding retry, mTLS, and tracing everywhere in application code is difficult. Service mesh moves this to the <b>infrastructure layer</b>, keeping the app simple — networking policies are centralized. Important interview concept.</p>",
+      "gotchas": [
+        "Just remember: <b>Service mesh = sidecar proxies (data plane) + control plane, provides mTLS and traffic split</b>.",
+        "Injecting sidecars adds latency and per-pod memory overhead.",
+        "Metrics and tracing must be attached to a canary split — otherwise you get a blind deployment."
+      ],
+      "terms": [
+        [
+          "Service mesh",
+          "Infrastructure layer that manages microservices traffic."
+        ],
+        [
+          "Sidecar proxy",
+          "A proxy like Envoy attached to each service."
+        ],
+        [
+          "mTLS",
+          "Both sides encrypted and verified."
+        ],
+        [
+          "Traffic splitting",
+          "Canary/blue-green — percentage of traffic directed to different versions."
+        ]
+      ]
+    },
+    "nws1": {
+      "q": "What is the difference between stateful and stateless firewalls? How does defense-in-depth work in cloud networking?",
+      "qsub": "In AWS, what is the difference between Security Groups and Network ACLs? Why would you use both?",
+      "what": "<p><b>Firewall</b> allows or denies network traffic according to rules. <b>ACL (Access Control List)</b> is a rule set — source, destination, port, allow/deny. <b>Stateful</b> firewall tracks <b>connection state</b> — once a connection is allowed, its return traffic is automatically allowed.</p>\n<p><b>Stateless</b> firewall treats each packet <b>independent</b> — it does not know whether the packet is return traffic or a new request. Therefore separate rules are required for each direction. Stateful = intelligent (connection aware), Stateless = simple but rigid.</p>",
+      "analogy": "<b>Building security</b> — stateless guard: every visitor must show identity again, even if they entered 2 seconds earlier. Stateful guard: your record is kept, once approved, free movement during the session. A stateful guard fully understands reply traffic.",
+      "why": "<p>The first line of security — keep only allowed ports (80, 443) open from external. Stateful complexity makes it easier to understand replies/multipart. The stateful vs stateless firewall difference is common in interviews.</p>",
+      "cons": [
+        "Stateful: state table uses memory",
+        "Stateless: many rules, setup tricky",
+        "Wrong rule can block legitimate traffic"
+      ],
+      "gotchas": [
+        "Just remember: <b>Stateful = connection tracking (replies auto), Stateless = both directions rules</b>.",
+        "NACL vs SG: NACL is subnet-level stateless, SG is instance-level stateful.",
+        "Allow-list by default (drop unknown) — deny-list is risky."
+      ],
+      "terms": [
+        [
+          "Firewall",
+          "Allows or denies traffic based on rules."
+        ],
+        [
+          "ACL",
+          "Access Control List — source/dest/port/action."
+        ],
+        [
+          "Stateful",
+          "Tracks connection state — replies are automatically allowed."
+        ],
+        [
+          "Stateless",
+          "Each packet is independent — requires rules for both directions."
+        ]
+      ]
+    },
+    "nws2": {
+      "q": "What are the three types of DDoS attacks? How would you design a multi-layer DDoS mitigation strategy?",
+      "what": "<p><b>DDoS (Distributed Denial of Service)</b> prevents the system from working by sending overwhelming traffic from a botnet. 3 types: <b>volumetric</b> (network bandwidth saturate — UDP flood), <b>protocol</b> (connection state exhaust — SYN flood), and <b>application-layer</b> (legit-looking HTTP flood / slowloris — app resources overuse).</p>\n<p>Protection: rate limiting, WAF (L7), CDN/scrubbing center, anycast (traffic to multiple locations), auto-scaling. App-layer attacks are the trickiest — they appear like legitimate traffic.</p>",
+      "analogy": "<b>Crowd at a shop</b> — volumetric = block all people entering the lane (bandwidth saturation). Protocol = fill the guard’s queue with bad tickets (SYN queue full). App-layer = fake customers who move forward and take time (slow requests) — the cleverest.",
+      "why": "<p>When a DDoS occurs, availability is impacted — the business loses money. In an interview, show categories + layered mitigation (edge absorb + rate-limit + autoscale). Planning CDN/scrubbing in advance is a good practice.</p>",
+      "gotchas": [
+        "Just remember: <b>DDoS 3 types: volumetric, protocol, app-layer; mitigation: CDN + WAF + rate-limit + autoscale</b>.",
+        "App-layer attacks look like legitimate traffic — rate-limiting by IP is not enough; behavior analysis is needed.",
+        "SYN flood mitigation: SYN cookies / proxy absorbing half-open connections."
+      ],
+      "terms": [
+        [
+          "DDoS",
+          "Distributed DoS — colliding with overwhelming traffic."
+        ],
+        [
+          "Volumetric",
+          "Fill the bandwidth — UDP/ICMP flood."
+        ],
+        [
+          "Protocol",
+          "SYN flood — connection state exhaust."
+        ],
+        [
+          "App-layer",
+          "Legitimate requests cause app resources overuse — HTTP flood."
+        ]
+      ],
+      "where": [
+        [
+          "Cloudflare/CloudArmor",
+          "Always-on DDoS absorb."
+        ],
+        [
+          "Auto scaling",
+          "To absorb the swell."
+        ],
+        [
+          "Anycast",
+          "Distribute traffic across multiple POPs."
+        ]
+      ]
+    },
+    "nws3": {
+      "q": "How would you design a VPC network with public and private subnets? What is the purpose of a NAT Gateway?",
+      "what": "<p><b>Network segmentation</b> splits a large network into smaller isolated parts — like subnets (public/private) inside a VPC, each part has its own security. <b>VPC</b> is an isolated virtual network. <b>NAT gateway</b> allows instances in a private subnet (without a public IP) to connect to the internet — outbound is allowed, inbound is blocked.</p>\n<p>Segmentation reduces risk: if one subnet is compromised, the rest remain safe (lateral movement stops). Public subnet = internet-facing (web), private = database/backend (no public access).</p>",
+      "analogy": "<b>Bank vault system</b> — each compartment has its own access. Lobby (public subnet) is open to everyone, vault room (db subnet) is for restricted staff only. NAT gateway is a gated entrance that lets traffic go out (to the internet) from inside but not come in without permission.",
+      "why": "<p>In a flat network, any compromise gives access to the entire network. Segmentation is the core of defense-in-depth — keeping sensitive data (DB) separate. Cloud security interviews often ask about VPC/subnet/NAT architecture.</p>",
+      "gotchas": [
+        "Just remember: <b>Segmentation = VPC + public/private subnets + NAT gateway, limits blast radius</b>.",
+        "NAT gateway is an AWS-managed resource — there is an outage risk, use multi-AZ for high availability.",
+        "Public/private misconfiguration = exposure; ensure ingress to the private subnet is blocked."
+      ],
+      "terms": [
+        [
+          "Segmentation",
+          "Splitting a large network into smaller isolated parts."
+        ],
+        [
+          "VPC",
+          "Virtual Private Cloud — isolated virtual network."
+        ],
+        [
+          "Subnet",
+          "Public or private segments inside a VPC."
+        ],
+        [
+          "NAT gateway",
+          "Private instances outbound to the internet without a public IP."
+        ]
+      ]
+    },
+    "nws4": {
+      "what": "<p><b>Zero Trust Networking</b> principle: <b>\"Never trust, always verify\"</b> — being inside the network does not mean automatically trusted. Every request must be <b>authenticate + authorize</b> whether the source is internal or external.</p>\n<p>Core: <b>mTLS</b> (both sides encrypted + verified), <b>identity-based access</b>, micro-segmentation, continuous verification, least privilege. The old VPN/segmentation model \"network access = trust\" is replaced.</p>",
+      "analogy": "<b>Hotel where every door is locked</b> — normal: once you enter the lobby (network), all rooms are open. Zero trust: even in the lobby, each room (service) requires its own separate key (identity) and must be verified each time. \"I came from the lobby\" is not enough.",
+      "why": "<p>If the perimeter (firewall) breaks, the attacker can access all resources. With Zero Trust, they have access only to the resource that is tagged with their identity — lateral movement stops. mTLS + identity policies are the backbone.</p>",
+      "gotchas": [
+        "Just remember: <b>Zero trust = \"never trust, always verify\"; mTLS + identity-based policy</b>.",
+        "Identity is only as good as its issuance — compromised identity = access.",
+        "Zero trust does not mean remove VPN — keep both network and identity layered."
+      ],
+      "terms": [
+        [
+          "Zero Trust",
+          "\"Never trust, always verify\" principle."
+        ],
+        [
+          "mTLS",
+          "Both sides encrypted + verified."
+        ],
+        [
+          "Identity-based access",
+          "Policy based on user/service identity."
+        ],
+        [
+          "Least privilege",
+          "Only necessary access — minimal."
+        ]
+      ]
+    },
+    "nws5": {
+      "desc": "VPN creates an encrypted tunnel over the internet (IPsec, OpenVPN). Direct Connect is a private physical connection from on-prem to cloud. VPC peering/Transit Gateway connect VPCs within the cloud.",
+      "q": "What are the options for connecting on-premises networks to the cloud? Compare VPN vs Direct Connect.",
+      "what": "<p><b>VPN</b> and <b>private connectivity</b> create a secure channel so that two sites/services can communicate. <b>IPsec VPN</b> — encrypted tunnel over the internet (site-to-site). <b>Direct Connect</b> (AWS) — dedicated private line from on-premise to AWS, without public internet. <b>VPC peering</b> — connect two VPCs with a direct private network.</p>\n<p>Choice: IPsec = cheap, internet-based, variable latency. Direct Connect = dedicated high-speed, stable, costly. Peering = same cloud, fast. With private connectivity, data does not traverse the public internet — security + consistency.</p>",
+      "analogy": "<b>Railway vs regular road</b> — VPN is an overlay route on the regular highway (internet), cheap, but latency varies with traffic. Direct Connect is a dedicated railway track — only your train, stable, but expensive to build. Peering = a direct footbridge between two buildings.",
+      "why": "<p>In production you need a secure and stable connection from an on-premise data center to the cloud. The public internet has variable latency and risk. Direct Connect/IPsec provide a private path — predictability and compliance. This is a hybrid cloud interview point.</p>",
+      "gotchas": [
+        "Just remember: <b>VPN = internet overlay; Direct Connect = private line; Peering = VPC-to-VPC</b>.",
+        "VPC peering is non-transitive — A↔B, B↔C doesn't mean A↔C.",
+        "Monitor IPsec tunnel logs and rekeying — silent tunnel drops are common."
+      ],
+      "terms": [
+        [
+          "IPsec VPN",
+          "Encrypted site-to-site tunnel over the internet."
+        ],
+        [
+          "Direct Connect",
+          "Dedicated private line on-premise to cloud (AWS)."
+        ],
+        [
+          "VPC peering",
+          "Connect two VPCs with a direct private network."
+        ],
+        [
+          "Hybrid cloud",
+          "Combination of on-premise and cloud."
+        ]
+      ]
+    },
+    "nad1": {
+      "q": "What are the different types of caching in a web architecture? Explain cache-aside vs write-through patterns.",
+      "what": "<p><b>Caching</b> is storing frequently used data in fast storage. Levels: <b>client cache</b> (browser), <b>server cache</b> (CDN/edge), <b>application cache</b> (Redis). <b>Invalidation</b> keeps the cache fresh — when data changes, delete the cache.</p>\n<p>Strategies: <b>cache-aside</b> (read from cache, on miss fetch from DB and set), <b>write-through</b> (every write updates cache and DB), TTL expiry, invalidation events. Headers <code>Cache-Control</code>, ETag control freshness.</p>",
+      "analogy": "<b>Kitchen fridge vs market</b> — the fridge (cache) holds daily essentials, you don’t go to the market (DB) every time. If an item becomes spoiled (stale), take it out (invalidate) and get a fresh one. Keep the fridge stocked by refilling from the market (write-through).",
+      "why": "<p>Caching reduces latency and load. For read-heavy apps (news, product pages) it’s a lifeline — better performance, lower DB load, cheaper CDN. Interviewers often ask “how do you cache” and expect a balance of TTL/invalidation.</p>",
+      "gotchas": [
+        "Just remember: <b>Cache-aside read, write-through, TTL + invalidation = freshness balance</b>.",
+        "Cache stampede: widespread miss puts full load on the DB — use lock/join single flight.",
+        "When distributed cache nodes join, cold cache = temporary full DB hit."
+      ],
+      "terms": [
+        [
+          "Cache-aside",
+          "Application checks cache first; on miss fetches from DB and sets cache."
+        ],
+        [
+          "Write-through",
+          "Every write updates both cache and DB."
+        ],
+        [
+          "TTL",
+          "Time-to-live — how long the cache remains valid."
+        ],
+        [
+          "Invalidation",
+          "On data change, delete or replace cache."
+        ]
+      ]
+    },
+    "nad2": {
+      "what": "<p><b>Gossip protocol</b> — spreads virally among information nodes: each node shares its information with its peers, and through a chain reaction everyone learns. Useful in clusters for membership and failure detection.</p>\n<p><b>Consistent hashing</b> — a way to distribute data across nodes such that when a node is added or removed only a small portion needs to be relocated. Each node is assigned on a hash ring; the hash of a key maps to the nearest node. Makes node churn cheap in caches/distributed stores.</p>",
+      "analogy": "<b>Gossip = office rumour</b> — someone hears it, tells two others, fast gossip reaches everyone (eventually consistent). Consistent hashing = <b>taxi stand slots</b> — each porter (node) has a fixed slot on the ring; a new job (key) goes to the nearest slot. When a porter leaves (node down), only its customers move to another slot — the rest remain unaffected.",
+      "why": "<p>In clusters, it is essential that every node knows each other's state (gossip) — reliable membership/failure detection. Data should be balanced without poor rebalance (consistent hashing) — scaling out is cheap.</p>",
+      "gotchas": [
+        "Just remember: <b>Gossip = epidemic propagation; consistent hashing = ring, minimal rebalance</b>.",
+        "Gossip is eventually consistent — nodes may see different states for a short period.",
+        "If a plain hash ring has uneven distribution, use virtual nodes (vnodes)."
+      ],
+      "terms": [
+        [
+          "Gossip protocol",
+          "viral among info nodes (eventually consistent)."
+        ],
+        [
+          "Consistent hashing",
+          "Data distribution on a hash ring across nodes."
+        ],
+        [
+          "Virtual nodes",
+          "to avoid uneven distribution."
+        ],
+        [
+          "Membership",
+          "Which nodes are up — detected via gossip."
+        ]
+      ]
+    },
+    "nad3": {
+      "what": "<p><b>Rate limiting</b> is about restricting the number of requests from a client or service. Algorithms: <b>token bucket</b> — bucket filled with tokens, each request consumes one token, tokens refresh at a fixed rate (+ burst allowed). <b>leaky bucket</b> — fixed-rate output queue, smooth processing, no burst. <b>sliding window</b> — exact count in a recent fixed-time window, precise aging.</p>\n<p>Token bucket: bursty but capped average. Leaky: completely smooth. Sliding: most accurate (no boundary spikes). Distributed implementations commonly use Redis + Lua counters.</p>",
+      "analogy": "<b>Ticket counter</b> — token bucket: 60 tickets (tokens) are added each minute, you can use up to 60 at once (burst) then they stop. Leaky: the line exits at a fixed speed — even during a rush it stays smooth. Sliding window: exact count of \"the last 60 seconds' 60 requests\" — correct even across boundaries.",
+      "why": "<p>Rate limiting controls malicious floods (DDoS, scraper) and accidental spikes. Algorithm choice: burst (token), smooth (leaky), precise (sliding). Distributed production requires Redis.</p>",
+      "gotchas": [
+        "Just remember: <b>Token = burst, Leaky = smooth, Sliding = precise; distributed needs Redis</b>.",
+        "403 vs 429: send 429 + Retry-After for rate limiting, 403 has wrong semantics.",
+        "A single-process limiter behind N load-balancer replicas results in Nx limit — use a centralized Redis."
+      ],
+      "terms": [
+        [
+          "Token bucket",
+          "In a token bucket, tokens refresh at a fixed rate — burst allowed."
+        ],
+        [
+          "Leaky bucket",
+          "Fixed rate output queue — smooth, no burst."
+        ],
+        [
+          "Sliding window",
+          "Recent exact window count — precise."
+        ],
+        [
+          "Redis counter",
+          "For distributed rate limiting, use Lua/atomic."
+        ]
+      ]
+    },
+    "nad4": {
+      "qsub": "How do reactive streams handle backpressure? What happens in a message queue when the consumer can't keep up?",
+      "what": "<p><b>Backpressure &amp; flow control</b> prevents the system from being overrun when the producer is faster than the consumer. <b>TCP</b> uses window size for flow control — when the receiver buffer fills, the sender slows down. <b>HTTP/2</b> provides stream-level flow-control frames. <b>Reactive streams</b> (RxJS, Project Reactor, Node streams) use demand-based backpressure — the consumer indicates “how much it needs,” and the producer sends that amount.</p>\n<p>Apply: without backpressure you get memory/buffer overflow — the app crashes. Therefore keep queues bounded or coordinate the producer.</p>",
+      "analogy": "<b>A grain truck vs warehouse</b> — if the warehouse (receiver) is full and the truck (sender) keeps coming, the warehouse overflows. Deterministic backpressure: the warehouse says “give me 5 boxes now” — the truck sends 5 and waits. TCP/Pipes work exactly the same with demand signals.",
+      "why": "<p>Without flow control, a fast producer can overflow the system’s memory/queue. TCP has it built-in (window). High-level applications (streaming, message queues) need an explicit backpressure pattern for stability. The interview question “how do you handle backpressure” is common.</p>",
+      "gotchas": [
+        "Just remember: <b>Backpressure = slow the producer when the consumer is full; TCP window + reactive demand</b>.",
+        "Unbounded queues = hidden backpressure that causes OOMs — always keep them bounded.",
+        "Deadlock: circular dependency + bounded buffers = cycle block — detect it."
+      ],
+      "terms": [
+        [
+          "Backpressure",
+          "Slow the producer when the consumer is overburdened."
+        ],
+        [
+          "Flow control",
+          "TCP window — receiver buffer capacity."
+        ],
+        [
+          "Reactive streams",
+          "Publisher/Subscriber with demand signal."
+        ],
+        [
+          "HOL blocking",
+          "Head-of-line blocking – slows the downstream when the upstream is slow."
+        ]
+      ]
+    },
+    "nad5": {
+      "q": "Explain the four key network performance metrics. How do they interact and which one matters most for different applications?",
+      "qsub": "What is the Bandwidth-Delay Product? How does TCP window size limit throughput? What tools measure each metric?",
+      "what": "<p><b>Latency</b> is the time for a small packet's round-trip (ms). <b>Bandwidth</b> is the channel's max capacity (bps). <b>Throughput</b> is the actual data that is safely transferred (with protocol overhead). <b>Jitter</b> is the variation in latency — a killer for real-time apps (VoIP, gaming).</p>\n<p>Relation: latency × bandwidth = <b>bandwidth-delay product</b> (data in flight). Video streaming throughput, chat latency, VoIP jitter matter. Measurement tools: ping (latency), iperf (throughput), traceroute (path).</p>",
+      "analogy": "<b>Highway</b> — latency = time for the first sign to appear after leaving home, bandwidth = number of lanes (max cars), throughput = actual cars that pass (including toll delays), jitter = sometimes 5 min, sometimes 20 min — jagged. VoIP/Games are sensitive to jitter: occasional delay spikes are problematic.",
+      "why": "<p>Understanding performance metrics is essential in an interview — which metric matters for which use case. Demonstrating the distinct impact of latency, throughput, and jitter for diagnosis signals senior-level competence.</p>",
+      "gotchas": [
+        "Just Remember: <b>Latency = time, Bandwidth = pipe, Throughput = actual, Jitter = variation</b>.",
+        "Throughput != bandwidth always — protocol overhead, congestion occurs.",
+        "Median hides the 99th percentile — keep latency SLO at p99/p95, not at the average."
+      ],
+      "terms": [
+        [
+          "Latency",
+          "The time for a request (RTT / ms)."
+        ],
+        [
+          "Bandwidth",
+          "Max data rate (bps)."
+        ],
+        [
+          "Throughput",
+          "Actual data rate (with overhead)."
+        ],
+        [
+          "Jitter",
+          "Variation in latency."
+        ]
+      ],
+      "where": [
+        [
+          "SLO/SLA",
+          "Targets: p99 latency, throughput."
+        ],
+        [
+          "CDN",
+          "Latency cut by edge."
+        ],
+        [
+          "VoIP/Games",
+          "Jitter is the killer metric."
+        ]
+      ]
+    },
+    "npr1": {
+      "qsub": "What is PrivateLink and how does it enable cross-VPC service access? What are the cost tradeoffs of different connectivity options?",
+      "what": "<p><b>Cloud networking</b> — Starting with VPC design: public subnets (web), private subnets (app/db), NAT gateway, route tables, NACL/SG. <b>Multi-region</b> — replicating data across multiple regions (geo redundancy, low latency). <b>Hybrid cloud</b> — connecting an on-premise data center to the cloud (Direct Connect/VPN).</p>\n<p>Design principles: least-privilege, blast radius, HA (multi-AZ), low-latency via edge/CDN. Traffic flow: client → CDN/cloudfront → LB → app (multi-AZ) → DB (private, replicated).</p>",
+      "analogy": "<b>Building multiple secure wings</b> — VPC = the entire campus (isolated), subnets = wings (public lobby / private office / vault), AZs = separate buildings so that if one fails, another keeps running (HA). Multi-region = two separate campuses in different cities (geo redundancy). Hybrid = campus connected to a remote office via a secure line.",
+      "why": "<p>Production cloud apps need availability, security, and performance. Multi-AZ/region avoids downtime, and isolation within a VPC provides security. In an interview, when asked to “design a network for this service,” you need to show these blocks.</p>",
+      "gotchas": [
+        "Just Remember: <b>Cloud network = VPC + subnets + AZs + multi-region + hybrid link</b>.",
+        "Multi-AZ = HA, multi-region = disaster recovery + geo — they are different.",
+        "Cross-region calls add WAN latency — co-locate data where the user is."
+      ],
+      "terms": [
+        [
+          "VPC design",
+          "Layout of subnets + route tables + gateways."
+        ],
+        [
+          "Multi-region",
+          "Availability + low latency across regions."
+        ],
+        [
+          "Hybrid cloud",
+          "On-premise + cloud mix."
+        ],
+        [
+          "AZ",
+          "Availability Zone — datacenter group."
+        ]
+      ]
+    },
+    "npr2": {
+      "what": "<p><b>Network observability</b> — understand what the network is doing. <b>Tracing</b> (Jaeger/Zipkin) follows a request across multiple services (spans). <b>Metrics</b> (Prometheus) counters — latency, QPS, error rate. <b>Packet capture</b> (tcpdump/Wireshark) view raw packets — retries, drops, retransmissions. <b>eBPF</b> kernel-internal program that observes traffic without application code.</p>\n<p>Signal-to-noise: tracing = multi-service aware, metrics = aggregate numbers, packet capture = deepest raw. eBPF (Cilium, eBPF-based probes) = visibility with low overhead.</p>",
+      "analogy": "<b>Journey tracking</b> — metrics = GPS showing \"how many km/hour\" (average). Tracing = log at every intersection (service) \"which route was taken\". Packet capture = dashcam video from each tire (raw). eBPF = built-in sensor in the car that records everything without any dash cam — kernel-level magic.",
+      "why": "<p>Network failures occur — retry storms, high latency, packet loss. Observability reveals where the bottleneck is. Pocket interview: tracing Jaeger, metrics Prometheus, deep-debug tcpdump/eBPF.</p>",
+      "gotchas": [
+        "Just remember: <b>Observability = tracing (spans) + metrics + packet/eBPF at depth</b>.",
+        "Trace ID neutralizing/leak — do not store sensitive data in span attributes.",
+        "tcpdump on busy production = huge output; filtering + rotating files is necessary."
+      ],
+      "terms": [
+        [
+          "Tracing",
+          "Follow a request across services (span graph)."
+        ],
+        [
+          "Metrics",
+          "Counters/gauges — latency, QPS, error rate."
+        ],
+        [
+          "Packet capture",
+          "tcpdump/Wireshark — view raw packets."
+        ],
+        [
+          "eBPF",
+          "Program in the kernel — observability without instrumentation."
+        ],
+        [
+          "pcap",
+          "Packet capture format."
+        ]
+      ]
+    },
+    "npr3": {
+      "q": "How does networking work in Kubernetes? Explain the roles of CNI, kube-proxy, and Ingress.",
+      "qsub": "What is the difference between iptables and IPVS modes in kube-proxy? How does Cilium use eBPF for improved networking?",
+      "what": "<p><b>Kubernetes networking</b> — pods get a flat network (each pod has its own IP). <b>CNI</b> (Calico, Cilium) provides pod-to-pod networking and policies. <b>Service</b> gives pods a stable virtual IP and DNS — pod churn changes IPs but the service remains constant. <b>Ingress</b> provides HTTP/L7 routing inside the cluster (path→service). <b>kube-proxy</b> forwards the service IP to the actual pod IP.</p>\n<p>External traffic: Ingress/LoadBalancer → Service → Pods. Network policies (CNI) provide pod-level micro-segmentation.</p>",
+      "analogy": "<b>Apartment mail system</b> — each room (pod) has its own mailbox address (IP). The building reception (Service) is a fixed address that delivers to all rooms — if a room changes (pod restarted) the reception stays the same. The security guard (network policy) decides which room can talk to which.",
+      "why": "<p>Kubernetes networking is a core topic for interviews and real-world deployments. Pod IPs are dynamic — Service abstraction is essential. Understanding CNI, Ingress, and policies makes distributed deployment easier.</p>",
+      "gotchas": [
+        "Just remember: <b>K8s net = CNI (pod net) + Service (stable VIP) + Ingress (L7) + NetworkPolicy</b>.",
+        "Service only load-balances healthy pods — readiness probe is required.",
+        "ClusterIP is internal only; external traffic needs NodePort, Ingress, or LoadBalancer."
+      ],
+      "terms": [
+        [
+          "CNI",
+          "Container Network Interface — pod networking plugin."
+        ],
+        [
+          "Service",
+          "Pods' stable virtual IP and DNS."
+        ],
+        [
+          "Ingress",
+          "HTTP L7 routing inside the cluster."
+        ],
+        [
+          "kube-proxy",
+          "Service IP -> pod IP forwarding rules."
+        ]
+      ]
+    },
+    "npr4": {
+      "q": "What are the four essential network resiliency patterns? How do retry and circuit breaker interact?",
+      "qsub": "Why is jitter important in retry backoff? What is the thundering herd problem and how do you prevent it?",
+      "what": "<p><b>Network resiliency</b> handles failures: <b>retries</b> (retry on transient failures, without expanding the blast radius), <b>circuit breaker</b> (circuit opens on repeated failures — fast fail, without waiting), <b>timeouts</b> (deadline boundary — how long to wait), and <b>bulkhead</b> (partition resources — if one pool goes down the other does not fail).</p>\n<p>Patterns combine: timeout <em>then</em> retry with backoff <em>then</em> circuit opens <em>and</em> bulkhead isolates. Jittered backoff + retry budget = no sabotage.</p>",
+      "analogy": "<b>Customer service lines</b> — retry = dial again after a short delay (backoff). Circuit breaker = when the machine is busy every time, the operator says \"don't take any calls now, wait a bit\" (fast fail). Timeout = \"don't keep the phone for 5 minutes, hang up\". Bulkhead = separate kiosks so that if one kiosk line fails the other continues.",
+      "why": "<p>Networks fail — transient blips, cascading failures. Without these patterns a single failure can bring down the whole system (retry storm, timeout exhaustion). In an interview, the answer to \"how do you make this resilient\" is these patterns.</p>",
+      "gotchas": [
+        "Just remember: <b>Resiliency = retry (backoff) + timeout + circuit breaker + bulkhead</b>.",
+        "Retry only on idempotent operations — POST retry can double-create.",
+        "No jitter backoff = synchronized thundering herd — add jitter."
+      ],
+      "terms": [
+        [
+          "Retry",
+          "Retry the request on failure — idempotency required."
+        ],
+        [
+          "Circuit breaker",
+          "Circuit opens on repeated failures (fast fail)."
+        ],
+        [
+          "Timeout",
+          "How long to wait; deadline boundary."
+        ],
+        [
+          "Bulkhead",
+          "Partition resources — one failure should not stop the other."
+        ]
+      ]
+    },
+    "bgp": {
+      "desc": "BGP is the routing protocol of the internet. Autonomous Systems (AS) exchange routes via BGP. eBGP between ASes, iBGP within an AS. BGP selects routes based on AS-path length, local preference, MED. Route propagation is incremental — not periodic like OSPF.",
+      "qsub": "What is route hijacking and how does BGP prevent it? What is the difference between eBGP and iBGP?",
+      "what": "<p><b>BGP (Border Gateway Protocol)</b> is the internet's routing protocol — it enables routers belonging to different <b>Autonomous Systems (AS)</b> to announce and choose routes. <b>eBGP</b> concerns routes between ASes, <b>iBGP</b> operates within a single AS. Each route announces a <b>prefix</b> (CIDR).</p>\n<p><b>AS path</b> determines a route's trustworthiness: a shorter AS path = preferred route. BGP path selection: weight, local-pref, AS path length, MED, then IGP metric. Cloud providers (AWS, GCP) use BGP (Direct Connect, VPN, cloud routers).</p>",
+      "analogy": "<b>Highways between states</b> — every state (AS) announces its highways (routes) \"from my side 10.0.0.0/8 is reachable\". Drivers (routers) choose the shortest/easiest route (path). If a road is closed (route withdrawn), BGP automatically finds an alternative. AS path = \"how many states need to be crossed\".",
+      "why": "<p>BGP is the glue of the internet — provider multi-homing, cloud hybrid, anycast CDN all rely on BGP. Virtual route table: \"prefix + next-hop\" is selected by BGP based on the path. In an interview, the answer to \"how does the internet route\" is BGP.</p>",
+      "gotchas": [
+        "Just remember: <b>BGP = inter-AS routing, AS path = shortest route, eBGP/iBGP</b>.",
+        "AS path length is just one factor — local-pref/weight are considered first.",
+        "BGP hijack (prefix) is a security risk — mitigated with RPKI/ROA."
+      ],
+      "terms": [
+        [
+          "BGP",
+          "Border Gateway Protocol — internet routing."
+        ],
+        [
+          "AS",
+          "Autonomous System — a network block belonging to an organization."
+        ],
+        [
+          "eBGP/iBGP",
+          "eBGP between ASes, iBGP within an AS."
+        ],
+        [
+          "Prefix",
+          "Announced route block (CIDR)."
+        ],
+        [
+          "AS path",
+          "Route's hop list — loop prevention."
+        ]
+      ]
+    },
+    "ethernet-layer2": {
+      "q": "What is the structure of an Ethernet frame? How does ARP resolve an IP to a MAC address?",
+      "what": "<p><b>Ethernet</b> is a Layer-2 LAN technology — it identifies devices by <b>MAC address</b> and sends data in <b>frames</b>. <b>Switch</b> uses a MAC table for flooding instead of specific forwarding. <b>ARP</b> resolves the MAC of an unknown IP (broadcast request). <b>VLANs</b> (802.1Q) divide a switch into logical isolated segments — traffic stays within its segment.</p>\n<p>Frame: destination MAC, source MAC, EtherType, payload, FCS (checksum). MAC flooding / VLAN hopping — security attacks on layer-2.</p>",
+      "analogy": "<b>Building intercom (MAC) + delivery address</b> — Ethernet = the physical intercom (MAC) of each apartment that is routed by the switch (reception). ARP = when you don’t know which apartment to go to, you announce \"202.54.1.5 which apartment is it?\" — that apartment replies. VLAN = the building divided into floors with separate wings — traffic of each wing is isolated.",
+      "why": "<p>Layer-2 networking is the core of real LANs — switches, MAC, ARP, VLANs are present in every data center. For interviews, the frame structure, switch learning, ARP resolution, and VLAN isolation basics are essential.</p>",
+      "gotchas": [
+        "Just Remember: <b>Ethernet = MAC + frames + switch; ARP resolves IP-&gt;MAC; VLAN isolates</b>.",
+        "ARP is trust-on-first-use — ARP spoofing attack mitigate (DAI).",
+        "VLAN = broadcast isolation, and subnet/routing must be managed separately."
+      ],
+      "terms": [
+        [
+          "Ethernet",
+          "Layer-2 LAN technology — frames, MAC."
+        ],
+        [
+          "MAC address",
+          "48-bit physical unique address."
+        ],
+        [
+          "ARP",
+          "IP -> MAC resolution."
+        ],
+        [
+          "VLAN",
+          "Dividing a switch into logical segments (802.1Q)."
+        ],
+        [
+          "Frame",
+          "L2 PDU: MAC hdr | payload | FCS."
+        ]
+      ]
+    },
+    "icmp-tools": {
+      "q": "How does traceroute work? What is the difference between ping and traceroute?",
+      "qsub": "How does Path MTU Discovery work? What is the problem with ICMP blackholes?",
+      "what": "<p><b>ICMP</b> (Internet Control Message Protocol) is used for diagnostics — such as <code>ping</code> (echo request/reply — the host is reachable and what the RTT is) and <code>traceroute</code> (IP and latency of each hop on the path). <b>Path MTU discovery</b> finds the smallest MTU on the path so that packets are not fragmented.</p>\n<p>ICMP types: echo (8), echo reply (0), destination unreachable (3), time exceeded (11). Uptime checks (ping), routing diagnosis (traceroute). ICMP can be rate-limited/blocked for security.</p>",
+      "analogy": "<b>Postal status check</b> — ping = \"send your postcard; when you receive an echo-reply you know the route and time\". Traceroute = the stamp of each post-office (hop) — \"when it arrived, where it stopped\". Path MTU = the road’s smallest bridge (MTU) — if a large truck (packet) cannot pass, break it into smaller pieces (fragment) or take another route.",
+      "why": "<p>ICMP is the first tool for network troubleshooting — ping provides reachability + RTT, traceroute analyzes hop latency. In an interview, when asked \"the network is slow, how do you diagnose it?\" the answer involves ICMP.</p>",
+      "gotchas": [
+        "Just remember: <b>ICMP = ping (RTT) + traceroute (hops) + path MTU; type 8/0/3/11</b>.",
+        "Ping success doesn't mean the app works — only host reachable.",
+        "Firewall blocking ICMP = traceroute/MTU diagnosis blind; allow selectively."
+      ],
+      "terms": [
+        [
+          "ICMP",
+          "Internet Control Message Protocol — diagnostics."
+        ],
+        [
+          "ping",
+          "Host reachability + RTT."
+        ],
+        [
+          "traceroute",
+          "Each hop on the path + latency."
+        ],
+        [
+          "Path MTU",
+          "Smallest MTU on the path — fragmentation."
+        ],
+        [
+          "Echo/Reply",
+          "ICMP type 8 / 0."
+        ]
+      ]
+    },
+    "wifi-protocols": {
+      "q": "What is the difference between WiFi 5 (802.11ac) and WiFi 6 (802.11ax)?",
+      "what": "<p><b>WiFi</b> runs on the IEEE <b>802.11</b> standard — versions: 802.11n (WiFi 4), ac (WiFi 5), ax (WiFi 6), be (WiFi 7). <b>WPA3</b> is the latest security — <b>SAE</b> (Simultaneous Authentication of Equals) is dictionary-attack resistant and provides forward secrecy. Bands: 2.4 GHz (long range, congestion), 5 GHz (faster, shorter range), 6 GHz (newest, clean).</p>\n<p>Security evolution: WEP (broken) → WPA → WPA2 → WPA3. SSID = network name, channel = frequency slice. WiFi is half-duplex (collision), using CSMA/CA.</p>",
+      "analogy": "<b>Radio walkie-talkie in a cafe</b> — WiFi = wireless walkie-talkie lines (bands/channels) on which devices communicate. WPA3 = modern encryption lock that is guess-proof (SAE) — WEP/WPA are old locks that break easily. 2.4 GHz = long distance with crowd, 5 GHz = fast but small area — trade-off.",
+      "why": "<p>The WiFi interface and security topics can appear in interviews (system design for mobile, basic security). For backend developers, knowing the WPA versions, bands, and CSMA/CA is sufficient. WPA3 security is the modern standard.</p>",
+      "gotchas": [
+        "Just remember: <b>WiFi = 802.11 (n/ac/ax), WPA3 = SAE secure, bands 2.4/5/6 GHz, CSMA/CA half-duplex</b>.",
+        "WPA3-Personal vs Enterprise: PSK vs RADIUS — guest VLAN is best for IoT.",
+        "2.4 GHz crowded = more interference; QoS/WiFi 6 (OFDMA) helps."
+      ]
+    }
+  }
+}

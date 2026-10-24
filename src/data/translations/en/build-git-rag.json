@@ -1,0 +1,171 @@
+{
+  "lessons": {
+    "l0_0": {
+      "name": "Why history is a different retrieval problem",
+      "desc": "Relevance decays, contradictions are normal, order carries meaning.",
+      "what": "<p>In codebase RAG every chunk is simultaneously true, because it is the current state of the repo. In history, chunks <b>contradict each other on purpose</b>. A commit from 2023 that added a feature and a commit from 2025 that removed it are both real, and the second one supersedes the first.</p><p>Plain cosine similarity has no idea about any of this. It will happily hand you the 2023 commit as your top hit.</p>",
+      "why": "<p>This is the whole intellectual content of the project and it is why it makes a better writeup than a second codebase RAG. Time-aware retrieval is a genuinely different problem and very few people have built it.</p>\n<p><b>How to do it:</b></p><p>Three tools you will use: recency weighting in ranking, path filters so a question about one file only searches that file’s history, and ordering results chronologically before generation so the model can narrate a sequence.</p>",
+      "gotchas": [
+        "Returning the oldest matching commit as the answer is the signature failure of naive history RAG. Your eval must contain questions that catch it."
+      ]
+    },
+    "l0_1": {
+      "name": "What the documents actually are",
+      "desc": "A commit is a message plus a set of diff hunks, and they need different handling.",
+      "what": "<p>A commit has two very different kinds of content. The <b>message</b> is prose written by a human explaining intent, which embeds well. The <b>diff</b> is code, which embeds badly but keyword-matches beautifully.</p><p>Treat them as separate chunk kinds sharing a commit id, so you can retrieve intent and change independently and join them at the end.</p>",
+      "why": "<p>Merging message and diff into one blob means the diff noise drowns the message signal, and your intent questions stop working. Splitting them is the single most important structural decision in the project.</p>\n<p><b>How to do it:</b></p><p>One chunk per commit message, one chunk per file touched in that commit carrying that file’s hunks. Both carry the same commit id, author, date and any linked issue number.</p>",
+      "gotchas": [
+        "Do not index whole diffs as one document. A commit touching forty files becomes one enormous useless chunk.",
+        "Merge commits usually have no meaningful content. Filter them or your index fills with noise."
+      ]
+    },
+    "l0_2": {
+      "name": "The honest scoping problem",
+      "desc": "Commit messages are often terrible, and you must plan for that.",
+      "what": "<p>Real history contains a lot of \"fix\", \"wip\" and \"update stuff\". No retrieval system recovers intent that was never written down.</p><p>So choose your corpus with care: a repo with a culture of decent messages and linked issues, ideally with pull requests, gives you something to work with. A repo of one-word commits gives you nothing and you will blame your retrieval.</p>",
+      "why": "<p>Being upfront about this in the writeup is itself the insight: this technique works in proportion to how well the team documented itself, and you can measure that.</p>\n<p><b>How to do it:</b></p><p>Before building, measure your corpus: median message length, fraction with a body, fraction linking an issue. If the median is under about 30 characters, pick a different repo.</p>",
+      "gotchas": [
+        "Do not use your own solo side project as the corpus. Solo commit messages are written for an audience of one and contain almost no reasoning."
+      ]
+    },
+    "l1_0": {
+      "name": "Parsing git log without regretting it",
+      "desc": "Custom separators, machine format, never split on newline.",
+      "what": "<p>Commit messages contain newlines, pipes, quotes and occasionally your chosen delimiter. Splitting on newline works until it does not, usually at commit 900 of 2000.</p><p>Use a format string with an unlikely multi-character separator and a record terminator, and parse records rather than lines.</p>",
+      "why": "<p>Half the bugs in projects like this are a parsing error that silently corrupts a few hundred records, and you find out when a question returns nonsense.</p>\n<p><b>How to do it:</b></p><p>Prefer a library like isomorphic-git or nodegit if you want to skip this entirely. Doing it by hand once is educational, and you should still assert the record count matches git rev-list --count.</p>",
+      "gotchas": [
+        "Always assert the parsed count against rev-list. It catches the corruption class of bug immediately.",
+        "Author date and commit date differ after a rebase. Pick one, usually author date, and be consistent."
+      ]
+    },
+    "l6_0": {
+      "name": "Making it runnable on any repo",
+      "desc": "One command, a path argument, sensible defaults.",
+      "what": "<p>Ship it as an npx-runnable CLI that takes a repo path, runs the health check, extracts, indexes and drops into a question prompt. No config file required to get a first answer.</p>",
+      "why": "<p>A tool someone can run on their own codebase in one command gets tried. A repo that requires cloning, editing config and setting four environment variables does not.</p>\n<p><b>How to do it:</b></p><p>Print the corpus health check on first run. If the repo has poor commit hygiene, say so upfront rather than producing bad answers and letting them blame the tool.</p>",
+      "gotchas": [
+        "Do not silently produce bad answers on a repo with one-word commits. Warn during the health check."
+      ]
+    },
+    "l6_1": {
+      "name": "The writeup",
+      "desc": "Attribution table first, staleness story second.",
+      "what": "<p>Lead with the per-technique attribution table from Phase 4. Then the staleness story, which is the genuinely novel part. Then the finding about how much reasoning lives in PRs rather than commits, which is a point about engineering culture and gets shared more widely than a technical result.</p>",
+      "why": "<p>That culture finding is your most quotable line, and it comes free from your Phase 2 breakdown. It is the kind of thing that travels beyond people who care about RAG.</p>\n<p><b>How to do it:</b></p><p>Same voice as always: plain, short sentences, no buzzwords, numbers doing the work.</p>",
+      "gotchas": [
+        "Do not bury the culture finding at the bottom. It is the most shareable thing you have."
+      ]
+    },
+    "l3_0": {
+      "name": "Retrieving each kind separately, then fusing",
+      "desc": "Three sub-searches with their own budgets, combined with RRF.",
+      "what": "<p>Rather than one index of mixed chunk kinds, run three searches: messages by vector, hunks by BM25, issues by vector. Take a fixed number from each, then fuse with reciprocal rank fusion.</p>",
+      "why": "<p>Mixed-kind indexes have a subtle failure: one kind dominates the top-k purely because of length or vocabulary, and you never see the others. Fixed budgets per kind guarantee representation from each.</p>\n<p><b>How to do it:</b></p><p>Reuse the RRF implementation from project one unchanged. This is the second time it earns its keep, which is worth noting in the post.</p>",
+      "gotchas": [
+        "Without per-kind budgets, issue bodies (long, prose-like) will dominate every result set and hunks will never surface."
+      ]
+    },
+    "l3_1": {
+      "name": "Grouping results by commit",
+      "desc": "The unit of an answer is a commit, not a chunk.",
+      "what": "<p>After fusion, group chunks by sha and score the commit by the best rank among its chunks, with a small bonus when multiple kinds matched. Present the commit with its message, the relevant hunk and the linked issue together.</p>",
+      "why": "<p>A commit that matched on both message and diff is much more likely to be the real answer than one that matched a single chunk. The grouping bonus captures that cheaply.</p>\n<p><b>How to do it:</b></p><p>This also fixes a presentation problem: three chunks from the same commit taking three of your five slots and crowding out other candidates.</p>",
+      "gotchas": [
+        "Deduplicate before grouping or a commit touching ten files gets an unfair boost purely from having many hunks."
+      ]
+    },
+    "l4_0": {
+      "name": "Recency weighting done carefully",
+      "desc": "A decay term, not a sort by date.",
+      "what": "<p>Multiply the relevance score by a decay factor based on age. An exponential decay with a half-life of a year or two works well. Do not sort by date, that destroys relevance entirely and returns whatever happened most recently.</p>",
+      "why": "<p>The naive fix people reach for is filtering to the last year, which breaks every question whose answer is genuinely old. A soft decay preserves old answers when nothing newer competes.</p>\n<p><b>How to do it:</b></p><p>Tune the half-life against your eval and report the curve. Showing that you tried three values and picked one on evidence is much stronger than an unexplained magic number.</p>",
+      "gotchas": [
+        "No floor on the decay means five-year-old answers become unreachable, and many correct answers are old.",
+        "Tuning the half-life on the same 25 questions you report on is fitting. Say so plainly."
+      ]
+    },
+    "l4_1": {
+      "name": "Path scoping",
+      "desc": "If the question names a file, only search that file’s history.",
+      "what": "<p>Many why-questions implicitly name a location: a file, a function, a config key. Resolve that to a path, then restrict retrieval to commits touching it, following renames.</p><p>This is a hard filter and it is enormously effective, because it removes the entire rest of the repo from competition.</p>",
+      "why": "<p>It is also the technique that makes the tool actually usable day to day, since the real workflow is \"I am looking at this line, why is it like this\".</p>\n<p><b>How to do it:</b></p><p>Extract a path or symbol from the question with a simple pattern plus a lookup against the file list. If nothing resolves, fall back to unscoped search rather than returning nothing.</p>",
+      "gotchas": [
+        "Forgetting previousPath silently truncates history at the last rename, which is exactly where interesting decisions hide."
+      ]
+    },
+    "l1_1": {
+      "name": "Diffs, hunks and rename tracking",
+      "desc": "One chunk per file per commit. Follow renames or history breaks.",
+      "what": "<p>For each commit, get the per-file patch and split it into hunks. Attach the file path, the commit sha, and the line ranges touched.</p><p>Then handle renames: <code>git log --follow</code> tracks a file through renames, and without it the history of any renamed file appears to start at the rename, which quietly loses the answers to many why-questions.</p>",
+      "why": "<p>Renames are extremely common in real repos and silently truncating history is the kind of bug that makes your eval scores mysteriously bad on exactly the questions you cared about.</p>\n<p><b>How to do it:</b></p><p>Use --find-renames when generating diffs and store both the old and new path on the chunk so a query about either resolves.</p>",
+      "gotchas": [
+        "Lockfiles, generated code and vendored directories produce enormous meaningless diffs. Exclude them at extraction, not later.",
+        "A commit that only moves files produces huge diffs with zero informational value. Consider skipping pure renames."
+      ]
+    },
+    "l1_2": {
+      "name": "Enriching with issues and pull requests",
+      "desc": "The reasoning is often in the PR discussion, not the commit.",
+      "what": "<p>Commit messages are terse. The actual argument about why is usually in the pull request description or the issue thread. Extract issue numbers from messages with a simple pattern, then fetch titles and bodies from the GitHub API.</p>",
+      "why": "<p>On repos with good PR hygiene this is where most of your best answers come from, and it turns a decent project into a clearly useful one. It also gives you a real API integration with rate limits and caching to talk about.</p>\n<p><b>How to do it:</b></p><p>Cache aggressively to a local file. GitHub rate limits unauthenticated requests hard, and you will re-run extraction many times.</p>",
+      "gotchas": [
+        "Unauthenticated GitHub allows 60 requests an hour. Use a token and cache to disk or extraction will take days.",
+        "Not every #123 is an issue reference. Some are line numbers or version strings in a message. Validate before fetching."
+      ]
+    },
+    "l2_0": {
+      "name": "Scoring on shas, plus a staleness metric",
+      "desc": "Recall@k for correctness, staleness rate for the time failure.",
+      "what": "<p>Recall@k works unchanged, matching on sha. The new metric is <b>staleness</b>: on your superseded questions, how often does an outdated commit rank above the correct current one.</p>",
+      "why": "<p>This single metric is the reason your project is interesting. It measures a failure mode that plain RAG has no concept of, and improving it is the arc of Phase 4.</p>\n<p><b>How to do it:</b></p><p>For each superseded question, record the rank of the correct commit and the rank of the best outdated one. If outdated ranks higher, that is a staleness failure.</p>",
+      "gotchas": [
+        "You must list the outdated shas in your eval file for this to work. Do it while writing the questions, not later."
+      ]
+    },
+    "l2_1": {
+      "name": "Splitting the score by where the answer lived",
+      "desc": "Message, diff, or issue thread. Very different difficulty.",
+      "what": "<p>Break results down by whether the answer was in the commit message, the diff, or the linked issue. These behave completely differently: messages embed well, diffs need keyword search, issues are prose and are usually the easiest of the three.</p>",
+      "why": "<p>This breakdown tells you where to invest and produces the most quotable finding in the writeup, usually something like \"58% of answerable why-questions were only answerable through the linked issue, not the commit\".</p>\n<p><b>How to do it:</b></p><p>Tag each eval question with the source when you write it, then report per-source recall alongside the overall number.</p>",
+      "gotchas": [
+        "If your repo has few linked issues this breakdown collapses. Check it during the Phase 0 health check."
+      ]
+    },
+    "l4_2": {
+      "name": "Supersession detection",
+      "desc": "When two commits touch the same lines, the later one wins.",
+      "what": "<p>Build a small index from file plus line range to the commits that touched it, ordered by date. When two retrieved commits overlap on the same region, mark the older one as superseded by the newer.</p><p>Then either demote the superseded commit, or better, keep it and label it, so the answer can narrate the change.</p>",
+      "why": "<p>This is the most sophisticated idea in the project and the one that produces the best answers. \"It was 5, changed to 3 in January 2024 because of gateway rate limits, and made configurable in 2025\" is a genuinely good answer that no plain RAG system will produce.</p>\n<p><b>How to do it:</b></p><p>Keeping superseded commits and labelling them is better than dropping them. The history <i>is</i> the answer.</p>",
+      "gotchas": [
+        "Line ranges shift as files change, so exact overlap matching degrades over time. Approximate overlap with a tolerance is good enough and much simpler than tracking line movement properly."
+      ]
+    },
+    "l5_0": {
+      "name": "Ordering context by time, not by score",
+      "desc": "One of the few places where rank order is the wrong order.",
+      "what": "<p>Retrieve by relevance, then <b>sort the selected context chronologically</b> before building the prompt, with dates and superseded labels attached.</p>",
+      "why": "<p>Models narrate sequences much better when the sequence is already in order. Handing them score-ordered context produces answers that jump around in time and sometimes state the outdated version as current.</p>\n<p><b>How to do it:</b></p><p>Include the date on every context item explicitly. Models are unreliable at inferring chronology from hashes or content alone.</p>",
+      "gotchas": [
+        "Without explicit SUPERSEDED labels the model frequently reports the oldest value as the current one."
+      ]
+    },
+    "l5_1": {
+      "name": "Prompting for a why-answer",
+      "desc": "Current state first, then the history that explains it.",
+      "what": "<p>Structure the instruction: state the current answer in the first sentence, then explain how it got that way, citing commits by number. If the reasoning was never recorded, say that explicitly rather than inferring intent from the diff.</p>",
+      "why": "<p>The failure mode here is a plausible-sounding invented rationale. \"The commit does not say why\" is a valid and valuable answer, and a system that says it is far more trustworthy than one that guesses.</p>\n<p><b>How to do it:</b></p><p>Add a rule: never infer motivation from a diff alone. If no message or issue states the reason, report what changed and say the reason was not recorded.</p>",
+      "gotchas": [
+        "This is the single most likely place for hallucination in the project, because inventing a plausible reason is easy and sounds right."
+      ]
+    },
+    "l5_2": {
+      "name": "Citations that resolve to real links",
+      "desc": "Shas and issue numbers become GitHub URLs.",
+      "what": "<p>Resolve every cited item to a real URL: a commit link, an issue link, and the file at that revision. Validate that every citation index the model produced actually exists in the context you supplied.</p>",
+      "why": "<p>Being able to click straight to the commit is what makes this a tool rather than a demo, and it is what lets a reviewer verify your output in five seconds.</p>\n<p><b>How to do it:</b></p><p>Same pattern as project one: number the context items, have the model cite numbers, and resolve numbers to URLs in your own code.</p>",
+      "gotchas": [
+        "A hallucinated sha looks completely plausible. Always validate against your context array rather than trusting the output."
+      ]
+    }
+  }
+}

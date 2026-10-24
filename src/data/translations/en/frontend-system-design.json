@@ -1,0 +1,2530 @@
+{
+  "lessons": {
+    "t1-2": {
+      "what": "<p><b>Definition:</b> In a design interview, just mentioning \"controlled vs uncontrolled\" is not enough — support both. The production component standard is: if the <code>value</code> prop is provided, it is controlled; if not, the component keeps its own state (starting from <code>defaultValue</code>).</p>\n<p>This pattern exists in every good library — Radix, MUI, React Aria, etc.</p>",
+      "analogy": "Car's cruise control. If you want, press the accelerator yourself (controlled); if you want, the car maintains its speed on its own (uncontrolled). Both options should be available — providing only one is a stubborn design.",
+      "why": "<p>In 90% of use cases, the user doesn't care about the value — they just need a working dropdown. Forcing those 90% to be controlled means unnecessary <code>useState</code> everywhere. But the remaining 10% (when using a form library, or syncing the value with the URL) definitely need control.</p>\n<p>The hybrid pattern satisfies both — and by writing a <code>useControllableState</code> hook, it can be reused across the entire design system.</p>",
+      "pros": [
+        "Simple case stays simple, complex case is possible",
+        "A single hook reused across the entire design system",
+        "onChange fires in both modes — analytics/validation works"
+      ],
+      "cons": [
+        "A bit of extra code in each component",
+        "Bugs can appear if the mode switches mid-flight",
+        "You have to explain the reasoning for both branches to the interviewer"
+      ],
+      "gotchas": [
+        "If a value appears from undefined, it means an uncontrolled-to-controlled switch — always add a dev warning",
+        "onChange should also be called in uncontrolled mode, otherwise the consumer will be left blind",
+        "Do NOT update internal state in controlled mode — otherwise you have two sources of truth"
+      ],
+      "terms": [
+        [
+          "Controlled",
+          "value comes from the parent’s state"
+        ],
+        [
+          "Uncontrolled",
+          "the component maintains its own value"
+        ],
+        [
+          "Hybrid",
+          "supports both — if a value is provided it’s controlled, otherwise internal"
+        ]
+      ],
+      "where": [
+        [
+          "Design system inputs",
+          "Select, Checkbox, Tabs, Accordion, Dialog"
+        ],
+        [
+          "Form libraries",
+          "RHF needs to be controlled"
+        ],
+        [
+          "URL sync",
+          "run filter/tab from the URL"
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// dono case mein callback",
+          "// a callback in both cases"
+        ],
+        [
+          " dev warning -- mode switch pakdo",
+          " dev warning -- catch the mode switch"
+        ],
+        [
+          " uncontrolled -> apna state",
+          " uncontrolled -> its own state"
+        ],
+        [
+          "console.warn('Select controlled/uncontrolled ke beech switch ho gaya');",
+          "console.warn('Select switched between controlled/uncontrolled');"
+        ]
+      ]
+    },
+    "t1-4": {
+      "what": "<p><b>Definition:</b> There are two ways to provide flexibility:</p>\n<ul><li><b>Configuration</b> — <code>&lt;Card title icon actions showBorder /&gt;</code>. Simple, but each new case needs a new prop.</li>\n<li><b>Composition</b> — <code>&lt;Card&gt;&lt;Card.Header/&gt;&lt;Card.Body/&gt;&lt;/Card&gt;</code>. More code to write, but unlimited flexibility.</li></ul>\n<p>The middle path: <b>slots</b> — <code>&lt;Card header={&lt;X/&gt;} footer={&lt;Y/&gt;} /&gt;</code>.</p>",
+      "why": "<p>Rule of thumb that works in interviews: <b>\"Config for data, composition for structure.\"</b> Anything that is data (title text, disabled) remains a prop. Anything that is <b>structure</b> (where and how it appears) should come from children or a slot.</p>\n<p>Bonus that people often forget: composition also provides a <b>performance</b> benefit — children are created outside the parent, so when the parent’s state changes their element reference stays the same and React skips rendering them.</p>",
+      "pros": [
+        "No new prop needed for a new requirement",
+        "Composition gives a free performance benefit",
+        "Component code stays small"
+      ],
+      "cons": [
+        "Call site becomes verbose",
+        "Structure is not enforced — user can put anything",
+        "Simple cases may feel over-engineered"
+      ],
+      "gotchas": [
+        "Saying \"config for data, composition for structure\" in an interview impresses everyone",
+        "Slots (ReactNode props) are the middle path — fixed structure with flexible content",
+        "Be sure to mention the performance benefit of children as props — very few people know this"
+      ],
+      "terms": [
+        [
+          "Composition",
+          "building a larger component by combining small pieces"
+        ],
+        [
+          "Configuration",
+          "describing everything about a component via props"
+        ],
+        [
+          "Slot pattern",
+          "named prop that receives JSX — header, footer, actions"
+        ]
+      ],
+      "where": [
+        [
+          "Layout components",
+          "Card, Panel, Page, Modal"
+        ],
+        [
+          "Design system",
+          "flexible primitives"
+        ],
+        [
+          "Perf refactor",
+          "separating the wrapper’s state from a heavy child"
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// SLOTS -- beech ka rasta, structure fix par content flexible",
+          "// SLOTS -- the middle path, structure is fixed while content is flexible"
+        ],
+        [
+          "// perf bonus -- Heavy parent ke render se azaad",
+          "// perf bonus -- independent of the Heavy parent's render"
+        ],
+        [
+          "// ...children ka element WAHI hai",
+          "// ...the children element is the SAME"
+        ],
+        [
+          "// Heavy re-render NAHI hoga",
+          "// Heavy re-render will NOT happen"
+        ],
+        [
+          " CONFIG -- 3 props tak theek",
+          " CONFIG -- fine up to 3 props"
+        ],
+        [
+          " ye badle to...",
+          " if this changes..."
+        ],
+        [
+          "<Alert type=\"error\" message=\"Kuch gadbad hui\" />",
+          "<Alert type=\"error\" message=\"Something went wrong\" />"
+        ]
+      ]
+    },
+    "t1-1": {
+      "what": "<p><b>Definition:</b> Component API design means defining the component’s <b>public contract</b>: which props, what names, which are required, which have defaults, and what <i>not</i> to provide.</p>\n<p>In the design round the interviewer asks first — \"What will its API be?\" Your answer should not be a list of props, but a <b>thought</b>: which data is essential, which is optional, and where the user needs control.</p>",
+      "analogy": "The restaurant menu. A small menu = every dish turns out well. A 200-item menu = the kitchen gets confused, quality suffers. A component is the same — a small, clean API is more reliable.",
+      "why": "<p>Once an API is public, changing it is a <b>breaking change</b>. In a design system, renaming a prop means refactoring 200 files. That’s why interviewers look to see if you <b>think ahead</b>.</p>\n<p>The most common mistake: adding a new boolean prop for every new requirement — <code>isBig</code>, <code>isRed</code>, <code>hasIcon</code>, <code>showBorder</code>. After 6 months you have 22 props and no combination makes sense. The solution is <b>variant + composition</b>.</p>",
+      "pros": [
+        "Union variant prevents impossible combinations from being created",
+        "...rest passes native props through for free",
+        "Small API = fewer breaking changes, fewer docs"
+      ],
+      "cons": [
+        "In the variant approach, cases with only a \"tiny difference\" are difficult",
+        "Providing an escape hatch (className) can break the design system’s consistency",
+        "Learning composition takes time — props feel more obvious"
+      ],
+      "gotchas": [
+        "In the design round, state the API first, implementation later — the interviewer is waiting for that",
+        "Place the ...rest spread ... after (or before) your own props — decide deliberately which wins",
+        "Use a boolean prop only when it is truly binary — for three states use a string union"
+      ],
+      "terms": [
+        [
+          "API surface",
+          "all the props of a component that external users use"
+        ],
+        [
+          "Escape hatch",
+          "a prop that lets the user step outside the default behavior (className, render)"
+        ],
+        [
+          "Prop explosion",
+          "adding a new prop for every new requirement — a component with 20 props"
+        ]
+      ],
+      "where": [
+        [
+          "Design systems",
+          "Button, Input, Card — which 100 people will use"
+        ],
+        [
+          "Interview opening",
+          "the answer to \"What will its API be?\" comes from here"
+        ],
+        [
+          "Library authoring",
+          "npm package ka public contract"
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// ...rest ZAROORI hai -- aria-*, data-*, onFocus sab pass through ho jaate hain",
+          "// ...rest is ESSENTIAL -- aria-*, data-*, onFocus all pass through"
+        ],
+        [
+          "// icon/text composition se",
+          "// via icon/text composition"
+        ],
+        [
+          " SAHI -- union variants + composition + escape hatch",
+          " CORRECT -- union variants + composition + escape hatch"
+        ],
+        [
+          " GALAT -- boolean explosion, 2^8 combinations",
+          " WRONG -- boolean explosion, 2^8 combinations"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "Boolean flags multiply hote hain. Union variant nahi hota.",
+          "Boolean flags multiply. A union has no variants."
+        ],
+        [
+          "impossible combination ban hi nahi sakta",
+          "an impossible combination can't be created"
+        ],
+        [
+          "isPrimary + isGhost = kya hoga?",
+          "isPrimary + isGhost = what happens?"
+        ]
+      ]
+    },
+    "t1-3": {
+      "what": "<p><b>Definition:</b> It holds a parent state and provides it to its children via Context. The user writes it like HTML — <code>&lt;Tabs&gt;&lt;Tabs.List&gt;&lt;Tabs.Tab/&gt;&lt;/Tabs.List&gt;&lt;Tabs.Panel/&gt;&lt;/Tabs&gt;</code>.</p>\n<p>In a design round this is the answer to flexibility — when the interviewer asks \"what if the client wants a divider between tabs?\"</p>",
+      "why": "<p>The config-object API (<code>&lt;Tabs items={[...]} /&gt;</code>) is fine as long as the layout is fixed. As soon as the first custom requirement arrives — \"badge with tab\", \"divider\", \"tabs at the bottom\" — you have to add a new prop. In a compound component the layout belongs to the user, you only provide the <b>behaviour</b> (state, keyboard, ARIA).</p>\n<p>That is why Radix/Headless UI are all compound — they provide behaviour, not look.</p>",
+      "pros": [
+        "Full layout control is with the user",
+        "Prop explosion ends",
+        "Behaviour (keyboard, ARIA) in one place — free for every consumer"
+      ],
+      "cons": [
+        "Implicit dependency — runtime error if used in the wrong place",
+        "Too much boilerplate for small widgets",
+        "Dot-notation types in TypeScript require a bit of extra work"
+      ],
+      "gotchas": [
+        "Check for null Context and throw a clear error — much better than \"cannot read of null\"",
+        "Don't inspect children with React.Children.map — it breaks as soon as a nested wrapper appears",
+        "Memoize the Context value with useMemo otherwise all tabs re-render on every render"
+      ],
+      "terms": [
+        [
+          "Compound",
+          "multiple components that together form a widget"
+        ],
+        [
+          "Implicit state",
+          "parent state that children automatically receive via Context"
+        ],
+        [
+          "Slot",
+          "the place where the user can insert their content"
+        ]
+      ],
+      "where": [
+        [
+          "Tabs, Accordion, Menu",
+          "every composite widget"
+        ],
+        [
+          "Design system",
+          "core pattern of Radix/Headless UI"
+        ],
+        [
+          "Design round",
+          "answer to flexibility questions"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "Interviewer \"aur agar X chahiye?\" poochhe — compound mein jawab \"haan, bas likh do\"",
+          "If the interviewer asks \"and what if we need X?\" — in compound the answer is \"yes, just write it\""
+        ],
+        [
+          "layout user ka, behaviour tumhara",
+          "the layout is the user's, the behaviour is yours"
+        ],
+        [
+          "har nayi zaroorat = naya prop",
+          "each new requirement = a new prop"
+        ]
+      ],
+      "codeSwap": [
+        [
+          " keyboard behaviour hamara",
+          " keyboard behaviour is ours"
+        ],
+        [
+          "if (!c) throw new Error('Tabs.* ko <Tabs> ke andar rakho');",
+          "if (!c) throw new Error('Keep Tabs.* inside <Tabs>');"
+        ]
+      ]
+    },
+    "t1-5": {
+      "what": "<p><b>Definition:</b> Keep the state only as high as necessary — no more than one level. Default is at the bottom; lift it up only when both siblings need it.</p>\n<p>In the design round this is the <b>first answer for performance</b> — before memo.</p>",
+      "analogy": "Household items. Keep the tea cup in the kitchen, not in the storage room. Anything that is used only in one room, placing it in a common area causes trouble for everyone.",
+      "why": "<p>The higher the state, the larger the subtree that will re-render on update. If a modal’s <code>isOpen</code> is in <code>App</code>, opening the modal causes the entire app to render. Keeping that state in <code>Modal</code> means only the modal re-renders.</p>\n<p>In an interview say: <b>\"first I push the state down, memo is the last resort\"</b> — because memo has its own cost, while colocation is free.</p>",
+      "pros": [
+        "Zero-cost optimization — no memo, no library",
+        "Component becomes portable — can be moved anywhere",
+        "Code is easy to read — state is next to its use"
+      ],
+      "cons": [
+        "If you later need it in two places you have to lift it",
+        "Prop drilling can increase in deep trees",
+        "Does not work for global things (auth, theme)"
+      ],
+      "gotchas": [
+        "Put filter, tab, page, search query in the URL, not in useState. Shareable and back-button friendly.",
+        "Lift only when siblings need it — not before",
+        "In an interview say \"first colocation, then composition, finally memo\" — that is the correct order"
+      ],
+      "terms": [
+        [
+          "Colocation",
+          "keeping state next to where it is used"
+        ],
+        [
+          "Lifting state up",
+          "moving state up to the common parent"
+        ],
+        [
+          "Prop drilling",
+          "passing props down 4-5 levels"
+        ]
+      ],
+      "where": [
+        [
+          "Performance rounds",
+          "first answer colocation, memo later"
+        ],
+        [
+          "Modal / dropdown / tooltip",
+          "every local UI state"
+        ],
+        [
+          "Form fields",
+          "field-level state next to the field"
+        ]
+      ],
+      "visualCap": "State location = render scope",
+      "codeSwap": [
+        [
+          "// 3. URL (searchParams)                  <- shareable/bookmarkable ho",
+          "// 3. URL (searchParams)                  <- if it must be shareable/bookmarkable"
+        ],
+        [
+          "// 2. common parent (lift up)             <- 2 siblings ko chahiye",
+          "// 2. common parent (lift up)             <- needed by 2 siblings"
+        ],
+        [
+          "// 4. global store / context              <- poore app ko chahiye",
+          "// 4. global store / context              <- the whole app needs it"
+        ],
+        [
+          "// SAHI -- state usi component ke paas jo use karta hai",
+          "// CORRECT -- state lives with the component that uses it"
+        ],
+        [
+          "// 1. component ka apna useState          <- default",
+          "// 1. the component's own useState          <- default"
+        ],
+        [
+          "// state ki 4 possible jagah -- neeche se upar",
+          "// the 4 possible homes for state -- bottom to top"
+        ],
+        [
+          "// modal kholo -> HeavyTable bhi render",
+          "// open the modal -> HeavyTable renders too"
+        ],
+        [
+          "// GALAT -- modal ka state App mein",
+          "// WRONG -- the modal's state is in App"
+        ],
+        [
+          "// App ka state",
+          "// The app's state"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "State Modal mein",
+          "State in Modal"
+        ],
+        [
+          "State App mein",
+          "State in App"
+        ]
+      ]
+    },
+    "t1-6": {
+      "what": "<p><b>Definition:</b> Accessibility is not added later — it is built into the component's design. Four things are required in every widget:</p>\n<ol><li><b>Semantic HTML</b> — <code>&lt;button&gt;</code>, <code>&lt;nav&gt;</code>, <code>&lt;dialog&gt;</code> (not onClick on a div)</li>\n<li><b>Keyboard</b> — Tab, Enter/Space, Arrow, Escape, Home/End</li>\n<li><b>ARIA</b> — role, state (<code>aria-expanded</code>), relationship (<code>aria-controls</code>)</li>\n<li><b>Focus management</b> — where it should go when opened, and where it should return when closed</li></ol>",
+      "why": "<p>Mentioning a11y in an interview is a signal of seniority — few people do it. And practically: <code>&lt;div onClick&gt;</code> cannot be clicked with the keyboard, the screen reader does not read it, and the Enter key does not work. <code>&lt;button&gt;</code> provides all three for free.</p>\n<p>The best rule: <b>choose the correct HTML element first</b>. Half of accessibility is achieved there. Apply ARIA only when the needed element does not exist in HTML (tabs, combobox).</p>",
+      "pros": [
+        "Half the work is free with Semantic HTML",
+        "Keyboard users, screen reader users, and power users all benefit",
+        "You stand out immediately in an interview"
+      ],
+      "cons": [
+        "Testing requires a real screen reader (NVDA/VoiceOver)",
+        "Applying ARIA incorrectly is worse than not applying it",
+        "Focus management has many edge cases"
+      ],
+      "gotchas": [
+        "ARIA's first rule: no ARIA > incorrect ARIA. Choose the correct HTML element first.",
+        "aria-label overrides native text — the screen reader will read that, not the visible text",
+        "Never remove the focus outline — style it with :focus-visible, don't set display to none"
+      ],
+      "terms": [
+        [
+          "ARIA",
+          "Accessible Rich Internet Applications — extra information for screen readers"
+        ],
+        [
+          "Roving tabindex",
+          "only one element in a group is tab-focusable, the rest are reachable via arrow keys"
+        ],
+        [
+          "Focus trap",
+          "keep focus confined inside a modal"
+        ]
+      ],
+      "where": [
+        [
+          "Every interactive widget",
+          "button, menu, tabs, dialog, combobox"
+        ],
+        [
+          "Design round",
+          "mentioning a11y is a signal of seniority"
+        ],
+        [
+          "Legal compliance",
+          "WCAG is mandatory in large companies"
+        ]
+      ],
+      "visualCap": "Roving tabindex — only one tab stop in a group",
+      "codeSwap": [
+        [
+          "// live region -- dynamic update screen reader ko batao",
+          "// live region -- tell the screen reader about dynamic updates"
+        ],
+        [
+          "// roving tabindex -- list/tabs/menu mein",
+          "// roving tabindex -- in lists/tabs/menus"
+        ],
+        [
+          "// sirf ek tab stop",
+          "// only one tab stop"
+        ],
+        [
+          "// kuch bhi nahi",
+          "// nothing at all"
+        ],
+        [
+          " pehle SAHI ELEMENT -- aadhi a11y free",
+          " first the RIGHT ELEMENT -- half of a11y is free"
+        ],
+        [
+          " keyboard, role, focus sab free",
+          " keyboard, role, focus all free"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "list se nikalne mein 4 tab lagenge",
+          "it will take 4 tabs to get out of the list"
+        ],
+        [
+          "Sab tabbable — 10 tab dabao",
+          "All tabbable — press tab 10 times"
+        ],
+        [
+          "Arrow se items ke beech",
+          "Between items with an arrow"
+        ],
+        [
+          "Tab se andar/bahar,",
+          "Ever since, inside/outside,"
+        ]
+      ]
+    },
+    "t2-1": {
+      "what": "<p><b>Definition:</b> 10,000 rows of DOM kill the browser. In virtualization only ~20 visible rows get DOM; the scrollbar's height is faked with a spacer.</p>\n<p>In a design round this is the <b>standard answer for a \"large list\"</b> — but saying it alone isn't enough, you have to state its <b>tradeoffs</b>.</p>",
+      "why": "<p>Each DOM node has memory and layout cost. 10k rows cause the browser to freeze for 5-10 seconds. In a virtualized list, only 20 nodes remain, so 10k and 1 M rows run at roughly the same speed.</p>\n<p><b>But in an interview say</b> — virtualization is not free: Ctrl+F doesn’t work, content isn’t visible to SEO, and variable-height rows require measurement. Therefore, don’t apply it for up to 200 rows.</p>",
+      "pros": [
+        "Performance is almost independent of list size",
+        "Memory usage is very low",
+        "Scrolling stays smooth even with 1 M rows"
+      ],
+      "cons": [
+        "Browser find-in-page and SEO both stop working",
+        "Scroll can jump with variable-height rows",
+        "Accessibility (screen readers don’t see the full list) requires extra work"
+      ],
+      "gotchas": [
+        "In an interview, mentioning tradeoffs is essential — just saying \"we’ll virtualize\" sounds junior",
+        "If estimateSize is wrong for variable height, the scrollbar jumps — use measureElement",
+        "Don’t virtualize up to 200 rows — a plain list works fine"
+      ],
+      "terms": [
+        [
+          "Windowing",
+          "rendering only the visible items in the DOM"
+        ],
+        [
+          "Overscan",
+          "extra rows just outside the window to keep scrolling smooth"
+        ],
+        [
+          "Variable height",
+          "each row has a different height — the hardest case"
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// - variable height ke liye measurement + estimate se scroll jump",
+          "// - for variable height, scroll jumps because of measurement + estimate"
+        ],
+        [
+          "// - <200 rows pe mat lagao -- complexity ka fayda nahi",
+          "// - don't use it under <200 rows -- the complexity isn't worth it"
+        ],
+        [
+          "// - Ctrl+F kaam nahi karta, SEO nahi, print nahi",
+          "// - Ctrl+F doesn't work, no SEO, no print"
+        ],
+        [
+          "// + O(visible) DOM, list size se azaad",
+          "// + O(visible) DOM, independent of list size"
+        ],
+        [
+          "// interview mein ye tradeoffs bolo:",
+          "// say these tradeoffs in the interview:"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "scrollbar sahi dikhta hai",
+          "the scrollbar looks right"
+        ],
+        [
+          "spacer se aa rahi hai",
+          "comes from the spacer"
+        ],
+        [
+          "asli DOM: ~20 nodes",
+          "real DOM: ~20 nodes"
+        ],
+        [
+          "kyunki total height",
+          "because total height"
+        ]
+      ],
+      "where": [
+        [
+          "Feeds / timelines",
+          "Twitter, LinkedIn style infinite feed"
+        ],
+        [
+          "Data tables",
+          "analytics, logs, admin panels"
+        ],
+        [
+          "Long dropdowns",
+          "selects with thousands of options"
+        ]
+      ]
+    },
+    "t2-2": {
+      "what": "<p><b>Definition:</b> Three ways to show large datasets — <b>numbered pagination</b>, <b>infinite scroll</b>, and <b>load more button</b>. And on the backend there are two approaches — <b>offset</b> or <b>cursor</b>.</p>\n<p>In the design round both decisions are separate and both are asked.</p>",
+      "why": "<p><b>Offset bug that appears in every interview:</b> you are viewing page 1, a new item gets added at the top. Now you request page 2 — the item that was at the end of page 1 slides down and appears at the top of page 2. You will see it <b>again</b>. If an item is deleted, one item will be <b>skip</b>ped.</p>\n<p>This does not happen with a cursor because you send an identifier, not a position — \"the items after this id\". Therefore every real-time feed (Twitter, Slack) uses a cursor.</p>",
+      "pros": [
+        "Cursor: consistent results, fast on the DB (index seek, no OFFSET scan)",
+        "Numbered: user can jump, shareable URL, back button works",
+        "Load more: benefits of infinite scroll plus accessible footer"
+      ],
+      "cons": [
+        "Cursor: \"go to page 5\" not possible",
+        "Infinite scroll: scroll position is lost on back button, footer not reachable",
+        "Offset: DB slow on large offsets (OFFSET 100000 = scanning 100k rows)"
+      ],
+      "gotchas": [
+        "Offset drift bug is a favorite interview question — have a duplicate/skip example ready",
+        "In infinite scroll, handle scroll restoration yourself — otherwise the back button takes the user to the top",
+        "Don’t use a scroll listener, use IntersectionObserver — scroll events fire up to 60 times per second"
+      ],
+      "terms": [
+        [
+          "Offset pagination",
+          "page=3&limit=20 — OFFSET 40 in SQL"
+        ],
+        [
+          "Cursor pagination",
+          "after=<last-item-id> — \"the two after this\""
+        ],
+        [
+          "Page drift",
+          "items repeat or get skipped when a new item arrives"
+        ]
+      ],
+      "where": [
+        [
+          "Social feeds",
+          "infinite scroll + cursor"
+        ],
+        [
+          "Search results",
+          "numbered pagination (user needs to go to page 5)"
+        ],
+        [
+          "E-commerce listing",
+          "Load more button — footer also available"
+        ]
+      ],
+      "visualCap": "Offset drift bug",
+      "codeSwap": [
+        [
+          "// isliye e-commerce mein \"Load more\" button behtar hota hai",
+          "// that's why a \"Load more\" button is better in e-commerce"
+        ],
+        [
+          "// trigger -- IntersectionObserver, scroll listener nahi",
+          "// trigger -- IntersectionObserver, not a scroll listener"
+        ],
+        [
+          "// infinite scroll ke saath footer kabhi nahi milta --",
+          "// with infinite scroll you never reach the footer --"
+        ],
+        [
+          "// CURSOR pagination -- feeds ka standard",
+          "// CURSOR pagination -- the standard for feeds"
+        ],
+        [
+          " 400px pehle hi load shuru",
+          " the 400px starts loading in advance"
+        ],
+        [
+          " null = khatam",
+          " null = done"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "C DOBARA dikha — user ko duplicate",
+          "C shows UP AGAIN — a duplicate for the user"
+        ],
+        [
+          "koi duplicate/skip nahi &#10003;",
+          "no duplicates/skips &#10003;"
+        ],
+        [
+          "position nahi, PEHCHAN se —",
+          "by IDENTITY, not position —"
+        ],
+        [
+          "phir top pe NAYA item Z aa gaya",
+          "then a NEW item Z appears at the top"
+        ],
+        [
+          "C ← offset 3 yahan",
+          "C ← offset 3 is here"
+        ]
+      ]
+    },
+    "t2-3": {
+      "what": "<p><b>Definition:</b> Data table design round is classic because it includes everything — sorting, filtering, pagination, virtualization, column resize, row selection, sticky header, and responsive.</p>\n<p>The most important decision: <b>server-side or client-side?</b> Up to 1,000 rows client, above that server.</p>",
+      "why": "<p>In interviews, people jump straight into implementation. The right approach: first ask about the scale — \"how many rows? 100 or 1,000,000?\" Based on that the entire architecture changes:</p>\n<ul><li><b>&lt;1,000 rows</b> — everything on client, sort/filter in memory, no API</li>\n<li><b>&gt;1,000</b> — server-side sorting/filtering/pagination, client only displays</li>\n<li><b>&gt;10,000 visible</b> — also add virtualization</li></ul>",
+      "pros": [
+        "Headless library (TanStack Table) provides logic for free, styling is entirely yours",
+        "Server-side removes dataset size limit",
+        "keepPreviousData prevents flicker on sort/page change"
+      ],
+      "cons": [
+        "Every interaction on server-side incurs a network round trip",
+        "Column resize + virtualization together are quite complex",
+        "Tables are inherently poor on mobile — a different layout is needed"
+      ],
+      "gotchas": [
+        "First ask \"how many rows?\" — the entire design depends on it",
+        "Track row selection by id, not by index — index changes after sorting",
+        "Implement sticky header with CSS (position:sticky), not with a JS scroll listener"
+      ],
+      "terms": [
+        [
+          "Column virtualization",
+          "render only the visible columns across the width"
+        ],
+        [
+          "Sticky header",
+          "header stays stuck at the top while scrolling"
+        ],
+        [
+          "Headless table",
+          "logic library provides functionality, you write the markup (TanStack Table)"
+        ]
+      ],
+      "where": [
+        [
+          "Admin dashboards",
+          "most common table use"
+        ],
+        [
+          "Analytics",
+          "large datasets + server-side"
+        ],
+        [
+          "Design round",
+          "\"design a data table\" is a standard question"
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// index se karoge to sort/filter ke baad galat rows select rahenge",
+          "// if you use the index, the wrong rows stay selected after sort/filter"
+        ],
+        [
+          "// server-side sort/filter/page -- ek hi query key",
+          "// server-side sort/filter/page -- a single query key"
+        ],
+        [
+          "// responsive -- mobile pe table nahi, cards",
+          "// responsive -- cards on mobile, not a table"
+        ],
+        [
+          "// purana data dikhta rahe -- flicker nahi",
+          "// the old data stays visible -- no flicker"
+        ],
+        [
+          "// row selection -- id se, index se NAHI",
+          "// row selection -- by id, NOT by index"
+        ],
+        [
+          "// sticky header -- CSS se, JS se nahi",
+          "// sticky header -- with CSS, not JS"
+        ],
+        [
+          "// koi bhi badla -> refetch",
+          "// anything changed -> refetch"
+        ],
+        [
+          " headless approach -- logic library, markup tumhara",
+          " headless approach -- logic library, markup is yours"
+        ]
+      ]
+    },
+    "t2-4": {
+      "what": "<p><b>Definition:</b> Every data-driven UI has <b>four</b> states, not three:</p>\n<ol><li><b>Loading</b> — skeleton (not a spinner, if the shape is known)</li>\n<li><b>Error</b> — what happened + <b>retry button</b></li>\n<li><b>Empty</b> — two separate: \"there was never any data\" vs \"nothing found with the filter\"</li>\n<li><b>Success</b> — actual content</li></ol>\n<p>Calling out these four in a design round shows <b>maturity</b> — a junior only thinks about loading and success.</p>",
+      "why": "<p>An empty state should have two forms because the user's need differs. \"No orders yet\" &rarr; they need a button to <b>start shopping</b>. \"This filter found nothing\" &rarr; they need a button to <b>clear the filter</b>. Showing a single \"No data\" is useless in both cases.</p>\n<p>And a skeleton is better than a spinner because it <b>reserves the layout</b> — the page doesn't jump when the content arrives (CLS = 0).</p>",
+      "pros": [
+        "Skeleton gives CLS zero — page doesn’t jump",
+        "Correct empty state tells the user the next step",
+        "Retry button lets a transient network error self-heal"
+      ],
+      "cons": [
+        "Four states = four UI pieces to build + maintain",
+        "Skeleton must be kept in sync with content",
+        "Too many skeletons make the page feel \"busy\""
+      ],
+      "gotchas": [
+        "Create two separate empty states — “never had data” and “not found with filter” are completely different",
+        "Keep the skeleton’s height the same as a real row, otherwise the page will shift when content appears",
+        "Always provide a retry in the error state — without retry the error state is a dead end"
+      ],
+      "terms": [
+        [
+          "Skeleton",
+          "grey placeholder matching the shape of the content"
+        ],
+        [
+          "Empty state",
+          "UI for when there is no data at all"
+        ],
+        [
+          "CLS",
+          "Cumulative Layout Shift — page jumping when content arrives"
+        ]
+      ],
+      "where": [
+        [
+          "Every list / table / card grid",
+          "all data-driven UIs"
+        ],
+        [
+          "Design round",
+          "mentioning four states signals maturity"
+        ],
+        [
+          "Dashboard widgets",
+          "each widget has its own four states"
+        ]
+      ],
+      "visualCap": "Four states — not three",
+      "codeSwap": [
+        [
+          "// <div className=\"skeleton\" style={{ height: 72 }} />   // row ki asli height",
+          "// <div className=\"skeleton\" style={{ height: 72 }} />   // the row's real height"
+        ],
+        [
+          "// skeleton ka size asli content jaisa -- warna CLS",
+          "// the skeleton's size matches the real content -- otherwise CLS"
+        ],
+        [
+          "desc={error.message} action={<Button onClick={() => refetch()}>Dobara</Button>} />",
+          "desc={error.message} action={<Button onClick={() => refetch()}>Retry</Button>} />"
+        ],
+        [
+          "action={<Button onClick={clearFilters}>Filter hatao</Button>} />",
+          "action={<Button onClick={clearFilters}>Clear filters</Button>} />"
+        ],
+        [
+          "action={<Button href=\"/shop\">Shopping shuru karo</Button>} />;",
+          "action={<Button href=\"/shop\">Start shopping</Button>} />;"
+        ],
+        [
+          "? <EmptyState title=\"Is filter se kuch nahi mila\"",
+          "? <EmptyState title=\"Nothing matched this filter\""
+        ],
+        [
+          "<EmptyState icon=\"⚠️\" title=\"Load nahi hua\"",
+          "<EmptyState icon=\"⚠️\" title=\"Failed to load\""
+        ],
+        [
+          ": <EmptyState title=\"Abhi koi order nahi\"",
+          ": <EmptyState title=\"No orders yet\""
+        ]
+      ],
+      "svgSwap": [
+        [
+          "\"koi order nahi\" → CTA",
+          "\"no orders\" → CTA"
+        ],
+        [
+          "skeleton, spinner nahi",
+          "skeleton, not a spinner"
+        ],
+        [
+          "\"filter se kuch nahi\"",
+          "\"nothing from the filter\""
+        ],
+        [
+          "Dobara koshish",
+          "Retry"
+        ],
+        [
+          "Kuch gadbad hui",
+          "Something went wrong"
+        ],
+        [
+          "DO alag empty",
+          "TWO separate empties"
+        ],
+        [
+          "retry ZAROORI",
+          "retry REQUIRED"
+        ]
+      ]
+    },
+    "t2-5": {
+      "what": "<p><b>Definition:</b> In an optimistic update you <b>assume</b> that the server will say yes — you update the UI immediately, then send the request in the background. If it fails, revert to the previous state.</p>\n<p>Three things are required: (1) <b>save</b> the previous state, (2) <b>rollback</b> on failure, (3) later <b>reconcile</b> with the server.</p>",
+      "analogy": "Ask a friend for ₹100. You assume they will give it and make a plan. If they refuse, cancel the plan — but by then you saved time.",
+      "why": "<p>The Like button shows a 300 ms wait. With optimistic updates the app feels \"instant\" — this is the biggest lever for perceived performance.</p>\n<p><b>But not every action should be optimistic.</b> In an interview say: <i>\"optimistic only when the chance of failure is low and rollback is cheap.\"</i> Like, star, reorder — yes. Payment, delete, checkout — never.</p>",
+      "pros": [
+        "App feels instant — the biggest lever for perceived performance",
+        "Huge difference on slow networks",
+        "First step toward offline-first"
+      ],
+      "cons": [
+        "Rollback logic must be written for every mutation",
+        "Race conditions on rapid clicking",
+        "User may see an incorrect state (briefly)"
+      ],
+      "gotchas": [
+        "In onMutate, always cancelQueries — otherwise an old in-flight response will erase your optimistic update",
+        "Never make irreversible actions (payment, delete) optimistic",
+        "Show a toast with the rollback — silently reverting confuses the user"
+      ],
+      "terms": [
+        [
+          "Optimistic update",
+          "changing the UI before the server responds"
+        ],
+        [
+          "Rollback",
+          "restoring the previous state when the server fails"
+        ],
+        [
+          "Idempotent",
+          "sending the same request twice still has the same effect"
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// KAB MAT KARO             : payment, delete, submit, kuch bhi irreversible",
+          "// WHEN NOT TO USE IT       : payment, delete, submit, anything irreversible"
+        ],
+        [
+          "// KAB optimistic KARO      : like, bookmark, reorder, toggle, rename",
+          "// WHEN to use optimistic      : like, bookmark, reorder, toggle, rename"
+        ],
+        [
+          "// cancelQueries + onSettled invalidate se aakhir mein server jeetega",
+          "// with cancelQueries + onSettled invalidate the server wins in the end"
+        ],
+        [
+          "// context mein bhejo",
+          "// send it through context"
+        ],
+        [
+          "// server se sach lo",
+          "// take the truth from the server"
+        ],
+        [
+          "// purana SAVE karo",
+          "// SAVE the old one"
+        ],
+        [
+          "// turant update",
+          "// updates immediately"
+        ],
+        [
+          "toast.error('Like nahi hua, dobara koshish karo');",
+          "toast.error('Like failed, please try again');"
+        ]
+      ],
+      "where": [
+        [
+          "Social actions",
+          "like, follow, bookmark"
+        ],
+        [
+          "Drag-drop reorder",
+          "show the move instantly"
+        ],
+        [
+          "Inline edit",
+          "rename, toggle, checkbox"
+        ]
+      ]
+    },
+    "t2-6": {
+      "what": "<p><b>Definition:</b> API provides nested data — each post contains the full author object. If the same author has 20 posts, that object is in memory <b>20 times</b>. If the author's name changes, you have to change it in 20 places.</p>\n<p>In normalization you flatten the data — <code>{ posts: {id: post}, users: {id: user} }</code> — and keep only <code>authorId</code> in the post.</p>",
+      "analogy": "Writing the full address in every row in Excel vs creating a separate \"customers\" sheet and storing only the customer ID. If the address changes, update it in one place, not in 500 rows.",
+      "why": "<p>This comes up in interviews when an entity appears in <b>multiple places</b> — the user's name on every chat message, the author on every feed post. Without normalization, a single update can leave half the UI stale.</p>\n<p><b>But it is not required everywhere.</b> With caches like React Query, a simple invalidate is often sufficient. Use normalization when: the entity appears in multiple places, you need real-time updates, or you need offline support.</p>",
+      "pros": [
+        "One entity, one place — updates are never partial",
+        "Lower memory (no duplicate objects)",
+        "Applying real-time patches becomes trivial"
+      ],
+      "cons": [
+        "Reading requires joining (selectors)",
+        "Boilerplate — need to write both normalize and denormalize",
+        "Completely overkill for small apps"
+      ],
+      "gotchas": [
+        "Don't normalize everywhere — React Query's invalidate often suffices",
+        "Keep order separate (feed: string[]) — don't rely on object key order",
+        "You can use a library like Normalizr, but a 30-line custom function is usually enough"
+      ],
+      "terms": [
+        [
+          "Normalization",
+          "flattening nested data into \"id → object\" maps"
+        ],
+        [
+          "Denormalized",
+          "nested tree — as the API provides"
+        ],
+        [
+          "Single source of truth",
+          "the data for an entity exists in only one place"
+        ]
+      ],
+      "where": [
+        [
+          "Chat apps",
+          "user info on every message"
+        ],
+        [
+          "Social feeds",
+          "author on multiple posts"
+        ],
+        [
+          "Real-time collab",
+          "a single update reflects across the entire app"
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// KAB MAT karo: simple list, ek hi jagah, React Query ka invalidate kaafi hai",
+          "// WHEN NOT TO: a simple list, a single place, React Query's invalidate is enough"
+        ],
+        [
+          "// KAB karo: entity kai jagah dikhe, real-time updates, offline",
+          "// WHEN TO: the entity shows up in many places, real-time updates, offline"
+        ],
+        [
+          "// ek update -> poori UI sahi",
+          "// one update -> the whole UI is correct"
+        ],
+        [
+          "// read -- selector se jodo",
+          "// read -- connect via a selector"
+        ],
+        [
+          "// sirf ids ka order",
+          "// only the order of ids"
+        ],
+        [
+          "// dedupe apne aap",
+          "// dedupes automatically"
+        ],
+        [
+          " 20 posts sab automatically update",
+          " 20 posts all update automatically"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "ek bhool gaye → UI mein do naam",
+          "forgot one → two names in the UI"
+        ],
+        [
+          "poori UI apne aap sahi &#10003;",
+          "the whole UI is correct automatically &#10003;"
+        ],
+        [
+          "naam badla → EK jagah update",
+          "name changed → update in ONE place"
+        ],
+        [
+          "Nested — author 3 baar",
+          "Nested — author 3 times"
+        ],
+        [
+          "Normalized — ek jagah",
+          "Normalized — in one place"
+        ],
+        [
+          "naam badla → 3 jagah update",
+          "name changed → update in 3 places"
+        ]
+      ]
+    },
+    "t3-1": {
+      "what": "<p><b>Definition:</b> Both reduce rapid events, but the approach is different:</p>\n<ul><li><b>Debounce</b> — \"do nothing until it stops\". For search input.</li>\n<li><b>Throttle</b> — \"keep going, but only once every 200ms\". For scroll, resize, mouse-move.</li></ul>\n<p>Search box needs debounce because sending an API call on every keystroke wastes money and exhausts rate limits.</p>",
+      "analogy": "Elevator door. Debounce = if someone is coming, wait; close only when no one arrives for 3 seconds. Throttle = it will close once every 10 seconds, regardless of how many people arrive.",
+      "why": "<p>In a design round, saying only \"we’ll add debounce\" is a half answer. The complete answer has three parts:</p>\n<ol><li><b>Debounce</b> — reduces network calls (typical 300ms)</li>\n<li><b>Cancel/abort</b> — stop the previous in-flight request, otherwise an out-of-order response will show stale results</li>\n<li><b>Cache</b> — if the same query comes again, don’t hit the network</li></ol>\n<p>Debounce alone does not eliminate a <b>race condition</b> — that is a separate problem.</p>",
+      "pros": [
+        "Network calls reduced 10–20×",
+        "Both rate limit and server load are saved",
+        "Abort eliminates the out-of-order results bug"
+      ],
+      "cons": [
+        "Debounce increases perceived latency (an extra 300ms)",
+        "Wrong delay makes the UI either laggy or spammy",
+        "Debounce alone does not fix a race condition"
+      ],
+      "gotchas": [
+        "Debounce + abort + cache — mention all three; saying only debounce is a half answer",
+        "Keep the debounced function in useMemo/useRef otherwise a new timer is created on every render",
+        "Don’t apply debounce on scroll — use throttle there, otherwise nothing will happen during scrolling"
+      ],
+      "terms": [
+        [
+          "Debounce",
+          "wait for it to stop — invoke after N ms from the last event"
+        ],
+        [
+          "Throttle",
+          "rate limit — at most once every N ms"
+        ],
+        [
+          "Trailing / leading",
+          "run at the end of the window or at the start"
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// React Query signal khud abort karta hai jab query key badalti hai",
+          "// React Query aborts the signal itself when the query key changes"
+        ],
+        [
+          "// race condition ka manual fix (React Query ke bina)",
+          "// manual fix for the race condition (without React Query)"
+        ],
+        [
+          "// manual version -- interview mein ye likhwate hain",
+          "// manual version -- this is what they make you write in interviews"
+        ],
+        [
+          "// debounce + abort + cache -- teeno chahiye",
+          "// debounce + abort + cache -- you need all three"
+        ],
+        [
+          "// throttle -- scroll/resize ke liye",
+          "// throttle -- for scroll/resize"
+        ],
+        [
+          " purane results dikhte rahein",
+          " so old results keep showing"
+        ],
+        [
+          " purani request cancel",
+          " cancel the old request"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "rukne ka intezaar",
+          "waiting to be paused"
+        ],
+        [
+          "fixed rate pe chalta rehta",
+          "keeps running at a fixed rate"
+        ]
+      ]
+    },
+    "t3-2": {
+      "what": "<p><b>Definition:</b> The most common question in an autocomplete design round because it includes everything — debounce, caching, race conditions, keyboard navigation, ARIA, virtualization, and highlighting.</p>\n<p>The complete answer consists of 5 layers: <b>input handling &rarr; network &rarr; cache &rarr; keyboard/ARIA &rarr; rendering</b>.</p>",
+      "why": "<p>The interviewer checks how many layers you remember. Most people stop after mentioning debounce + fetch. Those who also mention these stand out:</p>\n<ul><li>Keyboard: Arrow up/down, Enter, Escape, Home/End</li>\n<li>ARIA: <code>role=\"combobox\"</code>, <code>aria-expanded</code>, <code>aria-activedescendant</code> — stays focused on the input</li>\n<li>Minimum length (2 chars), and empty/no-results state</li>\n<li>Highlight — matched portion bold, and escape user input (XSS)</li></ul>",
+      "pros": [
+        "Instant response when typing the same query again thanks to cache",
+        "Keyboard navigation means power users don’t need a mouse",
+        "Minimum length prevents unnecessary API calls"
+      ],
+      "cons": [
+        "Many edge cases — blur, click, escape, IME input",
+        "On mobile, competition for space between keyboard and dropdown",
+        "If results exceed 1,000, virtualization is also needed"
+      ],
+      "gotchas": [
+        "Call preventDefault on onMouseDown — otherwise the input blurs and the click isn’t registered",
+        "Focus should stay on the input — don’t focus the list item, use aria-activedescendant",
+        "Escape user input while highlighting — otherwise you open an XSS vector"
+      ],
+      "terms": [
+        [
+          "Typeahead",
+          "show suggestions as you type"
+        ],
+        [
+          "Combobox",
+          "ARIA pattern of input + listbox"
+        ],
+        [
+          "aria-activedescendant",
+          "indicating which list item is \"active\" while keeping focus on the input"
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// blur se pehle click",
+          "// click before blur"
+        ],
+        [
+          "{!items.length && <li role=\"option\" aria-disabled>Kuch nahi mila</li>}",
+          "{!items.length && <li role=\"option\" aria-disabled>Nothing found</li>}"
+        ]
+      ]
+    },
+    "t3-3": {
+      "what": "<p><b>Definition:</b> Large form architecture has three decisions:</p>\n<ol><li><b>Where state</b> — controlled (render on every keystroke) or uncontrolled (via RHF, refs)</li>\n<li><b>When to validate</b> — onChange / onBlur / onSubmit, and where the schema lives</li>\n<li><b>How to show errors</b> — below the field, summary on top, or both</li></ol>\n<p>Design round answer: <b>uncontrolled + schema validation + onBlur first, onChange after first error</b>.</p>",
+      "why": "<p>30 fields controlled = 30 components render on every keystroke. RHF keeps it uncontrolled, so typing causes zero re-renders — only renders when an error appears.</p>\n<p>Validation timing is a big part of UX: <b>don’t start with onChange</b> — the user will type “m” and see “invalid email”, which is irritating. Correct pattern: first validate on <b>onBlur</b>; once an error appears, validate on <b>onChange</b> so the error disappears as soon as it’s corrected.</p>",
+      "pros": [
+        "Even large forms are fast with uncontrolled",
+        "Type + validation from a single source with schema",
+        "You can map server errors to fields"
+      ],
+      "cons": [
+        "Need to wrap custom components (MUI, Radix) with Controller",
+        "Cross-field validation (password match) requires a bit extra work",
+        "Async validation (username available?) can have race conditions"
+      ],
+      "gotchas": [
+        "Don’t start validation with onChange — start with onTouched (blur), then onChange",
+        "Provide defaultValues or you’ll get an “uncontrolled to controlled” warning",
+        "Connect the error to the input with aria-describedby, otherwise screen readers won’t know about the error"
+      ],
+      "terms": [
+        [
+          "Field-level state",
+          "each field keeps its own state"
+        ],
+        [
+          "Schema validation",
+          "write rules in one place (zod/yup)"
+        ],
+        [
+          "Dirty / touched",
+          "whether the field has changed, whether the user has touched it"
+        ]
+      ],
+      "visualCap": "Validation timing — when to show",
+      "codeSwap": [
+        [
+          "// error ke baad turant clear",
+          "// clear immediately after the error"
+        ],
+        [
+          "// type + validation ek jagah",
+          "// type + validation in one place"
+        ],
+        [
+          " blur pe pehli validation",
+          " first validation on blur"
+        ],
+        [
+          "else setError('root', { message: 'Kuch gadbad hui' });     // form-level",
+          "else setError('root', { message: 'Something went wrong' });     // form-level"
+        ],
+        [
+          "message: 'Password match nahi kar rahe', path: ['confirm'],",
+          "message: 'Passwords do not match', path: ['confirm'],"
+        ],
+        [
+          "password: z.string().min(8, '8 character chahiye'),",
+          "password: z.string().min(8, 'Needs 8 characters'),"
+        ],
+        [
+          "age: z.coerce.number().min(18, '18+ hona chahiye'),",
+          "age: z.coerce.number().min(18, 'Must be 18+'),"
+        ],
+        [
+          "email: z.string().email('Sahi email daalo'),",
+          "email: z.string().email('Enter a valid email'),"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "blur ke baad validate, phir reValidateMode: \"onChange\"",
+          "validate after blur, then reValidateMode: \"onChange\""
+        ],
+        [
+          "error ke baad har keystroke pe — turant clear",
+          "after an error, on every keystroke — clear immediately"
+        ],
+        [
+          "mode: \"onTouched\" — RHF mein yahi ek line hai",
+          "mode: \"onTouched\" — in RHF this is the one line"
+        ],
+        [
+          "onChange se shuru — irritating",
+          "starting with onChange — irritating"
+        ],
+        [
+          "blur pe pehli baar check",
+          "check the first time on blur"
+        ],
+        [
+          "user ne abhi likhna shuru hi kiya tha",
+          "the user had only just started typing"
+        ],
+        [
+          "onBlur → phir onChange",
+          "onBlur → then onChange"
+        ]
+      ]
+    },
+    "t3-4": {
+      "what": "<p><b>Definition:</b> Keyboard navigation design means that every interaction can happen without a mouse. Four questions for each widget:</p>\n<ol><li><b>Where does focus go</b> when the widget opens?</li>\n<li><b>Which keys do what?</b> (Arrow, Enter, Escape, Tab)</li>\n<li><b>Where does focus return</b> when it closes?</li>\n<li><b>Is focus trapped</b> (modal) or free (dropdown)?</li></ol>",
+      "why": "<p>This is not just accessibility — power users also use the keyboard. Gmail, Linear, Slack are all keyboard-first and that is their competitive advantage.</p>\n<p>In the design round, when you say \"close with Escape, return focus to the trigger\", the interviewer sees that you built a real production component.</p>",
+      "pros": [
+        "Power users get a very fast workflow",
+        "Accessibility compliance automatically",
+        "You appear senior immediately in the interview"
+      ],
+      "cons": [
+        "You have to remember each widget's keyboard contract",
+        "Many edge cases for focus restoration (what if the element is removed?)",
+        "Testing is manual — automated tests catch less"
+      ],
+      "gotchas": [
+        "When closing, send focus back to the trigger — otherwise the keyboard user ends up at the top of the page",
+        "If the focusable element is removed, focus goes to the body — think of a fallback",
+        "You can use Radix/React Aria — in the interview say \"we use Radix in production, here I'm writing it myself\""
+      ],
+      "terms": [
+        [
+          "Focus order",
+          "The order focus moves when Tab is pressed"
+        ],
+        [
+          "Focus trap",
+          "Keeping focus trapped inside a modal/menu"
+        ],
+        [
+          "Skip link",
+          "A link that skips navigation and goes straight to content"
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// Menu    : Arrow move, Enter select, Escape band, letter se jump",
+          "// Menu    : Arrow to move, Enter to select, Escape to close, jump by letter"
+        ],
+        [
+          "// skip link -- har page pe, sabse pehla element",
+          "// skip link -- on every page, the very first element"
+        ],
+        [
+          "// WAI-ARIA ke standard patterns -- yaad rakho",
+          "// Standard WAI-ARIA patterns -- remember them"
+        ],
+        [
+          " Dialog  : Escape band kare, focus trap, band pe trigger pe wapas",
+          " Dialog  : Escape closes it, focus trap, on close return focus to the trigger"
+        ],
+        [
+          " pehle pe jao",
+          " go to the first one"
+        ],
+        [
+          " kahan the",
+          " where we were"
+        ],
+        [
+          " WAPAS",
+          " BACK"
+        ]
+      ],
+      "where": [
+        [
+          "Modals / drawers",
+          "focus trap + restore"
+        ],
+        [
+          "Menus / dropdowns",
+          "arrow nav + escape"
+        ],
+        [
+          "Command palette",
+          "a fully keyboard-driven UI"
+        ]
+      ]
+    },
+    "t3-5": {
+      "what": "<p><b>Definition:</b> Rich inputs — mention (<code>@user</code>), tag input, markdown editor, code editor, masked input (phone, card). Their common problem is only one: <b>caret (cursor) position</b>.</p>\n<p>When you change the value programmatically (formatting, masking), the browser moves the cursor to the <b>end</b> — if the user was typing in the middle, it becomes very irritating.</p>",
+      "why": "<p>This topic is asked because it shows whether you know the deep details of the DOM — <code>selectionStart</code>, <code>Selection</code> API, and IME composition events.</p>\n<p>The biggest trap: <b>IME</b>. While typing Hindi/Chinese, <code>onChange</code> fires on every intermediate character. If you make an API call or format on every change, typing breaks. <code>compositionstart</code>/<code>compositionend</code> indicate that the user is currently composing.</p>",
+      "pros": [
+        "Proper caret handling makes the input feel professional",
+        "IME support works for global users",
+        "Mention/tag makes the UX feel very natural"
+      ],
+      "cons": [
+        "contenteditable has many browser-specific bugs",
+        "If caret math is wrong, the input becomes unusable",
+        "Mobile keyboards behave differently"
+      ],
+      "gotchas": [
+        "Call setSelectionRange inside requestAnimationFrame — if you do it before rendering it will be overwritten",
+        "In IME (Hindi/Chinese) onChange fires on every intermediate character — guard with composition events",
+        "Don't build a rich text editor yourself — use Lexical or TipTap, and say that in the interview"
+      ],
+      "terms": [
+        [
+          "contenteditable",
+          "making a div editable — the base for rich text"
+        ],
+        [
+          "IME",
+          "Input Method Editor — the system for Hindi/Chinese/Japanese typing"
+        ],
+        [
+          "Controlled caret",
+          "managing the cursor position yourself"
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// IME -- compose ke dauraan process mat karo",
+          "// IME -- don't process during composition"
+        ],
+        [
+          "// @mention -- trigger detect karo",
+          "// @mention -- detect the trigger"
+        ],
+        [
+          "// caret se peechhe @word",
+          "// from the caret, backwards to @word"
+        ],
+        [
+          "// render ke BAAD",
+          "// AFTER render"
+        ],
+        [
+          " rich text -- khud mat banao, Lexical / TipTap / ProseMirror lo",
+          " rich text -- don't build it yourself, take Lexical / TipTap / ProseMirror"
+        ],
+        [
+          " caret position bachao -- masked input",
+          " preserve the caret position -- masked input"
+        ]
+      ]
+    },
+    "t3-6": {
+      "what": "<p><b>Definition:</b> Search query, filters, sort, page, and open tab — these should all be in the <b>URL</b>, not in <code>useState</code>.</p>\n<p>Benefit: shareable link, back button works, state persists on refresh, and it can be bookmarked.</p>",
+      "analogy": "A bookmark in a book. The page number is in the book itself — you can tell a friend “read page 47.” If the page number existed only in your mind, you couldn’t share it.",
+      "why": "<p>In a design round this is a <b>small but very effective</b> point. When you say “I’ll keep filters in the URL so the user can share the link and the back button works as expected” — the interviewer sees that you’re thinking from the <b>user’s perspective</b>.</p>\n<p>Another important detail: <b>don’t create a history entry for every keystroke</b>. Use <code>replace: true</code> while typing a search, otherwise the user would have to press back about 30 times.</p>",
+      "pros": [
+        "The same view opens when the link is shared",
+        "Back/forward buttons work as expected",
+        "State persists on refresh — no extra code needed"
+      ],
+      "cons": [
+        "The URL can become long and messy",
+        "Requires some code to serialize/parse",
+        "Sensitive data should not go in the URL (it appears in logs)"
+      ],
+      "gotchas": [
+        "Use replace:true while typing, push on actions — otherwise the back button becomes useless",
+        "When filters change, reset page=1, otherwise the user will see an empty page 5",
+        "Don’t copy URL state into useState — keep the URL as the single source of truth"
+      ],
+      "terms": [
+        [
+          "URL as state",
+          "keeping filter/search in query parameters"
+        ],
+        [
+          "Deep link",
+          "a URL that opens directly to that view"
+        ],
+        [
+          "History entry",
+          "a new step in the browser history"
+        ]
+      ],
+      "where": [
+        [
+          "Search / listing pages",
+          "e-commerce, job boards, docs"
+        ],
+        [
+          "Dashboards",
+          "date range, selected metric"
+        ],
+        [
+          "Tabs",
+          "shareable tab link"
+        ]
+      ],
+      "visualCap": "push vs replace — how the history is built",
+      "codeSwap": [
+        [
+          "// URL mein KYA MAT rakho: form ka adhoora draft, scroll position, modal ka animation state",
+          "// What NOT to put in the URL: a half-finished form draft, scroll position, a modal's animation state"
+        ],
+        [
+          "// URL mein KYA rakho:  filter, sort, page, tab, search, selected id",
+          "// What to put in the URL:  filter, sort, page, tab, search, selected id"
+        ],
+        [
+          "// query params se seedha data fetch -- ek hi source of truth",
+          "// fetch data straight from the query params -- a single source of truth"
+        ],
+        [
+          "// filter apply -> push (back se hat jaaye)",
+          "// apply filter -> push (moves off the back)"
+        ],
+        [
+          "// typing -> replace (history spam nahi)",
+          "// typing -> replace (no history spam)"
+        ],
+        [
+          " URL badla -> query badli -> refetch",
+          " URL changed -> query changed -> refetch"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "back ek baar = /search &#10003;",
+          "press back once = /search &#10003;"
+        ],
+        [
+          "back 5 baar dabana padega",
+          "you'd have to press back 5 times"
+        ]
+      ]
+    },
+    "t4-1": {
+      "what": "<p><b>Definition:</b> Three ways to bring real-time data:</p>\n<ul><li><b>Polling</b> — the client asks repeatedly. Simple, but latency equals the interval, and wasteful requests.</li>\n<li><b>SSE</b> — server pushes, one direction. Runs over HTTP, auto-reconnect built-in.</li>\n<li><b>WebSocket</b> — two-way, full duplex. Most powerful, requires the most infrastructure work.</li></ul>",
+      "why": "<p>In an interview, <b>don’t say WebSocket by default</b> — that’s a junior signal. The correct answer comes from the requirements:</p>\n<ul><li>If the client needs to <b>send</b> (chat, cursor, collaboration)? → WebSocket</li>\n<li>If it only needs to <b>receive</b> (notifications, live scores, AI token stream)? → SSE — simple, cheap, auto-reconnect</li>\n<li>If updates are <b>rare</b> (every 30 seconds)? → polling — do nothing else</li></ul>\n<p>The big point about SSE: it uses normal HTTP, so proxy/CDN/auth work without extra configuration.</p>",
+      "pros": [
+        "SSE: auto-reconnect + Last-Event-ID for free",
+        "WebSocket: lowest latency, two-way",
+        "Polling: zero infrastructure, never fails"
+      ],
+      "cons": [
+        "WebSocket: load balancer sticky sessions, scaling, reconnect all yourself",
+        "SSE: per-domain limit of 6 connections in HTTP/1.1",
+        "Polling: wasteful load on the server"
+      ],
+      "gotchas": [
+        "Saying WebSocket by default is a junior signal — ask about requirements first",
+        "SSE hits the 6-connection limit on HTTP/1.1 — not an issue on HTTP/2",
+        "WebSocket requires sticky sessions on the load balancer — be sure to mention this"
+      ],
+      "terms": [
+        [
+          "Polling",
+          "ask \"any new data?\" every N seconds"
+        ],
+        [
+          "SSE",
+          "Server-Sent Events — one-way stream from the server, over HTTP"
+        ],
+        [
+          "WebSocket",
+          "two-way persistent connection"
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// reconnect pe browser Last-Event-ID header bhejta hai -- gap bhar sakte ho",
+          "// on reconnect the browser sends the Last-Event-ID header -- you can fill the gap"
+        ],
+        [
+          "// interview line: \"sirf sunna hai to SSE, bhejna bhi hai to WebSocket,",
+          "// interview line: \"SSE if you only need to listen, WebSocket if you need to send too,"
+        ],
+        [
+          "//                  rare update hai to polling\"",
+          "//                  if updates are rare, polling\""
+        ],
+        [
+          "/* browser KHUD reconnect karta hai */ };",
+          "/* the browser reconnects BY ITSELF */ };"
+        ],
+        [
+          "// WebSocket -- jab dono taraf chahiye",
+          "// WebSocket -- when you need both directions"
+        ],
+        [
+          "// Polling -- ek line, React Query",
+          "// Polling -- one line, React Query"
+        ],
+        [
+          "// SSE -- sabse underrated option",
+          "// SSE -- the most underrated option"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "+ sabse simple, koi infra nahi",
+          "+ simplest, no infra"
+        ],
+        [
+          "server → client (ek taraf)",
+          "server → client (one way)"
+        ],
+        [
+          "− client bhej nahi sakta",
+          "− the client can't send it"
+        ],
+        [
+          "har 5s, baar baar",
+          "every 5s, repeatedly"
+        ],
+        [
+          "client ↔ server (dono taraf)",
+          "client ↔ server (both directions)"
+        ],
+        [
+          "− reconnect khud likhna",
+          "− you write reconnect yourself"
+        ],
+        [
+          "− 95% requests khaali",
+          "− 95% of requests empty"
+        ],
+        [
+          "apna protocol",
+          "its own protocol"
+        ]
+      ]
+    },
+    "t4-2": {
+      "what": "<p><b>Definition:</b> Connection <b>will break</b> — WiFi changed, tunnel arrived, laptop slept, server deployed. The question is not whether it will break, the question is <b>how it will reconnect</b>.</p>\n<p>Four things are needed: (1) exponential backoff + jitter, (2) fill the gap of missed messages, (3) offline queue, (4) show the user the connection status.</p>",
+      "why": "<p><b>Thundering herd</b> is the core of this topic. The server was down for 30 seconds. It came back. Now 50,000 clients will reconnect at once and the server will crash again. <b>Jitter</b> is the remedy — if each client waits a random time, the load is spread.</p>\n<p>In an interview, say \"exponential backoff <b>with jitter</b>\" — it is much better than just saying backoff.</p>",
+      "pros": [
+        "Jitter prevents the server reconnect storm.",
+        "Offline queue ensures the user's message is not lost.",
+        "Since/Last-Event-ID fills missed messages."
+      ],
+      "cons": [
+        "It requires managing a lot of state.",
+        "Filling the gap needs server-side message history.",
+        "Testing is difficult (you have to simulate the network)."
+      ],
+      "gotchas": [
+        "\"exponential backoff WITH JITTER\" — just saying backoff leaves this point half communicated.",
+        "Listen to both the online event and visibilitychange — then reconnect immediately when returning.",
+        "Show the user the connection status (live / reconnecting / offline) — silently failing is the worst UX."
+      ],
+      "terms": [
+        [
+          "Exponential backoff",
+          "double the wait time on each failure"
+        ],
+        [
+          "Jitter",
+          "random variation in wait time — so all clients don’t arrive together"
+        ],
+        [
+          "Thundering herd",
+          "thousands of clients connect as soon as the server comes back"
+        ]
+      ],
+      "visualCap": "Backoff + jitter — the reconnect load is spread",
+      "codeSwap": [
+        [
+          "// browser ke signals -- reconnect turant",
+          "// browser signals -- reconnect immediately"
+        ],
+        [
+          "// offline ke dauraan bheje messages",
+          "// messages sent while offline"
+        ],
+        [
+          "// gap bharne ke liye",
+          "// to fill the gap"
+        ],
+        [
+          "// tab wapas aaya",
+          "// the tab came back"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "50k clients ek saath → server phir gira",
+          "50k clients at once → the server went down again"
+        ],
+        [
+          "Backoff + jitter — load bata hua",
+          "Backoff + jitter — load gets spread out"
+        ],
+        [
+          "sambhal gaya &#10003;",
+          "handled &#10003;"
+        ],
+        [
+          "server wapas aaya",
+          "server came back"
+        ]
+      ]
+    },
+    "t4-3": {
+      "what": "<p><b>Definition:</b> As soon as a message is sent in the chat, it should appear on the screen — no waiting for server confirmation. For this you need:</p>\n<ol><li><b>Temp id</b> (uuid) to immediately insert the message into the list, status <code>sending</code></li>\n<li>When the server response arrives, replace the temp id with the <b>real id</b></li>\n<li>If it fails, set status <code>failed</code> + <b>retry button</b> — do not delete the message</li>\n</ol>",
+      "why": "<p>This differs from a normal optimistic update because there is an <b>identity</b> problem — the client creates an id, the server creates its own, and the same message can arrive again via WebSocket (echo). Without a temp-id mapping, a <b>duplicate</b> will appear.</p>\n<p>And when it fails, the message should not be <b>removed</b> — the user typed it, that's effort. A failed state + retry is the correct UX.</p>",
+      "pros": [
+        "App feels instant even if the network is slow",
+        "Failed messages are retained — the user's effort is not lost",
+        "Echoes and duplicates are handled with tempId"
+      ],
+      "cons": [
+        "You have to manage three separate states in the message list",
+        "Ordering: pending message and server message order mismatch",
+        "In offline mode you need to persist the queue (localStorage/IndexedDB)"
+      ],
+      "gotchas": [
+        "Send the tempId to the server and request it back — this is the clean solution for echo/duplicate",
+        "Never delete a failed message — change its status and provide a retry",
+        "Use the server timestamp for ordering, not the client’s (clocks differ)"
+      ],
+      "terms": [
+        [
+          "Pending state",
+          "the message that was sent but not yet confirmed"
+        ],
+        [
+          "Temp id",
+          "temporary id generated on the client side"
+        ],
+        [
+          "Reconciliation",
+          "replacing the temp with the real one when the server response arrives"
+        ]
+      ],
+      "where": [
+        [
+          "Chat",
+          "WhatsApp/Slack style instant send"
+        ],
+        [
+          "Comments",
+          "appear immediately after posting"
+        ],
+        [
+          "Collaborative lists",
+          "adding a todo"
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// WebSocket echo -- duplicate se bacho",
+          "// WebSocket echo -- avoid duplicates"
+        ],
+        [
+          "// tempId server ko BHEJO",
+          "// SEND tempId to the server"
+        ],
+        [
+          "// UI mein status dikhao",
+          "// Show the status in the UI"
+        ],
+        [
+          "// asli id se replace",
+          "// replace with the real id"
+        ],
+        [
+          "// turant dikha do",
+          "// show it immediately"
+        ],
+        [
+          "// already hai",
+          "// already there"
+        ],
+        [
+          " HATAO mat -- retry do",
+          " DON'T remove it -- retry"
+        ],
+        [
+          "{msg.status === 'failed'  && <button onClick={() => retry(msg)}>Dobara bhejo</button>}",
+          "{msg.status === 'failed'  && <button onClick={() => retry(msg)}>Resend</button>}"
+        ]
+      ]
+    },
+    "t4-4": {
+      "what": "<p><b>Definition:</b> Presence (online/offline) and typing indicators are <b>ephemeral</b> data — they are not saved in the DB, they only reside in memory/Redis with a short TTL.</p>\n<p>Two standard patterns: presence via <b>heartbeat + TTL</b>, typing via <b>throttled event + auto-expire</b>.</p>",
+      "why": "<p>A naive typing indicator sends an event on every keystroke — 60 messages per minute per user. In a room with 50 people this becomes 3,000 messages/minute just for \"typing\". The correct approach: <b>throttle</b> (one \"typing\" event every 3 seconds) and on the receiver side use <b>auto-expire</b> (remove it automatically after 5 seconds).</p>\n<p>Auto-expire is necessary because a \"stopped typing\" event can be lost (e.g., the user disconnects, network drops) — then the indicator would remain stuck forever.</p>",
+      "pros": [
+        "Throttle reduces traffic by 3–5×",
+        "Auto-expire prevents a stuck indicator",
+        "TTL-based presence clears itself automatically even if the server crashes"
+      ],
+      "cons": [
+        "Some extra traffic remains",
+        "Requires Redis or another memory store",
+        "In large rooms the presence list itself becomes heavy"
+      ],
+      "gotchas": [
+        "Don’t rely on a \"stop typing\" event — always have auto-expire on the receiver side",
+        "Keep the heartbeat interval much shorter than the TTL (e.g., 30 s beat / 45 s TTL) otherwise the user will flicker",
+        "In large rooms (1,000+) don’t send each user’s presence — send a count or only the active few"
+      ],
+      "terms": [
+        [
+          "Presence",
+          "who is online"
+        ],
+        [
+          "Heartbeat",
+          "send \"I’m alive\" every N seconds"
+        ],
+        [
+          "Ephemeral",
+          "temporary data that is not saved in the DB"
+        ]
+      ],
+      "where": [
+        [
+          "Chat apps",
+          "typing + online dot"
+        ],
+        [
+          "Collab editors",
+          "who is on which document, cursors"
+        ],
+        [
+          "Support tools",
+          "agent availability"
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// receiver -- auto-expire (5s), kyunki \"stop\" event kho sakta hai",
+          "// receiver -- auto-expire (5s), because the \"stop\" event can get lost"
+        ],
+        [
+          "// TTL se kam interval",
+          "// Interval less than the TTL"
+        ],
+        [
+          "// 3s mein ek baar",
+          "// once every 3s"
+        ],
+        [
+          " TYPING -- throttled bhejo, auto-expire dikhao",
+          " TYPING -- send throttled, show auto-expire"
+        ],
+        [
+          ": names.length <= 3  ? names.join(', ') + ' likh rahe hain...'",
+          ": names.length <= 3  ? names.join(', ') + ' are typing...'"
+        ],
+        [
+          ": names.length === 1 ? names[0] + ' likh raha hai...'",
+          ": names.length === 1 ? names[0] + ' is typing...'"
+        ],
+        [
+          ": names.length + ' log likh rahe hain...';",
+          ": names.length + ' people are typing...';"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "aur atakta bhi nahi",
+          "and doesn't freeze either"
+        ],
+        [
+          "20/min — 3x kam",
+          "20/min — 3x less"
+        ]
+      ]
+    },
+    "t4-5": {
+      "what": "<p><b>Definition:</b> The notification system design round appears because it requires thinking about both frontend and backend. The frontend side has four components:</p>\n<ol><li><b>Delivery</b> — SSE/WebSocket (live) + REST (history)</li>\n<li><b>State</b> — unread count, read/unread, per-notification actions</li>\n<li><b>Grouping</b> — \"5 people liked it\" (not 25 separate rows)</li>\n<li><b>Cross-tab sync</b> — if read in one tab, it should appear as read in the other tab</li></ol>",
+      "why": "<p>Cross-tab sync is the detail that very few people mention. The user has three tabs open. In one tab the notification is read — the other two still show the badge as \"3\". <code>BroadcastChannel</code> fixes this in a single line.</p>\n<p>And grouping is essential because without it a popular post can generate 200 notifications and the user will turn off notifications.</p>",
+      "pros": [
+        "SSE provides cheap and simple live delivery",
+        "Grouping reduces notification fatigue",
+        "BroadcastChannel makes cross-tab sync almost free"
+      ],
+      "cons": [
+        "Keeping the read state synchronized across the server and multiple tabs",
+        "Grouping rules are product-specific",
+        "The UX for browser notification permission is delicate"
+      ],
+      "gotchas": [
+        "Be sure to mention cross-tab sync — few people know about BroadcastChannel",
+        "Don't request notification permission on page load — ask after a user action",
+        "Fetch the unread count from the server — counting on the client list will be wrong for a paginated list"
+      ],
+      "terms": [
+        [
+          "Fan-out",
+          "delivering a single event to many users"
+        ],
+        [
+          "Read state",
+          "which notification has been read"
+        ],
+        [
+          "Dedup / coalesce",
+          "combining multiple similar notifications into one"
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// cross-tab sync -- ye detail interview mein alag dikhati hai",
+          "// cross-tab sync -- this detail makes you stand out in an interview"
+        ],
+        [
+          "// unread badge -- server se count lo, client pe mat gino",
+          "// unread badge -- take the count from the server, don't count on the client"
+        ],
+        [
+          "// grouping -- 25 rows ki jagah 1",
+          "// grouping -- 1 instead of 25 rows"
+        ],
+        [
+          "// live -- SSE kaafi hai",
+          "// live -- SSE is enough"
+        ],
+        [
+          "// baaki tabs ko batao",
+          "// tell the other tabs"
+        ],
+        [
+          " live + history dono",
+          " live + history both"
+        ],
+        [
+          "text: g[0].actor.name + ' aur ' + (g.length-1) + ' aur logon ne like kiya',",
+          "text: g[0].actor.name + ' and ' + (g.length-1) + ' others liked this',"
+        ]
+      ]
+    },
+    "t4-6": {
+      "what": "<p><b>Definition:</b> What happens if two people change the same thing at the same time? Three strategies:</p>\n<ul><li><b>LWW</b> — the one with the later timestamp wins. Simple. The other's work disappears silently.</li>\n<li><b>OT</b> — transform each operation according to the other’s. Powerful, but requires a central server and is very hard to implement.</li>\n<li><b>CRDT</b> — design a data structure so that merges always produce the same result. No server needed, but uses more memory.</li></ul>",
+      "analogy": "Two people are writing in the same Google Doc. LWW = the version whose save happened later is kept, the other's is lost. CRDT = both people's words stay in their own places, nothing is lost.",
+      "why": "<p>In an interview <b>there is no expectation that you will implement CRDT yourself</b>. The expectation is that you:</p>\n<ol><li>Identify the <b>conflict</b> — \"what if two people edit at the same time?\"</li>\n<li>Choose the <b>right strategy</b> for the product — LWW is fine for a form field, not for a text editor</li>\n<li>Know the library name — <b>Yjs</b> (CRDT), <b>Automerge</b></li></ol>\n<p>And a practical fallback: <b>field-level locking</b> — \"Riya is editing this field\" — sufficient for many business apps and takes one day to build.</p>",
+      "pros": [
+        "CRDT: merges without a server, naturally offline-first",
+        "Version check: easy to implement and data never disappears silently",
+        "Field locking: the simplest and clearly visible to the user"
+      ],
+      "cons": [
+        "CRDT: memory overhead and heavy mental model",
+        "OT: requires a central server, very hard to implement",
+        "LWW: data disappears silently — the user doesn't even notice"
+      ],
+      "gotchas": [
+        "Don't implement CRDT yourself — use Yjs or Automerge, and say that in the interview",
+        "Use a server timestamp for LWW, not the client’s — client clocks are inaccurate",
+        "Silent overwrite is the worst option — showing a conflict dialog on a 409 response is sufficient"
+      ],
+      "terms": [
+        [
+          "Last-write-wins",
+          "the one that arrives later wins — simple but data can be lost"
+        ],
+        [
+          "OT",
+          "Operational Transform — the older method used by Google Docs"
+        ],
+        [
+          "CRDT",
+          "Conflict-free Replicated Data Type — data that merges automatically"
+        ]
+      ],
+      "where": [
+        [
+          "Collaborative editors",
+          "CRDT (Yjs)"
+        ],
+        [
+          "Business forms",
+          "version check + conflict dialog"
+        ],
+        [
+          "Kanban / lists",
+          "field locking or LWW"
+        ]
+      ],
+      "visualCap": "Data is lost with LWW, not with CRDT",
+      "codeSwap": [
+        [
+          "// 2. Version check -- conflict DIKHAO, chup-chaap overwrite mat karo",
+          "// 2. Version check -- SHOW the conflict, don't overwrite silently"
+        ],
+        [
+          "// interview mein: \"text editing ho to Yjs (CRDT), form fields ho to",
+          "// in an interview: \"for text editing use Yjs (CRDT), for form fields"
+        ],
+        [
+          "// 4. Field locking -- practical, aur bahut apps ke liye kaafi",
+          "// 4. Field locking -- practical, and enough for many apps"
+        ],
+        [
+          "// 1. LWW -- form fields, settings ke liye theek",
+          "// 1. LWW -- fine for form fields and settings"
+        ],
+        [
+          "// 3. CRDT -- Yjs, text collaboration ke liye",
+          "// 3. CRDT -- Yjs, for text collaboration"
+        ],
+        [
+          "// kisi aur ne badal diya",
+          "// someone else changed it"
+        ],
+        [
+          " user decide kare",
+          " let the user decide"
+        ],
+        [
+          "<Badge>{users[locks.title].name} edit kar rahe hain</Badge>}",
+          "<Badge>{users[locks.title].name} is editing</Badge>}"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "\"Riya is field ko edit kar rahi hai\" — 1 din mein ban jaata hai",
+          "\"Riya is editing this field\" — takes 1 day to build"
+        ],
+        [
+          "dono ka kaam bacha &#10003;",
+          "both jobs survived &#10003;"
+        ],
+        [
+          "A ka \"world\" gaya",
+          "A's \"world\" is gone"
+        ],
+        [
+          "dono ne \"Hello\" pe kaam kiya",
+          "both acted on \"Hello\""
+        ]
+      ]
+    },
+    "t5-1": {
+      "what": "<p><b>Definition:</b> The four decisions of SPA routing architecture:</p>\n<ol><li><b>Code splitting</b> — each route gets its own chunk (<code>lazy</code> + <code>Suspense</code>)</li>\n<li><b>Data loading</b> — from a loader before render, or inside the component</li>\n<li><b>Nested layouts</b> — no re-render when navigating the sidebar/nav</li>\n<li><b>Prefetch</b> — load the next route on hover/viewport</li></ol>",
+      "why": "<p>The core interview point is the <b>waterfall</b>. The old pattern: route match &rarr; chunk download &rarr; component render &rarr; <code>useEffect</code> &rarr; data fetch. These are <b>three sequential</b> steps — 300ms + 200ms + 400ms.</p>\n<p>In loader-based routing, the router knows which data is required as soon as the route matches, so <b>chunks and data run in parallel</b>. And in nested routes, all matching loaders run together, not one after another.</p>",
+      "pros": [
+        "Data and code run in parallel via the loader — waterfall eliminated",
+        "State in a nested layout is preserved when navigating",
+        "Prefetch makes navigation feel instant"
+      ],
+      "cons": [
+        "If you split too much, each navigation triggers a new request",
+        "You need to learn the loader mental model",
+        "Hooks cannot be used inside a data loader"
+      ],
+      "gotchas": [
+        "Use Promise.all in the loader — sequential await brings the waterfall back",
+        "Prefetch on hover — on mobile you need to use touchstart (hover never occurs)",
+        "Route-level splitting is the biggest win — don’t start with component-level splitting"
+      ],
+      "terms": [
+        [
+          "Route-based splitting",
+          "each page’s own JS chunk"
+        ],
+        [
+          "Loader",
+          "function that fetches a route’s data before render"
+        ],
+        [
+          "Waterfall",
+          "one thing after another — not parallel, therefore slow"
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// nested layout -- navigate pe re-render NAHI hota, scroll bacha rehta hai",
+          "// nested layout -- does NOT re-render on navigate, scroll is preserved"
+        ],
+        [
+          "// parallel -- sequential await se waterfall banta hai",
+          "// parallel -- sequential awaits create a waterfall"
+        ],
+        [
+          " prefetch -- hover pe hi chunk + data dono",
+          " prefetch -- chunk + data both on hover itself"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "Loader — chunk aur data parallel",
+          "Loader — chunk and data in parallel"
+        ]
+      ],
+      "where": [
+        [
+          "Multi-page SPAs",
+          "dashboards, admin panels"
+        ],
+        [
+          "Nested UIs",
+          "sidebar + detail views"
+        ],
+        [
+          "Perf work",
+          "route-level splitting is the biggest bundle win"
+        ]
+      ]
+    },
+    "t5-2": {
+      "what": "<p><b>Definition:</b> \"State management\" is not a single thing, there are <b>four separate things</b> — and each has its own tool:</p>\n<ol><li><b>Server state</b> → React Query / SWR / RTK Query</li>\n<li><b>URL state</b> → searchParams</li>\n<li><b>Global client state</b> → Zustand / Jotai / Context</li>\n<li><b>Local state</b> → useState / useReducer</li></ol>\n<p>In the design round, mentioning these <b>four</b> is the real answer — not \"I'll use Redux\".</p>",
+      "why": "<p>90% of the \"pain of state management\" comes from treating server state like client state. Server data needs caching, refetching, deduplication, stale detection — Redux provides none of this, so people write it manually and the store grows to 5,000 lines.</p>\n<p>Separate server state, separate URL state — the remaining global client state is often so small that a 30-line Zustand store is enough.</p>",
+      "pros": [
+        "When server state is separated, the global store becomes 80% smaller",
+        "Each tool is best at its own job",
+        "URL state provides free shareability"
+      ],
+      "cons": [
+        "You need to learn two or three libraries",
+        "Which data goes where — the team needs conventions",
+        "In a small app, this separation can feel like over-engineering"
+      ],
+      "gotchas": [
+        "\"I will use Redux\" is not the answer — first describe the four types of state, then choose a tool",
+        "Don't copy server data into the store — you'll end up with two sources of truth",
+        "Context is not a state manager — it's a dependency injection tool"
+      ],
+      "terms": [
+        [
+          "Server state",
+          "server data that you have a copy of"
+        ],
+        [
+          "Client state",
+          "only the browser's state — modal, draft, theme"
+        ],
+        [
+          "URL state",
+          "filter, tab, page — in the address bar"
+        ]
+      ],
+      "where": [
+        [
+          "Design round",
+          "state separation should be mentioned in every app design"
+        ],
+        [
+          "Refactor",
+          "remove server state from Redux"
+        ],
+        [
+          "Naya project",
+          "decide this at the start"
+        ]
+      ],
+      "visualCap": "Four types of state, four separate tools",
+      "codeSwap": [
+        [
+          "// interview line: \"main pehle poochta hoon ki data server ka hai ya client ka --",
+          "// interview line: \"I first ask whether the data is server-side or client-side --"
+        ],
+        [
+          "//                  server ka hai to wo cache hai, state nahi\"",
+          "//                  if it belongs to the server, it's cache, not state\""
+        ],
+        [
+          "// 3. GLOBAL client -- Zustand, selector ke saath",
+          "// 3. GLOBAL client -- Zustand, with a selector"
+        ],
+        [
+          "// GALAT -- server data global store mein",
+          "// WRONG -- server data in a global store"
+        ],
+        [
+          " ab caching, dedup, stale, retry, refetch-on-focus sab KHUD likhna padega",
+          " now you'll have to write caching, dedup, stale, retry, refetch-on-focus ALL yourself"
+        ],
+        [
+          " sirf count pe subscribe",
+          " subscribe to count only"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "ho sake utna neeche",
+          "as low as possible"
+        ],
+        [
+          "selector se precise",
+          "precise with a selector"
+        ],
+        [
+          "~70% ka data",
+          "~70% of the data"
+        ],
+        [
+          "back button kaam kare",
+          "the back button should work"
+        ],
+        [
+          "jitna neeche",
+          "as low as"
+        ]
+      ]
+    },
+    "t5-3": {
+      "what": "<p><b>Definition:</b> the three parts of frontend auth:</p>\n<ol><li><b>Where to store the token</b> — <code>httpOnly</code> cookie (safe) vs <code>localStorage</code> (gets stolen in XSS)</li>\n<li><b>How to refresh</b> — on a 401, only one refresh runs, and all pending requests wait for it</li>\n<li><b>Authorization</b> — what to show (UI) and what to allow (server)</li></ol>",
+      "why": "<p><b>The most important line to say in an interview:</b> frontend authorization is only <b>UX</b>, not security. Hiding a button does not make any API safe — a user can send a request from DevTools. The real check is always on the <b>server</b>.</p>\n<p>And token storage: a token in <code>localStorage</code> gets stolen via XSS. An <code>httpOnly</code> cookie cannot be read by JavaScript — but for CSRF you need <code>SameSite=Strict</code> or a CSRF token. Mentioning this tradeoff is essential.</p>",
+      "pros": [
+        "httpOnly cookie protects the token from XSS",
+        "Single-flight refresh prevents a refresh storm",
+        "Cross-tab logout keeps security consistent"
+      ],
+      "cons": [
+        "CSRF protection is needed separately when using cookies",
+        "Refresh logic has many edge cases (what if the refresh itself returns 401?)",
+        "Keeping permissions on the client increases payload size"
+      ],
+      "gotchas": [
+        "\"Frontend authorization is only UX, security is on the server\" — be sure to say this line",
+        "a token in localStorage gets stolen in XSS — prefer an httpOnly cookie and explain the tradeoff",
+        "Make refresh single-flight otherwise 10 parallel 401 responses will trigger 10 refresh calls"
+      ],
+      "terms": [
+        [
+          "Access token",
+          "a short-lived token that is sent with every request"
+        ],
+        [
+          "Refresh token",
+          "a long-lived token that provides a new access token"
+        ],
+        [
+          "httpOnly cookie",
+          "a cookie that JavaScript cannot read at all"
+        ]
+      ],
+      "where": [
+        [
+          "Every authenticated app",
+          "this is the baseline"
+        ],
+        [
+          "Multi-tenant SaaS",
+          "role + tenant based access"
+        ],
+        [
+          "Admin panels",
+          "fine-grained permissions"
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// refresh -- ek hi refresh chale, baaki wait karein (thundering herd se bacho)",
+          "// refresh -- only one refresh runs, the rest wait (avoid the thundering herd)"
+        ],
+        [
+          "// cross-tab logout -- ek tab mein logout, sab tabs mein",
+          "// cross-tab logout -- log out in one tab, all tabs"
+        ],
+        [
+          "// authorization -- UI ke liye, security ke liye NAHI",
+          "// authorization -- for the UI, NOT for security"
+        ],
+        [
+          "// server pe bhi check hona ZAROORI hai",
+          "// it MUST be checked on the server too"
+        ],
+        [
+          "// flash of login se bacho",
+          "// avoid the flash of login"
+        ],
+        [
+          "// sab isi ka intezaar",
+          "// everything waits for this"
+        ],
+        [
+          " sirf UX",
+          " UX only"
+        ]
+      ]
+    },
+    "t5-4": {
+      "what": "<p><b>Definition:</b> Error boundary strategy means — <b>where</b> to place boundaries so that a widget crash doesn't sink the entire app.</p>\n<p>Three levels: <b>root</b> (final safety net), <b>route</b> (a page breaks, navigation continues), <b>widget</b> (a chart breaks, dashboard continues).</p>",
+      "analogy": "A plane's watertight compartments. If water fills one compartment, the whole plane doesn't sink — only that section gets sealed.",
+      "why": "<p>Since React 16, an uncaught error <b>unmounts the entire app</b> — white screen. Adding a boundary only at the root replaces the white screen with \"Something went wrong\", but the user's work is still lost.</p>\n<p>Thinking about blast radius in a design round shows seniority: \"The third-party chart widget should have its own boundary so its crash doesn't sink my dashboard.\"</p>",
+      "pros": [
+        "Small blast radius — the user's work remains intact",
+        "Faster debugging with context-aware logging",
+        "Auto-reload on chunk-load-failed is a real production fix"
+      ],
+      "cons": [
+        "Can only be created with class components",
+        "Event handler and async errors must be handled separately",
+        "Too many boundaries make the code noisy"
+      ],
+      "gotchas": [
+        "Error boundaries do NOT catch errors from event handlers, setTimeout, or promises — attach window listeners separately",
+        "\"Loading chunk failed\" is common after deployment — detect it and reload",
+        "Upload source maps otherwise production stack traces won't be readable"
+      ],
+      "terms": [
+        [
+          "Blast radius",
+          "how much of the app is affected by a single error"
+        ],
+        [
+          "Graceful degradation",
+          "if one part fails, the rest keeps running"
+        ],
+        [
+          "Source map",
+          "file that maps a minified stack trace back to the original code"
+        ]
+      ],
+      "where": [
+        [
+          "Dashboards",
+          "each widget gets its own boundary"
+        ],
+        [
+          "Third-party embeds",
+          "ads, maps, chat widgets"
+        ],
+        [
+          "Routes",
+          "per-page boundary"
+        ]
+      ],
+      "visualCap": "Boundary level = blast radius",
+      "codeSwap": [
+        [
+          "// chunk load fail -- deploy ke baad purane chunks 404 dete hain",
+          "// chunk load fail -- after a deploy, the old chunks return 404"
+        ],
+        [
+          "// logging -- context ke saath, warna stack trace bekaar",
+          "// logging -- with context, otherwise the stack trace is useless"
+        ],
+        [
+          "// jo boundary NAHI pakadti -- ye alag handle karo",
+          "// what the boundary does NOT catch -- handle these separately"
+        ],
+        [
+          " teen level",
+          " three levels"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "blast radius sabse chhota",
+          "the smallest blast radius"
+        ],
+        [
+          "nav se nikal sakte ho",
+          "you can leave from the nav"
+        ],
+        [
+          "Baaki widgets zinda &#10003;",
+          "The other widgets stay alive &#10003;"
+        ],
+        [
+          "sirf chart fallback",
+          "only the chart falls back"
+        ],
+        [
+          "Nav zinda &#10003;",
+          "Nav alive &#10003;"
+        ],
+        [
+          "poora page gaya",
+          "the whole page is gone"
+        ],
+        [
+          "Content gaya",
+          "Content gone"
+        ],
+        [
+          "Sirf root",
+          "Root only"
+        ],
+        [
+          "Nav gaya",
+          "Nav gone"
+        ]
+      ]
+    },
+    "t5-5": {
+      "what": "<p><b>Definition:</b> Performance budget = numbers that are enforced in CI. Without a budget, performance degrades slowly and no one notices.</p>\n<p>Two types of measurement: <b>lab</b> (Lighthouse, in CI) and <b>field/RUM</b> (real users, from the <code>web-vitals</code> library). Both are needed — lab catches regressions, RUM tells the truth.</p>",
+      "why": "<p>Talking about <b>numbers</b> in an interview makes a big difference. \"We'll make it fast\" vs \"LCP p75 under 2.5s, INP under 200ms, CLS under 0.1, and initial JS 200KB gzipped\" — the latter is a senior answer.</p>\n<p>And measuring at <b>p75</b> is essential, not at the average — the average can be hidden by a few fast devices. Google’s Core Web Vitals are also based on p75.</p>",
+      "pros": [
+        "Regression is caught in the PR itself, not in production",
+        "RUM reveals the truth from real users",
+        "Numbers make the team's discussion objective"
+      ],
+      "cons": [
+        "Maintaining the budget — sometimes it genuinely needs to be increased",
+        "RUM data requires its own infrastructure",
+        "Lighthouse CI can be flaky"
+      ],
+      "gotchas": [
+        "Measure at p75, not at the average — the average lies because of fast devices",
+        "Both lab (Lighthouse) and field (RUM) are needed — lab catches regressions, RUM tells the truth",
+        "Use sendBeacon, not fetch — fetch gets cancelled when the page unloads"
+      ],
+      "terms": [
+        [
+          "Performance budget",
+          "a limit — \"bundle will not exceed 200KB\""
+        ],
+        [
+          "RUM",
+          "Real User Monitoring — data from real users, not a lab test"
+        ],
+        [
+          "p75",
+          "75th percentile — 75% of users get a better experience than this"
+        ]
+      ],
+      "where": [
+        [
+          "CI pipeline",
+          "budget check on every PR"
+        ],
+        [
+          "Production monitoring",
+          "RUM dashboard"
+        ],
+        [
+          "Perf discussion",
+          "discuss with numbers"
+        ]
+      ],
+      "visualCap": "Core Web Vitals thresholds",
+      "codeSwap": [
+        [
+          "// budget ke typical numbers (interview mein bolne layak):",
+          "// typical budget numbers (worth saying in an interview):"
+        ],
+        [
+          "// budget CI mein -- bundlesize / size-limit",
+          "// budget in CI -- bundlesize / size-limit"
+        ],
+        [
+          "// custom timing -- apne interactions naapo",
+          "// custom timing -- measure your own interactions"
+        ],
+        [
+          "// lighthouse CI -- PR pe fail karo",
+          "// lighthouse CI -- fail on the PR"
+        ],
+        [
+          "// RUM -- asli users ka data",
+          "// RUM -- data from real users"
+        ]
+      ],
+      "svgSwap": [
+        [
+          "INP — click ke baad response kitni der",
+          "INP — how long the response takes after a click"
+        ],
+        [
+          "LCP — sabse bada content kab dikha",
+          "LCP — when the largest content appeared"
+        ],
+        [
+          "average pe nahi",
+          "not on the average"
+        ],
+        [
+          "CLS — page kitna kood-a",
+          "CLS — how much the page jumps around"
+        ],
+        [
+          "&gt; 4s kharab",
+          "&gt; 4s bad"
+        ],
+        [
+          "achha ≤ 200ms",
+          "good ≤ 200ms"
+        ],
+        [
+          "achha ≤ 2.5s",
+          "good ≤ 2.5s"
+        ],
+        [
+          "achha ≤ 0.1",
+          "good ≤ 0.1"
+        ],
+        [
+          "sab p75 pe,",
+          "all at p75,"
+        ]
+      ]
+    },
+    "t5-6": {
+      "what": "<p><b>Definition:</b> i18n is not just about translating strings. There are five parts:</p>\n<ol><li><b>Strings</b> — keys + translation files, lazy load per locale</li>\n<li><b>Plurals & gender</b> — ICU format (each language has different rules)</li>\n<li><b>Formatting</b> — date, number, currency (<code>Intl</code> API)</li>\n<li><b>RTL</b> — layout mirroring for Arabic/Hebrew</li>\n<li><b>Locale detection</b> — URL, cookie, or <code>Accept-Language</code></li></ol>",
+      "why": "<p>Most common mistake: string concatenation. <code>\"You have \" + n + \" items\"</code> cannot be translated because each language has a different word order, and plural rules differ — Russian has four plural forms, Arabic has six. That’s why ICU format exists.</p>\n<p>Another mistake: putting all language translations in a single bundle. 20 languages × 50 KB = 1 MB, but the user only uses 50 KB. Perform locale-wise <b>lazy load</b>.</p>",
+      "pros": [
+        "Intl API is built into the browser — no library needed",
+        "ICU provides correct plural/gender handling for every language",
+        "Logical CSS properties make RTL almost free"
+      ],
+      "cons": [
+        "Translation workflow (TMS, translators) has its own process",
+        "Text expansion — German can be 30% longer, causing layout breakage",
+        "Testing must be done for every locale"
+      ],
+      "gotchas": [
+        "Never concatenate strings — use ICU message format",
+        "Write margin-inline-start instead of margin-left in CSS — RTL will work automatically",
+        "Prepare the layout for text expansion — German/Finnish text can be 30–40% longer"
+      ],
+      "terms": [
+        [
+          "i18n",
+          "internationalization — making the app translatable"
+        ],
+        [
+          "l10n",
+          "localization — actual translation and regional formatting"
+        ],
+        [
+          "ICU MessageFormat",
+          "plural/gender handling message syntax"
+        ]
+      ],
+      "where": [
+        [
+          "Global products",
+          "multi-market SaaS, e-commerce"
+        ],
+        [
+          "India-first apps",
+          "Hindi + regional languages"
+        ],
+        [
+          "Design round",
+          "\"What will change for international users?\""
+        ]
+      ],
+      "codeSwap": [
+        [
+          "// .card { margin-inline-start: 16px; }   <- LTR mein left, RTL mein right",
+          "// .card { margin-inline-start: 16px; }   <- left in LTR, right in RTL"
+        ],
+        [
+          "// .card { margin-left: 16px; }           <- RTL mein toot jaayega",
+          "// .card { margin-left: 16px; }           <- will break in RTL"
+        ],
+        [
+          "// GALAT -- concatenation, translate ho hi nahi sakta",
+          "// WRONG -- concatenation, can't be translated at all"
+        ],
+        [
+          "// formatting -- Intl, koi library nahi chahiye",
+          "// formatting -- Intl, no library needed"
+        ],
+        [
+          "// RTL -- logical properties, left/right nahi",
+          "// RTL -- logical properties, not left/right"
+        ],
+        [
+          "// SEO -- har locale ka apna URL",
+          "// SEO -- each locale has its own URL"
+        ],
+        [
+          "// Russian/Arabic mein galat",
+          "// Wrong in Russian/Arabic"
+        ],
+        [
+          "// \"Cart khali hai\"",
+          "// \"Cart is empty\""
+        ],
+        [
+          " lazy load -- sirf zaroori locale",
+          " lazy load -- only the needed locale"
+        ],
+        [
+          "\"invited\": \"{gender, select, male {Usne} female {Usne} other {Unhone}} aapko invite kiya\"",
+          "\"invited\": \"{gender, select, male {He} female {She} other {They}} invited you\""
+        ],
+        [
+          "\"cart.items\": \"{count, plural, =0 {Cart khali hai} one {# item} other {# items}}\",",
+          "\"cart.items\": \"{count, plural, =0 {Cart is empty} one {# item} other {# items}}\","
+        ]
+      ]
+    }
+  }
+}
