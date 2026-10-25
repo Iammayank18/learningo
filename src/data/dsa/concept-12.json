@@ -1,0 +1,699 @@
+{
+  "items": [
+    {
+      "id": "mst",
+      "prereqs": [
+        "union-find",
+        "greedy"
+      ],
+      "dryRun": {
+        "title": "Kruskal's algorithm. Edges (weight): 0-1 (1), 1-2 (2), 0-2 (3), 2-3 (4), 1-3 (5), tried from the lightest",
+        "columns": [
+          "edge",
+          "already in the same group?",
+          "action",
+          "total weight"
+        ],
+        "rows": [
+          [
+            "0-1 (1)",
+            "no",
+            "take it",
+            "1"
+          ],
+          [
+            "1-2 (2)",
+            "no",
+            "take it",
+            "3"
+          ],
+          [
+            "0-2 (3)",
+            "yes: 0 and 2 are already joined through 1",
+            "skip (it would make a cycle)",
+            "3"
+          ],
+          [
+            "2-3 (4)",
+            "no",
+            "take it",
+            "7"
+          ],
+          [
+            "1-3 (5)",
+            "yes",
+            "skip (we already have 3 edges)",
+            "7"
+          ]
+        ],
+        "hit": 2,
+        "note": "A minimum spanning tree joins all n nodes with <b>n - 1 edges</b> and the smallest possible total weight. Kruskal: go through edges from the lightest, and take an edge only if it joins two different groups (union-find)."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const edges = [[0, 1, 1], [1, 2, 2], [0, 2, 3], [2, 3, 4], [1, 3, 5]]\nedges.sort((a, b) =&gt; a[2] - b[2])\nconst parent = [0, 1, 2, 3]\nconst find = (x) =&gt; (parent[x] === x ? x : (parent[x] = find(parent[x])))\nlet total = 0, used = 0\nfor (const [u, v, w] of edges) {\n  const a = find(u), b = find(v)\n  if (a !== b) { parent[b] = a; total += w; used++ }\n}\nconsole.log(total, used)</code></pre>",
+          "opts": [
+            "<code>7 3</code>",
+            "<code>10 4</code>",
+            "<code>7 4</code>",
+            "<code>6 3</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "The edges 0-1, 1-2 and 2-3 are taken (1 + 2 + 4 = 7). The others join nodes that are already in one group. 4 nodes need exactly 3 edges.",
+            "The <code>a !== b</code> test is the cycle check."
+          ],
+          "exec": "const edges = [[0, 1, 1], [1, 2, 2], [0, 2, 3], [2, 3, 4], [1, 3, 5]]\nedges.sort((a, b) => a[2] - b[2])\nconst parent = [0, 1, 2, 3]\nconst find = (x) => (parent[x] === x ? x : (parent[x] = find(parent[x])))\nlet total = 0, used = 0\nfor (const [u, v, w] of edges) {\n  const a = find(u), b = find(v)\n  if (a !== b) { parent[b] = a; total += w; used++ }\n}\nconsole.log(total, used)"
+        },
+        {
+          "tag": "How many edges?",
+          "q": "<p>A connected graph has 10 nodes. How many edges does its minimum spanning tree have?</p>",
+          "opts": [
+            "<code>9</code>",
+            "<code>10</code>",
+            "<code>11</code>",
+            "<code>It depends on the weights</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "A tree on n nodes has exactly n - 1 edges: fewer would leave a node out, and more would make a cycle.",
+            "If the algorithm ends with fewer than n - 1 edges, the graph is not connected."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Why a greedy works",
+          "q": "<p>Why is it safe to take the lightest edge that does not make a cycle?</p>",
+          "opts": [
+            "Because lighter edges are always shorter",
+            "The lightest edge crossing any split of the nodes always belongs to some minimum spanning tree (the cut property)",
+            "Because sorting is fast",
+            "It is not safe, Kruskal is only a guess"
+          ],
+          "ans": 1,
+          "why": [
+            "Imagine splitting the nodes into two sides. The cheapest edge between the sides can always be swapped into an optimal tree without making it worse.",
+            "This is the exchange-argument idea from the greedy lesson."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Prim or Kruskal?",
+          "q": "<p>What is the difference between Prim's and Kruskal's algorithms?</p>",
+          "opts": [
+            "Kruskal sorts all edges and joins groups; Prim grows one tree from a start node, always adding the cheapest edge leaving it (with a heap)",
+            "Prim is for directed graphs only",
+            "Kruskal uses a queue and Prim uses a stack",
+            "They give different totals"
+          ],
+          "ans": 0,
+          "why": [
+            "Both give a tree with the same minimum total weight. Kruskal suits an edge list, Prim suits an adjacency list and dense graphs.",
+            "Kruskal is O(E log E) because of the sort."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Unique?",
+          "q": "<p>Is the minimum spanning tree always unique?</p>",
+          "opts": [
+            "Yes, always",
+            "The total weight is unique, but the tree can differ when several edges have the same weight",
+            "No, even the total can differ",
+            "Only when the graph is a tree"
+          ],
+          "ans": 1,
+          "why": [
+            "If all weights are different, the tree is unique. With ties, several trees may share the same minimum total.",
+            "That is why tests compare the total weight, not the exact edges."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>mstWeight(n, edges)</code>. The graph is <b>undirected</b> with nodes <code>0</code> to <code>n - 1</code>, and each edge is <code>[a, b, weight]</code>. Return the total weight of a minimum spanning tree, or <code>-1</code> if the graph is not connected. A graph with one node has weight 0.</p>",
+        "examples": [
+          "mstWeight(4, [[0, 1, 1], [1, 2, 2], [0, 2, 3], [2, 3, 4], [1, 3, 5]])  // 7",
+          "mstWeight(3, [[0, 1, 5]])  // -1"
+        ],
+        "hint": "<p>Sort a copy of the edges by weight. Use union-find (an iterative <code>find</code>). Take an edge when its two ends have different roots. If you took fewer than <code>n - 1</code> edges, return -1.</p>",
+        "fn": "mstWeight",
+        "starter": "function mstWeight(n, edges) {\n  // your code\n}",
+        "solution": "function mstWeight(n, edges) {\n  const parent = Array.from({ length: n }, (_, i) => i)\n  const find = (x) => {\n    while (parent[x] !== x) {\n      parent[x] = parent[parent[x]]\n      x = parent[x]\n    }\n    return x\n  }\n  const sorted = [...edges].sort((a, b) => a[2] - b[2])\n  let total = 0\n  let used = 0\n  for (const [u, v, w] of sorted) {\n    const a = find(u)\n    const b = find(v)\n    if (a !== b) {\n      parent[b] = a\n      total += w\n      used++\n    }\n  }\n  return used === n - 1 ? total : -1\n}",
+        "checks": [
+          {
+            "t": "the lesson example",
+            "verify": "assert(mstWeight(4, [[0, 1, 1], [1, 2, 2], [0, 2, 3], [2, 3, 4], [1, 3, 5]]) === 7, \"expected 7\")"
+          },
+          {
+            "t": "a graph that is not connected",
+            "verify": "assert(mstWeight(3, [[0, 1, 5]]) === -1, \"expected -1\")"
+          },
+          {
+            "t": "one node",
+            "verify": "assert(mstWeight(1, []) === 0, \"expected 0\")"
+          },
+          {
+            "t": "a cheaper path replaces a heavy edge",
+            "verify": "assert(mstWeight(3, [[0, 1, 10], [1, 2, 1], [0, 2, 2]]) === 3, \"expected 3\")"
+          },
+          {
+            "t": "does not change the input",
+            "verify": "const e = [[0, 1, 4], [0, 2, 1]]; mstWeight(3, e); assert(JSON.stringify(e) === \"[[0,1,4],[0,2,1]]\", \"the input was changed\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "A minimum spanning tree connects all nodes with <b>n - 1 edges</b> at the least total weight. <b>Kruskal</b>: sort the edges and take each one that joins two different groups (union-find). O(E log E).",
+        "mistakes": [
+          "Forgetting the cycle check (comparing roots).",
+          "Not noticing the graph is disconnected (fewer than n - 1 edges taken).",
+          "Sorting the caller's array in place.",
+          "Mixing up MST with shortest paths (they are different problems)."
+        ]
+      }
+    },
+    {
+      "id": "bellman-ford",
+      "prereqs": [
+        "dijkstra",
+        "graph-repr"
+      ],
+      "dryRun": {
+        "title": "Bellman-Ford from node 0. Edges in this order: 0→1 (4), 0→2 (5), 2→1 (-3), 1→3 (2)",
+        "columns": [
+          "pass",
+          "edge",
+          "what changes",
+          "distances after"
+        ],
+        "rows": [
+          [
+            "1",
+            "0→1 (4)",
+            "node 1: ∞ becomes 4",
+            "0, 4, ∞, ∞"
+          ],
+          [
+            "1",
+            "0→2 (5)",
+            "node 2: ∞ becomes 5",
+            "0, 4, 5, ∞"
+          ],
+          [
+            "1",
+            "2→1 (-3)",
+            "node 1: 4 becomes 2",
+            "0, 2, 5, ∞"
+          ],
+          [
+            "1",
+            "1→3 (2)",
+            "node 3: ∞ becomes 4",
+            "0, 2, 5, 4"
+          ],
+          [
+            "2",
+            "all four edges",
+            "nothing changes, so we can stop",
+            "0, 2, 5, 4"
+          ]
+        ],
+        "hit": 2,
+        "note": "Instead of being clever about the order, just <b>relax every edge</b>, and repeat. After pass k, every shortest path using at most k edges is correct. A shortest path has at most V - 1 edges, so V - 1 passes are enough."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const n = 4\nconst edges = [[0, 1, 4], [0, 2, 5], [2, 1, -3], [1, 3, 2]]\nconst dist = Array(n).fill(Infinity)\ndist[0] = 0\nfor (let pass = 0; pass &lt; n - 1; pass++) {\n  for (const [u, v, w] of edges) {\n    if (dist[u] + w &lt; dist[v]) dist[v] = dist[u] + w\n  }\n}\nconsole.log(dist.join(\",\"))</code></pre>",
+          "opts": [
+            "<code>0,4,5,6</code>",
+            "<code>0,2,5,4</code>",
+            "<code>0,1,5,3</code>",
+            "<code>0,2,5,6</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "The cheapest way to node 1 is 0 → 2 → 1 = 5 - 3 = 2, and then node 3 costs 2 + 2 = 4.",
+            "Dijkstra could go wrong here, because the edge 2→1 is negative."
+          ],
+          "exec": "const n = 4\nconst edges = [[0, 1, 4], [0, 2, 5], [2, 1, -3], [1, 3, 2]]\nconst dist = Array(n).fill(Infinity)\ndist[0] = 0\nfor (let pass = 0; pass < n - 1; pass++) {\n  for (const [u, v, w] of edges) {\n    if (dist[u] + w < dist[v]) dist[v] = dist[u] + w\n  }\n}\nconsole.log(dist.join(\",\"))"
+        },
+        {
+          "tag": "Negative cycle",
+          "q": "<pre><code>const n = 3\nconst edges = [[0, 1, 1], [1, 2, -3], [2, 1, 1]]\nconst dist = Array(n).fill(Infinity)\ndist[0] = 0\nfor (let pass = 0; pass &lt; n - 1; pass++) {\n  for (const [u, v, w] of edges) if (dist[u] + w &lt; dist[v]) dist[v] = dist[u] + w\n}\nlet again = false\nfor (const [u, v, w] of edges) if (dist[u] + w &lt; dist[v]) again = true\nconsole.log(again)</code></pre>",
+          "opts": [
+            "<code>false</code>",
+            "<code>true</code>",
+            "<code>undefined</code>",
+            "<code>0</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "The loop 1 → 2 → 1 costs -3 + 1 = -2 each time round, so distances could shrink forever. After n - 1 passes an edge can <b>still</b> be relaxed, which proves a negative cycle.",
+            "If the extra pass changes nothing, there is no negative cycle that you can reach."
+          ],
+          "exec": "const n = 3\nconst edges = [[0, 1, 1], [1, 2, -3], [2, 1, 1]]\nconst dist = Array(n).fill(Infinity)\ndist[0] = 0\nfor (let pass = 0; pass < n - 1; pass++) {\n  for (const [u, v, w] of edges) if (dist[u] + w < dist[v]) dist[v] = dist[u] + w\n}\nlet again = false\nfor (const [u, v, w] of edges) if (dist[u] + w < dist[v]) again = true\nconsole.log(again)"
+        },
+        {
+          "tag": "Why V - 1 passes?",
+          "q": "<p>Why are V - 1 passes enough when there is no negative cycle?</p>",
+          "opts": [
+            "Because V - 1 is a lucky number",
+            "A shortest path never repeats a node, so it has at most V - 1 edges, and each pass fixes one more edge of every path",
+            "Because each pass visits one node",
+            "Because the edges are sorted"
+          ],
+          "ans": 1,
+          "why": [
+            "After pass 1 all shortest paths of 1 edge are right, after pass 2 all of 2 edges, and so on up to V - 1.",
+            "You can stop early when a whole pass changes nothing."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>What is the time of Bellman-Ford?</p>",
+          "opts": [
+            "<code>O(V + E)</code>",
+            "<code>O(V * E)</code>",
+            "<code>O(E log V)</code>",
+            "<code>O(V²)</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "V - 1 passes, each over E edges. That is slower than Dijkstra's O((V + E) log V).",
+            "You pay that price only to get negative weights and cycle detection."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Which one?",
+          "q": "<p>Prices can go up and down, and you want to find a loop of trades that makes a profit (arbitrage). Which algorithm fits?</p>",
+          "opts": [
+            "BFS",
+            "Dijkstra",
+            "Bellman-Ford, looking for a negative cycle on log-prices",
+            "Union-find"
+          ],
+          "ans": 2,
+          "why": [
+            "A profitable loop is a cycle whose total (log) weight is negative. Bellman-Ford detects exactly that.",
+            "Dijkstra needs non-negative weights, so it cannot be used here."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>bellmanFord(n, edges, start)</code>. The graph is <b>directed</b>; each edge is <code>[from, to, weight]</code> and weights may be negative. Return the array of shortest distances from <code>start</code> (<code>Infinity</code> if unreachable). If a negative cycle can be reached from <code>start</code>, return <code>null</code>.</p>",
+        "examples": [
+          "bellmanFord(4, [[0, 1, 4], [0, 2, 5], [2, 1, -3], [1, 3, 2]], 0)  // [0, 2, 5, 4]",
+          "bellmanFord(3, [[0, 1, 1], [1, 2, -3], [2, 1, 1]], 0)  // null"
+        ],
+        "hint": "<p>Repeat <code>n - 1</code> times: for each edge, if <code>dist[u]</code> is not <code>Infinity</code> and <code>dist[u] + w &lt; dist[v]</code>, update. Then run one more pass: any update means a negative cycle, so return <code>null</code>.</p>",
+        "fn": "bellmanFord",
+        "starter": "function bellmanFord(n, edges, start) {\n  // your code\n}",
+        "solution": "function bellmanFord(n, edges, start) {\n  const dist = new Array(n).fill(Infinity)\n  dist[start] = 0\n  for (let pass = 0; pass < n - 1; pass++) {\n    let changed = false\n    for (const [u, v, w] of edges) {\n      if (dist[u] !== Infinity && dist[u] + w < dist[v]) {\n        dist[v] = dist[u] + w\n        changed = true\n      }\n    }\n    if (!changed) break\n  }\n  for (const [u, v, w] of edges) {\n    if (dist[u] !== Infinity && dist[u] + w < dist[v]) return null\n  }\n  return dist\n}",
+        "checks": [
+          {
+            "t": "a negative edge",
+            "verify": "assert(JSON.stringify(bellmanFord(4, [[0, 1, 4], [0, 2, 5], [2, 1, -3], [1, 3, 2]], 0)) === \"[0,2,5,4]\", \"expected [0,2,5,4]\")"
+          },
+          {
+            "t": "a negative cycle is found",
+            "verify": "assert(bellmanFord(3, [[0, 1, 1], [1, 2, -3], [2, 1, 1]], 0) === null, \"expected null\")"
+          },
+          {
+            "t": "unreachable nodes stay Infinity",
+            "verify": "const d = bellmanFord(3, [[0, 1, 2]], 0); assert(d[2] === Infinity && d[1] === 2, \"expected Infinity for node 2\")"
+          },
+          {
+            "t": "a negative cycle that cannot be reached is ignored",
+            "verify": "const d = bellmanFord(4, [[0, 1, 1], [2, 3, -5], [3, 2, 1]], 0); assert(d !== null && d[1] === 1 && d[2] === Infinity, \"the unreachable cycle must not matter\")"
+          },
+          {
+            "t": "no edges",
+            "verify": "const d2 = bellmanFord(2, [], 1); assert(d2[0] === Infinity && d2[1] === 0, \"expected [Infinity, 0]\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Bellman-Ford relaxes <b>every edge V - 1 times</b>, so it handles negative weights. One extra pass that still improves something means a <b>negative cycle</b>. Time O(V × E).",
+        "mistakes": [
+          "Using Dijkstra when a weight is negative.",
+          "Relaxing from a node whose distance is still <code>Infinity</code> (Infinity + a negative number is still Infinity, but be careful to keep the guard).",
+          "Reporting a negative cycle that is not reachable from the start.",
+          "Running only V - 2 passes."
+        ]
+      }
+    },
+    {
+      "id": "floyd-warshall",
+      "prereqs": [
+        "dijkstra",
+        "bellman-ford"
+      ],
+      "dryRun": {
+        "title": "Floyd-Warshall on 3 nodes with edges 0→1 (3), 1→2 (1), 0→2 (8). Each round k allows node k as a stop-over",
+        "columns": [
+          "k (allowed stop-over)",
+          "pair that improves",
+          "old distance",
+          "new distance"
+        ],
+        "rows": [
+          [
+            "0",
+            "none (nothing points into node 0)",
+            "-",
+            "-"
+          ],
+          [
+            "1",
+            "0 to 2 (stop at 1)",
+            "8",
+            "3 + 1 = 4"
+          ],
+          [
+            "2",
+            "none (node 2 has no way out)",
+            "-",
+            "-"
+          ]
+        ],
+        "hit": 1,
+        "note": "The idea: <code>d[i][j] = min(d[i][j], d[i][k] + d[k][j])</code>. After round k, every distance is the best one that only uses the nodes 0 to k as stop-overs. The <b>k loop must be outermost</b>."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const n = 3, INF = Infinity\nconst d = [[0, 3, 8], [INF, 0, 1], [INF, INF, 0]]\nfor (let k = 0; k &lt; n; k++)\n  for (let i = 0; i &lt; n; i++)\n    for (let j = 0; j &lt; n; j++)\n      if (d[i][k] + d[k][j] &lt; d[i][j]) d[i][j] = d[i][k] + d[k][j]\nconsole.log(JSON.stringify(d[0]))</code></pre>",
+          "opts": [
+            "<code>[0,3,8]</code>",
+            "<code>[0,3,4]</code>",
+            "<code>[0,3,9]</code>",
+            "<code>[0,4,4]</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "The direct edge 0→2 costs 8, but 0→1→2 costs 3 + 1 = 4. When k = 1 the code finds it.",
+            "JSON writes <code>Infinity</code> as <code>null</code>; here row 0 has no infinity, so it prints clean numbers."
+          ],
+          "exec": "const n = 3, INF = Infinity\nconst d = [[0, 3, 8], [INF, 0, 1], [INF, INF, 0]]\nfor (let k = 0; k < n; k++)\n  for (let i = 0; i < n; i++)\n    for (let j = 0; j < n; j++)\n      if (d[i][k] + d[k][j] < d[i][j]) d[i][j] = d[i][k] + d[k][j]\nconsole.log(JSON.stringify(d[0]))"
+        },
+        {
+          "tag": "Loop order",
+          "q": "<p>Which loop must be the <b>outermost</b> in Floyd-Warshall, and why?</p>",
+          "opts": [
+            "i, because it is the start node",
+            "j, because it is the end node",
+            "k, the stop-over: the table after round k must be fully correct for stop-overs 0 to k before we allow k + 1",
+            "It does not matter"
+          ],
+          "ans": 2,
+          "why": [
+            "The meaning of the table depends on k. If k is not the outer loop, the pieces <code>d[i][k]</code> and <code>d[k][j]</code> may not be final yet.",
+            "This is the most common mistake with this algorithm."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>What are the time and the space of Floyd-Warshall for V nodes?</p>",
+          "opts": [
+            "<code>O(V²) time, O(V) space</code>",
+            "<code>O(V³) time, O(V²) space</code>",
+            "<code>O(V * E) time, O(V) space</code>",
+            "<code>O(V log V) time, O(V) space</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "Three nested loops over V give V³. The table has V × V cells.",
+            "That is fine up to a few hundred nodes, and too slow beyond a thousand."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Negative cycle",
+          "q": "<p>After the algorithm finishes, how can you see that a negative cycle exists?</p>",
+          "opts": [
+            "Some d[i][j] is Infinity",
+            "Some d[i][i] is less than 0",
+            "The matrix is not symmetric",
+            "Some d[i][j] is 0"
+          ],
+          "ans": 1,
+          "why": [
+            "The distance from a node to itself should be 0. If a negative loop through it exists, going round gives a smaller number.",
+            "Like Bellman-Ford, it can detect negative cycles."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Which one?",
+          "q": "<p>You need the distance between <b>every pair</b> of 200 cities. Which approach is simplest?</p>",
+          "opts": [
+            "Run BFS once",
+            "Floyd-Warshall (about 8 million steps)",
+            "Union-find",
+            "A trie"
+          ],
+          "ans": 1,
+          "why": [
+            "200³ = 8 million, which is instant. It is short to write and handles negative edges.",
+            "For a huge sparse graph, running Dijkstra from each node can be better."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>allPairs(n, edges)</code>. The graph is <b>directed</b>; each edge is <code>[from, to, weight]</code> (weights are 0 or more). Return an <code>n × n</code> matrix <code>d</code> where <code>d[i][j]</code> is the shortest distance from i to j, with <code>d[i][i] = 0</code> and <code>Infinity</code> when there is no path.</p>",
+        "examples": [
+          "allPairs(3, [[0, 1, 3], [1, 2, 1], [0, 2, 8]])[0]  // [0, 3, 4]",
+          "allPairs(2, [])  // [[0, Infinity], [Infinity, 0]]"
+        ],
+        "hint": "<p>Fill the matrix with <code>Infinity</code>, the diagonal with 0, then each edge (keep the smaller weight if there are several). Then three loops with <code>k</code> outermost.</p>",
+        "fn": "allPairs",
+        "starter": "function allPairs(n, edges) {\n  // your code\n}",
+        "solution": "function allPairs(n, edges) {\n  const d = Array.from({ length: n }, (_, i) =>\n    Array.from({ length: n }, (_, j) => (i === j ? 0 : Infinity))\n  )\n  for (const [u, v, w] of edges) {\n    if (w < d[u][v]) d[u][v] = w\n  }\n  for (let k = 0; k < n; k++) {\n    for (let i = 0; i < n; i++) {\n      for (let j = 0; j < n; j++) {\n        if (d[i][k] + d[k][j] < d[i][j]) d[i][j] = d[i][k] + d[k][j]\n      }\n    }\n  }\n  return d\n}",
+        "checks": [
+          {
+            "t": "a shorter way through a middle node",
+            "verify": "assert(JSON.stringify(allPairs(3, [[0, 1, 3], [1, 2, 1], [0, 2, 8]])[0]) === \"[0,3,4]\", \"expected [0,3,4]\")"
+          },
+          {
+            "t": "no edges",
+            "verify": "const d = allPairs(2, []); assert(d[0][0] === 0 && d[0][1] === Infinity && d[1][0] === Infinity && d[1][1] === 0, \"expected zeros on the diagonal and Infinity elsewhere\")"
+          },
+          {
+            "t": "the cheaper of two parallel edges",
+            "verify": "assert(allPairs(2, [[0, 1, 9], [0, 1, 4]])[0][1] === 4, \"expected 4\")"
+          },
+          {
+            "t": "edges are one-way",
+            "verify": "const d = allPairs(2, [[0, 1, 5]]); assert(d[0][1] === 5 && d[1][0] === Infinity, \"the edge only goes one way\")"
+          },
+          {
+            "t": "a ring of 150 nodes",
+            "verify": "const n = 150; const e = Array.from({ length: n }, (_, i) => [i, (i + 1) % n, 1]); const d = allPairs(n, e); let ok = true; for (let i = 0; i < n; i += 7) for (let j = 0; j < n; j += 5) if (d[i][j] !== (j - i + n) % n) ok = false; assert(ok, \"a distance in the ring is wrong\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Floyd-Warshall finds <b>all-pairs shortest paths</b> with three loops, <b>k outermost</b>: <code>d[i][j] = min(d[i][j], d[i][k] + d[k][j])</code>. O(V³) time, O(V²) space. A negative <code>d[i][i]</code> means a negative cycle.",
+        "mistakes": [
+          "Putting k in the inner loop.",
+          "Forgetting the zero diagonal.",
+          "Overwriting a parallel edge with a heavier one.",
+          "Using it on thousands of nodes."
+        ]
+      }
+    },
+    {
+      "id": "euler-path",
+      "prereqs": [
+        "graph-repr",
+        "dfs-graphs"
+      ],
+      "dryRun": {
+        "title": "Hierholzer's algorithm on a directed graph with edges 0→1, 1→2, 2→0, 0→3, 3→0",
+        "columns": [
+          "stack",
+          "next unused edge from the top",
+          "action",
+          "path built so far"
+        ],
+        "rows": [
+          [
+            "[0]",
+            "0 → 1",
+            "push 1",
+            "[ ]"
+          ],
+          [
+            "[0, 1]",
+            "1 → 2",
+            "push 2",
+            "[ ]"
+          ],
+          [
+            "[0, 1, 2]",
+            "2 → 0",
+            "push 0",
+            "[ ]"
+          ],
+          [
+            "[0, 1, 2, 0]",
+            "0 → 3",
+            "push 3",
+            "[ ]"
+          ],
+          [
+            "[0, 1, 2, 0, 3]",
+            "3 → 0",
+            "push 0",
+            "[ ]"
+          ],
+          [
+            "[0, 1, 2, 0, 3, 0]",
+            "none left",
+            "pop everything into the path",
+            "0 3 0 2 1 0, reversed: 0 1 2 0 3 0"
+          ]
+        ],
+        "hit": 5,
+        "note": "Walk along unused edges until you are stuck, then <b>pop</b> nodes into the path. Reverse the path at the end. Every edge is used exactly once, so the time is <b>O(E)</b>."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const adj = { 0: [1, 3], 1: [2], 2: [0], 3: [0] }\nconst stack = [0], path = []\nwhile (stack.length) {\n  const u = stack[stack.length - 1]\n  if (adj[u].length) stack.push(adj[u].shift())\n  else path.push(stack.pop())\n}\nconsole.log(path.reverse().join(\",\"))</code></pre>",
+          "opts": [
+            "<code>0,1,2,0,3,0</code>",
+            "<code>0,3,0,1,2,0</code>",
+            "<code>0,1,2,3,0</code>",
+            "<code>0,1,3,2,0</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "The walk follows 0→1→2→0→3→0, uses all five edges, and gets stuck at 0. Then every node is popped into the path.",
+            "Reversing the popped order gives the circuit in the right direction."
+          ],
+          "exec": "const adj = { 0: [1, 3], 1: [2], 2: [0], 3: [0] }\nconst stack = [0], path = []\nwhile (stack.length) {\n  const u = stack[stack.length - 1]\n  if (adj[u].length) stack.push(adj[u].shift())\n  else path.push(stack.pop())\n}\nconsole.log(path.reverse().join(\",\"))"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const edges = [[0, 1], [1, 2], [2, 0], [2, 3]]\nconst deg = [0, 0, 0, 0]\nfor (const [a, b] of edges) { deg[a]++; deg[b]++ }\nconsole.log(deg.filter((d) =&gt; d % 2 === 1).length)</code></pre>",
+          "opts": [
+            "<code>0</code>",
+            "<code>1</code>",
+            "<code>2</code>",
+            "<code>4</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "The degrees are 2, 2, 3 and 1. Nodes 2 and 3 have an odd degree, so there are two odd nodes.",
+            "In an undirected connected graph, 0 odd nodes means an Euler <b>circuit</b>, exactly 2 means an Euler <b>path</b> (start at one odd node, end at the other), and any other count means neither exists."
+          ],
+          "exec": "const edges = [[0, 1], [1, 2], [2, 0], [2, 3]]\nconst deg = [0, 0, 0, 0]\nfor (const [a, b] of edges) { deg[a]++; deg[b]++ }\nconsole.log(deg.filter((d) => d % 2 === 1).length)"
+        },
+        {
+          "tag": "Euler or Hamiltonian?",
+          "q": "<p>What does an Euler path visit exactly once, compared with a Hamiltonian path?</p>",
+          "opts": [
+            "Euler: every node once. Hamiltonian: every edge once",
+            "Euler: every edge once. Hamiltonian: every node once",
+            "They are the same thing",
+            "Euler: every cycle once"
+          ],
+          "ans": 1,
+          "why": [
+            "Euler is about <b>edges</b> and is easy to decide with degrees. Hamiltonian is about <b>nodes</b> and is NP-hard.",
+            "This is a classic interview question, and the Königsberg bridges are the origin story."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Directed graphs",
+          "q": "<p>When does a directed graph (with all edges in one connected piece) have an Euler circuit?</p>",
+          "opts": [
+            "When every node has in-degree equal to out-degree",
+            "When every node has an even total degree",
+            "When it has no cycles",
+            "When it has a node with no edges"
+          ],
+          "ans": 0,
+          "why": [
+            "Every time you arrive at a node you must be able to leave it, so the arrivals and departures must match.",
+            "For an Euler <b>path</b> exactly one node has out - in = 1 (the start) and one has in - out = 1 (the end)."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>What is the time of Hierholzer's algorithm for a graph with E edges?</p>",
+          "opts": [
+            "<code>O(E)</code>",
+            "<code>O(E log E)</code>",
+            "<code>O(E²)</code>",
+            "<code>O(2^E)</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "Each edge is taken off a list once and each node push has a matching pop. (Remove edges by moving an index, not with <code>shift()</code>, to keep it linear.)",
+            "Trying all orders by backtracking would be exponential, so this algorithm is a big improvement."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>eulerCircuit(edges)</code>. <code>edges</code> is a list of <b>directed</b> edges <code>[from, to]</code>. Return a closed walk that uses every edge exactly once, as a list of nodes starting at <code>edges[0][0]</code> (so it has <code>edges.length + 1</code> nodes). Return <code>[]</code> if there are no edges or no such circuit exists.</p>",
+        "examples": [
+          "eulerCircuit([[0, 1], [1, 2], [2, 0], [0, 3], [3, 0]])  // for example [0, 1, 2, 0, 3, 0]",
+          "eulerCircuit([[0, 1], [1, 2]])  // []"
+        ],
+        "hint": "<p>First check that every node has in-degree equal to out-degree. Then run Hierholzer with an index pointer per node instead of <code>shift()</code>. If the final path has fewer than <code>edges.length + 1</code> nodes, the edges are not all connected: return <code>[]</code>.</p>",
+        "fn": "eulerCircuit",
+        "starter": "function eulerCircuit(edges) {\n  // your code\n}",
+        "solution": "function eulerCircuit(edges) {\n  if (edges.length === 0) return []\n  const adj = new Map()\n  const bal = new Map()\n  for (const [a, b] of edges) {\n    if (!adj.has(a)) adj.set(a, [])\n    adj.get(a).push(b)\n    bal.set(a, (bal.get(a) || 0) + 1)\n    bal.set(b, (bal.get(b) || 0) - 1)\n  }\n  for (const v of bal.values()) if (v !== 0) return []\n  const next = new Map()\n  const start = edges[0][0]\n  const stack = [start]\n  const path = []\n  while (stack.length) {\n    const u = stack[stack.length - 1]\n    const list = adj.get(u) || []\n    const i = next.get(u) || 0\n    if (i < list.length) {\n      next.set(u, i + 1)\n      stack.push(list[i])\n    } else {\n      path.push(stack.pop())\n    }\n  }\n  path.reverse()\n  return path.length === edges.length + 1 ? path : []\n}",
+        "checks": [
+          {
+            "t": "a valid circuit uses every edge once",
+            "verify": "const edges = [[0, 1], [1, 2], [2, 0], [0, 3], [3, 0]]; const p = eulerCircuit(edges); assert(p.length === 6 && p[0] === 0 && p[5] === 0, \"expected 6 nodes that start and end at 0\"); const used = p.slice(0, -1).map((u, i) => u + \">\" + p[i + 1]).sort(); const want = edges.map(([a, b]) => a + \">\" + b).sort(); assert(JSON.stringify(used) === JSON.stringify(want), \"every edge must be used exactly once\")"
+          },
+          {
+            "t": "a path that is not closed",
+            "verify": "assert(JSON.stringify(eulerCircuit([[0, 1], [1, 2]])) === \"[]\", \"expected []\")"
+          },
+          {
+            "t": "no edges",
+            "verify": "assert(JSON.stringify(eulerCircuit([])) === \"[]\", \"expected []\")"
+          },
+          {
+            "t": "two separate cycles can not be walked",
+            "verify": "assert(JSON.stringify(eulerCircuit([[0, 1], [1, 0], [2, 3], [3, 2]])) === \"[]\", \"expected []\")"
+          },
+          {
+            "t": "a big cycle of 100,000 edges",
+            "verify": "const n = 100000; const e = Array.from({ length: n }, (_, i) => [i, (i + 1) % n]); const t0 = Date.now(); const p = eulerCircuit(e); assert(p.length === n + 1 && p[0] === 0 && p[n] === 0 && Date.now() - t0 < 1000, \"wrong circuit or too slow\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "An Euler path uses every <b>edge</b> once. Check the degrees first (even degrees for a circuit in an undirected graph, in = out for a directed one), then use <b>Hierholzer</b>: walk until stuck, pop into the path, reverse. O(E).",
+        "mistakes": [
+          "Mixing up Euler (edges) and Hamiltonian (nodes).",
+          "Skipping the degree check or the \"all edges connected\" check.",
+          "Using <code>shift()</code> and getting O(E²).",
+          "Forgetting to reverse the popped path."
+        ]
+      }
+    }
+  ],
+  "flags": [
+    "euler-path: the try-it accepts any valid circuit (checks length, start/end and that every edge is used once), since many circuits exist.",
+    "floyd-warshall: the ring check samples every 7th row and 5th column of the 150 x 150 result to keep the script light.",
+    "The dry-run tables are traced by hand (concept dry runs are not machine-run)."
+  ]
+}

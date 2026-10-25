@@ -1,0 +1,1078 @@
+{
+  "items": [
+    {
+      "id": "memo-vs-tab",
+      "prereqs": [
+        "fibonacci",
+        "recursion",
+        "hashmaps"
+      ],
+      "dryRun": {
+        "title": "Stairs: ways(n) = ways(n - 1) + ways(n - 2), built from the bottom (tabulation)",
+        "columns": [
+          "n",
+          "ways(n)",
+          "where it comes from"
+        ],
+        "rows": [
+          [
+            "0",
+            "1",
+            "base case"
+          ],
+          [
+            "1",
+            "1",
+            "base case"
+          ],
+          [
+            "2",
+            "2",
+            "1 + 1"
+          ],
+          [
+            "3",
+            "3",
+            "2 + 1"
+          ],
+          [
+            "4",
+            "5",
+            "3 + 2"
+          ],
+          [
+            "5",
+            "8",
+            "5 + 3"
+          ]
+        ],
+        "hit": 5,
+        "note": "Both styles solve the same small problems once. <b>Memoization</b> starts at the big problem and caches answers on the way down. <b>Tabulation</b> starts at the base cases and fills a table going up."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>let calls = 0\nconst memo = new Map()\nfunction ways(n) {\n  calls++\n  if (n &lt;= 1) return 1\n  if (memo.has(n)) return memo.get(n)\n  const v = ways(n - 1) + ways(n - 2)\n  memo.set(n, v)\n  return v\n}\nconsole.log(ways(5), calls)</code></pre>",
+          "opts": [
+            "<code>8 15</code>",
+            "<code>8 9</code>",
+            "<code>5 9</code>",
+            "<code>13 9</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "There are 8 ways to climb 5 stairs. With the cache the function runs 9 times instead of 15.",
+            "This is the top-down way: write the plain recursion first, then add a cache."
+          ],
+          "exec": "let calls = 0\nconst memo = new Map()\nfunction ways(n) {\n  calls++\n  if (n <= 1) return 1\n  if (memo.has(n)) return memo.get(n)\n  const v = ways(n - 1) + ways(n - 2)\n  memo.set(n, v)\n  return v\n}\nconsole.log(ways(5), calls)"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const n = 5\nconst dp = new Array(n + 1).fill(0)\ndp[0] = 1\ndp[1] = 1\nfor (let i = 2; i &lt;= n; i++) dp[i] = dp[i - 1] + dp[i - 2]\nconsole.log(dp.join(\",\"))</code></pre>",
+          "opts": [
+            "<code>1,1,2,3,5,8</code>",
+            "<code>0,1,1,2,3,5</code>",
+            "<code>1,2,3,4,5,6</code>",
+            "<code>1,1,2,4,8,16</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "The table is filled from index 2 upwards. Each cell uses two cells that are already final.",
+            "This is the bottom-up way. There is no recursion, so there is no stack depth problem."
+          ],
+          "exec": "const n = 5\nconst dp = new Array(n + 1).fill(0)\ndp[0] = 1\ndp[1] = 1\nfor (let i = 2; i <= n; i++) dp[i] = dp[i - 1] + dp[i - 2]\nconsole.log(dp.join(\",\"))"
+        },
+        {
+          "tag": "Which is which?",
+          "q": "<p>Which statement is correct?</p>",
+          "opts": [
+            "Memoization fills a table from the base cases up; tabulation uses recursion",
+            "Memoization is recursion plus a cache (top-down); tabulation is a loop that fills a table (bottom-up)",
+            "They have different time complexities for the same problem",
+            "Memoization needs a 2D array"
+          ],
+          "ans": 1,
+          "why": [
+            "Both reach the same O(n) here. The difference is the style, and where each one is easier.",
+            "Memoization computes only the subproblems it needs; tabulation computes all of them."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Deep input",
+          "q": "<p>You need <code>ways(100000)</code>. What goes wrong with the memoized recursion, and what fixes it?</p>",
+          "opts": [
+            "It gives a wrong answer; use a bigger cache",
+            "The recursion is 100,000 calls deep and overflows the stack; use the bottom-up loop",
+            "It runs forever; use a Set",
+            "Nothing goes wrong"
+          ],
+          "ans": 1,
+          "why": [
+            "Each call waits for the next smaller one, so the stack grows to n frames. A loop uses no stack at all.",
+            "Numbers also get huge (beyond about n = 78 they lose exactness), so real problems ask for the answer modulo some number."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Save space",
+          "q": "<p>In the stairs table, <code>dp[i]</code> only needs <code>dp[i-1]</code> and <code>dp[i-2]</code>. How much space can you use?</p>",
+          "opts": [
+            "<code>O(n)</code>",
+            "<code>O(1), two variables</code>",
+            "<code>O(n²)</code>",
+            "<code>O(log n)</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "Once <code>dp[i]</code> is computed, older cells are never read again. Keep only the last two values.",
+            "This \"rolling\" trick works whenever a state depends on a fixed number of earlier states."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>climbStairs(n)</code>. You climb <code>n</code> stairs, taking 1 or 2 steps each time. Return the number of different ways to reach the top. <code>n</code> is at least 1 and at most 70.</p>",
+        "examples": [
+          "climbStairs(2)  // 2",
+          "climbStairs(5)  // 8"
+        ],
+        "hint": "<p>The last move was a 1-step or a 2-step, so <code>ways(n) = ways(n - 1) + ways(n - 2)</code>. Fill an array from the bottom, or keep two variables.</p>",
+        "fn": "climbStairs",
+        "starter": "function climbStairs(n) {\n  // your code\n}",
+        "solution": "function climbStairs(n) {\n  let prev = 1\n  let cur = 1\n  for (let i = 2; i <= n; i++) {\n    ;[prev, cur] = [cur, prev + cur]\n  }\n  return cur\n}",
+        "checks": [
+          {
+            "t": "the first values",
+            "verify": "assert(climbStairs(1) === 1 && climbStairs(2) === 2 && climbStairs(3) === 3, \"expected 1, 2, 3\")"
+          },
+          {
+            "t": "five stairs",
+            "verify": "assert(climbStairs(5) === 8, \"expected 8\")"
+          },
+          {
+            "t": "45 stairs",
+            "verify": "assert(climbStairs(45) === 1836311903, \"expected 1836311903\")"
+          },
+          {
+            "t": "70 stairs",
+            "verify": "assert(climbStairs(70) === 308061521170129, \"expected 308061521170129\")"
+          },
+          {
+            "t": "fast enough",
+            "verify": "const t0 = Date.now(); for (let i = 0; i < 3000; i++) climbStairs(70); assert(Date.now() - t0 < 300, \"too slow, did you use plain recursion?\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "DP means solving each small problem <b>once</b>. <b>Top-down</b> = recursion + cache. <b>Bottom-up</b> = fill a table from the base cases. Bottom-up avoids deep recursion, and a rolling window can cut the space to O(1).",
+        "mistakes": [
+          "Writing the cache but never reading from it.",
+          "Missing a base case (n = 0 or 1).",
+          "Deep recursion on a big n.",
+          "Keeping a full table when only the last two cells are needed."
+        ]
+      }
+    },
+    {
+      "id": "identify-dp",
+      "prereqs": [
+        "memo-vs-tab"
+      ],
+      "dryRun": {
+        "title": "House robber: no two neighbouring houses. Money: [2, 7, 9, 3, 1]. dp[i] = best total using houses 0 to i",
+        "columns": [
+          "house i",
+          "money",
+          "skip it: dp[i - 1]",
+          "rob it: dp[i - 2] + money",
+          "dp[i]"
+        ],
+        "rows": [
+          [
+            "0",
+            "2",
+            "0",
+            "0 + 2 = 2",
+            "2"
+          ],
+          [
+            "1",
+            "7",
+            "2",
+            "0 + 7 = 7",
+            "7"
+          ],
+          [
+            "2",
+            "9",
+            "7",
+            "2 + 9 = 11",
+            "11"
+          ],
+          [
+            "3",
+            "3",
+            "11",
+            "7 + 3 = 10",
+            "11"
+          ],
+          [
+            "4",
+            "1",
+            "11",
+            "11 + 1 = 12",
+            "12"
+          ]
+        ],
+        "hit": 2,
+        "note": "The four DP steps in this table: <b>state</b> (dp[i] = best for the first i + 1 houses), <b>transition</b> (skip or rob), <b>base</b> (before house 0 the total is 0), <b>answer</b> (the last cell)."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>function rob(nums) {\n  const dp = new Array(nums.length).fill(0)\n  for (let i = 0; i &lt; nums.length; i++) {\n    const skip = i &gt;= 1 ? dp[i - 1] : 0\n    const take = (i &gt;= 2 ? dp[i - 2] : 0) + nums[i]\n    dp[i] = Math.max(skip, take)\n  }\n  return dp[nums.length - 1]\n}\nconsole.log(rob([2, 7, 9, 3, 1]))</code></pre>",
+          "opts": [
+            "<code>11</code>",
+            "<code>12</code>",
+            "<code>13</code>",
+            "<code>22</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "The best choice is houses 0, 2 and 4: 2 + 9 + 1 = 12. The table shows the same thing, cell by cell.",
+            "The two guards (<code>i &gt;= 1</code>, <code>i &gt;= 2</code>) are the base cases written inline."
+          ],
+          "exec": "function rob(nums) {\n  const dp = new Array(nums.length).fill(0)\n  for (let i = 0; i < nums.length; i++) {\n    const skip = i >= 1 ? dp[i - 1] : 0\n    const take = (i >= 2 ? dp[i - 2] : 0) + nums[i]\n    dp[i] = Math.max(skip, take)\n  }\n  return dp[nums.length - 1]\n}\nconsole.log(rob([2, 7, 9, 3, 1]))"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>let prev2 = 0, prev1 = 0\nfor (const x of [2, 1, 1, 2]) {\n  const cur = Math.max(prev1, prev2 + x)\n  prev2 = prev1\n  prev1 = cur\n}\nconsole.log(prev1)</code></pre>",
+          "opts": [
+            "<code>6</code>",
+            "<code>3</code>",
+            "<code>4</code>",
+            "<code>5</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "The best choice is the first and the last house: 2 + 2 = 4. Taking the middle ones gives only 2.",
+            "Two variables replace the table. <code>prev1</code> is <code>dp[i - 1]</code> and <code>prev2</code> is <code>dp[i - 2]</code>."
+          ],
+          "exec": "let prev2 = 0, prev1 = 0\nfor (const x of [2, 1, 1, 2]) {\n  const cur = Math.max(prev1, prev2 + x)\n  prev2 = prev1\n  prev1 = cur\n}\nconsole.log(prev1)"
+        },
+        {
+          "tag": "Is it DP?",
+          "q": "<p>Which clue most strongly suggests dynamic programming?</p>",
+          "opts": [
+            "\"Find a pair with a given sum\"",
+            "\"Reverse the list\"",
+            "\"Sort the array\"",
+            "\"Count the ways\", \"find the minimum or maximum\", or \"can we reach...\" over many choices, where the same smaller question comes up again and again"
+          ],
+          "ans": 3,
+          "why": [
+            "DP needs two things: <b>overlapping subproblems</b> (the same sub-question repeats) and <b>optimal substructure</b> (the best answer is built from best answers of smaller problems).",
+            "If brute force is exponential and a smaller version of the same question appears inside it, think DP."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "The recipe",
+          "q": "<p>What is a good order of steps when you design a DP solution?</p>",
+          "opts": [
+            "Define the state (what does dp[i] mean), write the transition, set the base cases, then decide the order and the answer cell",
+            "Pick the table size, then guess",
+            "Sort the input, then use a heap",
+            "Write the loops first, think about meaning later"
+          ],
+          "ans": 0,
+          "why": [
+            "The state definition is the heart. If you can say in one sentence what <code>dp[i]</code> means, the transition usually follows.",
+            "Most wrong DP answers come from a vague state definition."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "DP or greedy?",
+          "q": "<p>You want the best total, and a quick greedy rule has a counter-example (for example \"take the biggest coin\" fails for coins 4, 3, 1 and amount 6). What do you do?</p>",
+          "opts": [
+            "Keep the greedy rule",
+            "Switch to DP: try all choices at each state and keep the best, reusing sub-answers",
+            "Use a trie",
+            "Give up"
+          ],
+          "ans": 1,
+          "why": [
+            "A counter-example proves greedy is wrong for this problem. DP tries every choice but remembers sub-results, so it stays fast.",
+            "The greedy lesson ended on exactly this warning."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>rob(nums)</code>. <code>nums[i]</code> is the money in house <code>i</code>. You cannot take from two neighbouring houses. Return the largest total you can take. An empty list gives 0.</p>",
+        "examples": [
+          "rob([2, 7, 9, 3, 1])  // 12",
+          "rob([2, 1, 1, 2])  // 4"
+        ],
+        "hint": "<p>At house <code>i</code> choose the better of \"skip it\" (<code>dp[i-1]</code>) and \"take it\" (<code>dp[i-2] + nums[i]</code>). Two variables are enough.</p>",
+        "fn": "rob",
+        "starter": "function rob(nums) {\n  // your code\n}",
+        "solution": "function rob(nums) {\n  let prev2 = 0\n  let prev1 = 0\n  for (const x of nums) {\n    const cur = Math.max(prev1, prev2 + x)\n    prev2 = prev1\n    prev1 = cur\n  }\n  return prev1\n}",
+        "checks": [
+          {
+            "t": "the lesson example",
+            "verify": "assert(rob([2, 7, 9, 3, 1]) === 12, \"expected 12\")"
+          },
+          {
+            "t": "the first and last are best",
+            "verify": "assert(rob([2, 1, 1, 2]) === 4, \"expected 4\")"
+          },
+          {
+            "t": "empty list and one house",
+            "verify": "assert(rob([]) === 0 && rob([5]) === 5, \"edge cases\")"
+          },
+          {
+            "t": "two houses",
+            "verify": "assert(rob([3, 9]) === 9, \"expected 9\")"
+          },
+          {
+            "t": "a big input stays fast",
+            "verify": "const big = Array.from({ length: 200000 }, (_, i) => (i % 5) + 1); const t0 = Date.now(); const r = rob(big); assert(typeof r === \"number\" && r > 0 && Date.now() - t0 < 200, \"too slow, it must be O(n)\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "DP in four steps: <b>state</b> (say in words what dp[i] means), <b>transition</b> (how it comes from smaller states), <b>base cases</b>, and <b>order + answer</b>. Look for \"count / min / max\" with repeated sub-questions.",
+        "mistakes": [
+          "A vague state (\"dp[i] is the answer\").",
+          "Forgetting the base cases for the first one or two indexes.",
+          "Using greedy when a counter-example exists.",
+          "Reading a cell that has not been computed yet."
+        ]
+      }
+    },
+    {
+      "id": "dp-1d",
+      "prereqs": [
+        "identify-dp"
+      ],
+      "dryRun": {
+        "title": "Fewest coins for each amount with coins [1, 2, 5]. dp[a] = min over coins of dp[a - coin] + 1",
+        "columns": [
+          "amount a",
+          "coin 1",
+          "coin 2",
+          "coin 5",
+          "dp[a]"
+        ],
+        "rows": [
+          [
+            "4",
+            "dp[3] + 1 = 3",
+            "dp[2] + 1 = 2",
+            "-",
+            "2"
+          ],
+          [
+            "5",
+            "dp[4] + 1 = 3",
+            "dp[3] + 1 = 3",
+            "dp[0] + 1 = 1",
+            "1"
+          ],
+          [
+            "6",
+            "dp[5] + 1 = 2",
+            "dp[4] + 1 = 3",
+            "dp[1] + 1 = 2",
+            "2"
+          ],
+          [
+            "7",
+            "dp[6] + 1 = 3",
+            "dp[5] + 1 = 2",
+            "dp[2] + 1 = 2",
+            "2"
+          ],
+          [
+            "8",
+            "dp[7] + 1 = 3",
+            "dp[6] + 1 = 3",
+            "dp[3] + 1 = 3",
+            "3"
+          ]
+        ],
+        "hit": 1,
+        "note": "To make amount a, the last coin could be any coin. Try them all, look up the best answer for the smaller amount, add one coin, and keep the minimum. Start with <code>dp[0] = 0</code> and everything else <code>Infinity</code>."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>function minCoins(coins, amount) {\n  const dp = new Array(amount + 1).fill(Infinity)\n  dp[0] = 0\n  for (let a = 1; a &lt;= amount; a++) {\n    for (const coin of coins) {\n      if (coin &lt;= a) dp[a] = Math.min(dp[a], dp[a - coin] + 1)\n    }\n  }\n  return dp[amount] === Infinity ? -1 : dp[amount]\n}\nconsole.log(minCoins([1, 2, 5], 11))</code></pre>",
+          "opts": [
+            "<code>2</code>",
+            "<code>3</code>",
+            "<code>4</code>",
+            "<code>11</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "11 = 5 + 5 + 1, which is 3 coins. No way to make 11 with just 2 coins from 1, 2 and 5.",
+            "The loop goes up from 1 to the amount, so <code>dp[a - coin]</code> is always ready."
+          ],
+          "exec": "function minCoins(coins, amount) {\n  const dp = new Array(amount + 1).fill(Infinity)\n  dp[0] = 0\n  for (let a = 1; a <= amount; a++) {\n    for (const coin of coins) {\n      if (coin <= a) dp[a] = Math.min(dp[a], dp[a - coin] + 1)\n    }\n  }\n  return dp[amount] === Infinity ? -1 : dp[amount]\n}\nconsole.log(minCoins([1, 2, 5], 11))"
+        },
+        {
+          "tag": "Impossible amount",
+          "q": "<pre><code>function minCoins(coins, amount) {\n  const dp = new Array(amount + 1).fill(Infinity)\n  dp[0] = 0\n  for (let a = 1; a &lt;= amount; a++)\n    for (const coin of coins) if (coin &lt;= a) dp[a] = Math.min(dp[a], dp[a - coin] + 1)\n  return dp[amount] === Infinity ? -1 : dp[amount]\n}\nconsole.log(minCoins([2], 3))</code></pre>",
+          "opts": [
+            "<code>1</code>",
+            "<code>Infinity</code>",
+            "<code>0</code>",
+            "<code>-1</code>"
+          ],
+          "ans": 3,
+          "why": [
+            "With only 2-coins you can never make 3. The cell stays at <code>Infinity</code>, and the last line turns it into -1.",
+            "<code>Infinity</code> is a good \"not possible\" marker: <code>Infinity + 1</code> is still <code>Infinity</code> and <code>Math.min</code> ignores it."
+          ],
+          "exec": "function minCoins(coins, amount) {\n  const dp = new Array(amount + 1).fill(Infinity)\n  dp[0] = 0\n  for (let a = 1; a <= amount; a++)\n    for (const coin of coins) if (coin <= a) dp[a] = Math.min(dp[a], dp[a - coin] + 1)\n  return dp[amount] === Infinity ? -1 : dp[amount]\n}\nconsole.log(minCoins([2], 3))"
+        },
+        {
+          "tag": "Beats greedy",
+          "q": "<pre><code>function minCoins(coins, amount) {\n  const dp = new Array(amount + 1).fill(Infinity)\n  dp[0] = 0\n  for (let a = 1; a &lt;= amount; a++)\n    for (const coin of coins) if (coin &lt;= a) dp[a] = Math.min(dp[a], dp[a - coin] + 1)\n  return dp[amount] === Infinity ? -1 : dp[amount]\n}\nconsole.log(minCoins([4, 3, 1], 6))</code></pre>",
+          "opts": [
+            "<code>3</code>",
+            "<code>2</code>",
+            "<code>1</code>",
+            "<code>6</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "3 + 3 uses only 2 coins. The greedy \"biggest coin first\" took 4 + 1 + 1 = 3 coins.",
+            "DP tries every coin for every amount, so it cannot be fooled by a locally best choice."
+          ],
+          "exec": "function minCoins(coins, amount) {\n  const dp = new Array(amount + 1).fill(Infinity)\n  dp[0] = 0\n  for (let a = 1; a <= amount; a++)\n    for (const coin of coins) if (coin <= a) dp[a] = Math.min(dp[a], dp[a - coin] + 1)\n  return dp[amount] === Infinity ? -1 : dp[amount]\n}\nconsole.log(minCoins([4, 3, 1], 6))"
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>With <code>amount</code> A and <code>k</code> coin types, what are the time and space?</p>",
+          "opts": [
+            "<code>O(A * k) time, O(A) space</code>",
+            "<code>O(k^A) time, O(A) space</code>",
+            "<code>O(A) time, O(1) space</code>",
+            "<code>O(A²) time, O(A²) space</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "There are A cells, and each cell tries k coins. The table has A + 1 numbers.",
+            "The brute-force recursion without a cache would be exponential."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Base case",
+          "q": "<p>Why do we set <code>dp[0] = 0</code> and all other cells to <code>Infinity</code> at the start?</p>",
+          "opts": [
+            "It is just a habit",
+            "Zero coins make amount 0, and every other amount is \"not reachable yet\", so the minimum can only improve",
+            "To save memory",
+            "Because arrays start at 0"
+          ],
+          "ans": 1,
+          "why": [
+            "Amount 0 needs no coins, and every other amount grows from it. Starting with <code>Infinity</code> means any real answer is better than \"unknown\".",
+            "If you started with 0 everywhere, the minimum would always be 0."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>coinChange(coins, amount)</code>. Return the fewest coins that add up to <code>amount</code>, using any coin any number of times, or <code>-1</code> if it is not possible. An amount of 0 needs 0 coins.</p>",
+        "examples": [
+          "coinChange([1, 2, 5], 11)  // 3",
+          "coinChange([2], 3)  // -1"
+        ],
+        "hint": "<p>Make <code>dp</code> of length <code>amount + 1</code> filled with <code>Infinity</code>, and <code>dp[0] = 0</code>. For each amount from 1 up, try every coin that fits: <code>dp[a] = Math.min(dp[a], dp[a - coin] + 1)</code>.</p>",
+        "fn": "coinChange",
+        "starter": "function coinChange(coins, amount) {\n  // your code\n}",
+        "solution": "function coinChange(coins, amount) {\n  const dp = new Array(amount + 1).fill(Infinity)\n  dp[0] = 0\n  for (let a = 1; a <= amount; a++) {\n    for (const coin of coins) {\n      if (coin <= a && dp[a - coin] + 1 < dp[a]) dp[a] = dp[a - coin] + 1\n    }\n  }\n  return dp[amount] === Infinity ? -1 : dp[amount]\n}",
+        "checks": [
+          {
+            "t": "the lesson example",
+            "verify": "assert(coinChange([1, 2, 5], 11) === 3, \"expected 3\")"
+          },
+          {
+            "t": "impossible",
+            "verify": "assert(coinChange([2], 3) === -1, \"expected -1\")"
+          },
+          {
+            "t": "greedy would be wrong",
+            "verify": "assert(coinChange([4, 3, 1], 6) === 2, \"expected 2\")"
+          },
+          {
+            "t": "amount 0",
+            "verify": "assert(coinChange([1], 0) === 0 && coinChange([5], 0) === 0, \"expected 0\")"
+          },
+          {
+            "t": "a bigger case stays fast",
+            "verify": "const t0 = Date.now(); assert(coinChange([186, 419, 83, 408], 6249) === 20 && coinChange([1, 2, 5], 10000) === 2000 && Date.now() - t0 < 500, \"wrong or too slow\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "1D DP: <code>dp[a]</code> = best answer for size <code>a</code>, built from smaller sizes. For coin change: <code>dp[a] = min(dp[a - coin] + 1)</code>, <code>dp[0] = 0</code>, others <code>Infinity</code>. O(amount × coins).",
+        "mistakes": [
+          "Starting the table at 0 instead of <code>Infinity</code>.",
+          "Using greedy (the biggest coin first).",
+          "Reading <code>dp[a - coin]</code> when <code>coin &gt; a</code> (negative index).",
+          "Forgetting to turn <code>Infinity</code> into -1."
+        ]
+      }
+    },
+    {
+      "id": "dp-2d-grid",
+      "prereqs": [
+        "dp-1d",
+        "matrix-2d"
+      ],
+      "dryRun": {
+        "title": "Cheapest path from top-left to bottom-right, moving only right or down. Grid: 1 3 1 / 1 5 1",
+        "columns": [
+          "cell",
+          "cost",
+          "from above",
+          "from left",
+          "dp"
+        ],
+        "rows": [
+          [
+            "(0,0)",
+            "1",
+            "-",
+            "-",
+            "1"
+          ],
+          [
+            "(0,1)",
+            "3",
+            "-",
+            "1",
+            "1 + 3 = 4"
+          ],
+          [
+            "(0,2)",
+            "1",
+            "-",
+            "4",
+            "4 + 1 = 5"
+          ],
+          [
+            "(1,0)",
+            "1",
+            "1",
+            "-",
+            "1 + 1 = 2"
+          ],
+          [
+            "(1,1)",
+            "5",
+            "4",
+            "2",
+            "min(4, 2) + 5 = 7"
+          ],
+          [
+            "(1,2)",
+            "1",
+            "5",
+            "7",
+            "min(5, 7) + 1 = 6"
+          ]
+        ],
+        "hit": 4,
+        "note": "Each cell can only be reached from above or from the left, so <code>dp[r][c] = cost + min(dp[r-1][c], dp[r][c-1])</code>. The first row and column have only one way in. The answer is the bottom-right cell: 6."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const g = [[1, 3, 1], [1, 5, 1], [4, 2, 1]]\nconst R = g.length, C = g[0].length\nconst dp = Array.from({ length: R }, () =&gt; new Array(C).fill(0))\nfor (let r = 0; r &lt; R; r++) {\n  for (let c = 0; c &lt; C; c++) {\n    if (r === 0 &amp;&amp; c === 0) dp[r][c] = g[r][c]\n    else {\n      const up = r &gt; 0 ? dp[r - 1][c] : Infinity\n      const left = c &gt; 0 ? dp[r][c - 1] : Infinity\n      dp[r][c] = g[r][c] + Math.min(up, left)\n    }\n  }\n}\nconsole.log(dp[R - 1][C - 1])</code></pre>",
+          "opts": [
+            "<code>6</code>",
+            "<code>7</code>",
+            "<code>8</code>",
+            "<code>12</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "The cheapest path is 1 → 3 → 1 → 1 → 1 (right, right, down, down), with total 7.",
+            "Using <code>Infinity</code> for a missing neighbour makes <code>Math.min</code> pick the one that exists, so the first row and column need no special code."
+          ],
+          "exec": "const g = [[1, 3, 1], [1, 5, 1], [4, 2, 1]]\nconst R = g.length, C = g[0].length\nconst dp = Array.from({ length: R }, () => new Array(C).fill(0))\nfor (let r = 0; r < R; r++) {\n  for (let c = 0; c < C; c++) {\n    if (r === 0 && c === 0) dp[r][c] = g[r][c]\n    else {\n      const up = r > 0 ? dp[r - 1][c] : Infinity\n      const left = c > 0 ? dp[r][c - 1] : Infinity\n      dp[r][c] = g[r][c] + Math.min(up, left)\n    }\n  }\n}\nconsole.log(dp[R - 1][C - 1])"
+        },
+        {
+          "tag": "Count the paths",
+          "q": "<pre><code>const R = 3, C = 3\nconst dp = Array.from({ length: R }, () =&gt; new Array(C).fill(1))\nfor (let r = 1; r &lt; R; r++)\n  for (let c = 1; c &lt; C; c++) dp[r][c] = dp[r - 1][c] + dp[r][c - 1]\nconsole.log(dp[R - 1][C - 1])</code></pre>",
+          "opts": [
+            "<code>8</code>",
+            "<code>4</code>",
+            "<code>6</code>",
+            "<code>9</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "A 3 × 3 grid has 6 paths from corner to corner. The first row and column are all 1s, because there is only one way along an edge.",
+            "The same table shape, with \"+\" instead of \"min\", counts paths instead of minimising cost."
+          ],
+          "exec": "const R = 3, C = 3\nconst dp = Array.from({ length: R }, () => new Array(C).fill(1))\nfor (let r = 1; r < R; r++)\n  for (let c = 1; c < C; c++) dp[r][c] = dp[r - 1][c] + dp[r][c - 1]\nconsole.log(dp[R - 1][C - 1])"
+        },
+        {
+          "tag": "Fill order",
+          "q": "<p>Why can we fill the table row by row, left to right?</p>",
+          "opts": [
+            "Because rows are faster than columns",
+            "The order does not matter at all",
+            "It is the only order that compiles",
+            "Each cell depends only on the cell above and the cell to its left, and both are already filled by then"
+          ],
+          "ans": 3,
+          "why": [
+            "The fill order must respect the dependencies: never read a cell that is not ready.",
+            "If a problem lets you move up as well, this simple order stops working."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Save space",
+          "q": "<p>A cell needs only the row above and the cell to its left. How little memory do you need for an R × C grid?</p>",
+          "opts": [
+            "<code>O(C), one row reused</code>",
+            "<code>O(1)</code>",
+            "<code>O(R * C * C)</code>",
+            "<code>O(R * C)</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "Keep one row. Updating it left to right turns \"above\" into the old value in the same slot, and \"left\" into the slot just written.",
+            "Say this out loud in interviews: it shows you understand the dependencies."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Obstacles",
+          "q": "<p>Counting paths with obstacles (cells you cannot enter). What goes in the table at an obstacle cell?</p>",
+          "opts": [
+            "<code>1</code>",
+            "<code>0, because there are no ways to stand there</code>",
+            "<code>Infinity</code>",
+            "<code>-1</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "A blocked cell has zero paths through it. Its neighbours then add a 0 from that side.",
+            "For minimum-cost problems you would use <code>Infinity</code> instead."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>uniquePathsWithObstacles(grid)</code>. <code>grid[r][c]</code> is <code>0</code> for an open cell and <code>1</code> for an obstacle. Start at the top-left, end at the bottom-right, and move only right or down. Return the number of different paths. If the start or the end is blocked, return 0.</p>",
+        "examples": [
+          "uniquePathsWithObstacles([[0, 0, 0], [0, 1, 0], [0, 0, 0]])  // 2",
+          "uniquePathsWithObstacles([[0, 1], [0, 0]])  // 1"
+        ],
+        "hint": "<p><code>dp[r][c] = 0</code> for an obstacle, otherwise <code>dp[r-1][c] + dp[r][c-1]</code> (treat missing neighbours as 0). Start with <code>dp[0][0] = 1</code> if the start is open.</p>",
+        "fn": "uniquePathsWithObstacles",
+        "starter": "function uniquePathsWithObstacles(grid) {\n  // your code\n}",
+        "solution": "function uniquePathsWithObstacles(grid) {\n  const R = grid.length\n  if (R === 0) return 0\n  const C = grid[0].length\n  if (grid[0][0] === 1 || grid[R - 1][C - 1] === 1) return 0\n  const dp = Array.from({ length: R }, () => new Array(C).fill(0))\n  dp[0][0] = 1\n  for (let r = 0; r < R; r++) {\n    for (let c = 0; c < C; c++) {\n      if (grid[r][c] === 1) {\n        dp[r][c] = 0\n      } else if (r > 0 || c > 0) {\n        dp[r][c] = (r > 0 ? dp[r - 1][c] : 0) + (c > 0 ? dp[r][c - 1] : 0)\n      }\n    }\n  }\n  return dp[R - 1][C - 1]\n}",
+        "checks": [
+          {
+            "t": "an obstacle in the middle",
+            "verify": "assert(uniquePathsWithObstacles([[0, 0, 0], [0, 1, 0], [0, 0, 0]]) === 2, \"expected 2\")"
+          },
+          {
+            "t": "a small grid",
+            "verify": "assert(uniquePathsWithObstacles([[0, 1], [0, 0]]) === 1, \"expected 1\")"
+          },
+          {
+            "t": "the start is blocked",
+            "verify": "assert(uniquePathsWithObstacles([[1, 0], [0, 0]]) === 0, \"expected 0\")"
+          },
+          {
+            "t": "one open cell",
+            "verify": "assert(uniquePathsWithObstacles([[0]]) === 1, \"expected 1\")"
+          },
+          {
+            "t": "a 15 × 15 open grid",
+            "verify": "const g = Array.from({ length: 15 }, () => new Array(15).fill(0)); assert(uniquePathsWithObstacles(g) === 40116600, \"expected 40116600\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "2D grid DP: <code>dp[r][c]</code> comes from the cell above and the cell to the left. Handle the first row and column with a missing-neighbour value. O(R × C) time, and one row of memory is enough.",
+        "mistakes": [
+          "Reading outside the grid on the first row or column.",
+          "Forgetting the blocked start or end.",
+          "Using the wrong fill order.",
+          "Using \"+\" for a cost problem and \"min\" for a counting problem (or the other way round)."
+        ]
+      }
+    },
+    {
+      "id": "dp-2d-seq",
+      "prereqs": [
+        "dp-2d-grid"
+      ],
+      "dryRun": {
+        "title": "Longest common subsequence of \"abc\" and \"ac\". Row letter vs column letter",
+        "columns": [
+          "row letter",
+          "column letter",
+          "equal?",
+          "rule",
+          "dp"
+        ],
+        "rows": [
+          [
+            "a",
+            "a",
+            "yes",
+            "diagonal + 1",
+            "1"
+          ],
+          [
+            "a",
+            "c",
+            "no",
+            "max(left, above)",
+            "1"
+          ],
+          [
+            "b",
+            "a",
+            "no",
+            "max(left, above)",
+            "1"
+          ],
+          [
+            "b",
+            "c",
+            "no",
+            "max(left, above)",
+            "1"
+          ],
+          [
+            "c",
+            "a",
+            "no",
+            "max(left, above)",
+            "1"
+          ],
+          [
+            "c",
+            "c",
+            "yes",
+            "diagonal (1) + 1",
+            "2"
+          ]
+        ],
+        "hit": 5,
+        "note": "<code>dp[i][j]</code> = answer for the first i letters of one string and the first j of the other. If the letters match, extend the diagonal. If not, take the better of dropping one letter. The answer is 2 (\"ac\")."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>function lcs(a, b) {\n  const dp = Array.from({ length: a.length + 1 }, () =&gt; new Array(b.length + 1).fill(0))\n  for (let i = 1; i &lt;= a.length; i++)\n    for (let j = 1; j &lt;= b.length; j++)\n      dp[i][j] = a[i - 1] === b[j - 1] ? dp[i - 1][j - 1] + 1 : Math.max(dp[i - 1][j], dp[i][j - 1])\n  return dp[a.length][b.length]\n}\nconsole.log(lcs(\"abcde\", \"ace\"))</code></pre>",
+          "opts": [
+            "<code>2</code>",
+            "<code>3</code>",
+            "<code>4</code>",
+            "<code>5</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "\"ace\" appears inside \"abcde\" in order, with letters skipped. Its length is 3.",
+            "A subsequence keeps the order but may skip letters. A substring must be continuous."
+          ],
+          "exec": "function lcs(a, b) {\n  const dp = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0))\n  for (let i = 1; i <= a.length; i++)\n    for (let j = 1; j <= b.length; j++)\n      dp[i][j] = a[i - 1] === b[j - 1] ? dp[i - 1][j - 1] + 1 : Math.max(dp[i - 1][j], dp[i][j - 1])\n  return dp[a.length][b.length]\n}\nconsole.log(lcs(\"abcde\", \"ace\"))"
+        },
+        {
+          "tag": "Edit distance",
+          "q": "<pre><code>function edit(a, b) {\n  const dp = Array.from({ length: a.length + 1 }, (_, i) =&gt; [i, ...new Array(b.length).fill(0)])\n  for (let j = 0; j &lt;= b.length; j++) dp[0][j] = j\n  for (let i = 1; i &lt;= a.length; i++)\n    for (let j = 1; j &lt;= b.length; j++)\n      dp[i][j] = a[i - 1] === b[j - 1]\n        ? dp[i - 1][j - 1]\n        : 1 + Math.min(dp[i - 1][j - 1], dp[i - 1][j], dp[i][j - 1])\n  return dp[a.length][b.length]\n}\nconsole.log(edit(\"kitten\", \"sitting\"))</code></pre>",
+          "opts": [
+            "<code>7</code>",
+            "<code>2</code>",
+            "<code>3</code>",
+            "<code>4</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "kitten → sitten (replace k with s) → sittin (replace e with i) → sitting (insert g). That is 3 edits.",
+            "The three <code>min</code> terms are replace, delete and insert."
+          ],
+          "exec": "function edit(a, b) {\n  const dp = Array.from({ length: a.length + 1 }, (_, i) => [i, ...new Array(b.length).fill(0)])\n  for (let j = 0; j <= b.length; j++) dp[0][j] = j\n  for (let i = 1; i <= a.length; i++)\n    for (let j = 1; j <= b.length; j++)\n      dp[i][j] = a[i - 1] === b[j - 1]\n        ? dp[i - 1][j - 1]\n        : 1 + Math.min(dp[i - 1][j - 1], dp[i - 1][j], dp[i][j - 1])\n  return dp[a.length][b.length]\n}\nconsole.log(edit(\"kitten\", \"sitting\"))"
+        },
+        {
+          "tag": "Table size",
+          "q": "<p>Why does the table have <code>a.length + 1</code> rows and <code>b.length + 1</code> columns?</p>",
+          "opts": [
+            "Because of zero-based counting only",
+            "The last row is for the answer",
+            "To waste memory",
+            "Row 0 and column 0 stand for the empty string, which gives clean base cases"
+          ],
+          "ans": 3,
+          "why": [
+            "<code>dp[i][j]</code> uses the first i and first j letters. i = 0 means \"no letters\", so the base case is built into the table.",
+            "In edit distance that first row and column are 0, 1, 2, 3, ... (insert or delete everything)."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>Two strings have lengths m and n. What is the time and the space of the table solution?</p>",
+          "opts": [
+            "<code>O(m * n) time and space</code>",
+            "<code>O(2^(m+n)) time, O(m) space</code>",
+            "<code>O(m * n) time, O(1) space</code>",
+            "<code>O(m + n) time and space</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "Every cell is computed once in O(1). The table has (m + 1) × (n + 1) cells.",
+            "If you only need the length, two rows are enough, which cuts the space to O(n)."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Pattern",
+          "q": "<p>Which question belongs to this \"two sequences\" DP family?</p>",
+          "opts": [
+            "Smallest window with all letters",
+            "Minimum edits to turn one word into another",
+            "Number of islands",
+            "Kth largest element"
+          ],
+          "ans": 1,
+          "why": [
+            "Whenever you compare two strings or arrays position by position (LCS, edit distance, \"is it a subsequence\", wildcard matching), expect a table with one string on each axis.",
+            "The state is always \"the first i of one and the first j of the other\"."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>editDistance(a, b)</code>. Return the fewest single-letter edits (insert, delete or replace) that turn string <code>a</code> into string <code>b</code>.</p>",
+        "examples": [
+          "editDistance(\"horse\", \"ros\")  // 3",
+          "editDistance(\"\", \"abc\")  // 3"
+        ],
+        "hint": "<p><code>dp[i][j]</code> = edits for the first i letters of a and the first j letters of b. Row 0 is <code>j</code>, column 0 is <code>i</code>. If the letters match copy the diagonal; else add 1 to the smallest of diagonal, above and left.</p>",
+        "fn": "editDistance",
+        "starter": "function editDistance(a, b) {\n  // your code\n}",
+        "solution": "function editDistance(a, b) {\n  const m = a.length\n  const n = b.length\n  let prev = Array.from({ length: n + 1 }, (_, j) => j)\n  for (let i = 1; i <= m; i++) {\n    const cur = new Array(n + 1)\n    cur[0] = i\n    for (let j = 1; j <= n; j++) {\n      cur[j] = a[i - 1] === b[j - 1] ? prev[j - 1] : 1 + Math.min(prev[j - 1], prev[j], cur[j - 1])\n    }\n    prev = cur\n  }\n  return prev[n]\n}",
+        "checks": [
+          {
+            "t": "horse to ros",
+            "verify": "assert(editDistance(\"horse\", \"ros\") === 3, \"expected 3\")"
+          },
+          {
+            "t": "intention to execution",
+            "verify": "assert(editDistance(\"intention\", \"execution\") === 5, \"expected 5\")"
+          },
+          {
+            "t": "an empty string",
+            "verify": "assert(editDistance(\"\", \"abc\") === 3 && editDistance(\"abc\", \"\") === 3 && editDistance(\"\", \"\") === 0, \"empty string cases\")"
+          },
+          {
+            "t": "equal strings",
+            "verify": "assert(editDistance(\"same\", \"same\") === 0, \"expected 0\")"
+          },
+          {
+            "t": "two strings of 2,000 letters",
+            "verify": "const a = \"ab\".repeat(1000), b = \"ba\".repeat(1000); const t0 = Date.now(); const r = editDistance(a, b); assert(r === 2 && Date.now() - t0 < 1500, \"wrong or too slow, got \" + r)"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Two-sequence DP: <code>dp[i][j]</code> covers the first i letters of one string and the first j of the other. <b>Match</b> → take the diagonal. <b>No match</b> → take the best neighbour (+1 for edit distance). O(m × n).",
+        "mistakes": [
+          "Mixing the 1-based table index with the 0-based string index (<code>a[i - 1]</code>).",
+          "Forgetting the first row and column.",
+          "Confusing subsequence (can skip) with substring (continuous).",
+          "Using only one of the three moves in edit distance."
+        ]
+      }
+    },
+    {
+      "id": "dp-unbounded",
+      "prereqs": [
+        "dp-1d"
+      ],
+      "dryRun": {
+        "title": "Number of ways to make 5 from coins [1, 2, 5], one coin type at a time",
+        "columns": [
+          "after using coin",
+          "dp[0..5] (ways to make 0..5)",
+          "what changed"
+        ],
+        "rows": [
+          [
+            "(start)",
+            "1 0 0 0 0 0",
+            "only the empty sum is possible"
+          ],
+          [
+            "coin 1",
+            "1 1 1 1 1 1",
+            "every amount can be made with ones: 1 way"
+          ],
+          [
+            "coin 2",
+            "1 1 2 2 3 3",
+            "dp[a] += dp[a - 2] for a from 2 up"
+          ],
+          [
+            "coin 5",
+            "1 1 2 2 3 4",
+            "dp[5] += dp[0]: now 4 ways"
+          ]
+        ],
+        "hit": 3,
+        "note": "The loops are <b>coins outside, amounts inside</b>. Each coin is added once, so 1+2 and 2+1 are never counted as different. Going <b>upwards</b> through the amounts lets the same coin be used again."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>function ways(coins, amount) {\n  const dp = new Array(amount + 1).fill(0)\n  dp[0] = 1\n  for (const coin of coins)\n    for (let a = coin; a &lt;= amount; a++) dp[a] += dp[a - coin]\n  return dp[amount]\n}\nconsole.log(ways([1, 2, 5], 5))</code></pre>",
+          "opts": [
+            "<code>3</code>",
+            "<code>4</code>",
+            "<code>5</code>",
+            "<code>9</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "The four combinations are 5, 2+2+1, 2+1+1+1 and 1+1+1+1+1.",
+            "Because the coins are the outer loop, each combination is counted once, whatever the order of its coins."
+          ],
+          "exec": "function ways(coins, amount) {\n  const dp = new Array(amount + 1).fill(0)\n  dp[0] = 1\n  for (const coin of coins)\n    for (let a = coin; a <= amount; a++) dp[a] += dp[a - coin]\n  return dp[amount]\n}\nconsole.log(ways([1, 2, 5], 5))"
+        },
+        {
+          "tag": "Swap the loops",
+          "q": "<pre><code>function perms(coins, amount) {\n  const dp = new Array(amount + 1).fill(0)\n  dp[0] = 1\n  for (let a = 1; a &lt;= amount; a++)\n    for (const coin of coins) if (coin &lt;= a) dp[a] += dp[a - coin]\n  return dp[amount]\n}\nconsole.log(perms([1, 2], 3))</code></pre>",
+          "opts": [
+            "<code>2</code>",
+            "<code>3</code>",
+            "<code>4</code>",
+            "<code>1</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "With the amount as the outer loop, the order of coins matters: 1+1+1, 1+2 and 2+1 are counted separately. That is 3.",
+            "With coins outside it would be 2 (1+1+1 and 1+2). Reading the question carefully decides which loop goes outside."
+          ],
+          "exec": "function perms(coins, amount) {\n  const dp = new Array(amount + 1).fill(0)\n  dp[0] = 1\n  for (let a = 1; a <= amount; a++)\n    for (const coin of coins) if (coin <= a) dp[a] += dp[a - coin]\n  return dp[amount]\n}\nconsole.log(perms([1, 2], 3))"
+        },
+        {
+          "tag": "Why upwards?",
+          "q": "<p>In the inner loop, <code>a</code> goes <b>up</b> from <code>coin</code> to the amount. Why?</p>",
+          "opts": [
+            "It is faster",
+            "So that <code>dp[a - coin]</code> may already include this same coin, which lets us use a coin many times",
+            "To avoid negative indexes only",
+            "It makes the order of coins matter"
+          ],
+          "ans": 1,
+          "why": [
+            "At <code>a</code>, the value <code>dp[a - coin]</code> was updated earlier in the same loop, so it already counts uses of this coin.",
+            "Going downwards would allow each coin at most once. That is the 0-1 knapsack, the next lesson."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>With <code>k</code> coin types and an amount A, what is the time?</p>",
+          "opts": [
+            "<code>O(A * k)</code>",
+            "<code>O(A²)</code>",
+            "<code>O(k^A)</code>",
+            "<code>O(A + k)</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "Each coin makes one pass over up to A cells.",
+            "Space is O(A), because only one row is needed."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "\"Unbounded\" means",
+          "q": "<p>What does \"unbounded\" mean in unbounded knapsack?</p>",
+          "opts": [
+            "Each item can be used at most once",
+            "Each item can be used any number of times",
+            "The knapsack has no weight limit",
+            "The items have no value"
+          ],
+          "ans": 1,
+          "why": [
+            "Coins are the standard example: you have as many of each kind as you like.",
+            "If each item can be taken only once, it is 0-1 knapsack."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>countWays(coins, amount)</code>. Return the number of different <b>combinations</b> of coins (any coin any number of times) that add up to <code>amount</code>. The order does not matter: 1+2 and 2+1 are the same. An amount of 0 has exactly 1 way.</p>",
+        "examples": [
+          "countWays([1, 2, 5], 5)  // 4",
+          "countWays([2], 3)  // 0"
+        ],
+        "hint": "<p><code>dp[0] = 1</code>. Put the <b>coins in the outer loop</b>. For each coin, for <code>a</code> from the coin value up to the amount: <code>dp[a] += dp[a - coin]</code>.</p>",
+        "fn": "countWays",
+        "starter": "function countWays(coins, amount) {\n  // your code\n}",
+        "solution": "function countWays(coins, amount) {\n  const dp = new Array(amount + 1).fill(0)\n  dp[0] = 1\n  for (const coin of coins) {\n    for (let a = coin; a <= amount; a++) {\n      dp[a] += dp[a - coin]\n    }\n  }\n  return dp[amount]\n}",
+        "checks": [
+          {
+            "t": "the lesson example",
+            "verify": "assert(countWays([1, 2, 5], 5) === 4, \"expected 4\")"
+          },
+          {
+            "t": "impossible",
+            "verify": "assert(countWays([2], 3) === 0, \"expected 0\")"
+          },
+          {
+            "t": "one exact coin",
+            "verify": "assert(countWays([10], 10) === 1, \"expected 1\")"
+          },
+          {
+            "t": "amount 0",
+            "verify": "assert(countWays([1, 2], 0) === 1, \"expected 1\")"
+          },
+          {
+            "t": "a bigger amount",
+            "verify": "assert(countWays([1, 2, 5], 500) === 12701, \"expected 12701\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Unbounded knapsack / coin combinations: <code>dp[0] = 1</code>, <b>coins in the outer loop</b>, amounts <b>upwards</b>, <code>dp[a] += dp[a - coin]</code>. Swap the loops and you count ordered sequences instead.",
+        "mistakes": [
+          "Putting the amount loop outside and counting permutations.",
+          "Looping the amounts downwards (that is 0-1).",
+          "Forgetting <code>dp[0] = 1</code>.",
+          "Confusing \"fewest coins\" (min) with \"number of ways\" (sum)."
+        ]
+      }
+    }
+  ],
+  "flags": [
+    "memo-vs-tab: the checks use values up to climbStairs(70) = 308061521170129, which is still exact in JavaScript.",
+    "dp-1d: the 6249 / [186,419,83,408] -> 20 case is the well-known LeetCode example. I did not re-derive it by hand; the reference solution passes it.",
+    "dp-2d-grid: the 15 x 15 open grid answer 40116600 is C(28,14).",
+    "dp-unbounded: the amount-500 expected value was computed by a separate reference loop in the generator.",
+    "The dry-run tables are traced by hand (concept dry runs are not machine-run)."
+  ]
+}

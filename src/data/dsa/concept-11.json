@@ -1,0 +1,686 @@
+{
+  "items": [
+    {
+      "id": "grid-problems",
+      "prereqs": [
+        "matrix-2d",
+        "dfs-graphs"
+      ],
+      "dryRun": {
+        "title": "Count islands (1 = land) in the grid  1 1 0 / 0 1 0 / 0 0 1",
+        "columns": [
+          "cell scanned",
+          "new land?",
+          "flood fill marks",
+          "islands"
+        ],
+        "rows": [
+          [
+            "(0,0)",
+            "yes",
+            "(0,0) (0,1) (1,1)",
+            "1"
+          ],
+          [
+            "(0,1) up to (2,1)",
+            "no: water, or already marked",
+            "-",
+            "1"
+          ],
+          [
+            "(2,2)",
+            "yes",
+            "(2,2)",
+            "2"
+          ]
+        ],
+        "hit": 2,
+        "note": "A grid is a graph: each cell is a node, and its neighbours are the cells up, down, left and right. Scan every cell. When you find land that is not marked, count one island and <b>flood-fill</b> it so it is never counted again."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const g = [[1, 1, 0], [0, 1, 0], [0, 0, 1]]\nlet count = 0\nconst dfs = (r, c) =&gt; {\n  if (r &lt; 0 || c &lt; 0 || r &gt;= g.length || c &gt;= g[0].length || g[r][c] !== 1) return\n  g[r][c] = 2\n  dfs(r + 1, c); dfs(r - 1, c); dfs(r, c + 1); dfs(r, c - 1)\n}\nfor (let r = 0; r &lt; g.length; r++)\n  for (let c = 0; c &lt; g[0].length; c++)\n    if (g[r][c] === 1) { count++; dfs(r, c) }\nconsole.log(count)</code></pre>",
+          "opts": [
+            "<code>1</code>",
+            "<code>2</code>",
+            "<code>3</code>",
+            "<code>4</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "The cells (0,0), (0,1) and (1,1) touch and form one island. The cell (2,2) touches nothing but a corner, and corners do not count. That is a second island.",
+            "Writing 2 into a visited cell is the \"mark as seen\" step, so the cell is skipped later."
+          ],
+          "exec": "const g = [[1, 1, 0], [0, 1, 0], [0, 0, 1]]\nlet count = 0\nconst dfs = (r, c) => {\n  if (r < 0 || c < 0 || r >= g.length || c >= g[0].length || g[r][c] !== 1) return\n  g[r][c] = 2\n  dfs(r + 1, c); dfs(r - 1, c); dfs(r, c + 1); dfs(r, c - 1)\n}\nfor (let r = 0; r < g.length; r++)\n  for (let c = 0; c < g[0].length; c++)\n    if (g[r][c] === 1) { count++; dfs(r, c) }\nconsole.log(count)"
+        },
+        {
+          "tag": "Neighbours",
+          "q": "<pre><code>const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]]\nconst inside = (r, c) =&gt; r &gt;= 0 &amp;&amp; c &gt;= 0 &amp;&amp; r &lt; 3 &amp;&amp; c &lt; 3\nconst nb = (r, c) =&gt; dirs.filter(([dr, dc]) =&gt; inside(r + dr, c + dc)).length\nconsole.log(nb(0, 0), nb(1, 1))</code></pre>",
+          "opts": [
+            "<code>2 4</code>",
+            "<code>3 4</code>",
+            "<code>2 3</code>",
+            "<code>4 4</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "A corner cell has only 2 neighbours inside a 3 × 3 grid, and the centre has 4.",
+            "Keeping the four directions in a list (<code>dirs</code>) avoids four copy-pasted lines, and a single <code>inside</code> check avoids out-of-range reads."
+          ],
+          "exec": "const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]]\nconst inside = (r, c) => r >= 0 && c >= 0 && r < 3 && c < 3\nconst nb = (r, c) => dirs.filter(([dr, dc]) => inside(r + dr, c + dc)).length\nconsole.log(nb(0, 0), nb(1, 1))"
+        },
+        {
+          "tag": "Spot the bug",
+          "q": "<pre><code>const g = [[1]]\ntry {\n  console.log(g[-1][0])\n} catch (e) {\n  console.log(e.constructor.name)\n}</code></pre>",
+          "opts": [
+            "<code>undefined</code>",
+            "<code>0</code>",
+            "<code>TypeError</code>",
+            "<code>RangeError</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "<code>g[-1]</code> is <code>undefined</code>, and reading <code>[0]</code> of undefined throws a TypeError. Always check the row <b>before</b> touching the cell.",
+            "In the check, test the row and column ranges first, and the cell value last."
+          ],
+          "exec": "const g = [[1]]\ntry {\n  console.log(g[-1][0])\n} catch (e) {\n  console.log(e.constructor.name)\n}"
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>A grid has R rows and C columns. What is the time of the island count?</p>",
+          "opts": [
+            "<code>O(R + C)</code>",
+            "<code>O(R * C)</code>",
+            "<code>O((R * C)²)</code>",
+            "<code>O(R * C * log(R * C))</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "Every cell is scanned once, and every land cell is flood-filled once because it is marked right away.",
+            "The marks are the reason it does not blow up to the square."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Pattern",
+          "q": "<p>\"Rotting oranges\": every minute, fresh oranges next to a rotten one become rotten. How many minutes until all are rotten? Which tool fits?</p>",
+          "opts": [
+            "DFS from the first rotten orange",
+            "BFS that starts with all rotten oranges in the queue at once (multi-source BFS)",
+            "Sorting the grid",
+            "A trie"
+          ],
+          "ans": 1,
+          "why": [
+            "The rot spreads at the same time from all rotten cells, one ring per minute. That is a BFS with many starting points, counted level by level.",
+            "\"Nearest X\" or \"time to spread\" in a grid usually means BFS."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>numIslands(grid)</code>. <code>grid</code> is an array of rows with <code>1</code> (land) and <code>0</code> (water). An island is land cells joined up, down, left or right (not diagonally). Return the number of islands. Do not change the input. It must work on a 300 × 300 grid of all land.</p>",
+        "examples": [
+          "numIslands([[1, 1, 0], [0, 1, 0], [0, 0, 1]])  // 2",
+          "numIslands([[0, 0], [0, 0]])  // 0"
+        ],
+        "hint": "<p>Copy the grid (or keep a <code>seen</code> array). Scan each cell. For unseen land, count 1 and flood-fill with your own <b>stack</b>, because recursion goes 90,000 calls deep on a big island.</p>",
+        "fn": "numIslands",
+        "starter": "function numIslands(grid) {\n  // your code\n}",
+        "solution": "function numIslands(grid) {\n  const R = grid.length\n  if (R === 0) return 0\n  const C = grid[0].length\n  const seen = Array.from({ length: R }, () => new Array(C).fill(false))\n  let count = 0\n  for (let r = 0; r < R; r++) {\n    for (let c = 0; c < C; c++) {\n      if (grid[r][c] !== 1 || seen[r][c]) continue\n      count++\n      const stack = [[r, c]]\n      seen[r][c] = true\n      while (stack.length) {\n        const [y, x] = stack.pop()\n        for (const [dy, dx] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {\n          const ny = y + dy\n          const nx = x + dx\n          if (ny >= 0 && nx >= 0 && ny < R && nx < C && grid[ny][nx] === 1 && !seen[ny][nx]) {\n            seen[ny][nx] = true\n            stack.push([ny, nx])\n          }\n        }\n      }\n    }\n  }\n  return count\n}",
+        "checks": [
+          {
+            "t": "two islands",
+            "verify": "assert(numIslands([[1, 1, 0], [0, 1, 0], [0, 0, 1]]) === 2, \"expected 2\")"
+          },
+          {
+            "t": "diagonal cells are not connected",
+            "verify": "assert(numIslands([[1, 0], [0, 1]]) === 2, \"expected 2\")"
+          },
+          {
+            "t": "no land and an empty grid",
+            "verify": "assert(numIslands([[0, 0], [0, 0]]) === 0 && numIslands([]) === 0, \"expected 0\")"
+          },
+          {
+            "t": "does not change the input",
+            "verify": "const g = [[1, 1], [0, 1]]; numIslands(g); assert(JSON.stringify(g) === \"[[1,1],[0,1]]\", \"the input was changed\")"
+          },
+          {
+            "t": "a 300 × 300 island (recursion would crash)",
+            "verify": "const g = Array.from({ length: 300 }, () => new Array(300).fill(1)); assert(numIslands(g) === 1, \"expected 1\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "A grid is a graph with up to 4 neighbours per cell. <b>Scan every cell</b>, and flood-fill each new piece of land once: O(R × C). Check the bounds first. Use BFS for \"nearest\" and \"spread over time\".",
+        "mistakes": [
+          "Reading <code>grid[r][c]</code> before checking the bounds.",
+          "Counting diagonal cells as connected.",
+          "Not marking cells as seen, so the fill never ends.",
+          "Deep recursion on a big island (use an explicit stack)."
+        ]
+      }
+    },
+    {
+      "id": "union-find",
+      "prereqs": [
+        "graph-repr",
+        "arrays"
+      ],
+      "dryRun": {
+        "title": "Union-find on 5 nodes. Each node starts as its own root.",
+        "columns": [
+          "operation",
+          "parent array",
+          "result"
+        ],
+        "rows": [
+          [
+            "start",
+            "[0, 1, 2, 3, 4]",
+            "5 groups"
+          ],
+          [
+            "union(0, 1)",
+            "[0, 0, 2, 3, 4]",
+            "4 groups"
+          ],
+          [
+            "union(1, 2)",
+            "[0, 0, 0, 3, 4]",
+            "3 groups: root of 2 now points at root 0"
+          ],
+          [
+            "union(3, 4)",
+            "[0, 0, 0, 3, 3]",
+            "2 groups"
+          ],
+          [
+            "union(2, 4)",
+            "[0, 0, 0, 0, 3]",
+            "1 group: root 3 now points at root 0"
+          ]
+        ],
+        "hit": 4,
+        "note": "Each group is a tree, and its <b>root</b> is the group name. <code>find(x)</code> walks up to the root. <code>union(a, b)</code> joins the two roots. Two nodes are connected exactly when their roots are equal."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const parent = [0, 1, 2, 3, 4]\nconst find = (x) =&gt; (parent[x] === x ? x : (parent[x] = find(parent[x])))\nconst union = (a, b) =&gt; {\n  const ra = find(a), rb = find(b)\n  if (ra === rb) return false\n  parent[rb] = ra\n  return true\n}\nunion(0, 1); union(1, 2); union(3, 4)\nconsole.log(find(0) === find(2), find(0) === find(4), new Set(parent.map((_, i) =&gt; find(i))).size)</code></pre>",
+          "opts": [
+            "<code>true false 2</code>",
+            "<code>true true 1</code>",
+            "<code>false false 3</code>",
+            "<code>true false 3</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "0, 1 and 2 are one group, and 3 and 4 are another. So 0 and 2 are connected, 0 and 4 are not, and there are 2 groups (2 different roots).",
+            "The number of groups equals the number of different roots."
+          ],
+          "exec": "const parent = [0, 1, 2, 3, 4]\nconst find = (x) => (parent[x] === x ? x : (parent[x] = find(parent[x])))\nconst union = (a, b) => {\n  const ra = find(a), rb = find(b)\n  if (ra === rb) return false\n  parent[rb] = ra\n  return true\n}\nunion(0, 1); union(1, 2); union(3, 4)\nconsole.log(find(0) === find(2), find(0) === find(4), new Set(parent.map((_, i) => find(i))).size)"
+        },
+        {
+          "tag": "Path compression",
+          "q": "<pre><code>const parent = [0, 0, 1, 2]   // a chain 3 → 2 → 1 → 0\nconst find = (x) =&gt; (parent[x] === x ? x : (parent[x] = find(parent[x])))\nfind(3)\nconsole.log(parent.join(\",\"))</code></pre>",
+          "opts": [
+            "<code>0,0,1,2</code>",
+            "<code>0,0,0,0</code>",
+            "<code>3,3,3,3</code>",
+            "<code>0,0,1,1</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "While walking up to the root, <code>find</code> re-points every node on the path straight at the root. The chain becomes flat.",
+            "This is <b>path compression</b>. The next <code>find</code> on any of these nodes takes one step."
+          ],
+          "exec": "const parent = [0, 0, 1, 2]   // a chain 3 → 2 → 1 → 0\nconst find = (x) => (parent[x] === x ? x : (parent[x] = find(parent[x])))\nfind(3)\nconsole.log(parent.join(\",\"))"
+        },
+        {
+          "tag": "Cycle detection",
+          "q": "<p>You process the edges of an undirected graph one by one with <code>union(a, b)</code>. When does an edge create a cycle?</p>",
+          "opts": [
+            "When a and b are both roots",
+            "When find(a) and find(b) are already the same (union returns false)",
+            "When a is smaller than b",
+            "When the group count goes up"
+          ],
+          "ans": 1,
+          "why": [
+            "If a and b are already in the same group, there is already a path between them. Adding this edge closes a loop.",
+            "This is how Kruskal's algorithm skips edges that would make a cycle."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>With path compression (and union by size or rank), how long does one <code>find</code> or <code>union</code> take, roughly?</p>",
+          "opts": [
+            "<code>O(n)</code>",
+            "<code>O(log n)</code>",
+            "<code>Almost O(1) (inverse Ackermann)</code>",
+            "<code>O(n²)</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "The inverse Ackermann function grows so slowly that it is at most 4 or 5 for any real input. In practice it is constant.",
+            "Without either trick, a long chain makes <code>find</code> cost O(n)."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "When to use it",
+          "q": "<p>Which question is a natural fit for union-find?</p>",
+          "opts": [
+            "Shortest path with weights",
+            "Are these two people in the same friend group, while friendships keep being added?",
+            "Sort the nodes by degree",
+            "Find the median of a stream"
+          ],
+          "ans": 1,
+          "why": [
+            "Union-find answers \"same group?\" very fast while groups merge over time. It never splits groups.",
+            "Other uses: number of components as edges arrive, Kruskal's MST, \"accounts merge\"."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>createUnionFind(n)</code> for nodes <code>0</code> to <code>n - 1</code>. It returns an object with <code>find(x)</code> (the root of x), <code>union(a, b)</code> (join the groups, return <code>true</code> if they were different and <code>false</code> if they were already joined), <code>connected(a, b)</code> and <code>count()</code> (the number of groups). It must handle 100,000 nodes joined in a long chain.</p>",
+        "examples": [
+          "const uf = createUnionFind(5); uf.union(0, 1); uf.union(1, 2)",
+          "uf.connected(0, 2)  // true",
+          "uf.count()  // 3"
+        ],
+        "hint": "<p>Keep <code>parent</code> and a <code>size</code> array. Write <code>find</code> with a <b>loop</b> (path halving: <code>parent[x] = parent[parent[x]]</code>) so a deep chain cannot overflow the stack. Attach the smaller tree under the bigger one.</p>",
+        "fn": "createUnionFind",
+        "starter": "function createUnionFind(n) {\n  // your code\n}",
+        "solution": "function createUnionFind(n) {\n  const parent = Array.from({ length: n }, (_, i) => i)\n  const size = new Array(n).fill(1)\n  let groups = n\n  const find = (x) => {\n    while (parent[x] !== x) {\n      parent[x] = parent[parent[x]]\n      x = parent[x]\n    }\n    return x\n  }\n  return {\n    find,\n    union(a, b) {\n      let ra = find(a)\n      let rb = find(b)\n      if (ra === rb) return false\n      if (size[ra] < size[rb]) [ra, rb] = [rb, ra]\n      parent[rb] = ra\n      size[ra] += size[rb]\n      groups--\n      return true\n    },\n    connected(a, b) {\n      return find(a) === find(b)\n    },\n    count() {\n      return groups\n    },\n  }\n}",
+        "checks": [
+          {
+            "t": "join and ask",
+            "verify": "const uf = createUnionFind(5); uf.union(0, 1); uf.union(1, 2); assert(uf.connected(0, 2) === true && uf.connected(0, 4) === false && uf.count() === 3, \"connected or count is wrong\")"
+          },
+          {
+            "t": "union tells whether it joined anything",
+            "verify": "const uf = createUnionFind(3); assert(uf.union(0, 1) === true && uf.union(1, 0) === false && uf.union(0, 1) === false, \"union return values\")"
+          },
+          {
+            "t": "every node starts alone",
+            "verify": "const uf = createUnionFind(4); assert(uf.count() === 4 && uf.find(2) === 2 && uf.connected(1, 1) === true, \"start state\")"
+          },
+          {
+            "t": "groups merge through a shared member",
+            "verify": "const uf = createUnionFind(6); uf.union(0, 1); uf.union(2, 3); uf.union(1, 3); assert(uf.connected(0, 2) && !uf.connected(0, 4) && uf.count() === 3, \"merge groups\")"
+          },
+          {
+            "t": "100,000 nodes in a long chain (a recursive find would crash)",
+            "verify": "const n = 100000; const uf = createUnionFind(n); for (let i = n - 2; i >= 0; i--) uf.union(i + 1, i); assert(uf.connected(0, n - 1) && uf.count() === 1, \"chain of 100,000 failed\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Union-find keeps groups as trees. <b>find</b> returns the root; <b>union</b> joins two roots. With path compression and union by size both are almost <b>O(1)</b>. If union returns false, the edge makes a cycle.",
+        "mistakes": [
+          "Comparing the nodes instead of their roots.",
+          "Recursive <code>find</code> on a huge chain (use a loop).",
+          "Linking nodes instead of roots in <code>union</code>.",
+          "Forgetting to lower the group count only when a real join happens."
+        ]
+      }
+    },
+    {
+      "id": "topological-sort",
+      "prereqs": [
+        "graph-repr",
+        "bfs-graphs",
+        "dfs-graphs"
+      ],
+      "dryRun": {
+        "title": "Kahn's algorithm. Edges 5→2, 5→0, 4→0, 4→1, 2→3, 3→1. In-degrees: 0:2, 1:2, 2:1, 3:1, 4:0, 5:0",
+        "columns": [
+          "pop",
+          "order so far",
+          "in-degrees that drop to 0",
+          "queue after"
+        ],
+        "rows": [
+          [
+            "4",
+            "4",
+            "-",
+            "[5]"
+          ],
+          [
+            "5",
+            "4 5",
+            "2 and 0",
+            "[2, 0]"
+          ],
+          [
+            "2",
+            "4 5 2",
+            "3",
+            "[0, 3]"
+          ],
+          [
+            "0",
+            "4 5 2 0",
+            "-",
+            "[3]"
+          ],
+          [
+            "3",
+            "4 5 2 0 3",
+            "1",
+            "[1]"
+          ],
+          [
+            "1",
+            "4 5 2 0 3 1",
+            "-",
+            "[ ]"
+          ]
+        ],
+        "hit": 1,
+        "note": "Start with every node that has <b>no incoming edge</b>. Take one, add it to the order, and remove its outgoing edges (lower the in-degree of its neighbours). Any neighbour that reaches 0 can go next."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const n = 6\nconst edges = [[5, 2], [5, 0], [4, 0], [4, 1], [2, 3], [3, 1]]\nconst adj = Array.from({ length: n }, () =&gt; [])\nconst indeg = new Array(n).fill(0)\nfor (const [a, b] of edges) { adj[a].push(b); indeg[b]++ }\nconst q = []\nfor (let i = 0; i &lt; n; i++) if (indeg[i] === 0) q.push(i)\nconst order = []\nwhile (q.length) {\n  const u = q.shift()\n  order.push(u)\n  for (const v of adj[u]) if (--indeg[v] === 0) q.push(v)\n}\nconsole.log(order.join(\",\"))</code></pre>",
+          "opts": [
+            "<code>4,5,2,0,3,1</code>",
+            "<code>5,4,0,2,3,1</code>",
+            "<code>0,1,2,3,4,5</code>",
+            "<code>4,5,0,1,2,3</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "Nodes 4 and 5 have no incoming edges, so they start in the queue. After 5 is taken, both 2 and 0 are released, and so on.",
+            "Other valid orders exist (for example 5,4,2,3,1,0). Every edge just needs its source before its target."
+          ],
+          "exec": "const n = 6\nconst edges = [[5, 2], [5, 0], [4, 0], [4, 1], [2, 3], [3, 1]]\nconst adj = Array.from({ length: n }, () => [])\nconst indeg = new Array(n).fill(0)\nfor (const [a, b] of edges) { adj[a].push(b); indeg[b]++ }\nconst q = []\nfor (let i = 0; i < n; i++) if (indeg[i] === 0) q.push(i)\nconst order = []\nwhile (q.length) {\n  const u = q.shift()\n  order.push(u)\n  for (const v of adj[u]) if (--indeg[v] === 0) q.push(v)\n}\nconsole.log(order.join(\",\"))"
+        },
+        {
+          "tag": "Cycle",
+          "q": "<pre><code>const n = 3\nconst edges = [[0, 1], [1, 2], [2, 1]]\nconst adj = Array.from({ length: n }, () =&gt; [])\nconst indeg = new Array(n).fill(0)\nfor (const [a, b] of edges) { adj[a].push(b); indeg[b]++ }\nconst q = [], order = []\nfor (let i = 0; i &lt; n; i++) if (indeg[i] === 0) q.push(i)\nwhile (q.length) {\n  const u = q.shift()\n  order.push(u)\n  for (const v of adj[u]) if (--indeg[v] === 0) q.push(v)\n}\nconsole.log(order.length)</code></pre>",
+          "opts": [
+            "<code>3</code>",
+            "<code>0</code>",
+            "<code>2</code>",
+            "<code>1</code>"
+          ],
+          "ans": 3,
+          "why": [
+            "Nodes 1 and 2 point at each other, so neither ever reaches in-degree 0. Only node 0 gets out.",
+            "If <code>order.length &lt; n</code>, the graph has a cycle and there is no valid order. This is how you detect an impossible course plan."
+          ],
+          "exec": "const n = 3\nconst edges = [[0, 1], [1, 2], [2, 1]]\nconst adj = Array.from({ length: n }, () => [])\nconst indeg = new Array(n).fill(0)\nfor (const [a, b] of edges) { adj[a].push(b); indeg[b]++ }\nconst q = [], order = []\nfor (let i = 0; i < n; i++) if (indeg[i] === 0) q.push(i)\nwhile (q.length) {\n  const u = q.shift()\n  order.push(u)\n  for (const v of adj[u]) if (--indeg[v] === 0) q.push(v)\n}\nconsole.log(order.length)"
+        },
+        {
+          "tag": "What is a valid order?",
+          "q": "<p>What makes an ordering of the nodes a valid topological order?</p>",
+          "opts": [
+            "It is sorted by node number",
+            "For every edge u → v, u appears before v",
+            "Every node appears next to its neighbours",
+            "It is unique"
+          ],
+          "ans": 1,
+          "why": [
+            "The order respects every \"must come before\" rule. There is often more than one valid order, so a test must check the rule, not one exact list.",
+            "Only a directed graph without cycles (a DAG) has one."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>What is the time of Kahn's algorithm?</p>",
+          "opts": [
+            "<code>O(V)</code>",
+            "<code>O(V + E)</code>",
+            "<code>O(V * E)</code>",
+            "<code>O(V²) always</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "Every node is queued once and every edge is removed once.",
+            "The same bound holds for the DFS version."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "DFS version",
+          "q": "<p>With DFS you can also build a topological order. What do you do?</p>",
+          "opts": [
+            "Record each node when you first reach it",
+            "Record each node after all its neighbours are done (postorder), then reverse the list",
+            "Sort by number of neighbours",
+            "Run BFS twice"
+          ],
+          "ans": 1,
+          "why": [
+            "A node is finished only after everything it points to is finished. So finishing order is \"targets first\", and reversing it puts sources first.",
+            "Both versions are fine. Kahn's is easier to explain and detects cycles for free."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>courseOrder(n, prerequisites)</code>. There are <code>n</code> courses (<code>0</code> to <code>n - 1</code>). Each pair <code>[a, b]</code> means you must take course <code>b</code> <b>before</b> course <code>a</code>. Return any valid order that takes all courses, or <code>[]</code> if it is impossible (a cycle).</p>",
+        "examples": [
+          "courseOrder(2, [[1, 0]])  // [0, 1]",
+          "courseOrder(2, [[1, 0], [0, 1]])  // []"
+        ],
+        "hint": "<p>Build the graph with an edge <code>b → a</code> for each pair, and count the in-degree of every course. Queue the courses with in-degree 0. Pop, record, lower the in-degree of its targets, and queue those that reach 0. At the end, if you recorded fewer than <code>n</code>, return <code>[]</code>.</p>",
+        "fn": "courseOrder",
+        "starter": "function courseOrder(n, prerequisites) {\n  // your code\n}",
+        "solution": "function courseOrder(n, prerequisites) {\n  const adj = Array.from({ length: n }, () => [])\n  const indeg = new Array(n).fill(0)\n  for (const [a, b] of prerequisites) {\n    adj[b].push(a)\n    indeg[a]++\n  }\n  let queue = []\n  for (let i = 0; i < n; i++) if (indeg[i] === 0) queue.push(i)\n  const order = []\n  while (queue.length) {\n    const next = []\n    for (const u of queue) {\n      order.push(u)\n      for (const v of adj[u]) {\n        indeg[v]--\n        if (indeg[v] === 0) next.push(v)\n      }\n    }\n    queue = next\n  }\n  return order.length === n ? order : []\n}",
+        "checks": [
+          {
+            "t": "a single rule",
+            "verify": "assert(JSON.stringify(courseOrder(2, [[1, 0]])) === \"[0,1]\", \"expected [0,1]\")"
+          },
+          {
+            "t": "a cycle gives an empty list",
+            "verify": "assert(JSON.stringify(courseOrder(2, [[1, 0], [0, 1]])) === \"[]\", \"expected []\")"
+          },
+          {
+            "t": "every rule is respected",
+            "verify": "const pre = [[1, 0], [2, 0], [3, 1], [3, 2]]; const o = courseOrder(4, pre); assert(o.length === 4 && new Set(o).size === 4, \"must contain every course once\"); for (const [a, b] of pre) assert(o.indexOf(b) < o.indexOf(a), \"course \" + b + \" must come before \" + a)"
+          },
+          {
+            "t": "no rules at all",
+            "verify": "const o = courseOrder(3, []); assert(o.length === 3 && new Set(o).size === 3, \"expected all three courses\")"
+          },
+          {
+            "t": "a long chain of 50,000 courses",
+            "verify": "const n = 50000; const pre = Array.from({ length: n - 1 }, (_, i) => [i + 1, i]); const o = courseOrder(n, pre); let ok = o.length === n; for (let i = 0; i < n && ok; i++) if (o[i] !== i) ok = false; assert(ok, \"wrong order for the long chain\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Topological sort orders a directed acyclic graph so every edge points forward. Kahn's way: queue the <b>in-degree 0</b> nodes, remove their edges, repeat. If you place fewer than n nodes, there is a <b>cycle</b>. O(V + E).",
+        "mistakes": [
+          "Reversing the edge direction (a prerequisite pair [a, b] is an edge b → a).",
+          "Forgetting to detect the cycle by comparing the order length with n.",
+          "Testing for one exact order when many are valid.",
+          "Using it on an undirected graph."
+        ]
+      }
+    },
+    {
+      "id": "dijkstra",
+      "prereqs": [
+        "bfs-graphs",
+        "heap"
+      ],
+      "dryRun": {
+        "title": "Dijkstra from node 0. Edges 0→1 (4), 0→2 (1), 2→1 (2), 1→3 (1), 2→3 (5)",
+        "columns": [
+          "take the closest unfinished node",
+          "edges we relax",
+          "best distances after"
+        ],
+        "rows": [
+          [
+            "0 (distance 0)",
+            "1 becomes 4, 2 becomes 1",
+            "0, 4, 1, ∞"
+          ],
+          [
+            "2 (distance 1)",
+            "1: 1 + 2 = 3, better than 4. 3: 1 + 5 = 6",
+            "0, 3, 1, 6"
+          ],
+          [
+            "1 (distance 3)",
+            "3: 3 + 1 = 4, better than 6",
+            "0, 3, 1, 4"
+          ],
+          [
+            "3 (distance 4)",
+            "no outgoing edges",
+            "0, 3, 1, 4"
+          ]
+        ],
+        "hit": 1,
+        "note": "Always finish the node with the <b>smallest known distance</b>. Its distance can no longer improve (weights are not negative). Then <b>relax</b> its edges: if going through it is shorter, update the neighbour."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const n = 4\nconst edges = [[0, 1, 4], [0, 2, 1], [2, 1, 2], [1, 3, 1], [2, 3, 5]]\nconst adj = Array.from({ length: n }, () =&gt; [])\nfor (const [u, v, w] of edges) adj[u].push([v, w])\nconst dist = Array(n).fill(Infinity)\ndist[0] = 0\nconst done = Array(n).fill(false)\nfor (let k = 0; k &lt; n; k++) {\n  let u = -1\n  for (let i = 0; i &lt; n; i++) if (!done[i] &amp;&amp; (u === -1 || dist[i] &lt; dist[u])) u = i\n  if (dist[u] === Infinity) break\n  done[u] = true\n  for (const [v, w] of adj[u]) if (dist[u] + w &lt; dist[v]) dist[v] = dist[u] + w\n}\nconsole.log(dist.join(\",\"))</code></pre>",
+          "opts": [
+            "<code>0,4,1,5</code>",
+            "<code>0,3,1,4</code>",
+            "<code>0,4,1,6</code>",
+            "<code>0,3,1,6</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "The cheapest way to node 1 is 0 → 2 → 1, which costs 1 + 2 = 3, not the direct edge of 4. The cheapest way to node 3 is 0 → 2 → 1 → 3, costing 4.",
+            "This version picks the next node by scanning all nodes, which is O(V²). A heap makes the pick O(log V)."
+          ],
+          "exec": "const n = 4\nconst edges = [[0, 1, 4], [0, 2, 1], [2, 1, 2], [1, 3, 1], [2, 3, 5]]\nconst adj = Array.from({ length: n }, () => [])\nfor (const [u, v, w] of edges) adj[u].push([v, w])\nconst dist = Array(n).fill(Infinity)\ndist[0] = 0\nconst done = Array(n).fill(false)\nfor (let k = 0; k < n; k++) {\n  let u = -1\n  for (let i = 0; i < n; i++) if (!done[i] && (u === -1 || dist[i] < dist[u])) u = i\n  if (dist[u] === Infinity) break\n  done[u] = true\n  for (const [v, w] of adj[u]) if (dist[u] + w < dist[v]) dist[v] = dist[u] + w\n}\nconsole.log(dist.join(\",\"))"
+        },
+        {
+          "tag": "Why not plain BFS?",
+          "q": "<p>Edge 0→1 costs 4, but 0→2→1 costs 1 + 2 = 3. Why does BFS give the wrong answer here?</p>",
+          "opts": [
+            "BFS cannot find any path",
+            "BFS is too slow",
+            "BFS needs a heap",
+            "BFS counts edges, not weights, so it prefers the path with fewer edges even if it is more expensive"
+          ],
+          "ans": 3,
+          "why": [
+            "BFS finds the path with the fewest edges: 0→1 has 1 edge. Dijkstra finds the cheapest total weight: 0→2→1.",
+            "If all weights are equal, BFS and Dijkstra give the same answer."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Negative edges",
+          "q": "<p>Why does Dijkstra break when an edge has a <b>negative</b> weight?</p>",
+          "opts": [
+            "A node it already finished could later become cheaper through the negative edge, but it never looks at it again",
+            "It cannot read negative numbers",
+            "The heap rejects negative values",
+            "It loops forever on every graph"
+          ],
+          "ans": 0,
+          "why": [
+            "The key promise is \"the closest unfinished node is final\". A negative edge can break this promise.",
+            "For negative weights use Bellman-Ford (next lessons)."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Stale heap entries",
+          "q": "<p>With a heap, the same node can be pushed several times as its distance improves. When you pop <code>[d, u]</code> and <code>d &gt; dist[u]</code>, what do you do?</p>",
+          "opts": [
+            "Update dist[u] to d",
+            "Stop the algorithm",
+            "Skip it, it is an old entry",
+            "Push it again"
+          ],
+          "ans": 2,
+          "why": [
+            "A better distance for <code>u</code> was already found and processed. This entry is out of date.",
+            "This \"lazy deletion\" is simpler than removing items from the middle of a heap."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>What is the time of Dijkstra with a binary heap?</p>",
+          "opts": [
+            "<code>O(V + E)</code>",
+            "<code>O((V + E) log V)</code>",
+            "<code>O(V * E)</code>",
+            "<code>O(V³)</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "Each edge can push one heap entry, and each push or pop costs O(log V). That is E log V, plus V log V for the pops.",
+            "The simple scan version is O(V²), which is fine for small dense graphs."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>dijkstra(n, edges, start)</code>. The graph is <b>directed</b>, with nodes <code>0</code> to <code>n - 1</code>, and each edge is <code>[from, to, weight]</code> with a weight of 0 or more. Return an array of the shortest distance from <code>start</code> to every node, using <code>Infinity</code> for unreachable nodes. It must handle 50,000 nodes.</p>",
+        "examples": [
+          "dijkstra(4, [[0, 1, 4], [0, 2, 1], [2, 1, 2], [1, 3, 1], [2, 3, 5]], 0)  // [0, 3, 1, 4]",
+          "dijkstra(3, [[0, 1, 5]], 0)  // [0, 5, Infinity]"
+        ],
+        "hint": "<p>Keep a min-heap of <code>[distance, node]</code> pairs (write a small one). Pop the smallest; skip it if <code>d &gt; dist[u]</code>; otherwise relax each edge and push improved neighbours.</p>",
+        "fn": "dijkstra",
+        "starter": "function dijkstra(n, edges, start) {\n  // your code\n}",
+        "solution": "function dijkstra(n, edges, start) {\n  const adj = Array.from({ length: n }, () => [])\n  for (const [u, v, w] of edges) adj[u].push([v, w])\n  const dist = new Array(n).fill(Infinity)\n  dist[start] = 0\n  const heap = [[0, start]]\n  const swap = (a, b) => {\n    ;[heap[a], heap[b]] = [heap[b], heap[a]]\n  }\n  const push = (item) => {\n    heap.push(item)\n    let i = heap.length - 1\n    while (i > 0) {\n      const p = Math.floor((i - 1) / 2)\n      if (heap[p][0] <= heap[i][0]) break\n      swap(p, i)\n      i = p\n    }\n  }\n  const pop = () => {\n    const top = heap[0]\n    const last = heap.pop()\n    if (heap.length > 0) {\n      heap[0] = last\n      let i = 0\n      while (true) {\n        let s = i\n        const l = 2 * i + 1\n        const r = 2 * i + 2\n        if (l < heap.length && heap[l][0] < heap[s][0]) s = l\n        if (r < heap.length && heap[r][0] < heap[s][0]) s = r\n        if (s === i) break\n        swap(i, s)\n        i = s\n      }\n    }\n    return top\n  }\n  while (heap.length) {\n    const [d, u] = pop()\n    if (d > dist[u]) continue\n    for (const [v, w] of adj[u]) {\n      if (d + w < dist[v]) {\n        dist[v] = d + w\n        push([dist[v], v])\n      }\n    }\n  }\n  return dist\n}",
+        "checks": [
+          {
+            "t": "the lesson example",
+            "verify": "assert(JSON.stringify(dijkstra(4, [[0, 1, 4], [0, 2, 1], [2, 1, 2], [1, 3, 1], [2, 3, 5]], 0)) === \"[0,3,1,4]\", \"expected [0,3,1,4]\")"
+          },
+          {
+            "t": "an unreachable node is Infinity",
+            "verify": "const d = dijkstra(3, [[0, 1, 5]], 0); assert(d[0] === 0 && d[1] === 5 && d[2] === Infinity, \"expected [0,5,Infinity]\")"
+          },
+          {
+            "t": "the cheaper of two parallel edges",
+            "verify": "const d = dijkstra(2, [[0, 1, 9], [0, 1, 3]], 0); assert(d[1] === 3, \"expected 3\")"
+          },
+          {
+            "t": "zero weights and a different start",
+            "verify": "const d = dijkstra(3, [[1, 2, 0], [2, 0, 4]], 1); assert(JSON.stringify(d) === \"[4,0,0]\", \"expected [4,0,0]\")"
+          },
+          {
+            "t": "a chain of 50,000 nodes stays fast",
+            "verify": "const n = 50000; const e = Array.from({ length: n - 1 }, (_, i) => [i, i + 1, (i % 3) + 1]); const t0 = Date.now(); const d = dijkstra(n, e, 0); assert(d[n - 1] === 99997 && Date.now() - t0 < 1500, \"wrong distance or too slow, use a heap\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Dijkstra finds shortest paths with <b>non-negative weights</b>: repeatedly finish the closest unfinished node and <b>relax</b> its edges. With a heap it is <b>O((V + E) log V)</b>. Skip stale heap entries. Negative weights need Bellman-Ford.",
+        "mistakes": [
+          "Using it with negative edge weights.",
+          "Using BFS when edges have different weights.",
+          "Forgetting to skip old heap entries (<code>d &gt; dist[u]</code>).",
+          "Starting with <code>dist = 0</code> everywhere instead of <code>Infinity</code>."
+        ]
+      }
+    }
+  ],
+  "flags": [
+    "topological-sort: the try-it checks the rule (every prerequisite before its course), not an exact list, because many orders are valid.",
+    "union-find: the 100,000 node check unions in reverse order, which builds a long chain unless union by size is used. The reference also uses an iterative find.",
+    "dijkstra: the chain check compares an exact distance computed in the generator (weights 1, 2, 3 repeating).",
+    "grid-problems: the 300 x 300 check would overflow a recursive flood fill on most engines.",
+    "The dry-run tables are traced by hand (concept dry runs are not machine-run)."
+  ]
+}

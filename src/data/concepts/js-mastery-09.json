@@ -1,0 +1,298 @@
+{
+ "course": "js-mastery",
+ "items": [
+  {
+   "id": "regex",
+   "prereqs": [
+    "service-workers"
+   ],
+   "dryRun": {
+    "title": "/(?<user>[\\w.]+)@(?<domain>\\w+\\.com)/ on \"mail a.b@site.com now\"",
+    "columns": [
+     "part",
+     "matches",
+     "captured as"
+    ],
+    "rows": [
+     [
+      "[\\w.]+",
+      "a.b",
+      "groups.user"
+     ],
+     [
+      "@",
+      "@",
+      "—"
+     ],
+     [
+      "\\w+\\.com",
+      "site.com",
+      "groups.domain"
+     ],
+     [
+      "whole match",
+      "a.b@site.com",
+      "m[0], index 5"
+     ]
+    ],
+    "hit": 0,
+    "note": "A regex describes a text pattern. Key pieces: character classes (<code>\\d \\w \\s [a-z]</code>), quantifiers (<code>* + ? {2,4}</code>, add <code>?</code> to make them lazy), anchors (<code>^ $ \\b</code>), groups (<code>( )</code>, named <code>(?&lt;n&gt;)</code>), lookarounds (<code>(?=…)</code>). Flags: g (all), i (ignore case), m (multiline), u (unicode)."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log('a1b22c333'.match(/\\d+/g).join(','), 'a1b22'.match(/\\d+/).index)</code></pre>",
+     "opts": [
+      "<code>1,2,2,3,3,3 1</code>",
+      "<code>1,22,333 2</code>",
+      "<code>1,22,333 1</code>",
+      "<code>1 1</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "With g, match returns every match. Without g it returns the first match with its details (index, groups)."
+     ],
+     "exec": "console.log('a1b22c333'.match(/\\d+/g).join(','), 'a1b22'.match(/\\d+/).index)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const s = '&lt;b&gt;x&lt;/b&gt;&lt;b&gt;y&lt;/b&gt;'\nconsole.log(s.match(/&lt;b&gt;.*&lt;\\/b&gt;/)[0].length, s.match(/&lt;b&gt;.*?&lt;\\/b&gt;/)[0])</code></pre>",
+     "opts": [
+      "<code>16 &lt;b&gt;x&lt;/b&gt;</code>",
+      "<code>8 &lt;b&gt;x&lt;/b&gt;&lt;b&gt;y&lt;/b&gt;</code>",
+      "<code>16 &lt;b&gt;y&lt;/b&gt;</code>",
+      "<code>8 &lt;b&gt;x&lt;/b&gt;</code>"
+     ],
+     "ans": 0,
+     "why": [
+      ".* is greedy and runs to the last </b>. .*? is lazy and stops at the first."
+     ],
+     "exec": "const s = '<b>x</b><b>y</b>'\nconsole.log(s.match(/<b>.*<\\/b>/)[0].length, s.match(/<b>.*?<\\/b>/)[0])"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const re = /a/g\nconsole.log(re.test('aa'), re.test('aa'), re.test('aa'))</code></pre>",
+     "opts": [
+      "<code>true true true</code>",
+      "<code>true false true</code>",
+      "<code>false false false</code>",
+      "<code>true true false</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "A global regex remembers lastIndex between test() calls: 0 → 1 → 2 (no match, resets to 0). Do not reuse /g regexes for test()."
+     ],
+     "exec": "const re = /a/g\nconsole.log(re.test('aa'), re.test('aa'), re.test('aa'))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log('2026-10-24'.replace(/(\\d+)-(\\d+)-(\\d+)/, '$3/$2/$1'), 'price: 100'.replace(/\\d+(?=$)/, (n) =&gt; n * 2))</code></pre>",
+     "opts": [
+      "<code>$3/$2/$1 price: 100</code>",
+      "<code>24/10/2026 price: 200</code>",
+      "<code>24/10/2026 price: 100</code>",
+      "<code>2026/10/24 price: 200</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "$1… refer to groups in the replacement. (?=$) is a lookahead: digits right before the end. A function replacement computes the new text."
+     ],
+     "exec": "console.log('2026-10-24'.replace(/(\\d+)-(\\d+)-(\\d+)/, '$3/$2/$1'), 'price: 100'.replace(/\\d+(?=$)/, (n) => n * 2))"
+    },
+    {
+     "tag": "Escaping",
+     "q": "You build a regex from user input <code>\"a.b\"</code> to find that exact text. What must you do?",
+     "opts": [
+      "Nothing",
+      "Escape special characters first, or \".\" matches any character",
+      "Add the g flag",
+      "Wrap it in quotes"
+     ],
+     "ans": 1,
+     "why": [
+      "Escape with s.replace(/[.*+?^${}()|[\\]\\\\]/g, \"\\\\$&amp;\") before new RegExp(s)."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>parseLogLine(line)</code> for lines like <code>\"2026-10-24 12:30:05 [ERROR] db: timeout after 30s\"</code>: return <code>{ date, time, level, source, message }</code>, or null if the line does not match. Use one regex with named groups.",
+    "examples": [
+     "parseLogLine(\"2026-10-24 12:30:05 [ERROR] db: timeout\").level  // \"ERROR\"",
+     "parseLogLine(\"garbage\")  // null"
+    ],
+    "hint": "Anchor with ^ and $; levels are capital letters; source is \\w+; message is the rest (.+).",
+    "fn": "parseLogLine",
+    "starter": "function parseLogLine(line) {\n  // your code\n}",
+    "solution": "function parseLogLine(line) {\n  const m = line.match(/^(?<date>\\d{4}-\\d{2}-\\d{2}) (?<time>\\d{2}:\\d{2}:\\d{2}) \\[(?<level>[A-Z]+)\\] (?<source>\\w+): (?<message>.+)$/)\n  return m ? { ...m.groups } : null\n}",
+    "checks": [
+     {
+      "t": "parses every field",
+      "verify": "const r = parseLogLine(\"2026-10-24 12:30:05 [ERROR] db: timeout after 30s\"); assert(r && r.date === \"2026-10-24\" && r.time === \"12:30:05\" && r.level === \"ERROR\" && r.source === \"db\" && r.message === \"timeout after 30s\", JSON.stringify(r))"
+     },
+     {
+      "t": "non-matching lines give null",
+      "verify": "assert(parseLogLine(\"garbage\") === null && parseLogLine(\"2026-10-24 12:30:05 ERROR db: x\") === null, \"null\")"
+     },
+     {
+      "t": "message may contain colons and brackets",
+      "verify": "const r = parseLogLine(\"2026-01-01 00:00:00 [INFO] api: GET /x [200]: ok\"); assert(r && r.message === \"GET /x [200]: ok\", \"message\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Classes, quantifiers (greedy vs lazy), anchors, groups, lookarounds and flags. Escape user input, and beware lastIndex on /g regexes.",
+    "mistakes": [
+     "Greedy .* swallowing too much.",
+     "Reusing a /g regex with test().",
+     "Building a regex from unescaped user input."
+    ]
+   }
+  },
+  {
+   "id": "date-time",
+   "prereqs": [
+    "regex"
+   ],
+   "dryRun": {
+    "title": "One instant, many views: new Date(Date.UTC(2026, 0, 31, 20, 0))",
+    "columns": [
+     "view",
+     "value"
+    ],
+    "rows": [
+     [
+      "what is stored",
+      "ms since 1970-01-01 UTC (one number)"
+     ],
+     [
+      "toISOString()",
+      "2026-01-31T20:00:00.000Z"
+     ],
+     [
+      "in Asia/Kolkata",
+      "1 Feb 2026, 01:30"
+     ],
+     [
+      "in America/New_York",
+      "31 Jan 2026, 15:00"
+     ],
+     [
+      "getMonth()",
+      "0 = January (months start at 0)"
+     ]
+    ],
+    "hit": 2,
+    "note": "A Date is one instant in time (a UTC timestamp). Time zones only matter when you <b>display</b> or <b>parse</b>. Store and send ISO strings in UTC; format with <code>Intl.DateTimeFormat</code> and an explicit timeZone. Temporal is the modern API that fixes most Date problems."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const d = new Date(Date.UTC(2026, 0, 31, 20, 0))\nconst f = (tz) =&gt; new Intl.DateTimeFormat('en-GB', { timeZone: tz, dateStyle: 'medium', timeStyle: 'short' }).format(d)\nconsole.log(f('Asia/Kolkata') + ' | ' + f('America/New_York'))</code></pre>",
+     "opts": [
+      "<code>31 Jan 2026, 20:00 | 31 Jan 2026, 20:00</code>",
+      "<code>1 Feb 2026, 01:30 | 1 Feb 2026, 01:30</code>",
+      "<code>31 Jan 2026, 15:00 | 1 Feb 2026, 01:30</code>",
+      "<code>1 Feb 2026, 01:30 | 31 Jan 2026, 15:00</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Same instant, different wall clocks. India is UTC+5:30, so it is already 1 February there."
+     ],
+     "exec": "const d = new Date(Date.UTC(2026, 0, 31, 20, 0))\nconst f = (tz) => new Intl.DateTimeFormat('en-GB', { timeZone: tz, dateStyle: 'medium', timeStyle: 'short' }).format(d)\nconsole.log(f('Asia/Kolkata') + ' | ' + f('America/New_York'))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const d = new Date(Date.UTC(2026, 0, 31))\nd.setUTCMonth(d.getUTCMonth() + 1)\nconsole.log(d.toISOString().slice(0, 10))</code></pre>",
+     "opts": [
+      "<code>2026-03-03</code>",
+      "<code>2026-02-28</code>",
+      "<code>2026-02-31</code>",
+      "<code>2026-03-31</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "31 February does not exist, so it rolls over into March. Adding months needs care (clamp to the last day)."
+     ],
+     "exec": "const d = new Date(Date.UTC(2026, 0, 31))\nd.setUTCMonth(d.getUTCMonth() + 1)\nconsole.log(d.toISOString().slice(0, 10))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log(new Date(Date.UTC(2026, 11, 25)).getUTCMonth(), new Date('2026-13-01').getTime())</code></pre>",
+     "opts": [
+      "<code>12 0</code>",
+      "<code>11 Invalid Date</code>",
+      "<code>11 NaN</code>",
+      "<code>12 NaN</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Months are 0-based (11 = December). An invalid date has time NaN, it does not throw."
+     ],
+     "exec": "console.log(new Date(Date.UTC(2026, 11, 25)).getUTCMonth(), new Date('2026-13-01').getTime())"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const a = new Date('2026-03-01T00:00:00Z'), b = new Date('2026-03-08T00:00:00Z')\nconsole.log((b - a) / 86400000, a &lt; b)</code></pre>",
+     "opts": [
+      "<code>7 false</code>",
+      "<code>604800000 true</code>",
+      "<code>NaN true</code>",
+      "<code>7 true</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Subtracting Dates gives milliseconds. Comparisons work because Dates convert to numbers."
+     ],
+     "exec": "const a = new Date('2026-03-01T00:00:00Z'), b = new Date('2026-03-08T00:00:00Z')\nconsole.log((b - a) / 86400000, a < b)"
+    },
+    {
+     "tag": "Parsing",
+     "q": "<code>new Date(\"2026-03-01\")</code> vs <code>new Date(\"2026-03-01T00:00\")</code>: what is the trap?",
+     "opts": [
+      "Both are UTC",
+      "The date-only form is parsed as UTC, the date-time form as local time",
+      "Both are local",
+      "The second throws"
+     ],
+     "ans": 1,
+     "why": [
+      "Always include an explicit zone (Z or +05:30) in strings you parse."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>addMonthsClamped(isoDate, n)</code> for date-only strings (UTC): add n months and clamp to the last day of the target month. Also write <code>daysBetween(a, b)</code> for two ISO dates.",
+    "examples": [
+     "addMonthsClamped(\"2026-01-31\", 1)  // \"2026-02-28\"",
+     "daysBetween(\"2026-03-01\", \"2026-03-08\")  // 7"
+    ],
+    "hint": "Get y, m, d in UTC; the last day of a month is new Date(Date.UTC(y, m + 1, 0)).getUTCDate().",
+    "fn": "addMonthsClamped",
+    "starter": "function addMonthsClamped(isoDate, n) {\n  // your code\n}\nfunction daysBetween(a, b) {\n  // your code\n}",
+    "solution": "function addMonthsClamped(isoDate, n) {\n  const d = new Date(isoDate + 'T00:00:00Z')\n  const y = d.getUTCFullYear(), m = d.getUTCMonth() + n\n  const last = new Date(Date.UTC(y, m + 1, 0)).getUTCDate()\n  return new Date(Date.UTC(y, m, Math.min(d.getUTCDate(), last))).toISOString().slice(0, 10)\n}\nfunction daysBetween(a, b) {\n  return Math.round((new Date(b + 'T00:00:00Z') - new Date(a + 'T00:00:00Z')) / 86400000)\n}",
+    "checks": [
+     {
+      "t": "clamps to the end of a short month",
+      "verify": "assert(addMonthsClamped(\"2026-01-31\", 1) === \"2026-02-28\" && addMonthsClamped(\"2028-01-31\", 1) === \"2028-02-29\", \"clamp\")"
+     },
+     {
+      "t": "crosses years and goes backwards",
+      "verify": "assert(addMonthsClamped(\"2026-11-15\", 3) === \"2027-02-15\" && addMonthsClamped(\"2026-03-31\", -1) === \"2026-02-28\", \"years\")"
+     },
+     {
+      "t": "days between dates",
+      "verify": "assert(daysBetween(\"2026-03-01\", \"2026-03-08\") === 7 && daysBetween(\"2026-12-31\", \"2027-01-01\") === 1, \"days\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "A Date is a UTC instant. Store/send ISO UTC strings, format with Intl and an explicit timeZone, remember months start at 0, and handle month-end rollovers.",
+    "mistakes": [
+     "Parsing strings without a zone.",
+     "Adding months with setMonth and landing in the next month.",
+     "Using local getters (getHours) when you meant UTC."
+    ]
+   }
+  }
+ ]
+}

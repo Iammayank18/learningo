@@ -1,0 +1,660 @@
+{
+  "items": [
+    {
+      "id": "merge-intervals",
+      "pattern": {
+        "name": "Sort by start, then sweep",
+        "question": "The intervals come in random order. What single sort would make every possible overlap show up between neighbours?",
+        "idea": [
+          "If you sort the intervals by <b>start</b>, an interval can only overlap the one just before it (or the merged result so far). You never need to compare far apart intervals.",
+          "Walk through the sorted list and keep the last merged interval. If the next start is at or before its end, stretch the end to the larger value. Otherwise start a new merged interval."
+        ],
+        "spotWhen": [
+          "The statement is about <b>overlapping ranges</b>, meetings or time slots.",
+          "The input is not sorted, but order by start would make the answer easy.",
+          "Overlap with one interval depends only on the one closest before it."
+        ],
+        "prereqs": [
+          "intervals",
+          "arrays-2"
+        ]
+      },
+      "dryRun": {
+        "title": "intervals = [[8,10],[1,3],[2,6],[15,18]]",
+        "columns": [
+          "interval (sorted)",
+          "last in result",
+          "start <= last end?",
+          "result after"
+        ],
+        "rows": [
+          [
+            "[1,3]",
+            "none",
+            "-",
+            "[[1,3]]"
+          ],
+          [
+            "[2,6]",
+            "[1,3]",
+            "yes (2 <= 3)",
+            "[[1,6]]: end becomes max(3, 6)"
+          ],
+          [
+            "[8,10]",
+            "[1,6]",
+            "no (8 > 6)",
+            "[[1,6],[8,10]]"
+          ],
+          [
+            "[15,18]",
+            "[8,10]",
+            "no (15 > 10)",
+            "[[1,6],[8,10],[15,18]]"
+          ]
+        ],
+        "hit": 1,
+        "note": "The input is sorted by start first: [[1,3],[2,6],[8,10],[15,18]]. After that, the overlap [2,6] with [1,3] shows up right next to it.",
+        "args": [
+          [
+            [
+              8,
+              10
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              2,
+              6
+            ],
+            [
+              15,
+              18
+            ]
+          ]
+        ],
+        "result": [
+          [
+            1,
+            6
+          ],
+          [
+            8,
+            10
+          ],
+          [
+            15,
+            18
+          ]
+        ]
+      },
+      "constraints": [
+        "Each interval is [start, end] with start <= end",
+        "The input is not sorted",
+        "Intervals that only touch, like [1,4] and [4,5], are merged",
+        "Target: O(n log n) time"
+      ],
+      "minutes": 25,
+      "review": {
+        "approaches": [
+          {
+            "name": "Merge any overlapping pair until none is left",
+            "time": "O(n²)",
+            "space": "O(n)",
+            "idea": "Compare every pair, merge one overlap, and start again until nothing overlaps.",
+            "best": false
+          },
+          {
+            "name": "Sort by start, then sweep",
+            "time": "O(n log n)",
+            "space": "O(n)",
+            "idea": "Sort a copy by start. Extend the last merged interval or add a new one.",
+            "best": true
+          }
+        ],
+        "why": [
+          "After sorting by start, every interval starts at or after the previous one. So if the next interval does not overlap the last merged one, it cannot overlap any earlier one either, because their ends are not larger than the last end. That is why one pass with a single \"last\" interval is enough.",
+          "Sorting costs O(n log n) and the sweep is O(n), so sorting dominates. The result list can hold up to n intervals, so the space is O(n)."
+        ],
+        "mistakes": [
+          "Not sorting first, or sorting by end. The sweep only works when sorted by start.",
+          "Using <code>start &lt; last end</code> instead of <code>&lt;=</code>. Touching intervals like [1,4] and [4,5] would stay separate.",
+          "Setting the new end to the current end instead of <code>max(lastEnd, end)</code>. A big interval that contains a smaller one would shrink.",
+          "Sorting with the default <code>sort()</code>. It compares as text, so 10 comes before 9."
+        ],
+        "variations": [
+          "Insert one new interval into an already sorted list of non-overlapping intervals.",
+          "Find the <b>minimum number of rooms</b> needed so that no two meetings overlap in the same room.",
+          "Return the intervals that remain after you remove the least number of overlapping ones."
+        ]
+      }
+    },
+    {
+      "id": "reverse-linked-list",
+      "pattern": {
+        "name": "Flip each pointer with prev and cur",
+        "question": "You turn one arrow around so it points backward. What do you lose if you do it before saving where the arrow used to point?",
+        "idea": [
+          "Reversing means every node should point to the node that used to come <b>before</b> it. Walk the list with two pointers: <code>cur</code> is the node you are fixing, <code>prev</code> is the already reversed part.",
+          "At each node, first save <code>cur.next</code>, then point <code>cur.next</code> at <code>prev</code>, then move both pointers one step. When <code>cur</code> becomes <code>null</code>, <code>prev</code> is the new head."
+        ],
+        "spotWhen": [
+          "The statement asks you to <b>reverse</b> a list or part of it.",
+          "You are asked to change the pointers in place and not create new nodes.",
+          "Extra memory should be O(1), so storing the nodes in an array is not allowed."
+        ],
+        "prereqs": [
+          "linked-lists"
+        ]
+      },
+      "dryRun": {
+        "title": "head = 1 → 2 → 3",
+        "columns": [
+          "step",
+          "cur",
+          "saved next",
+          "cur.next now points to",
+          "prev after"
+        ],
+        "rows": [
+          [
+            "1",
+            "1",
+            "2",
+            "null",
+            "1"
+          ],
+          [
+            "2",
+            "2",
+            "3",
+            "1",
+            "2"
+          ],
+          [
+            "3",
+            "3",
+            "null",
+            "2",
+            "3"
+          ],
+          [
+            "end",
+            "null",
+            "-",
+            "loop stops",
+            "return 3 (list is 3 → 2 → 1)"
+          ]
+        ],
+        "hit": 0,
+        "note": "Look at step 1: <b>next is saved as 2 before</b> node 1 is pointed at null. Without that saved pointer, the rest of the list is lost.",
+        "args": [
+          {
+            "val": 1,
+            "next": {
+              "val": 2,
+              "next": {
+                "val": 3,
+                "next": null
+              }
+            }
+          }
+        ],
+        "result": {
+          "val": 3,
+          "next": {
+            "val": 2,
+            "next": {
+              "val": 1,
+              "next": null
+            }
+          }
+        }
+      },
+      "constraints": [
+        "The list can be empty (head is null)",
+        "Reverse the nodes in place; do not create new nodes",
+        "Return the new head",
+        "Target: O(n) time and O(1) extra space"
+      ],
+      "minutes": 15,
+      "review": {
+        "approaches": [
+          {
+            "name": "Copy values into an array",
+            "time": "O(n)",
+            "space": "O(n)",
+            "idea": "Read the values, then write them back in reverse order.",
+            "best": false
+          },
+          {
+            "name": "Recursion",
+            "time": "O(n)",
+            "space": "O(n)",
+            "idea": "Reverse the rest of the list first, then make the next node point back to the current one.",
+            "best": false
+          },
+          {
+            "name": "Iterative pointer flip",
+            "time": "O(n)",
+            "space": "O(1)",
+            "idea": "Walk once with prev and cur, flipping each pointer after saving the next node.",
+            "best": true
+          }
+        ],
+        "why": [
+          "At every step the nodes before <code>cur</code> are already reversed and start at <code>prev</code>, and the nodes from <code>cur</code> on are untouched. Flipping one pointer extends the reversed part by one node and keeps that true.",
+          "Each node is visited once, so the time is O(n). Only three pointers are used, so the space is O(1)."
+        ],
+        "mistakes": [
+          "Setting <code>cur.next = prev</code> before saving <code>cur.next</code>. The rest of the list is lost.",
+          "Returning <code>cur</code> at the end. It is <code>null</code> by then. Return <code>prev</code>.",
+          "Forgetting that the old head must end up pointing to <code>null</code>, which gives a cycle.",
+          "Not handling an empty list. The loop should simply not run and return <code>null</code>."
+        ],
+        "variations": [
+          "Reverse only the nodes between position <b>left</b> and <b>right</b>.",
+          "Reverse the list in groups of <b>k</b> nodes.",
+          "Check whether a list is a palindrome in O(1) extra space."
+        ]
+      }
+    },
+    {
+      "id": "max-depth-tree",
+      "pattern": {
+        "name": "Depth from the depths of two children",
+        "question": "If someone told you the depth of the left subtree and the depth of the right subtree, how would you get the depth of the whole tree?",
+        "idea": [
+          "A tree is a node plus two smaller trees. Its depth is <b>1 plus the larger of the two child depths</b>. An empty tree has depth 0, which stops the recursion.",
+          "You trust the recursive call to give the child depth and only write the small step that combines the two answers. Every node is visited once."
+        ],
+        "spotWhen": [
+          "The statement asks for a value of the <b>whole tree</b> (height, count, sum).",
+          "The answer for a node can be built from the answers of its left and right child.",
+          "There is a natural base case: an empty tree."
+        ],
+        "prereqs": [
+          "tree-measurements",
+          "binary-tree",
+          "dfs"
+        ]
+      },
+      "dryRun": {
+        "title": "root = [3, 9, 20, null, null, 15, 7]",
+        "columns": [
+          "node (finishes in this order)",
+          "left depth",
+          "right depth",
+          "returns"
+        ],
+        "rows": [
+          [
+            "9",
+            "0",
+            "0",
+            "1"
+          ],
+          [
+            "15",
+            "0",
+            "0",
+            "1"
+          ],
+          [
+            "7",
+            "0",
+            "0",
+            "1"
+          ],
+          [
+            "20",
+            "1",
+            "1",
+            "2"
+          ],
+          [
+            "3",
+            "1",
+            "2",
+            "3"
+          ]
+        ],
+        "hit": 4,
+        "note": "A node can only answer after <b>both children</b> have answered. That is why leaves finish first and the root finishes last, with 1 + max(1, 2) = 3.",
+        "args": [
+          {
+            "val": 3,
+            "left": {
+              "val": 9,
+              "left": null,
+              "right": null
+            },
+            "right": {
+              "val": 20,
+              "left": {
+                "val": 15,
+                "left": null,
+                "right": null
+              },
+              "right": {
+                "val": 7,
+                "left": null,
+                "right": null
+              }
+            }
+          }
+        ],
+        "result": 3
+      },
+      "constraints": [
+        "The tree can be empty (root is null), then the depth is 0",
+        "Depth counts nodes on the longest path from the root down to a leaf",
+        "The tree is not necessarily balanced or sorted",
+        "Target: O(n) time"
+      ],
+      "minutes": 15,
+      "review": {
+        "approaches": [
+          {
+            "name": "Level by level (BFS)",
+            "time": "O(n)",
+            "space": "O(w)",
+            "idea": "Process the tree one level at a time with a queue and count the levels. w is the widest level.",
+            "best": false
+          },
+          {
+            "name": "Recursive DFS",
+            "time": "O(n)",
+            "space": "O(h)",
+            "idea": "Return 1 + max(depth of left, depth of right), with 0 for an empty tree. h is the height.",
+            "best": true
+          }
+        ],
+        "why": [
+          "The longest root-to-leaf path goes through either the left or the right child. So its length is 1 plus the longer of the two child depths, and the same reasoning applies inside each subtree.",
+          "Each node is visited once, so the time is O(n). The calls pile up as deep as the tree is high, so the extra space is O(h). That is O(log n) for a balanced tree and O(n) for a chain."
+        ],
+        "mistakes": [
+          "Returning 1 for an empty tree instead of 0, so the answer is off by one.",
+          "Using <code>+</code> instead of <code>Math.max</code> for the two child depths, which counts all nodes.",
+          "Forgetting the <code>1 +</code> for the current node.",
+          "Checking only one child, so a node with a single child is handled wrongly."
+        ],
+        "variations": [
+          "Find the <b>minimum</b> depth: the shortest path to a leaf.",
+          "Check whether the tree is <b>height-balanced</b>.",
+          "Return the diameter: the longest path between any two nodes."
+        ]
+      }
+    },
+    {
+      "id": "number-of-islands",
+      "pattern": {
+        "name": "Scan the grid and flood each new island",
+        "question": "You find a land cell. Before you keep scanning, how do you make sure the rest of the same island is never counted again?",
+        "idea": [
+          "Scan every cell. The first time you meet a <b>land cell</b> you have found a new island, so add 1. Then flood the whole island: visit every connected land cell (up, down, left, right) and turn it into water.",
+          "Because the island is now gone, the scan will never count it a second time. Each cell is turned into water at most once, so the total work stays linear in the grid size."
+        ],
+        "spotWhen": [
+          "The input is a <b>grid</b> and the statement asks for groups of connected cells.",
+          "Connection means up, down, left and right.",
+          "You need to count or measure regions, not find one path."
+        ],
+        "prereqs": [
+          "grid-problems",
+          "dfs-graphs"
+        ]
+      },
+      "dryRun": {
+        "title": "grid = [[1,1,0],[0,1,0],[0,0,1]]",
+        "columns": [
+          "cells scanned",
+          "value now",
+          "action",
+          "count"
+        ],
+        "rows": [
+          [
+            "(0,0)",
+            "1",
+            "new island: count it, then flood (0,0), (0,1), (1,1) to 0",
+            "1"
+          ],
+          [
+            "(0,1), (1,1)",
+            "0",
+            "already flooded: skip",
+            "1"
+          ],
+          [
+            "(0,2), (1,0), (1,2), (2,0), (2,1)",
+            "0",
+            "water: skip",
+            "1"
+          ],
+          [
+            "(2,2)",
+            "1",
+            "new island: count it, then flood (2,2)",
+            "2"
+          ]
+        ],
+        "hit": 1,
+        "note": "The cells (0,1) and (1,1) were land, but the first flood turned them into water. The scan <b>skips them</b>, which is why one island is counted once.",
+        "args": [
+          [
+            [
+              1,
+              1,
+              0
+            ],
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              1
+            ]
+          ]
+        ],
+        "result": 2
+      },
+      "constraints": [
+        "Cells hold 1 for land and 0 for water",
+        "Only up, down, left and right neighbours are connected; diagonals are not",
+        "Rows may be given in any size, including an empty grid",
+        "Target: O(rows × cols) time"
+      ],
+      "minutes": 25,
+      "review": {
+        "approaches": [
+          {
+            "name": "Flood fill with a separate visited grid",
+            "time": "O(rows × cols)",
+            "space": "O(rows × cols)",
+            "idea": "Keep a second grid of booleans and flood without changing the input.",
+            "best": false
+          },
+          {
+            "name": "Union-Find over land cells",
+            "time": "O(rows × cols × α(rows × cols))",
+            "space": "O(rows × cols)",
+            "idea": "Join neighbouring land cells into sets and count the sets.",
+            "best": false
+          },
+          {
+            "name": "Flood fill by sinking land with a stack",
+            "time": "O(rows × cols)",
+            "space": "O(rows × cols)",
+            "idea": "When land is found, count it and turn all connected land to water with an explicit stack.",
+            "best": true
+          }
+        ],
+        "why": [
+          "A flood from one land cell reaches exactly the cells of its island, so every island is counted once: when the scan meets its first cell. The flood turns those cells to water, so no cell of that island starts another flood.",
+          "Every cell is checked by the scan once and is added to a stack at most once, so the time is O(rows × cols). In the worst case (all land) the stack can hold many cells, so the space is O(rows × cols)."
+        ],
+        "mistakes": [
+          "Not turning a cell to water before pushing it. The same cell is pushed again and again and the island count can go wrong or the loop gets slow.",
+          "Counting a cell as new island without checking that it is still land after earlier floods.",
+          "Including diagonal neighbours, which join islands that should stay separate.",
+          "Recursing on a huge grid. A deep recursion can overflow the call stack, so an explicit stack is safer."
+        ],
+        "variations": [
+          "Return the <b>area of the biggest island</b>.",
+          "Count islands when diagonal neighbours are also connected.",
+          "The grid changes over time as land is added. Count islands after each step."
+        ]
+      }
+    },
+    {
+      "id": "coin-change",
+      "pattern": {
+        "name": "Fewest coins for every amount, bottom-up",
+        "question": "You want the fewest coins for amount 6. If you already knew the answer for every smaller amount, how would you use it?",
+        "idea": [
+          "Let <code>dp[a]</code> be the fewest coins to make amount <code>a</code>. The last coin you add can be any coin that fits, so <code>dp[a] = 1 + min(dp[a - coin])</code> over all coins with <code>coin &lt;= a</code>.",
+          "Fill the table from 0 upward, so every smaller amount is ready when you need it. Taking the biggest coin first (greedy) can fail, so you must try every coin at every amount."
+        ],
+        "spotWhen": [
+          "The statement asks for the <b>fewest items</b> (or most, or the count of ways) to reach a total.",
+          "You can reuse each coin as many times as you want.",
+          "A greedy choice seems tempting, but one bad choice early can block the best total."
+        ],
+        "prereqs": [
+          "dp-1d",
+          "memo-vs-tab"
+        ]
+      },
+      "dryRun": {
+        "title": "coins = [1, 3, 4], amount = 6",
+        "columns": [
+          "amount",
+          "with coin 1",
+          "with coin 3",
+          "with coin 4",
+          "dp[amount]"
+        ],
+        "rows": [
+          [
+            "0",
+            "-",
+            "-",
+            "-",
+            "0"
+          ],
+          [
+            "1",
+            "1",
+            "-",
+            "-",
+            "1"
+          ],
+          [
+            "2",
+            "2",
+            "-",
+            "-",
+            "2"
+          ],
+          [
+            "3",
+            "3",
+            "1",
+            "-",
+            "1"
+          ],
+          [
+            "4",
+            "2",
+            "2",
+            "1",
+            "1"
+          ],
+          [
+            "5",
+            "2",
+            "3",
+            "2",
+            "2"
+          ],
+          [
+            "6",
+            "3",
+            "2",
+            "3",
+            "2"
+          ]
+        ],
+        "hit": 6,
+        "note": "For amount 6 the best is 3 + 3 = 2 coins. A greedy choice (take 4 first, then 1 + 1) gives <b>3 coins</b>, which is worse.",
+        "args": [
+          [
+            1,
+            3,
+            4
+          ],
+          6
+        ],
+        "result": 2
+      },
+      "constraints": [
+        "Each coin can be used any number of times",
+        "Return -1 if the amount cannot be made",
+        "The amount 0 needs 0 coins",
+        "Target: O(amount × coins) time and O(amount) space"
+      ],
+      "minutes": 25,
+      "review": {
+        "approaches": [
+          {
+            "name": "Plain recursion over all coins",
+            "time": "O(coins^amount)",
+            "space": "O(amount)",
+            "idea": "Try every coin for the remaining amount. The same amounts are solved again and again.",
+            "best": false
+          },
+          {
+            "name": "Memoized recursion",
+            "time": "O(amount × coins)",
+            "space": "O(amount)",
+            "idea": "Store the answer for each remaining amount so it is solved once.",
+            "best": false
+          },
+          {
+            "name": "Bottom-up table",
+            "time": "O(amount × coins)",
+            "space": "O(amount)",
+            "idea": "Fill dp from 0 to amount, trying every coin that fits at each amount.",
+            "best": true
+          }
+        ],
+        "why": [
+          "The best way to make amount a ends with some coin c. Before that coin, the rest is a - c, and it must itself be made with the fewest coins. So the best answer is 1 plus the best of those smaller answers, and trying every coin finds it.",
+          "The table has amount + 1 entries and each entry tries every coin, so the time is O(amount × coins). The table is the only extra memory: O(amount)."
+        ],
+        "mistakes": [
+          "Using greedy (largest coin first). For coins [1, 3, 4] and amount 6 it gives 3 coins instead of 2.",
+          "Starting the table with 0 everywhere instead of <code>Infinity</code>. The minimum would always stay 0.",
+          "Returning <code>Infinity</code> when the amount is impossible instead of -1.",
+          "Reading <code>dp[a - coin]</code> when <code>coin &gt; a</code>, which is a negative index."
+        ],
+        "variations": [
+          "Count the <b>number of different ways</b> to make the amount.",
+          "Each coin can be used at most once.",
+          "Return one actual set of coins that reaches the minimum, not only the count."
+        ]
+      }
+    }
+  ],
+  "flags": [
+    "number-of-islands: the reference solution sinks land and changes the input grid. A caller who needs the grid afterwards must copy it first. Not mentioned elsewhere in the lesson.",
+    "constraints: I wrote only limits that the statement or reference solution implies, not numeric size limits, because the input does not give any."
+  ]
+}

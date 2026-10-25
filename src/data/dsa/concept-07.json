@@ -1,0 +1,868 @@
+{
+  "items": [
+    {
+      "id": "fibonacci",
+      "prereqs": [
+        "recursion",
+        "big-o"
+      ],
+      "dryRun": {
+        "title": "How many calls does fib(n) make? Without memo vs with memo",
+        "columns": [
+          "n",
+          "fib(n)",
+          "calls without memo",
+          "calls with memo"
+        ],
+        "rows": [
+          [
+            "2",
+            "1",
+            "3",
+            "3"
+          ],
+          [
+            "3",
+            "2",
+            "5",
+            "5"
+          ],
+          [
+            "4",
+            "3",
+            "9",
+            "7"
+          ],
+          [
+            "5",
+            "5",
+            "15",
+            "9"
+          ],
+          [
+            "6",
+            "8",
+            "25",
+            "11"
+          ]
+        ],
+        "hit": 4,
+        "note": "Without memo the calls grow by about <b>1.6× every step</b> (that is O(2ⁿ)). With memo they grow by 2 per step (O(n)), because each fib(k) is computed only once."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>let calls = 0\nfunction fib(n) {\n  calls++\n  return n &lt; 2 ? n : fib(n - 1) + fib(n - 2)\n}\nconsole.log(fib(5), calls)</code></pre>",
+          "opts": [
+            "<code>5 5</code>",
+            "<code>5 15</code>",
+            "<code>8 15</code>",
+            "<code>5 9</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "<code>fib(5)</code> is 5, but it needed 15 calls. The same small values, like <code>fib(2)</code>, are worked out again and again.",
+            "Draw the call tree and you will see the repeated branches."
+          ],
+          "exec": "let calls = 0\nfunction fib(n) {\n  calls++\n  return n < 2 ? n : fib(n - 1) + fib(n - 2)\n}\nconsole.log(fib(5), calls)"
+        },
+        {
+          "tag": "Add a memo",
+          "q": "<pre><code>let calls = 0\nconst memo = new Map()\nfunction fib(n) {\n  calls++\n  if (n &lt; 2) return n\n  if (memo.has(n)) return memo.get(n)\n  const v = fib(n - 1) + fib(n - 2)\n  memo.set(n, v)\n  return v\n}\nconsole.log(fib(5), calls)</code></pre>",
+          "opts": [
+            "<code>5 15</code>",
+            "<code>5 5</code>",
+            "<code>5 9</code>",
+            "<code>5 25</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "The memo remembers each answer. Calls drop from 15 to 9, and the gap grows fast as n grows.",
+            "Calls with a memo follow <code>2n - 1</code>, so the time is O(n)."
+          ],
+          "exec": "let calls = 0\nconst memo = new Map()\nfunction fib(n) {\n  calls++\n  if (n < 2) return n\n  if (memo.has(n)) return memo.get(n)\n  const v = fib(n - 1) + fib(n - 2)\n  memo.set(n, v)\n  return v\n}\nconsole.log(fib(5), calls)"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>let a = 0, b = 1\nfor (let i = 0; i &lt; 10; i++) {\n  ;[a, b] = [b, a + b]\n}\nconsole.log(a)</code></pre>",
+          "opts": [
+            "<code>34</code>",
+            "<code>55</code>",
+            "<code>89</code>",
+            "<code>10</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "Each round moves the pair one step forward: (0,1), (1,1), (1,2), (2,3)... After 10 rounds <code>a</code> is fib(10) = 55.",
+            "This version needs only two variables, so its space is O(1)."
+          ],
+          "exec": "let a = 0, b = 1\nfor (let i = 0; i < 10; i++) {\n  ;[a, b] = [b, a + b]\n}\nconsole.log(a)"
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>What is the time of the plain recursive <code>fib(n)</code> with no memo?</p>",
+          "opts": [
+            "<code>O(n)</code>",
+            "<code>O(n²)</code>",
+            "<code>O(2ⁿ)</code>",
+            "<code>O(log n)</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "Every call makes two more calls, and the depth is about n. That is roughly 2ⁿ calls.",
+            "fib(50) would take hours this way, while the loop does it in 50 steps."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "The big idea",
+          "q": "<p>What is the real problem with the plain recursive Fibonacci?</p>",
+          "opts": [
+            "Recursion is always slow",
+            "It solves the same smaller problems again and again (overlapping subproblems)",
+            "It uses too many variables",
+            "JavaScript cannot add big numbers"
+          ],
+          "ans": 1,
+          "why": [
+            "The answer to <code>fib(k)</code> never changes, so computing it twice is pure waste. Remember it once, and reuse it.",
+            "This is memoization. It is the first step towards dynamic programming."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>fib(n)</code>. Return the n-th Fibonacci number: <code>fib(0) = 0</code>, <code>fib(1) = 1</code>, then each number is the sum of the two before it. It must be fast for n up to 70.</p>",
+        "examples": [
+          "fib(10)  // 55",
+          "fib(50)  // 12586269025"
+        ],
+        "hint": "<p>Use a loop with two variables, or a recursion with a memo (a Map or an array). Do not use the plain double recursion.</p>",
+        "fn": "fib",
+        "starter": "function fib(n) {\n  // your code\n}",
+        "solution": "function fib(n) {\n  let a = 0\n  let b = 1\n  for (let i = 0; i < n; i++) {\n    ;[a, b] = [b, a + b]\n  }\n  return a\n}",
+        "checks": [
+          {
+            "t": "the first numbers",
+            "verify": "assert(fib(0) === 0 && fib(1) === 1 && fib(2) === 1 && fib(3) === 2, \"check fib(0) to fib(3)\")"
+          },
+          {
+            "t": "fib(10)",
+            "verify": "assert(fib(10) === 55, \"expected 55\")"
+          },
+          {
+            "t": "fib(50)",
+            "verify": "assert(fib(50) === 12586269025, \"expected 12586269025\")"
+          },
+          {
+            "t": "fib(70)",
+            "verify": "assert(fib(70) === 190392490709135, \"expected 190392490709135\")"
+          },
+          {
+            "t": "fast enough",
+            "verify": "const t0 = Date.now(); for (let i = 0; i < 2000; i++) fib(70); assert(Date.now() - t0 < 200, \"too slow, did you use the plain double recursion?\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Plain recursive Fibonacci repeats work and takes <b>O(2ⁿ)</b>. Remember each answer once (memo) or build up from the bottom: <b>O(n)</b>, and O(1) space with two variables.",
+        "mistakes": [
+          "Using the double recursion for large n.",
+          "Forgetting the two base cases (0 and 1).",
+          "Storing the memo but never reading it before computing.",
+          "Going past n = 78, where JavaScript numbers lose exact precision."
+        ]
+      }
+    },
+    {
+      "id": "merge-sort",
+      "prereqs": [
+        "recursion",
+        "fibonacci"
+      ],
+      "dryRun": {
+        "title": "Merge the sorted halves [1, 4, 7] and [2, 3, 9]",
+        "columns": [
+          "i",
+          "j",
+          "compare",
+          "take",
+          "output so far"
+        ],
+        "rows": [
+          [
+            "0",
+            "0",
+            "1 vs 2",
+            "1 (left)",
+            "1"
+          ],
+          [
+            "1",
+            "0",
+            "4 vs 2",
+            "2 (right)",
+            "1 2"
+          ],
+          [
+            "1",
+            "1",
+            "4 vs 3",
+            "3 (right)",
+            "1 2 3"
+          ],
+          [
+            "1",
+            "2",
+            "4 vs 9",
+            "4 (left)",
+            "1 2 3 4"
+          ],
+          [
+            "2",
+            "2",
+            "7 vs 9",
+            "7 (left)",
+            "1 2 3 4 7"
+          ],
+          [
+            "3",
+            "2",
+            "left is empty",
+            "copy the rest: 9",
+            "1 2 3 4 7 9"
+          ]
+        ],
+        "hit": 5,
+        "note": "Merging two sorted lists needs only <b>one look at each front item</b>, so it is O(n). Merge sort = split in half, sort each half, merge."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>function merge(a, b) {\n  const out = []\n  let i = 0, j = 0\n  while (i &lt; a.length &amp;&amp; j &lt; b.length) {\n    out.push(a[i] &lt;= b[j] ? a[i++] : b[j++])\n  }\n  return out.concat(a.slice(i), b.slice(j))\n}\nconsole.log(merge([1, 4, 7], [2, 3, 9]).join(\",\"))</code></pre>",
+          "opts": [
+            "<code>1,2,3,4,7,9</code>",
+            "<code>1,4,7,2,3,9</code>",
+            "<code>1,2,3,4,9,7</code>",
+            "<code>2,3,9,1,4,7</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "Each round takes the smaller front item. When one list runs out, <code>concat(a.slice(i), b.slice(j))</code> adds the rest of the other.",
+            "The merge only works because both inputs are <b>already sorted</b>."
+          ],
+          "exec": "function merge(a, b) {\n  const out = []\n  let i = 0, j = 0\n  while (i < a.length && j < b.length) {\n    out.push(a[i] <= b[j] ? a[i++] : b[j++])\n  }\n  return out.concat(a.slice(i), b.slice(j))\n}\nconsole.log(merge([1, 4, 7], [2, 3, 9]).join(\",\"))"
+        },
+        {
+          "tag": "Splitting",
+          "q": "<pre><code>const a = [1, 2, 3, 4, 5]\nconst mid = Math.floor(a.length / 2)\nconsole.log(a.slice(0, mid).length, a.slice(mid).length)</code></pre>",
+          "opts": [
+            "<code>2 3</code>",
+            "<code>3 2</code>",
+            "<code>2 2</code>",
+            "<code>2.5 2.5</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "<code>Math.floor(5 / 2)</code> is 2, so the left half has 2 items and the right half has 3.",
+            "The halves need not be equal. They only need to be smaller, so the recursion ends."
+          ],
+          "exec": "const a = [1, 2, 3, 4, 5]\nconst mid = Math.floor(a.length / 2)\nconsole.log(a.slice(0, mid).length, a.slice(mid).length)"
+        },
+        {
+          "tag": "How many levels?",
+          "q": "<pre><code>console.log(Math.log2(1024))</code></pre><p>How many times can 1,024 items be halved before single items remain?</p>",
+          "opts": [
+            "<code>10</code>",
+            "<code>32</code>",
+            "<code>512</code>",
+            "<code>1024</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "2¹⁰ = 1024, so there are 10 levels. Each level merges n items in total, so the cost is n × 10.",
+            "That is the O(n log n) of merge sort."
+          ],
+          "exec": "console.log(Math.log2(1024))"
+        },
+        {
+          "tag": "Stability",
+          "q": "<p>While merging, two items are equal. To keep the sort <b>stable</b>, which one do you take first?</p>",
+          "opts": [
+            "The one from the right half",
+            "The one from the left half",
+            "Either, it does not matter",
+            "Neither, skip both"
+          ],
+          "ans": 1,
+          "why": [
+            "The left half came first in the original array, so equal items from the left must stay first. That is why the test is <code>a[i] &lt;= b[j]</code> and not <code>&lt;</code>.",
+            "Stable sorts matter when you sort objects by one field after another."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Compare",
+          "q": "<p>What does merge sort cost, compared with quick sort?</p>",
+          "opts": [
+            "O(n log n) in every case, but O(n) extra space",
+            "O(n²) in the worst case, in place",
+            "O(n) time on any input",
+            "O(log n) time, O(1) space"
+          ],
+          "ans": 0,
+          "why": [
+            "The split is always even, so the time is always O(n log n). The merge step needs a helper array of size n.",
+            "Quick sort is in place but has an O(n²) worst case. Merge sort trades space for a guarantee."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>mergeSort(nums)</code>. Return a <b>new</b> array sorted in increasing order using merge sort. The input must stay unchanged. Do not use <code>sort</code>.</p>",
+        "examples": [
+          "mergeSort([5, 2, 4, 1, 3])  // [1, 2, 3, 4, 5]",
+          "mergeSort([2, 2, 1])  // [1, 2, 2]"
+        ],
+        "hint": "<p>If the length is 0 or 1, return a copy. Otherwise split at <code>mid</code>, sort both halves with the same function, and merge them with two indexes.</p>",
+        "fn": "mergeSort",
+        "starter": "function mergeSort(nums) {\n  // your code\n}",
+        "solution": "function mergeSort(nums) {\n  if (nums.length <= 1) return [...nums]\n  const mid = Math.floor(nums.length / 2)\n  const left = mergeSort(nums.slice(0, mid))\n  const right = mergeSort(nums.slice(mid))\n  const out = []\n  let i = 0\n  let j = 0\n  while (i < left.length && j < right.length) {\n    out.push(left[i] <= right[j] ? left[i++] : right[j++])\n  }\n  while (i < left.length) out.push(left[i++])\n  while (j < right.length) out.push(right[j++])\n  return out\n}",
+        "checks": [
+          {
+            "t": "a small unsorted array",
+            "verify": "assert(JSON.stringify(mergeSort([5, 2, 4, 1, 3])) === \"[1,2,3,4,5]\", \"expected [1,2,3,4,5]\")"
+          },
+          {
+            "t": "duplicates and negatives",
+            "verify": "assert(JSON.stringify(mergeSort([2, -1, 2, 0, -1])) === \"[-1,-1,0,2,2]\", \"expected [-1,-1,0,2,2]\")"
+          },
+          {
+            "t": "empty array and one item",
+            "verify": "assert(JSON.stringify(mergeSort([])) === \"[]\" && JSON.stringify(mergeSort([7])) === \"[7]\", \"edge cases\")"
+          },
+          {
+            "t": "does not change the input",
+            "verify": "const x = [3, 1, 2]; mergeSort(x); assert(JSON.stringify(x) === \"[3,1,2]\", \"the input was changed\")"
+          },
+          {
+            "t": "50,000 items, without sort()",
+            "verify": "const orig = Array.prototype.sort; Array.prototype.sort = function () { throw new Error(\"do not use sort\") }; try { const big = Array.from({ length: 50000 }, (_, i) => (i * 7919) % 50021); const t0 = Date.now(); const r = mergeSort(big); let ok = true; for (let k = 1; k < r.length; k++) if (r[k - 1] > r[k]) ok = false; assert(ok && r.length === 50000 && Date.now() - t0 < 1500, \"not sorted or too slow\") } finally { Array.prototype.sort = orig }"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Split in half, sort each half, <b>merge in O(n)</b>. Always O(n log n) time, O(n) extra space, and stable if you take the left item on ties.",
+        "mistakes": [
+          "Forgetting the base case (length 0 or 1) and recursing forever.",
+          "Forgetting to copy the leftover items after one half runs out.",
+          "Using <code>&lt;</code> instead of <code>&lt;=</code> in the merge and losing stability.",
+          "Calling merge on unsorted halves."
+        ]
+      }
+    },
+    {
+      "id": "binary-tree",
+      "prereqs": [
+        "recursion",
+        "arrays"
+      ],
+      "dryRun": {
+        "title": "Count the nodes of the tree 1 (2 (4, 5), 3) by recursion",
+        "columns": [
+          "node",
+          "left size",
+          "right size",
+          "returns 1 + left + right"
+        ],
+        "rows": [
+          [
+            "4",
+            "0",
+            "0",
+            "1"
+          ],
+          [
+            "5",
+            "0",
+            "0",
+            "1"
+          ],
+          [
+            "2",
+            "1",
+            "1",
+            "3"
+          ],
+          [
+            "3",
+            "0",
+            "0",
+            "1"
+          ],
+          [
+            "1",
+            "3",
+            "1",
+            "5"
+          ]
+        ],
+        "hit": 4,
+        "note": "A tree is a node plus <b>two smaller trees</b>. So a recursive function asks the left and right children, then combines their answers. A missing child (<code>null</code>) is the base case."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const T = (v, l = null, r = null) =&gt; ({ val: v, left: l, right: r })\nconst root = T(1, T(2, T(4), T(5)), T(3))\nconsole.log(root.left.right.val, root.right.left)</code></pre>",
+          "opts": [
+            "<code>5 null</code>",
+            "<code>4 null</code>",
+            "<code>5 undefined</code>",
+            "<code>3 null</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "<code>root.left</code> is the node 2, its <code>right</code> child is 5. The node 3 has no left child, so that field is <code>null</code>.",
+            "A missing child is stored as <code>null</code> here, not left out."
+          ],
+          "exec": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r })\nconst root = T(1, T(2, T(4), T(5)), T(3))\nconsole.log(root.left.right.val, root.right.left)"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const T = (v, l = null, r = null) =&gt; ({ val: v, left: l, right: r })\nconst root = T(1, T(2, T(4), T(5)), T(3))\nfunction count(n) {\n  if (!n) return 0\n  return 1 + count(n.left) + count(n.right)\n}\nconsole.log(count(root))</code></pre>",
+          "opts": [
+            "<code>3</code>",
+            "<code>4</code>",
+            "<code>5</code>",
+            "<code>2</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "The tree has five nodes: 1, 2, 3, 4 and 5. Each call adds 1 for itself and asks both children.",
+            "<code>if (!n) return 0</code> is the base case. Without it, <code>null.left</code> would crash."
+          ],
+          "exec": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r })\nconst root = T(1, T(2, T(4), T(5)), T(3))\nfunction count(n) {\n  if (!n) return 0\n  return 1 + count(n.left) + count(n.right)\n}\nconsole.log(count(root))"
+        },
+        {
+          "tag": "Spot the bug",
+          "q": "<pre><code>const t = { val: 1, left: null, right: null }\ntry {\n  console.log(t.left.val)\n} catch (e) {\n  console.log(e.constructor.name)\n}</code></pre>",
+          "opts": [
+            "<code>undefined</code>",
+            "<code>null</code>",
+            "<code>TypeError</code>",
+            "<code>ReferenceError</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "Reading <code>.val</code> of <code>null</code> throws a <b>TypeError</b>. Always check that a node exists before you use it.",
+            "Most tree bugs in interviews are a missing null check."
+          ],
+          "exec": "const t = { val: 1, left: null, right: null }\ntry {\n  console.log(t.left.val)\n} catch (e) {\n  console.log(e.constructor.name)\n}"
+        },
+        {
+          "tag": "Counting",
+          "q": "<p>A binary tree has 4 levels (the root is level 1). What is the largest number of nodes it can have?</p>",
+          "opts": [
+            "<code>8</code>",
+            "<code>15</code>",
+            "<code>16</code>",
+            "<code>7</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "Level k holds at most 2^(k-1) nodes: 1 + 2 + 4 + 8 = 15.",
+            "So a tree with n nodes can be as short as about log₂(n) levels, or as tall as n (a straight line)."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Space cost",
+          "q": "<p>A recursive function visits every node of a tree with n nodes and height h. What is its extra space?</p>",
+          "opts": [
+            "<code>O(1)</code>",
+            "<code>O(h), the call stack</code>",
+            "<code>O(n²)</code>",
+            "<code>O(log n) always</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "At any moment the stack holds one call per level on the path from the root to the current node: that is h calls.",
+            "For a balanced tree h is about log n. For a tree that is a straight line, h is n."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Nodes look like <code>{ val, left, right }</code>, and a missing child is <code>null</code>. Write <code>countLeaves(root)</code>. Return how many <b>leaf</b> nodes there are (nodes with no children). An empty tree (<code>null</code>) has 0 leaves.</p>",
+        "examples": [
+          "// tree 1 (2 (4, 5), 3)  has leaves 4, 5 and 3",
+          "countLeaves(root)  // 3",
+          "countLeaves(null)  // 0"
+        ],
+        "hint": "<p>Base cases: <code>null</code> gives 0, and a node with no children gives 1. Otherwise add the leaves of the left and right subtrees.</p>",
+        "fn": "countLeaves",
+        "starter": "function countLeaves(root) {\n  // your code\n}",
+        "solution": "function countLeaves(root) {\n  if (!root) return 0\n  if (!root.left && !root.right) return 1\n  return countLeaves(root.left) + countLeaves(root.right)\n}",
+        "checks": [
+          {
+            "t": "the tree from the lesson",
+            "verify": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r }); assert(countLeaves(T(1, T(2, T(4), T(5)), T(3))) === 3, \"expected 3\")"
+          },
+          {
+            "t": "empty tree",
+            "verify": "assert(countLeaves(null) === 0, \"expected 0\")"
+          },
+          {
+            "t": "a single node",
+            "verify": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r }); assert(countLeaves(T(9)) === 1, \"expected 1\")"
+          },
+          {
+            "t": "a node with only one child",
+            "verify": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r }); assert(countLeaves(T(1, T(2, T(3)), null)) === 1, \"expected 1, the node 1 is not a leaf\")"
+          },
+          {
+            "t": "a full tree",
+            "verify": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r }); assert(countLeaves(T(1, T(2, T(4), T(5)), T(3, T(6), T(7)))) === 4, \"expected 4\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "A binary tree is a node with <b>two smaller trees</b> (left and right). Recursion fits it perfectly: handle <code>null</code>, then combine the answers of both children. Time O(n), space O(height).",
+        "mistakes": [
+          "Not checking for <code>null</code> before reading <code>.left</code> or <code>.val</code>.",
+          "Counting a node with one child as a leaf.",
+          "Mixing up the tree (nodes) with an array that stores it.",
+          "Forgetting that the height of a skewed tree is n, so recursion can overflow."
+        ]
+      }
+    },
+    {
+      "id": "dfs",
+      "prereqs": [
+        "binary-tree",
+        "recursion"
+      ],
+      "dryRun": {
+        "title": "The three depth-first orders of the tree 4 (2 (1, 3), 6 (5, 7))",
+        "columns": [
+          "order",
+          "rule at each node",
+          "result"
+        ],
+        "rows": [
+          [
+            "preorder",
+            "node, then left, then right",
+            "4 2 1 3 6 5 7"
+          ],
+          [
+            "inorder",
+            "left, then node, then right",
+            "1 2 3 4 5 6 7"
+          ],
+          [
+            "postorder",
+            "left, then right, then node",
+            "1 3 2 5 7 6 4"
+          ]
+        ],
+        "hit": 1,
+        "note": "The three differ only in <b>when the node itself is visited</b>. Inorder on a binary search tree gives the values <b>sorted</b>."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const T = (v, l = null, r = null) =&gt; ({ val: v, left: l, right: r })\nconst root = T(1, T(2, T(4), T(5)), T(3))\nconst out = []\nfunction inorder(n) {\n  if (!n) return\n  inorder(n.left)\n  out.push(n.val)\n  inorder(n.right)\n}\ninorder(root)\nconsole.log(out.join(\",\"))</code></pre>",
+          "opts": [
+            "<code>1,2,4,5,3</code>",
+            "<code>4,2,5,1,3</code>",
+            "<code>4,5,2,3,1</code>",
+            "<code>1,2,3,4,5</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "Inorder goes all the way left first (4), then 2, then 5, then the root 1, then 3.",
+            "Remember: the node is visited <b>in the middle</b>, between its left and right subtrees."
+          ],
+          "exec": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r })\nconst root = T(1, T(2, T(4), T(5)), T(3))\nconst out = []\nfunction inorder(n) {\n  if (!n) return\n  inorder(n.left)\n  out.push(n.val)\n  inorder(n.right)\n}\ninorder(root)\nconsole.log(out.join(\",\"))"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const T = (v, l = null, r = null) =&gt; ({ val: v, left: l, right: r })\nconst root = T(1, T(2, T(4), T(5)), T(3))\nconst out = []\nfunction post(n) {\n  if (!n) return\n  post(n.left)\n  post(n.right)\n  out.push(n.val)\n}\npost(root)\nconsole.log(out.join(\",\"))</code></pre>",
+          "opts": [
+            "<code>1,2,4,5,3</code>",
+            "<code>4,2,5,1,3</code>",
+            "<code>4,5,2,3,1</code>",
+            "<code>3,5,4,2,1</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "Postorder visits the node <b>last</b>. Children always come before their parent, so the root 1 is the final value.",
+            "This is the order to use when a parent needs its children's answers first (height, size, delete)."
+          ],
+          "exec": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r })\nconst root = T(1, T(2, T(4), T(5)), T(3))\nconst out = []\nfunction post(n) {\n  if (!n) return\n  post(n.left)\n  post(n.right)\n  out.push(n.val)\n}\npost(root)\nconsole.log(out.join(\",\"))"
+        },
+        {
+          "tag": "Which order?",
+          "q": "<p>You want to <b>copy</b> a tree. You must create a parent before you attach its children. Which order fits?</p>",
+          "opts": [
+            "Preorder",
+            "Inorder",
+            "Postorder",
+            "Level order"
+          ],
+          "ans": 0,
+          "why": [
+            "Preorder handles the node first, then its children, so the parent exists when the children are attached.",
+            "It is also how a tree is saved to text, so it can be rebuilt later."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Which order?",
+          "q": "<p>A binary <b>search</b> tree holds 1 to 7. Which traversal prints <code>1 2 3 4 5 6 7</code>?</p>",
+          "opts": [
+            "Preorder",
+            "Postorder",
+            "Inorder",
+            "None of them"
+          ],
+          "ans": 2,
+          "why": [
+            "In a BST every left value is smaller and every right value is larger. Inorder visits left, node, right, so the values come out sorted.",
+            "This is the standard way to check or print a BST."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>What are the time and extra space of a recursive DFS on a tree with n nodes and height h?</p>",
+          "opts": [
+            "<code>O(n) time, O(h) space</code>",
+            "<code>O(n log n) time, O(1) space</code>",
+            "<code>O(n²) time, O(n) space</code>",
+            "<code>O(h) time, O(n) space</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "Every node is visited exactly once, so time is O(n). The call stack holds at most h calls at a time.",
+            "In a tree that is a straight line, h = n, so the stack can overflow for very large inputs."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Nodes look like <code>{ val, left, right }</code>. Write <code>inorder(root)</code>. Return an array of the values in <b>inorder</b> (left, node, right). For an empty tree return <code>[]</code>.</p>",
+        "examples": [
+          "// tree 1 (2 (4, 5), 3)",
+          "inorder(root)  // [4, 2, 5, 1, 3]",
+          "inorder(null)  // []"
+        ],
+        "hint": "<p>Use a helper that returns when the node is <code>null</code>; otherwise it visits the left child, pushes <code>node.val</code>, then visits the right child.</p>",
+        "fn": "inorder",
+        "starter": "function inorder(root) {\n  // your code\n}",
+        "solution": "function inorder(root) {\n  const out = []\n  const walk = (n) => {\n    if (!n) return\n    walk(n.left)\n    out.push(n.val)\n    walk(n.right)\n  }\n  walk(root)\n  return out\n}",
+        "checks": [
+          {
+            "t": "the tree from the lesson",
+            "verify": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r }); assert(JSON.stringify(inorder(T(1, T(2, T(4), T(5)), T(3)))) === \"[4,2,5,1,3]\", \"expected [4,2,5,1,3]\")"
+          },
+          {
+            "t": "a search tree gives sorted values",
+            "verify": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r }); assert(JSON.stringify(inorder(T(4, T(2, T(1), T(3)), T(6, T(5), T(7))))) === \"[1,2,3,4,5,6,7]\", \"expected 1 to 7\")"
+          },
+          {
+            "t": "empty tree and single node",
+            "verify": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r }); assert(JSON.stringify(inorder(null)) === \"[]\" && JSON.stringify(inorder(T(8))) === \"[8]\", \"edge cases\")"
+          },
+          {
+            "t": "a tree that leans left",
+            "verify": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r }); assert(JSON.stringify(inorder(T(3, T(2, T(1)), null))) === \"[1,2,3]\", \"expected [1,2,3]\")"
+          },
+          {
+            "t": "a tree that leans right",
+            "verify": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r }); assert(JSON.stringify(inorder(T(1, null, T(2, null, T(3))))) === \"[1,2,3]\", \"expected [1,2,3]\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "DFS goes deep first. <b>Preorder</b> = node first (copy), <b>inorder</b> = node between (sorted on a BST), <b>postorder</b> = node last (children first). O(n) time, O(h) stack.",
+        "mistakes": [
+          "Mixing up the three orders (look at where the node is handled).",
+          "Forgetting the <code>null</code> base case.",
+          "Pushing into one shared array by mistake across several calls.",
+          "Assuming inorder is sorted for any tree (only for a BST)."
+        ]
+      }
+    },
+    {
+      "id": "bfs",
+      "prereqs": [
+        "binary-tree",
+        "queue"
+      ],
+      "dryRun": {
+        "title": "Level order of the tree 1 (2 (4, 5), 3)",
+        "columns": [
+          "queue before the level",
+          "level size",
+          "visited this level",
+          "queue after"
+        ],
+        "rows": [
+          [
+            "[1]",
+            "1",
+            "1",
+            "[2, 3]"
+          ],
+          [
+            "[2, 3]",
+            "2",
+            "2, 3",
+            "[4, 5]"
+          ],
+          [
+            "[4, 5]",
+            "2",
+            "4, 5",
+            "[ ]"
+          ]
+        ],
+        "hit": 1,
+        "note": "Read the <b>level size first</b>, then take exactly that many nodes. The new children go to the back of the queue and wait for the next level. Result: <code>[[1], [2, 3], [4, 5]]</code>."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const T = (v, l = null, r = null) =&gt; ({ val: v, left: l, right: r })\nconst root = T(1, T(2, T(4), T(5)), T(3))\nconst levels = []\nlet queue = [root]\nwhile (queue.length) {\n  const size = queue.length\n  const level = []\n  for (let i = 0; i &lt; size; i++) {\n    const n = queue.shift()\n    level.push(n.val)\n    if (n.left) queue.push(n.left)\n    if (n.right) queue.push(n.right)\n  }\n  levels.push(level)\n}\nconsole.log(JSON.stringify(levels))</code></pre>",
+          "opts": [
+            "<code>[[1],[2,3],[4,5]]</code>",
+            "<code>[[1,2,3,4,5]]</code>",
+            "<code>[[4,5],[2,3],[1]]</code>",
+            "<code>[[1],[2],[3],[4],[5]]</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "Each pass of the <code>while</code> loop handles one full level. Level 1 is just the root, level 2 is its two children, level 3 is their children.",
+            "Without the <code>size</code> snapshot you would get one flat list and lose the levels."
+          ],
+          "exec": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r })\nconst root = T(1, T(2, T(4), T(5)), T(3))\nconst levels = []\nlet queue = [root]\nwhile (queue.length) {\n  const size = queue.length\n  const level = []\n  for (let i = 0; i < size; i++) {\n    const n = queue.shift()\n    level.push(n.val)\n    if (n.left) queue.push(n.left)\n    if (n.right) queue.push(n.right)\n  }\n  levels.push(level)\n}\nconsole.log(JSON.stringify(levels))"
+        },
+        {
+          "tag": "Why take the size first?",
+          "q": "<p>Why do we store <code>const size = queue.length</code> before the inner <code>for</code> loop?</p>",
+          "opts": [
+            "To save memory",
+            "Because the queue grows while we add children, and we need to stop at the end of the current level",
+            "Because queue.length is slow",
+            "To sort the level"
+          ],
+          "ans": 1,
+          "why": [
+            "Inside the loop we push children, so <code>queue.length</code> keeps changing. The snapshot says how many nodes belong to <b>this</b> level.",
+            "This one line is the whole trick for \"level by level\" problems."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Which structure?",
+          "q": "<p>Breadth-first search needs a ______, depth-first search needs a ______ (or recursion).</p>",
+          "opts": [
+            "stack, queue",
+            "queue, stack",
+            "heap, queue",
+            "set, map"
+          ],
+          "ans": 1,
+          "why": [
+            "A queue serves the oldest item first, so nodes are handled level by level. A stack serves the newest first, so you go deep before you go wide.",
+            "Swap the structure and you swap the traversal."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>What is the time, and the extra space, of level order on a tree with n nodes?</p>",
+          "opts": [
+            "<code>O(n) time, O(width) space</code>",
+            "<code>O(n log n) time, O(1) space</code>",
+            "<code>O(n) time, O(height) space</code>",
+            "<code>O(n²) time, O(n) space</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "Each node enters and leaves the queue once: O(n). The queue holds at most one full level, so the space is the widest level, up to about n / 2.",
+            "DFS uses space by height, BFS by width. Pick by tree shape."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "When BFS wins",
+          "q": "<p>You need the <b>minimum depth</b> (the nearest leaf). Why is BFS a good choice?</p>",
+          "opts": [
+            "It uses less memory than DFS in all cases",
+            "It reaches the nearest nodes first, so it can stop at the first leaf it sees",
+            "It visits nodes in sorted order",
+            "It does not need a queue"
+          ],
+          "ans": 1,
+          "why": [
+            "Level by level means the first leaf found is the closest one. DFS may explore a very deep branch before it finds a shallow leaf.",
+            "The same idea gives the shortest path in an unweighted graph."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Nodes look like <code>{ val, left, right }</code>. Write <code>levelOrder(root)</code>. Return an array of levels from top to bottom, each level as an array of values from left to right. For an empty tree return <code>[]</code>.</p>",
+        "examples": [
+          "// tree 1 (2 (4, 5), 3)",
+          "levelOrder(root)  // [[1], [2, 3], [4, 5]]",
+          "levelOrder(null)  // []"
+        ],
+        "hint": "<p>Start with <code>queue = [root]</code>. In each round read <code>size = queue.length</code>, take that many nodes, collect their values, and push their children.</p>",
+        "fn": "levelOrder",
+        "starter": "function levelOrder(root) {\n  // your code\n}",
+        "solution": "function levelOrder(root) {\n  if (!root) return []\n  const levels = []\n  let queue = [root]\n  while (queue.length) {\n    const next = []\n    const level = []\n    for (const n of queue) {\n      level.push(n.val)\n      if (n.left) next.push(n.left)\n      if (n.right) next.push(n.right)\n    }\n    levels.push(level)\n    queue = next\n  }\n  return levels\n}",
+        "checks": [
+          {
+            "t": "the tree from the lesson",
+            "verify": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r }); assert(JSON.stringify(levelOrder(T(1, T(2, T(4), T(5)), T(3)))) === \"[[1],[2,3],[4,5]]\", \"expected [[1],[2,3],[4,5]]\")"
+          },
+          {
+            "t": "empty tree",
+            "verify": "assert(JSON.stringify(levelOrder(null)) === \"[]\", \"expected []\")"
+          },
+          {
+            "t": "a single node",
+            "verify": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r }); assert(JSON.stringify(levelOrder(T(7))) === \"[[7]]\", \"expected [[7]]\")"
+          },
+          {
+            "t": "a tree that leans left",
+            "verify": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r }); assert(JSON.stringify(levelOrder(T(1, T(2, T(3)), null))) === \"[[1],[2],[3]]\", \"expected [[1],[2],[3]]\")"
+          },
+          {
+            "t": "a full tree",
+            "verify": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r }); assert(JSON.stringify(levelOrder(T(3, T(9), T(20, T(15), T(7))))) === \"[[3],[9,20],[15,7]]\", \"expected [[3],[9,20],[15,7]]\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "BFS uses a <b>queue</b> and goes level by level. Take the <b>level size first</b>, then handle exactly that many nodes. O(n) time, O(width) space. It reaches the nearest nodes first.",
+        "mistakes": [
+          "Not snapshotting the level size, so the levels get mixed.",
+          "Pushing a <code>null</code> child into the queue.",
+          "Forgetting the empty-tree case.",
+          "Using a stack by mistake, which turns it into DFS."
+        ]
+      }
+    }
+  ],
+  "flags": [
+    "Tree questions build the tree with a tiny helper T(val, left, right). Each try-it check repeats this helper so the copyable test script stays self-contained.",
+    "fibonacci: the try-it timing check calls fib(70) 2,000 times, which a double recursion cannot pass.",
+    "merge-sort: the try-it check temporarily replaces Array.prototype.sort and restores it in finally.",
+    "The dry-run tables are traced by hand (dry runs of concept lessons are not machine-run). The call counts in the fibonacci table were computed with a script."
+  ]
+}

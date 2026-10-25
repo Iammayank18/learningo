@@ -1,0 +1,579 @@
+{
+  "items": [
+    {
+      "id": "valid-palindrome",
+      "pattern": {
+        "name": "Two pointers from both ends",
+        "question": "Forget the symbols for a moment. If a text reads the same forwards and backwards, which two characters must always match first?",
+        "idea": [
+          "The first and the last useful character must match. Then the second and the second to last, and so on. You are comparing <b>mirror pairs</b> and moving toward the middle.",
+          "Building a cleaned copy and reversing it also works, but it needs extra memory. Two pointers read the original string directly: when a pointer lands on a symbol, it simply steps over it."
+        ],
+        "spotWhen": [
+          "The statement says the text <b>reads the same forwards and backwards</b>.",
+          "Some characters must be ignored (case, spaces, punctuation), so you cannot just compare positions.",
+          "A mirror comparison from the two ends would settle the answer."
+        ],
+        "prereqs": [
+          "strings"
+        ]
+      },
+      "dryRun": {
+        "title": "s = \"Ab,a\"",
+        "columns": [
+          "step",
+          "l",
+          "r",
+          "chars",
+          "action"
+        ],
+        "rows": [
+          [
+            "1",
+            "0",
+            "3",
+            "\"A\" and \"a\"",
+            "equal ignoring case: l = 1, r = 2"
+          ],
+          [
+            "2",
+            "1",
+            "2",
+            "\"b\" and \",\"",
+            "the right one is not a letter or digit: skip it, r = 1"
+          ],
+          [
+            "3",
+            "1",
+            "1",
+            "-",
+            "l is no longer less than r: stop, return true"
+          ]
+        ],
+        "hit": 1,
+        "note": "A symbol is <b>skipped, not compared</b>. Only letters and digits are compared, and case is ignored.",
+        "args": [
+          "Ab,a"
+        ],
+        "result": true
+      },
+      "constraints": [
+        "s can hold letters, digits, spaces and punctuation",
+        "Case is ignored; only letters and digits are compared",
+        "An empty or all-symbol string counts as a palindrome",
+        "Target: O(n) time and O(1) extra space"
+      ],
+      "minutes": 15,
+      "review": {
+        "approaches": [
+          {
+            "name": "Clean, reverse, compare",
+            "time": "O(n)",
+            "space": "O(n)",
+            "idea": "Build a lowercase string of letters and digits, reverse a copy, compare the two.",
+            "best": false
+          },
+          {
+            "name": "Two pointers on the original string",
+            "time": "O(n)",
+            "space": "O(1)",
+            "idea": "Move two pointers inward, skip symbols, compare letters ignoring case.",
+            "best": true
+          }
+        ],
+        "why": [
+          "Every character is visited at most once, because each loop step moves at least one pointer inward. So the time is O(n).",
+          "No new string is built, only two index variables. That is why the space is O(1)."
+        ],
+        "mistakes": [
+          "Comparing without lowercasing, so <code>\"A\"</code> and <code>\"a\"</code> count as different.",
+          "Skipping a symbol on the left but not on the right, so a symbol gets compared with a letter.",
+          "Skipping symbols in a loop with no bound check, which runs past the end on a string like <code>\",.\"</code>.",
+          "Returning <code>false</code> for an empty or all-symbol string. It is a palindrome."
+        ],
+        "variations": [
+          "You may delete <b>one</b> character. Can the text still become a palindrome?",
+          "Find the longest palindromic substring of the text.",
+          "Check whether a linked list is a palindrome using O(1) extra space."
+        ]
+      }
+    },
+    {
+      "id": "two-sum",
+      "pattern": {
+        "name": "Complement lookup with a hash map",
+        "question": "For each number x you need a partner. What exactly is the partner, and where could you have seen it before?",
+        "idea": [
+          "For a number <code>x</code>, the partner must be <code>target - x</code>. So at each step the question is: \"have I already seen <code>target - x</code>?\"",
+          "Checking all pairs asks about n²/2 pairs. A hash map remembers every earlier number with its index and answers the question in one lookup, so one pass is enough."
+        ],
+        "spotWhen": [
+          "You must return <b>positions</b> of two values that meet a condition, so sorting would lose the positions.",
+          "Each element has exactly one value that would complete it.",
+          "A nested loop would work, but the input can be large."
+        ],
+        "prereqs": [
+          "hashmaps"
+        ]
+      },
+      "dryRun": {
+        "title": "nums = [5, 3, 8, 2], target = 10",
+        "columns": [
+          "i",
+          "num",
+          "need",
+          "seen before",
+          "found?"
+        ],
+        "rows": [
+          [
+            "0",
+            "5",
+            "5",
+            "{}",
+            "no, then store 5 → 0"
+          ],
+          [
+            "1",
+            "3",
+            "7",
+            "{5:0}",
+            "no, then store 3 → 1"
+          ],
+          [
+            "2",
+            "8",
+            "2",
+            "{5:0, 3:1}",
+            "no, then store 8 → 2"
+          ],
+          [
+            "3",
+            "2",
+            "8",
+            "{5:0, 3:1, 8:2}",
+            "yes: return [2, 3]"
+          ]
+        ],
+        "hit": 3,
+        "note": "At i = 0 we need 5 and the number is 5. Because we <b>check first and store after</b>, the number cannot pair with itself.",
+        "args": [
+          [
+            5,
+            3,
+            8,
+            2
+          ],
+          10
+        ],
+        "result": [
+          2,
+          3
+        ]
+      },
+      "constraints": [
+        "Exactly one valid pair exists",
+        "The same element cannot be used twice",
+        "Return the two indexes in ascending order",
+        "Target: better than O(n²) time"
+      ],
+      "minutes": 15,
+      "review": {
+        "approaches": [
+          {
+            "name": "Compare every pair",
+            "time": "O(n²)",
+            "space": "O(1)",
+            "idea": "Two loops: try every pair of positions.",
+            "best": false
+          },
+          {
+            "name": "Sort a copy, then two pointers",
+            "time": "O(n log n)",
+            "space": "O(n)",
+            "idea": "Sort values together with their indexes, then move two pointers inward.",
+            "best": false
+          },
+          {
+            "name": "Hash map of seen values",
+            "time": "O(n)",
+            "space": "O(n)",
+            "idea": "Store value → index. For each number look up its complement.",
+            "best": true
+          }
+        ],
+        "why": [
+          "When we reach index <code>i</code>, the map holds exactly the numbers before <code>i</code>. If the complement is in it, we found a valid pair. If the pair exists, its second number is reached at some index and the first one is already in the map.",
+          "Each lookup and insert is O(1) on average, so n numbers cost O(n). The price is O(n) memory."
+        ],
+        "mistakes": [
+          "Storing the number <b>before</b> checking, so a number can pair with itself.",
+          "Returning the values instead of their indexes.",
+          "Storing index → value in the map, so you cannot look up a complement.",
+          "Returning the indexes in the wrong order. Ascending order is required."
+        ],
+        "variations": [
+          "The array is sorted. Can you do it in O(1) extra space?",
+          "Return <b>all</b> pairs that add up to the target, without repeats.",
+          "Find three numbers that add up to the target."
+        ]
+      }
+    },
+    {
+      "id": "group-anagrams",
+      "pattern": {
+        "name": "Group by a shared key",
+        "question": "What stays the same for \"eat\", \"tea\" and \"ate\", even though their letters sit in different places?",
+        "idea": [
+          "Anagrams use the same letters the same number of times. If you sort the letters of each word, all anagrams turn into the <b>same string</b>: \"eat\", \"tea\" and \"ate\" all become \"aet\".",
+          "That sorted string is a <b>key</b>. Words with the same key belong to one group, so a Map from key to list of words does the whole job in one pass."
+        ],
+        "spotWhen": [
+          "The statement asks you to <b>group</b> items that are \"the same\" in some sense.",
+          "You can compute a canonical form of each item that is equal for equivalent items.",
+          "The order of the groups does not matter."
+        ],
+        "prereqs": [
+          "hashmaps",
+          "strings"
+        ]
+      },
+      "dryRun": {
+        "title": "strs = [\"eat\", \"tea\", \"tan\"]",
+        "columns": [
+          "word",
+          "sorted letters (key)",
+          "key already in map?",
+          "map after"
+        ],
+        "rows": [
+          [
+            "eat",
+            "aet",
+            "no: create a group",
+            "{aet: [eat]}"
+          ],
+          [
+            "tea",
+            "aet",
+            "yes: add to it",
+            "{aet: [eat, tea]}"
+          ],
+          [
+            "tan",
+            "ant",
+            "no: create a group",
+            "{aet: [eat, tea], ant: [tan]}"
+          ]
+        ],
+        "hit": 1,
+        "note": "\"eat\" and \"tea\" produce the <b>same key</b>, so the second word joins the first group instead of starting a new one. The answer is the list of the map's values.",
+        "args": [
+          [
+            "eat",
+            "tea",
+            "tan"
+          ]
+        ],
+        "result": [
+          [
+            "eat",
+            "tea"
+          ],
+          [
+            "tan"
+          ]
+        ]
+      },
+      "constraints": [
+        "The order of the groups does not matter",
+        "The order of words inside a group does not matter",
+        "Words may be empty strings",
+        "Target: better than comparing every pair of words"
+      ],
+      "minutes": 25,
+      "review": {
+        "approaches": [
+          {
+            "name": "Compare each word with every group so far",
+            "time": "O(n² · k)",
+            "space": "O(n · k)",
+            "idea": "For each word, scan the existing groups and test whether it is an anagram of the first word in each.",
+            "best": false
+          },
+          {
+            "name": "Group by sorted letters",
+            "time": "O(n · k log k)",
+            "space": "O(n · k)",
+            "idea": "Sort the letters of each word to build a key, and collect words in a Map by key.",
+            "best": true
+          }
+        ],
+        "why": [
+          "Two words are anagrams exactly when their sorted letters are equal, so the sorted string is a correct key. Words with equal keys end up in the same group, and different keys never mix.",
+          "Sorting a word of length k costs O(k log k), and we do it once per word, so the total is O(n · k log k). The map stores every word once, which is O(n · k)."
+        ],
+        "mistakes": [
+          "Using the word itself as the key, so every word gets its own group.",
+          "Calling <code>sort</code> on a string. Strings have no <code>sort</code>: split to an array first.",
+          "Forgetting <code>.join(\"\")</code> and using the array as a Map key. Two equal arrays are different keys.",
+          "Pushing into a group that does not exist yet, instead of creating it first."
+        ],
+        "variations": [
+          "Use a count of the 26 letters as the key. That removes the sort and gives O(n · k).",
+          "Return only the <b>largest</b> group.",
+          "Words can contain any Unicode letters. What changes?"
+        ]
+      }
+    },
+    {
+      "id": "valid-parentheses",
+      "pattern": {
+        "name": "Match the latest opener with a stack",
+        "question": "A closing bracket arrives. Must it match the first bracket you ever saw, or the latest one that is still open?",
+        "idea": [
+          "A closing bracket must close the <b>most recent</b> opening bracket that is still open. \"Most recent unfinished thing first\" is exactly what a stack gives you.",
+          "So: push every opener. For every closer, pop the top and check that the types match. At the end, nothing may be left open."
+        ],
+        "spotWhen": [
+          "The statement is about <b>nested</b> or properly ordered pairs.",
+          "Something opened last must be closed first.",
+          "You need to remember what is still open while you read on."
+        ],
+        "prereqs": [
+          "stacks"
+        ]
+      },
+      "dryRun": {
+        "title": "s = \"{[]}(\"",
+        "columns": [
+          "step",
+          "char",
+          "action",
+          "stack after"
+        ],
+        "rows": [
+          [
+            "1",
+            "{",
+            "opener: push",
+            "{"
+          ],
+          [
+            "2",
+            "[",
+            "opener: push",
+            "{ ["
+          ],
+          [
+            "3",
+            "]",
+            "closer: pop [, it matches",
+            "{"
+          ],
+          [
+            "4",
+            "}",
+            "closer: pop {, it matches",
+            "(empty)"
+          ],
+          [
+            "5",
+            "(",
+            "opener: push",
+            "("
+          ],
+          [
+            "6",
+            "end",
+            "the stack is not empty, so something was never closed: return false",
+            "("
+          ]
+        ],
+        "hit": 5,
+        "note": "Every pair matched, but the loop is not the whole answer. Leftover openers at the end make the string <b>invalid</b>.",
+        "args": [
+          "{[]}("
+        ],
+        "result": false
+      },
+      "constraints": [
+        "s contains only ( ) [ ] { }",
+        "An empty string is valid",
+        "A closer must match the most recent unmatched opener",
+        "Target: O(n) time"
+      ],
+      "minutes": 15,
+      "review": {
+        "approaches": [
+          {
+            "name": "Delete matching pairs again and again",
+            "time": "O(n²)",
+            "space": "O(n)",
+            "idea": "Remove every \"()\", \"[]\" and \"{}\" from the string until nothing changes. Valid if it ends empty.",
+            "best": false
+          },
+          {
+            "name": "Stack of open brackets",
+            "time": "O(n)",
+            "space": "O(n)",
+            "idea": "Push openers, pop and compare on closers, check the stack is empty at the end.",
+            "best": true
+          }
+        ],
+        "why": [
+          "When a closer arrives, the top of the stack is the latest opener that is still open. If it does not match, no valid pairing exists for this string.",
+          "Each character is pushed and popped at most once, so the time is O(n). In the worst case, like \"((((\", the stack holds all of them: O(n) space."
+        ],
+        "mistakes": [
+          "Counting brackets with one counter per type. The string <code>\"([)]\"</code> would wrongly pass.",
+          "Not checking that the stack is empty at the end, so <code>\"((\"</code> passes.",
+          "Pushing closing brackets onto the stack too.",
+          "Returning <code>true</code> as soon as the first pair matches."
+        ],
+        "variations": [
+          "Return the <b>minimum number of brackets</b> to add to make the string valid.",
+          "The string may also contain letters, which must be ignored.",
+          "Return the length of the longest valid substring."
+        ]
+      }
+    },
+    {
+      "id": "daily-temperatures",
+      "pattern": {
+        "name": "Monotonic stack of waiting days",
+        "question": "A warmer day arrives. Which earlier days can it answer all at once?",
+        "idea": [
+          "Keep a stack of days that are still <b>waiting</b> for a warmer day. The temperatures of those days never go up from bottom to top, because a warmer day would already have answered the colder ones below it.",
+          "When today is warmer than the day on top, that day has found its answer: pop it and write the distance. Repeat while the top is colder, then push today."
+        ],
+        "spotWhen": [
+          "The statement asks for the <b>next</b> bigger or smaller value for every position.",
+          "A nested loop looking ahead from each position would work but is too slow for big inputs.",
+          "Many positions can be answered by the same later value."
+        ],
+        "prereqs": [
+          "stacks",
+          "arrays"
+        ]
+      },
+      "dryRun": {
+        "title": "temperatures = [30, 60, 90, 50, 70]",
+        "columns": [
+          "i",
+          "temp",
+          "stack before (indexes)",
+          "pops",
+          "stack after"
+        ],
+        "rows": [
+          [
+            "0",
+            "30",
+            "[]",
+            "none",
+            "[0]"
+          ],
+          [
+            "1",
+            "60",
+            "[0]",
+            "0 gets answer 1",
+            "[1]"
+          ],
+          [
+            "2",
+            "90",
+            "[1]",
+            "1 gets answer 1",
+            "[2]"
+          ],
+          [
+            "3",
+            "50",
+            "[2]",
+            "none (50 is not above 90)",
+            "[2, 3]"
+          ],
+          [
+            "4",
+            "70",
+            "[2, 3]",
+            "3 gets answer 1",
+            "[2, 4]"
+          ],
+          [
+            "end",
+            "-",
+            "[2, 4]",
+            "days 2 and 4 never get a warmer day: they stay 0",
+            "answer = [1, 1, 0, 1, 0]"
+          ]
+        ],
+        "hit": 4,
+        "note": "Day 3 waits on the stack and is answered later by day 4. Days still on the stack at the end keep the answer <b>0</b>.",
+        "args": [
+          [
+            30,
+            60,
+            90,
+            50,
+            70
+          ]
+        ],
+        "result": [
+          1,
+          1,
+          0,
+          1,
+          0
+        ]
+      },
+      "constraints": [
+        "answer[i] is 0 when no warmer day exists",
+        "An equal temperature is not warmer",
+        "Return the number of days to wait, not the warmer temperature",
+        "Target: O(n) time, not O(n²)"
+      ],
+      "minutes": 25,
+      "review": {
+        "approaches": [
+          {
+            "name": "For each day, scan forward",
+            "time": "O(n²)",
+            "space": "O(1)",
+            "idea": "From each day, walk ahead until a warmer day shows up.",
+            "best": false
+          },
+          {
+            "name": "Monotonic stack of day indexes",
+            "time": "O(n)",
+            "space": "O(n)",
+            "idea": "Keep days that wait for a warmer one. Pop and answer them when a warmer day arrives.",
+            "best": true
+          }
+        ],
+        "why": [
+          "A day leaves the stack only when a warmer day arrives, and that is the <b>first</b> warmer day after it, because days are processed in order. So every answer is correct.",
+          "Each index is pushed once and popped at most once, so the loop does at most 2n stack operations. That is O(n) time. The stack can hold all days in the worst case, which is O(n) space."
+        ],
+        "mistakes": [
+          "Storing temperatures on the stack instead of indexes, so you cannot compute the distance.",
+          "Using <code>if</code> instead of <code>while</code>. One warm day can answer several waiting days.",
+          "Comparing with <code>&gt;=</code>. An equal temperature is not warmer.",
+          "Forgetting that days left on the stack at the end must keep the answer 0."
+        ],
+        "variations": [
+          "Return the <b>temperature</b> of the next warmer day instead of the distance.",
+          "Solve it from right to left, jumping ahead with answers already computed, using O(1) extra space.",
+          "Find the next <b>greater element</b> in a circular array."
+        ]
+      }
+    }
+  ],
+  "flags": [
+    "group-anagrams: a 26-letter count key reaches O(n · k) and beats the reference solution. I listed it as a variation, because the reference uses sorted keys.",
+    "daily-temperatures: a right-to-left solution needs only O(1) extra space. It is listed as a variation for the same reason.",
+    "constraints: I wrote only limits that the statement or the reference solution implies, not numeric size limits, because the input does not give any."
+  ]
+}

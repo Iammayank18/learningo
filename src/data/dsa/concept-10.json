@@ -1,0 +1,1043 @@
+{
+  "items": [
+    {
+      "id": "two-heaps",
+      "prereqs": [
+        "heap",
+        "heap-variations"
+      ],
+      "dryRun": {
+        "title": "Running median of the stream 5, 2, 8, 1  (low = max-heap of the smaller half, high = min-heap of the bigger half)",
+        "columns": [
+          "x",
+          "low (smaller half)",
+          "high (bigger half)",
+          "median"
+        ],
+        "rows": [
+          [
+            "5",
+            "5",
+            "-",
+            "5"
+          ],
+          [
+            "2",
+            "2",
+            "5",
+            "(2 + 5) / 2 = 3.5"
+          ],
+          [
+            "8",
+            "5, 2",
+            "8",
+            "5"
+          ],
+          [
+            "1",
+            "2, 1",
+            "5, 8",
+            "(2 + 5) / 2 = 3.5"
+          ]
+        ],
+        "hit": 1,
+        "note": "The two heaps meet in the middle: the top of <code>low</code> is the biggest of the small half, the top of <code>high</code> is the smallest of the big half. The median is always one of these two tops, or their average."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const low = [1, 2]      // the smaller half\nconst high = [5, 8]     // the bigger half\nconsole.log((Math.max(...low) + Math.min(...high)) / 2)</code></pre>",
+          "opts": [
+            "<code>3.5</code>",
+            "<code>3</code>",
+            "<code>5</code>",
+            "<code>2</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "With an even count, the median is the average of the two middle values: the biggest of the small half (2) and the smallest of the big half (5). That is 3.5.",
+            "The heaps give both of these in O(1), because they sit at the roots."
+          ],
+          "exec": "const low = [1, 2]      // the smaller half\nconst high = [5, 8]     // the bigger half\nconsole.log((Math.max(...low) + Math.min(...high)) / 2)"
+        },
+        {
+          "tag": "The rules",
+          "q": "<p>Which two rules must always hold for the two heaps?</p>",
+          "opts": [
+            "Both heaps have the same items",
+            "Every item in low is at most every item in high, and their sizes differ by at most 1",
+            "low is sorted and high is not",
+            "low holds odd numbers and high holds even numbers"
+          ],
+          "ans": 1,
+          "why": [
+            "The first rule says the halves are really a split of the sorted order. The second rule puts the median at the roots.",
+            "After each insert you may have to move one item from one heap to the other to restore the sizes."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Which heap is which?",
+          "q": "<p>Why is the <b>smaller</b> half stored in a <b>max</b>-heap?</p>",
+          "opts": [
+            "Because it is easier to write",
+            "Because we need its biggest item, the one closest to the middle, at the root",
+            "Because max-heaps are faster",
+            "It makes no difference"
+          ],
+          "ans": 1,
+          "why": [
+            "The median sits between the halves, so we need the largest of the small half and the smallest of the big half.",
+            "That is a max-heap for the small half and a min-heap for the big half."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>A median finder takes n numbers one at a time. What are the cost of <code>add</code> and the cost of <code>median</code>?</p>",
+          "opts": [
+            "O(log n) and O(1)",
+            "O(1) and O(n)",
+            "O(n) and O(1)",
+            "O(log n) and O(log n)"
+          ],
+          "ans": 0,
+          "why": [
+            "An add pushes into a heap and maybe moves one item: a few O(log n) steps. The median is just a look at the roots.",
+            "Keeping one sorted array makes each add O(n), because items have to shift."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Odd count",
+          "q": "<p>You keep <code>low</code> one item bigger than <code>high</code> when the count is odd. Where is the median?</p>",
+          "opts": [
+            "The top of high",
+            "The top of low",
+            "The average of both tops",
+            "The last item added"
+          ],
+          "ans": 1,
+          "why": [
+            "The bigger heap holds the extra middle item, so its root is the median.",
+            "Pick one convention (low gets the extra) and keep to it everywhere."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>createMedianFinder()</code>. It returns an object with <code>add(x)</code> and <code>median()</code>. <code>median()</code> returns the median of all numbers added so far (the average of the two middle numbers when the count is even), or <code>undefined</code> if nothing was added. 100,000 adds must be fast.</p>",
+        "examples": [
+          "const m = createMedianFinder(); m.add(1); m.add(2)",
+          "m.median()  // 1.5",
+          "m.add(3); m.median()  // 2"
+        ],
+        "hint": "<p>Write a small heap helper that takes a compare function. Use <code>low</code> as a max-heap and <code>high</code> as a min-heap. Add to <code>low</code>, move its top to <code>high</code>, then if <code>high</code> is bigger than <code>low</code>, move one back.</p>",
+        "fn": "createMedianFinder",
+        "starter": "function createMedianFinder() {\n  // your code\n}",
+        "solution": "function createMedianFinder() {\n  const makeHeap = (less) => {\n    const h = []\n    const swap = (a, b) => {\n      ;[h[a], h[b]] = [h[b], h[a]]\n    }\n    return {\n      size: () => h.length,\n      peek: () => h[0],\n      push(x) {\n        h.push(x)\n        let i = h.length - 1\n        while (i > 0) {\n          const p = Math.floor((i - 1) / 2)\n          if (!less(h[i], h[p])) break\n          swap(i, p)\n          i = p\n        }\n      },\n      pop() {\n        const top = h[0]\n        const last = h.pop()\n        if (h.length > 0) {\n          h[0] = last\n          let i = 0\n          while (true) {\n            let s = i\n            const l = 2 * i + 1\n            const r = 2 * i + 2\n            if (l < h.length && less(h[l], h[s])) s = l\n            if (r < h.length && less(h[r], h[s])) s = r\n            if (s === i) break\n            swap(i, s)\n            i = s\n          }\n        }\n        return top\n      },\n    }\n  }\n  const low = makeHeap((a, b) => a > b)\n  const high = makeHeap((a, b) => a < b)\n  return {\n    add(x) {\n      low.push(x)\n      high.push(low.pop())\n      if (high.size() > low.size()) low.push(high.pop())\n    },\n    median() {\n      if (low.size() === 0) return undefined\n      if (low.size() > high.size()) return low.peek()\n      return (low.peek() + high.peek()) / 2\n    },\n  }\n}",
+        "checks": [
+          {
+            "t": "the first three numbers",
+            "verify": "const m = createMedianFinder(); m.add(1); const a = m.median(); m.add(2); const b = m.median(); m.add(3); const d = m.median(); assert(a === 1 && b === 1.5 && d === 2, \"expected 1, 1.5, 2 but got \" + a + \", \" + b + \", \" + d)"
+          },
+          {
+            "t": "the stream from the lesson",
+            "verify": "const m = createMedianFinder(); const out = []; for (const x of [5, 2, 8, 1]) { m.add(x); out.push(m.median()) } assert(JSON.stringify(out) === \"[5,3.5,5,3.5]\", \"got \" + JSON.stringify(out))"
+          },
+          {
+            "t": "nothing added yet",
+            "verify": "assert(createMedianFinder().median() === undefined, \"expected undefined\")"
+          },
+          {
+            "t": "negative numbers and duplicates",
+            "verify": "const m = createMedianFinder(); for (const x of [-1, -1, 4, 4]) m.add(x); assert(m.median() === 1.5, \"expected 1.5, got \" + m.median())"
+          },
+          {
+            "t": "100,000 adds stay fast",
+            "verify": "const m = createMedianFinder(); const t0 = Date.now(); for (let i = 0; i < 100000; i++) m.add((i * 7919) % 100003); assert(m.median() === 49999.5 && Date.now() - t0 < 1500, \"wrong median or too slow, add must be O(log n)\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Keep the smaller half in a <b>max-heap</b> and the bigger half in a <b>min-heap</b>, sizes within 1. The median is at the roots: <b>add O(log n), median O(1)</b>.",
+        "mistakes": [
+          "Forgetting to rebalance after an add, so the sizes drift apart.",
+          "Putting a bigger item in the small half.",
+          "Returning the wrong root when the count is odd.",
+          "Keeping one sorted array (add costs O(n))."
+        ]
+      }
+    },
+    {
+      "id": "intervals",
+      "prereqs": [
+        "arrays-2",
+        "insertion-sort"
+      ],
+      "dryRun": {
+        "title": "Merge [[1, 3], [8, 10], [2, 6], [15, 18]]. First sort by start: [1,3] [2,6] [8,10] [15,18]",
+        "columns": [
+          "interval",
+          "last merged",
+          "overlap?",
+          "action",
+          "merged so far"
+        ],
+        "rows": [
+          [
+            "[1, 3]",
+            "(none)",
+            "-",
+            "start the list",
+            "[1,3]"
+          ],
+          [
+            "[2, 6]",
+            "[1, 3]",
+            "yes: 2 is at most 3",
+            "extend the end to max(3, 6) = 6",
+            "[1,6]"
+          ],
+          [
+            "[8, 10]",
+            "[1, 6]",
+            "no: 8 is more than 6",
+            "add as a new interval",
+            "[1,6] [8,10]"
+          ],
+          [
+            "[15, 18]",
+            "[8, 10]",
+            "no",
+            "add as a new interval",
+            "[1,6] [8,10] [15,18]"
+          ]
+        ],
+        "hit": 1,
+        "note": "After sorting by start, an interval can only overlap the <b>last</b> merged one. If it does, stretch the end with <code>max</code>. If not, it starts a new group."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const iv = [[8, 10], [1, 3], [2, 6]]\niv.sort((a, b) =&gt; a[0] - b[0])\nconsole.log(JSON.stringify(iv))</code></pre>",
+          "opts": [
+            "<code>[[1,3],[2,6],[8,10]]</code>",
+            "<code>[[8,10],[1,3],[2,6]]</code>",
+            "<code>[[2,6],[1,3],[8,10]]</code>",
+            "<code>[[1,3],[8,10],[2,6]]</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "The compare function looks at the start (<code>a[0]</code>). Without it, <code>sort</code> would compare the arrays as strings.",
+            "Sorting by start is what makes one pass enough."
+          ],
+          "exec": "const iv = [[8, 10], [1, 3], [2, 6]]\niv.sort((a, b) => a[0] - b[0])\nconsole.log(JSON.stringify(iv))"
+        },
+        {
+          "tag": "Touching intervals",
+          "q": "<pre><code>const overlap = (a, b) =&gt; a[1] &gt;= b[0]\nconsole.log(overlap([1, 4], [4, 5]))</code></pre><p>For \"merge intervals\", do <code>[1, 4]</code> and <code>[4, 5]</code> count as overlapping?</p>",
+          "opts": [
+            "<code>true</code>",
+            "<code>false</code>",
+            "<code>undefined</code>",
+            "<code>null</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "They share the point 4, so they merge into <code>[1, 5]</code>. Whether touching counts is a detail you must ask about: here it does (<code>&gt;=</code>).",
+            "For \"meeting rooms\" the usual answer is the opposite: a meeting ending at 4 and another starting at 4 do not clash."
+          ],
+          "exec": "const overlap = (a, b) => a[1] >= b[0]\nconsole.log(overlap([1, 4], [4, 5]))"
+        },
+        {
+          "tag": "Spot the bug",
+          "q": "<pre><code>const iv = [[1, 10], [2, 3]]\nconst out = [iv[0].slice()]\nfor (const cur of iv.slice(1)) {\n  const last = out[out.length - 1]\n  if (cur[0] &lt;= last[1]) last[1] = cur[1]\n  else out.push(cur.slice())\n}\nconsole.log(JSON.stringify(out))</code></pre><p>The correct answer is <code>[[1,10]]</code>. What does this print?</p>",
+          "opts": [
+            "<code>[[1,10]]</code>",
+            "<code>[[1,3]]</code>",
+            "<code>[[1,10],[2,3]]</code>",
+            "<code>[[2,3]]</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "<code>last[1] = cur[1]</code> shrinks the end from 10 to 3, because the new interval sits <b>inside</b> the old one.",
+            "Always extend with <code>Math.max(last[1], cur[1])</code>."
+          ],
+          "exec": "const iv = [[1, 10], [2, 3]]\nconst out = [iv[0].slice()]\nfor (const cur of iv.slice(1)) {\n  const last = out[out.length - 1]\n  if (cur[0] <= last[1]) last[1] = cur[1]\n  else out.push(cur.slice())\n}\nconsole.log(JSON.stringify(out))"
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>What is the time of the merge-intervals solution?</p>",
+          "opts": [
+            "<code>O(n)</code>",
+            "<code>O(n log n)</code>",
+            "<code>O(n²)</code>",
+            "<code>O(log n)</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "Sorting costs O(n log n). The merge pass after it is a single O(n) loop, so sorting dominates.",
+            "If the input is already sorted by start, the whole thing is O(n)."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Related questions",
+          "q": "<p>\"Can one person attend all of these meetings?\" With the meetings sorted by start, what do you check?</p>",
+          "opts": [
+            "That the total length is under 24 hours",
+            "That each meeting starts at or after the previous one ends",
+            "That no two meetings have the same length",
+            "That the list has an even size"
+          ],
+          "ans": 1,
+          "why": [
+            "After sorting, a clash can only happen between neighbours. One pass comparing <code>start[i]</code> with <code>end[i-1]</code> decides it.",
+            "\"How many rooms are needed?\" is the next level: a min-heap of end times."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>mergeIntervals(intervals)</code>. Each interval is <code>[start, end]</code>. Merge all intervals that overlap or touch, and return the result sorted by start. Do not change the input.</p>",
+        "examples": [
+          "mergeIntervals([[1, 3], [8, 10], [2, 6], [15, 18]])  // [[1, 6], [8, 10], [15, 18]]",
+          "mergeIntervals([[1, 4], [4, 5]])  // [[1, 5]]"
+        ],
+        "hint": "<p>Copy and sort by start. Keep an output list. For each interval, compare its start with the end of the last output interval: if <code>start &lt;= lastEnd</code>, set <code>lastEnd = Math.max(lastEnd, end)</code>, otherwise push it.</p>",
+        "fn": "mergeIntervals",
+        "starter": "function mergeIntervals(intervals) {\n  // your code\n}",
+        "solution": "function mergeIntervals(intervals) {\n  const sorted = intervals.map((x) => [...x]).sort((a, b) => a[0] - b[0])\n  const out = []\n  for (const cur of sorted) {\n    const last = out[out.length - 1]\n    if (last && cur[0] <= last[1]) last[1] = Math.max(last[1], cur[1])\n    else out.push(cur)\n  }\n  return out\n}",
+        "checks": [
+          {
+            "t": "the lesson example",
+            "verify": "assert(JSON.stringify(mergeIntervals([[1, 3], [8, 10], [2, 6], [15, 18]])) === \"[[1,6],[8,10],[15,18]]\", \"expected [[1,6],[8,10],[15,18]]\")"
+          },
+          {
+            "t": "touching intervals merge",
+            "verify": "assert(JSON.stringify(mergeIntervals([[1, 4], [4, 5]])) === \"[[1,5]]\", \"expected [[1,5]]\")"
+          },
+          {
+            "t": "one interval inside another",
+            "verify": "assert(JSON.stringify(mergeIntervals([[1, 10], [2, 3], [4, 5]])) === \"[[1,10]]\", \"expected [[1,10]]\")"
+          },
+          {
+            "t": "does not change the input",
+            "verify": "const x = [[2, 6], [1, 3]]; mergeIntervals(x); assert(JSON.stringify(x) === \"[[2,6],[1,3]]\", \"the input was changed\")"
+          },
+          {
+            "t": "empty input and one interval",
+            "verify": "assert(JSON.stringify(mergeIntervals([])) === \"[]\" && JSON.stringify(mergeIntervals([[5, 6]])) === \"[[5,6]]\", \"edge cases\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "<b>Sort by start</b>, then one pass: if the next interval starts at or before the last end, extend the end with <code>max</code>; otherwise start a new one. O(n log n).",
+        "mistakes": [
+          "Not sorting first.",
+          "Setting the end to the new end instead of the <code>max</code> of both.",
+          "Deciding wrongly whether touching intervals merge.",
+          "Changing the caller's arrays."
+        ]
+      }
+    },
+    {
+      "id": "greedy",
+      "prereqs": [
+        "intervals",
+        "heap"
+      ],
+      "dryRun": {
+        "title": "Pick the most non-overlapping intervals from [1,3] [2,4] [3,5] [0,6] [5,7] [8,9] [5,9], sorted by END time",
+        "columns": [
+          "interval",
+          "start vs last chosen end",
+          "action",
+          "chosen so far"
+        ],
+        "rows": [
+          [
+            "[1, 3]",
+            "nothing chosen yet",
+            "take it",
+            "[1,3]"
+          ],
+          [
+            "[2, 4]",
+            "2 < 3: overlaps",
+            "skip",
+            "[1,3]"
+          ],
+          [
+            "[3, 5]",
+            "3 >= 3: fits",
+            "take it",
+            "[1,3] [3,5]"
+          ],
+          [
+            "[0, 6]",
+            "0 < 5",
+            "skip",
+            "same"
+          ],
+          [
+            "[5, 7]",
+            "5 >= 5: fits",
+            "take it",
+            "[1,3] [3,5] [5,7]"
+          ],
+          [
+            "[8, 9]",
+            "8 >= 7: fits",
+            "take it",
+            "4 intervals"
+          ],
+          [
+            "[5, 9]",
+            "5 < 9",
+            "skip",
+            "4 intervals"
+          ]
+        ],
+        "hit": 2,
+        "note": "Greedy = make the <b>locally best choice</b> and never look back. Here \"best\" means the interval that <b>ends first</b>, because it leaves the most room for the rest."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const iv = [[1, 3], [2, 4], [3, 5], [0, 6], [5, 7], [8, 9], [5, 9]]\niv.sort((a, b) =&gt; a[1] - b[1])\nlet end = -Infinity, count = 0\nfor (const [s, e] of iv) {\n  if (s &gt;= end) { count++; end = e }\n}\nconsole.log(count)</code></pre>",
+          "opts": [
+            "<code>3</code>",
+            "<code>4</code>",
+            "<code>5</code>",
+            "<code>7</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "Sorted by end, the code takes [1,3], [3,5], [5,7] and [8,9]. That is 4 intervals that never overlap.",
+            "The only decision per interval is \"does it start after my last chosen end?\"."
+          ],
+          "exec": "const iv = [[1, 3], [2, 4], [3, 5], [0, 6], [5, 7], [8, 9], [5, 9]]\niv.sort((a, b) => a[1] - b[1])\nlet end = -Infinity, count = 0\nfor (const [s, e] of iv) {\n  if (s >= end) { count++; end = e }\n}\nconsole.log(count)"
+        },
+        {
+          "tag": "A greedy that fails",
+          "q": "<pre><code>const iv = [[0, 10], [1, 2], [3, 4]]\niv.sort((a, b) =&gt; a[0] - b[0])   // sorted by START\nlet end = -Infinity, count = 0\nfor (const [s, e] of iv) {\n  if (s &gt;= end) { count++; end = e }\n}\nconsole.log(count)</code></pre><p>The best answer is 2 ([1,2] and [3,4]). What does this version print?</p>",
+          "opts": [
+            "<code>2</code>",
+            "<code>3</code>",
+            "<code>1</code>",
+            "<code>0</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "Sorting by start takes the huge [0,10] first and blocks everything else, so the answer is 1.",
+            "The idea of \"take the earliest\" is only right when you choose the <b>right measure</b>: earliest end, not earliest start."
+          ],
+          "exec": "const iv = [[0, 10], [1, 2], [3, 4]]\niv.sort((a, b) => a[0] - b[0])   // sorted by START\nlet end = -Infinity, count = 0\nfor (const [s, e] of iv) {\n  if (s >= end) { count++; end = e }\n}\nconsole.log(count)"
+        },
+        {
+          "tag": "Jump game",
+          "q": "<pre><code>function canJump(nums) {\n  let reach = 0\n  for (let i = 0; i &lt; nums.length; i++) {\n    if (i &gt; reach) return false\n    reach = Math.max(reach, i + nums[i])\n  }\n  return true\n}\nconsole.log(canJump([2, 3, 1, 1, 4]), canJump([3, 2, 1, 0, 4]))</code></pre>",
+          "opts": [
+            "<code>true true</code>",
+            "<code>true false</code>",
+            "<code>false true</code>",
+            "<code>false false</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "In the first array you can always push the reach forward to the end. In the second, every path ends on the 0 at index 3, so index 4 is out of reach.",
+            "The greedy idea: you never need to remember paths, only the <b>furthest index</b> you can reach."
+          ],
+          "exec": "function canJump(nums) {\n  let reach = 0\n  for (let i = 0; i < nums.length; i++) {\n    if (i > reach) return false\n    reach = Math.max(reach, i + nums[i])\n  }\n  return true\n}\nconsole.log(canJump([2, 3, 1, 1, 4]), canJump([3, 2, 1, 0, 4]))"
+        },
+        {
+          "tag": "When greedy breaks",
+          "q": "<pre><code>const coins = [4, 3, 1]\nlet left = 6, used = 0\nfor (const c of coins) {\n  used += Math.floor(left / c)\n  left %= c\n}\nconsole.log(used)</code></pre><p>The fewest coins for 6 is 2 (3 + 3). What does \"always take the biggest coin\" give?</p>",
+          "opts": [
+            "<code>2</code>",
+            "<code>3</code>",
+            "<code>6</code>",
+            "<code>1</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "It takes 4, then 1, then 1: three coins. The locally best choice (the biggest coin) blocks the better answer.",
+            "When greedy fails like this, you need dynamic programming. Always test a greedy idea on a small counter-example."
+          ],
+          "exec": "const coins = [4, 3, 1]\nlet left = 6, used = 0\nfor (const c of coins) {\n  used += Math.floor(left / c)\n  left %= c\n}\nconsole.log(used)"
+        },
+        {
+          "tag": "How to trust it",
+          "q": "<p>How do you convince yourself (and the interviewer) that a greedy choice is correct?</p>",
+          "opts": [
+            "It passes the given examples",
+            "You argue that swapping any optimal answer's first choice for the greedy choice never makes it worse (an exchange argument), and you try a small counter-example",
+            "It runs fast",
+            "It uses a heap"
+          ],
+          "ans": 1,
+          "why": [
+            "Examples can pass by luck. A short argument that \"my choice is at least as good as any other first choice\" is the real proof.",
+            "Say it in words: \"taking the earliest end leaves the most room for the others\"."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>maxMeetings(intervals)</code>. Each meeting is <code>[start, end]</code>. Return the largest number of meetings one person can attend. A meeting may start exactly when another one ends.</p>",
+        "examples": [
+          "maxMeetings([[1, 3], [2, 4], [3, 5], [0, 6], [5, 7], [8, 9], [5, 9]])  // 4",
+          "maxMeetings([[0, 10], [1, 2], [3, 4]])  // 2"
+        ],
+        "hint": "<p>Sort a copy by <b>end</b>. Keep <code>lastEnd = -Infinity</code>. Take a meeting when <code>start &gt;= lastEnd</code> and then set <code>lastEnd</code> to its end.</p>",
+        "fn": "maxMeetings",
+        "starter": "function maxMeetings(intervals) {\n  // your code\n}",
+        "solution": "function maxMeetings(intervals) {\n  const sorted = [...intervals].sort((a, b) => a[1] - b[1])\n  let lastEnd = -Infinity\n  let count = 0\n  for (const [s, e] of sorted) {\n    if (s >= lastEnd) {\n      count++\n      lastEnd = e\n    }\n  }\n  return count\n}",
+        "checks": [
+          {
+            "t": "the lesson example",
+            "verify": "assert(maxMeetings([[1, 3], [2, 4], [3, 5], [0, 6], [5, 7], [8, 9], [5, 9]]) === 4, \"expected 4\")"
+          },
+          {
+            "t": "one long meeting hides two short ones",
+            "verify": "assert(maxMeetings([[0, 10], [1, 2], [3, 4]]) === 2, \"expected 2, sort by END time\")"
+          },
+          {
+            "t": "meetings that only touch",
+            "verify": "assert(maxMeetings([[1, 2], [2, 3], [3, 4]]) === 3, \"expected 3\")"
+          },
+          {
+            "t": "everything overlaps",
+            "verify": "assert(maxMeetings([[1, 5], [2, 6], [3, 7]]) === 1, \"expected 1\")"
+          },
+          {
+            "t": "empty input and does not change the input",
+            "verify": "const x = [[3, 4], [1, 2]]; maxMeetings(x); assert(maxMeetings([]) === 0 && JSON.stringify(x) === \"[[3,4],[1,2]]\", \"edge cases\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Greedy = take the locally best choice and never undo it. It needs the <b>right sort or measure</b> (for intervals: earliest end) and a reason it is safe. If a small counter-example breaks it, use DP.",
+        "mistakes": [
+          "Sorting by start when the rule needs earliest end.",
+          "Trusting a greedy idea without trying a counter-example (coins 4, 3, 1).",
+          "Using &gt; instead of &gt;= and rejecting meetings that only touch.",
+          "Changing the input array while sorting."
+        ]
+      }
+    },
+    {
+      "id": "graph-repr",
+      "prereqs": [
+        "arrays",
+        "hashmaps"
+      ],
+      "dryRun": {
+        "title": "Build an adjacency list for 4 nodes and the edges 0-1, 0-2, 1-2, 2-3 (undirected)",
+        "columns": [
+          "edge",
+          "what we add",
+          "adjacency list now"
+        ],
+        "rows": [
+          [
+            "0 - 1",
+            "1 to the list of 0, and 0 to the list of 1",
+            "0: [1]   1: [0]"
+          ],
+          [
+            "0 - 2",
+            "2 to the list of 0, and 0 to the list of 2",
+            "0: [1, 2]   1: [0]   2: [0]"
+          ],
+          [
+            "1 - 2",
+            "2 to the list of 1, and 1 to the list of 2",
+            "0: [1, 2]   1: [0, 2]   2: [0, 1]"
+          ],
+          [
+            "2 - 3",
+            "3 to the list of 2, and 2 to the list of 3",
+            "0: [1, 2]   1: [0, 2]   2: [0, 1, 3]   3: [2]"
+          ]
+        ],
+        "hit": 3,
+        "note": "An undirected edge is written <b>twice</b>, once in each direction. A directed edge is written once. The list answers \"who are my neighbours?\" quickly."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const n = 4\nconst edges = [[0, 1], [0, 2], [1, 2], [2, 3]]\nconst adj = Array.from({ length: n }, () =&gt; [])\nfor (const [a, b] of edges) {\n  adj[a].push(b)\n  adj[b].push(a)\n}\nconsole.log(JSON.stringify(adj))</code></pre>",
+          "opts": [
+            "<code>[[1,2],[2],[3],[]]</code>",
+            "<code>[[1,2],[0,2],[0,1,3],[2]]</code>",
+            "<code>[[1],[0],[0],[2]]</code>",
+            "<code>[[0,1],[0,2],[1,2],[2,3]]</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "Each edge is pushed in both directions, so node 2 knows 0, 1 and 3. Its list length (3) is its <b>degree</b>.",
+            "The index in the outer array is the node, and the inner array holds its neighbours."
+          ],
+          "exec": "const n = 4\nconst edges = [[0, 1], [0, 2], [1, 2], [2, 3]]\nconst adj = Array.from({ length: n }, () => [])\nfor (const [a, b] of edges) {\n  adj[a].push(b)\n  adj[b].push(a)\n}\nconsole.log(JSON.stringify(adj))"
+        },
+        {
+          "tag": "Directed",
+          "q": "<pre><code>const edges = [[0, 1], [0, 2], [1, 2], [2, 3]]\nconst adj = Array.from({ length: 4 }, () =&gt; [])\nfor (const [a, b] of edges) adj[a].push(b)\nconsole.log(JSON.stringify(adj))</code></pre>",
+          "opts": [
+            "<code>[[1,2],[0,2],[0,1,3],[2]]</code>",
+            "<code>[[1,2],[2],[3],[]]</code>",
+            "<code>[[],[0],[0,1],[2]]</code>",
+            "<code>[[1],[2],[3],[]]</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "For a directed graph each edge is stored once, from <code>a</code> to <code>b</code>. Node 3 has no outgoing edge, so its list is empty.",
+            "Read the problem: \"undirected\" means push both ways."
+          ],
+          "exec": "const edges = [[0, 1], [0, 2], [1, 2], [2, 3]]\nconst adj = Array.from({ length: 4 }, () => [])\nfor (const [a, b] of edges) adj[a].push(b)\nconsole.log(JSON.stringify(adj))"
+        },
+        {
+          "tag": "Spot the bug",
+          "q": "<pre><code>const adj = new Array(3).fill([])\nadj[0].push(1)\nconsole.log(adj[2].length)</code></pre>",
+          "opts": [
+            "<code>0</code>",
+            "<code>1</code>",
+            "<code>undefined</code>",
+            "<code>3</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "<code>fill([])</code> puts the <b>same</b> array in all three slots, so the push shows up in every node.",
+            "Use <code>Array.from({ length: n }, () =&gt; [])</code> to get a fresh list per node."
+          ],
+          "exec": "const adj = new Array(3).fill([])\nadj[0].push(1)\nconsole.log(adj[2].length)"
+        },
+        {
+          "tag": "Space",
+          "q": "<p>A graph has V nodes and E edges. How much space do an adjacency <b>list</b> and an adjacency <b>matrix</b> use?</p>",
+          "opts": [
+            "List O(V + E), matrix O(V²)",
+            "List O(V²), matrix O(V + E)",
+            "Both O(E)",
+            "Both O(V)"
+          ],
+          "ans": 0,
+          "why": [
+            "The list stores each edge once or twice. The matrix stores a cell for every pair of nodes, even when there are few edges.",
+            "Use a matrix only for small, dense graphs."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Trade-off",
+          "q": "<p>You often ask \"is there an edge between a and b?\". What do the two forms cost?</p>",
+          "opts": [
+            "Matrix O(1), list O(degree of a)",
+            "Both O(1)",
+            "Matrix O(V), list O(1)",
+            "Both O(E)"
+          ],
+          "ans": 0,
+          "why": [
+            "The matrix looks at one cell. The list may scan all neighbours of <code>a</code>. If it matters, keep a Set of neighbours per node.",
+            "For \"visit all neighbours\", the list is faster: it never touches non-edges."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>buildGraph(n, edges, directed)</code>. Nodes are numbered <code>0</code> to <code>n - 1</code>. <code>edges</code> is a list of <code>[a, b]</code>. Return an adjacency list: an array of <code>n</code> arrays, where the array at index <code>i</code> holds the neighbours of <code>i</code> in the order the edges were given. If <code>directed</code> is false, store each edge both ways.</p>",
+        "examples": [
+          "buildGraph(4, [[0, 1], [0, 2], [1, 2], [2, 3]], false)  // [[1, 2], [0, 2], [0, 1, 3], [2]]",
+          "buildGraph(3, [[0, 1]], true)  // [[1], [], []]"
+        ],
+        "hint": "<p>Start with <code>Array.from({ length: n }, () =&gt; [])</code>. For each <code>[a, b]</code> push <code>b</code> into <code>adj[a]</code>, and if not directed, push <code>a</code> into <code>adj[b]</code>.</p>",
+        "fn": "buildGraph",
+        "starter": "function buildGraph(n, edges, directed) {\n  // your code\n}",
+        "solution": "function buildGraph(n, edges, directed) {\n  const adj = Array.from({ length: n }, () => [])\n  for (const [a, b] of edges) {\n    adj[a].push(b)\n    if (!directed) adj[b].push(a)\n  }\n  return adj\n}",
+        "checks": [
+          {
+            "t": "undirected graph",
+            "verify": "assert(JSON.stringify(buildGraph(4, [[0, 1], [0, 2], [1, 2], [2, 3]], false)) === \"[[1,2],[0,2],[0,1,3],[2]]\", \"wrong undirected list\")"
+          },
+          {
+            "t": "directed graph",
+            "verify": "assert(JSON.stringify(buildGraph(3, [[0, 1]], true)) === \"[[1],[],[]]\", \"expected [[1],[],[]]\")"
+          },
+          {
+            "t": "every node gets its own list",
+            "verify": "const g = buildGraph(3, [[0, 1]], true); g[2].push(9); assert(g[1].length === 0 && g[0].length === 1, \"the lists share the same array\")"
+          },
+          {
+            "t": "no edges",
+            "verify": "assert(JSON.stringify(buildGraph(3, [], false)) === \"[[],[],[]]\", \"expected three empty lists\")"
+          },
+          {
+            "t": "a self-loop and repeated edges are kept as given",
+            "verify": "assert(JSON.stringify(buildGraph(2, [[0, 0], [0, 1], [0, 1]], true)) === \"[[0,1,1],[]]\", \"expected [[0,1,1],[]]\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Use an <b>adjacency list</b>: one array of neighbours per node, O(V + E) space. Push each undirected edge <b>both ways</b>. Create the inner arrays separately.",
+        "mistakes": [
+          "<code>new Array(n).fill([])</code>, which shares one list.",
+          "Pushing an undirected edge only one way.",
+          "Using a matrix for a big, sparse graph.",
+          "Mixing 0-based and 1-based node numbers."
+        ]
+      }
+    },
+    {
+      "id": "bfs-graphs",
+      "prereqs": [
+        "graph-repr",
+        "bfs"
+      ],
+      "dryRun": {
+        "title": "BFS from node 0 on a square: 0-1, 0-2, 1-3, 2-3",
+        "columns": [
+          "queue before",
+          "pop",
+          "new neighbours (not seen yet)",
+          "distances so far"
+        ],
+        "rows": [
+          [
+            "[0]",
+            "0",
+            "1 and 2",
+            "0:0  1:1  2:1"
+          ],
+          [
+            "[1, 2]",
+            "1",
+            "3",
+            "0:0  1:1  2:1  3:2"
+          ],
+          [
+            "[2, 3]",
+            "2",
+            "none (0 and 3 are already seen)",
+            "same"
+          ],
+          [
+            "[3]",
+            "3",
+            "none",
+            "same"
+          ]
+        ],
+        "hit": 1,
+        "note": "Mark a node as seen <b>when you put it in the queue</b>, not when you take it out. Otherwise the same node can enter the queue twice. The first time BFS reaches a node is the <b>shortest</b> way there."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const adj = [[1, 2], [0, 3], [0, 3], [1, 2]]\nconst dist = Array(4).fill(-1)\ndist[0] = 0\nconst q = [0]\nwhile (q.length) {\n  const u = q.shift()\n  for (const v of adj[u]) {\n    if (dist[v] === -1) {\n      dist[v] = dist[u] + 1\n      q.push(v)\n    }\n  }\n}\nconsole.log(dist.join(\",\"))</code></pre>",
+          "opts": [
+            "<code>0,1,1,2</code>",
+            "<code>0,1,2,3</code>",
+            "<code>0,1,1,1</code>",
+            "<code>0,2,2,1</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "Nodes 1 and 2 are one step from 0. Node 3 is two steps away through either of them.",
+            "<code>dist[v] === -1</code> doubles as the \"not seen yet\" check, so no separate visited array is needed."
+          ],
+          "exec": "const adj = [[1, 2], [0, 3], [0, 3], [1, 2]]\nconst dist = Array(4).fill(-1)\ndist[0] = 0\nconst q = [0]\nwhile (q.length) {\n  const u = q.shift()\n  for (const v of adj[u]) {\n    if (dist[v] === -1) {\n      dist[v] = dist[u] + 1\n      q.push(v)\n    }\n  }\n}\nconsole.log(dist.join(\",\"))"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const adj = [[1], [0], [3], [2]]\nconst seen = new Set([0])\nconst q = [0]\nwhile (q.length) {\n  const u = q.shift()\n  for (const v of adj[u]) {\n    if (!seen.has(v)) { seen.add(v); q.push(v) }\n  }\n}\nconsole.log(seen.size)</code></pre>",
+          "opts": [
+            "<code>4</code>",
+            "<code>2</code>",
+            "<code>1</code>",
+            "<code>3</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "The graph has two separate pieces: {0, 1} and {2, 3}. BFS from 0 can only reach its own piece.",
+            "To visit a whole disconnected graph, start a new BFS from every node that is still unseen."
+          ],
+          "exec": "const adj = [[1], [0], [3], [2]]\nconst seen = new Set([0])\nconst q = [0]\nwhile (q.length) {\n  const u = q.shift()\n  for (const v of adj[u]) {\n    if (!seen.has(v)) { seen.add(v); q.push(v) }\n  }\n}\nconsole.log(seen.size)"
+        },
+        {
+          "tag": "When to mark?",
+          "q": "<p>Why do we mark a node as seen when it enters the queue, and not when it leaves?</p>",
+          "opts": [
+            "It is a style choice",
+            "Otherwise the same node can be queued many times by different neighbours, wasting time and breaking distance counts",
+            "Queues cannot hold seen nodes",
+            "To save memory"
+          ],
+          "ans": 1,
+          "why": [
+            "If node 3 is reached from both 1 and 2 before it is popped, marking late would push it twice.",
+            "Mark early, and each node is queued exactly once."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Shortest path",
+          "q": "<p>In which graphs does BFS give the shortest path (fewest edges)?</p>",
+          "opts": [
+            "Only trees",
+            "Any graph where every edge counts the same (unweighted)",
+            "Graphs with negative edges",
+            "Only directed graphs"
+          ],
+          "ans": 1,
+          "why": [
+            "BFS reaches nodes in rings of distance 1, 2, 3, and so on. The first arrival is therefore the shortest.",
+            "With different edge weights you need Dijkstra instead."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>What is the time of BFS on a graph with V nodes and E edges (adjacency list)?</p>",
+          "opts": [
+            "<code>O(V)</code>",
+            "<code>O(V + E)</code>",
+            "<code>O(V * E)</code>",
+            "<code>O(E²)</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "Each node is queued once and each edge is looked at once (twice if undirected).",
+            "With an adjacency matrix it becomes O(V²), because every row must be scanned."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>shortestPath(n, edges, start, end)</code>. The graph is <b>undirected</b> with nodes <code>0</code> to <code>n - 1</code>. Return the fewest edges on a path from <code>start</code> to <code>end</code>, or <code>-1</code> if there is no path. If <code>start === end</code> return 0.</p>",
+        "examples": [
+          "shortestPath(4, [[0, 1], [0, 2], [1, 3], [2, 3]], 0, 3)  // 2",
+          "shortestPath(4, [[0, 1], [2, 3]], 0, 3)  // -1"
+        ],
+        "hint": "<p>Build the adjacency list, then run BFS from <code>start</code> keeping a <code>dist</code> array filled with -1. Return <code>dist[end]</code>.</p>",
+        "fn": "shortestPath",
+        "starter": "function shortestPath(n, edges, start, end) {\n  // your code\n}",
+        "solution": "function shortestPath(n, edges, start, end) {\n  const adj = Array.from({ length: n }, () => [])\n  for (const [a, b] of edges) {\n    adj[a].push(b)\n    adj[b].push(a)\n  }\n  const dist = new Array(n).fill(-1)\n  dist[start] = 0\n  let queue = [start]\n  while (queue.length) {\n    const next = []\n    for (const u of queue) {\n      for (const v of adj[u]) {\n        if (dist[v] === -1) {\n          dist[v] = dist[u] + 1\n          next.push(v)\n        }\n      }\n    }\n    queue = next\n  }\n  return dist[end]\n}",
+        "checks": [
+          {
+            "t": "two steps on a square",
+            "verify": "assert(shortestPath(4, [[0, 1], [0, 2], [1, 3], [2, 3]], 0, 3) === 2, \"expected 2\")"
+          },
+          {
+            "t": "no path",
+            "verify": "assert(shortestPath(4, [[0, 1], [2, 3]], 0, 3) === -1, \"expected -1\")"
+          },
+          {
+            "t": "start equals end",
+            "verify": "assert(shortestPath(3, [[0, 1]], 2, 2) === 0, \"expected 0\")"
+          },
+          {
+            "t": "the short way wins over the long way",
+            "verify": "assert(shortestPath(5, [[0, 1], [1, 2], [2, 3], [3, 4], [0, 4]], 0, 3) === 2, \"expected 2 (0-4-3)\")"
+          },
+          {
+            "t": "a long chain stays fast",
+            "verify": "const n = 100000; const e = Array.from({ length: n - 1 }, (_, i) => [i, i + 1]); const t0 = Date.now(); assert(shortestPath(n, e, 0, n - 1) === n - 1 && Date.now() - t0 < 1000, \"wrong or too slow, avoid queue.shift on a huge array\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "BFS on a graph: a queue, a <b>seen/dist marker set when queued</b>, and the first arrival is the shortest path in an unweighted graph. O(V + E). Restart from unseen nodes to cover all components.",
+        "mistakes": [
+          "Marking nodes as seen only when popped.",
+          "Using BFS for weighted edges.",
+          "Forgetting that BFS from one node only covers its component.",
+          "Calling <code>shift()</code> on a very large array in a hot loop (use level arrays or an index)."
+        ]
+      }
+    },
+    {
+      "id": "dfs-graphs",
+      "prereqs": [
+        "graph-repr",
+        "dfs",
+        "bfs-graphs"
+      ],
+      "dryRun": {
+        "title": "Count the connected components of 6 nodes with edges 0-1, 1-2, 3-4",
+        "columns": [
+          "start node",
+          "nodes reached",
+          "components"
+        ],
+        "rows": [
+          [
+            "0",
+            "0, 1, 2",
+            "1"
+          ],
+          [
+            "1",
+            "already seen, skip",
+            "1"
+          ],
+          [
+            "2",
+            "already seen, skip",
+            "1"
+          ],
+          [
+            "3",
+            "3, 4",
+            "2"
+          ],
+          [
+            "4",
+            "already seen, skip",
+            "2"
+          ],
+          [
+            "5",
+            "5 (alone)",
+            "3"
+          ]
+        ],
+        "hit": 5,
+        "note": "Loop over all nodes. Whenever you meet a node that is <b>not seen</b>, it starts a new component: count it, then DFS to mark everything connected to it."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const n = 6, edges = [[0, 1], [1, 2], [3, 4]]\nconst adj = Array.from({ length: n }, () =&gt; [])\nfor (const [a, b] of edges) { adj[a].push(b); adj[b].push(a) }\nconst seen = new Array(n).fill(false)\nconst dfs = (u) =&gt; {\n  seen[u] = true\n  for (const v of adj[u]) if (!seen[v]) dfs(v)\n}\nlet count = 0\nfor (let i = 0; i &lt; n; i++) {\n  if (!seen[i]) { count++; dfs(i) }\n}\nconsole.log(count)</code></pre>",
+          "opts": [
+            "<code>2</code>",
+            "<code>3</code>",
+            "<code>4</code>",
+            "<code>6</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "The groups are {0, 1, 2}, {3, 4} and {5}. A node with no edges is its own component.",
+            "Each time the loop finds an unseen node, a whole new group starts."
+          ],
+          "exec": "const n = 6, edges = [[0, 1], [1, 2], [3, 4]]\nconst adj = Array.from({ length: n }, () => [])\nfor (const [a, b] of edges) { adj[a].push(b); adj[b].push(a) }\nconst seen = new Array(n).fill(false)\nconst dfs = (u) => {\n  seen[u] = true\n  for (const v of adj[u]) if (!seen[v]) dfs(v)\n}\nlet count = 0\nfor (let i = 0; i < n; i++) {\n  if (!seen[i]) { count++; dfs(i) }\n}\nconsole.log(count)"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const adj = [[1, 2], [3], [3], []]\nconst order = []\nconst seen = new Set()\nfunction dfs(u) {\n  seen.add(u)\n  order.push(u)\n  for (const v of adj[u]) if (!seen.has(v)) dfs(v)\n}\ndfs(0)\nconsole.log(order.join(\",\"))</code></pre>",
+          "opts": [
+            "<code>0,1,3,2</code>",
+            "<code>0,1,2,3</code>",
+            "<code>0,2,3,1</code>",
+            "<code>3,1,2,0</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "From 0 it goes to its first neighbour 1, then straight on to 3 (depth first), and only then comes back to try 2.",
+            "BFS would give 0,1,2,3 instead. The difference is \"go deep first\" versus \"go wide first\"."
+          ],
+          "exec": "const adj = [[1, 2], [3], [3], []]\nconst order = []\nconst seen = new Set()\nfunction dfs(u) {\n  seen.add(u)\n  order.push(u)\n  for (const v of adj[u]) if (!seen.has(v)) dfs(v)\n}\ndfs(0)\nconsole.log(order.join(\",\"))"
+        },
+        {
+          "tag": "Cycles",
+          "q": "<p>In an <b>undirected</b> graph, you find a cycle if DFS reaches a seen node. Which neighbour must you skip?</p>",
+          "opts": [
+            "Any neighbour",
+            "The start node",
+            "Nodes with degree 1",
+            "The node you just came from (the parent)"
+          ],
+          "ans": 3,
+          "why": [
+            "In an undirected graph, an edge a-b appears in both lists. Going from a to b and then seeing a again is not a cycle.",
+            "A seen node that is <b>not</b> the parent proves a real cycle. (For directed graphs you track the current path instead.)"
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Stack depth",
+          "q": "<p>A graph is a chain of 100,000 nodes. What can go wrong with a recursive DFS?</p>",
+          "opts": [
+            "It returns the wrong answer",
+            "It loops forever",
+            "The call stack overflows, so use an explicit stack or BFS",
+            "Nothing, JavaScript has no limit"
+          ],
+          "ans": 2,
+          "why": [
+            "The recursion goes 100,000 calls deep, far past what JavaScript allows (about ten thousand).",
+            "An iterative DFS with your own stack, or a BFS, avoids the problem."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>What is the time of DFS over a whole graph with V nodes and E edges?</p>",
+          "opts": [
+            "<code>O(V)</code>",
+            "<code>O(V + E)</code>",
+            "<code>O(V²)</code>",
+            "<code>O(E log V)</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "Each node is marked once and each edge is checked once or twice.",
+            "The extra space is O(V) for the seen markers plus the stack depth."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>countComponents(n, edges)</code>. The graph is <b>undirected</b> with nodes <code>0</code> to <code>n - 1</code>. Return how many connected components it has (a node alone counts as one). It must work for a chain of 50,000 nodes.</p>",
+        "examples": [
+          "countComponents(6, [[0, 1], [1, 2], [3, 4]])  // 3",
+          "countComponents(3, [])  // 3"
+        ],
+        "hint": "<p>Build the adjacency list. Loop over all nodes: if one is unseen, add 1 and mark everything it reaches. Use your own stack (an array with <code>push</code> and <code>pop</code>) instead of recursion.</p>",
+        "fn": "countComponents",
+        "starter": "function countComponents(n, edges) {\n  // your code\n}",
+        "solution": "function countComponents(n, edges) {\n  const adj = Array.from({ length: n }, () => [])\n  for (const [a, b] of edges) {\n    adj[a].push(b)\n    adj[b].push(a)\n  }\n  const seen = new Array(n).fill(false)\n  let count = 0\n  for (let i = 0; i < n; i++) {\n    if (seen[i]) continue\n    count++\n    const stack = [i]\n    seen[i] = true\n    while (stack.length) {\n      const u = stack.pop()\n      for (const v of adj[u]) {\n        if (!seen[v]) {\n          seen[v] = true\n          stack.push(v)\n        }\n      }\n    }\n  }\n  return count\n}",
+        "checks": [
+          {
+            "t": "three components",
+            "verify": "assert(countComponents(6, [[0, 1], [1, 2], [3, 4]]) === 3, \"expected 3\")"
+          },
+          {
+            "t": "no edges",
+            "verify": "assert(countComponents(3, []) === 3, \"expected 3\")"
+          },
+          {
+            "t": "everything connected",
+            "verify": "assert(countComponents(4, [[0, 1], [1, 2], [2, 3]]) === 1, \"expected 1\")"
+          },
+          {
+            "t": "a cycle does not add components",
+            "verify": "assert(countComponents(3, [[0, 1], [1, 2], [2, 0]]) === 1, \"expected 1\")"
+          },
+          {
+            "t": "a chain of 50,000 nodes (recursion would crash)",
+            "verify": "const n = 50000; const e = Array.from({ length: n - 1 }, (_, i) => [i, i + 1]); assert(countComponents(n, e) === 1, \"expected 1, did you use deep recursion?\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "DFS goes deep along one path before trying others. Loop over all nodes and start a DFS from each <b>unseen</b> one to count components. O(V + E). For very long chains use an <b>explicit stack</b>.",
+        "mistakes": [
+          "Not marking a node as seen before exploring it.",
+          "Treating the parent as a cycle in an undirected graph.",
+          "Deep recursion on huge chains.",
+          "Forgetting nodes that have no edges."
+        ]
+      }
+    }
+  ],
+  "flags": [
+    "two-heaps: the try-it reference solution has its own small heap builder; the 100,000 add check compares the exact final median (computed in the generator).",
+    "greedy: the lesson shows the failing coin greedy on purpose as a warning, and no knapsack/coin DP is taught here (that is in the DP unit).",
+    "bfs-graphs: the long-chain check forbids a slow queue.shift pattern; the reference uses level arrays.",
+    "The dry-run tables are traced by hand (concept dry runs are not machine-run)."
+  ]
+}

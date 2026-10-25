@@ -1,3 +1,5 @@
+import { buildLessonFor } from '../data/build'
+import { conceptFor } from '../data/dsa'
 import type { Course, Lesson } from '../types'
 import { t } from './i18n'
 
@@ -153,7 +155,18 @@ export function locate(course: Course, lessonId: string) {
 }
 
 /** A full lesson quiz: ~6 mixed exercises, ending with an interview-question recall card. */
+function mcQuiz(course: Course, lessonId: string, salt: string, n: number): Exercise[] | null {
+  const qs = buildLessonFor(course.id, lessonId)?.quiz ?? conceptFor(course.id, lessonId)?.think
+  if (!qs?.length) return null
+  const r = rng(`mc/${lessonId}/${salt}`)
+  return shuffle(qs, r).slice(0, n).map((q) => ({
+    kind: 'mcq' as const, tag: q.tag, prompt: plain(q.q), options: q.opts.map(plain), answer: q.ans, explain: plain(q.why.join(' ')),
+  }))
+}
+
 export function buildLessonQuiz(course: Course, lessonId: string, salt = ''): Exercise[] {
+  const mcq = mcQuiz(course, lessonId, salt, 99)
+  if (mcq) return mcq
   const loc = locate(course, lessonId)
   if (!loc) return []
   const c = ctxFor(course, loc.ui, loc.lesson, `${course.id}/${lessonId}/${salt}`)
@@ -175,6 +188,8 @@ export function buildLessonQuiz(course: Course, lessonId: string, salt = ''): Ex
 
 /** Short review: 2–3 quick exercises for one lesson. */
 export function buildReviewQuiz(course: Course, lessonId: string, salt = ''): Exercise[] {
+  const mcq = mcQuiz(course, lessonId, salt, 3)
+  if (mcq) return mcq
   const loc = locate(course, lessonId)
   if (!loc) return []
   const c = ctxFor(course, loc.ui, loc.lesson, `rev/${course.id}/${lessonId}/${salt}`)

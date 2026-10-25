@@ -1,0 +1,600 @@
+{
+ "course": "js-mastery",
+ "items": [
+  {
+   "id": "try-catch",
+   "prereqs": [
+    "proxy-reflect"
+   ],
+   "dryRun": {
+    "title": "function f() { try { return \"try\" } finally { log(\"finally\") } }",
+    "columns": [
+     "step",
+     "what runs",
+     "f returns"
+    ],
+    "rows": [
+     [
+      "enter try",
+      "return \"try\" is prepared",
+      "—"
+     ],
+     [
+      "before leaving",
+      "finally block runs",
+      "—"
+     ],
+     [
+      "after finally",
+      "the prepared value is returned",
+      "\"try\""
+     ],
+     [
+      "if finally had return \"f\"",
+      "it overrides",
+      "\"f\""
+     ]
+    ],
+    "hit": 3,
+    "note": "An error thrown in <code>try</code> jumps to <code>catch</code>; <code>finally</code> runs no matter what, even after return. A <code>return</code> inside finally overrides everything else, including a thrown error. Errors not caught travel up the call stack."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function f() { try { return 1 } finally { console.log('cleanup') } }\nconsole.log(f())</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>1 cleanup</code>",
+      "<code>cleanup 1</code>",
+      "<code>cleanup</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "finally runs before the function actually returns, so cleanup prints first."
+     ],
+     "exec": "function f() { try { return 1 } finally { console.log('cleanup') } }\nconsole.log(f())"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function f() { try { throw new Error('x') } finally { return 'swallowed' } }\nconsole.log(f())</code></pre>",
+     "opts": [
+      "<code>swallowed</code>",
+      "<code>Error: x</code>",
+      "<code>undefined</code>",
+      "<code>x</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "A return in finally replaces the pending error. The error is lost, which is why return in finally is a bug magnet."
+     ],
+     "exec": "function f() { try { throw new Error('x') } finally { return 'swallowed' } }\nconsole.log(f())"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function a() { b() }\nfunction b() { throw new Error('deep') }\ntry { a() } catch (e) { console.log(e.message) }</code></pre>",
+     "opts": [
+      "<code>undefined</code>",
+      "<code>a</code>",
+      "<code>b</code>",
+      "<code>deep</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "The error travels up from b through a to the nearest catch."
+     ],
+     "exec": "function a() { b() }\nfunction b() { throw new Error('deep') }\ntry { a() } catch (e) { console.log(e.message) }"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>try {\n  setTimeout(() =&gt; { try { throw new Error('later') } catch { console.log('inner') } })\n} catch { console.log('outer') }\nconsole.log('after')</code></pre>",
+     "opts": [
+      "<code>outer after</code>",
+      "<code>after inner</code>",
+      "<code>inner after</code>",
+      "<code>after outer</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "The outer try/catch only covers code running now: scheduling the timer. The callback throws later, on an empty stack, where only its own try/catch can catch it."
+     ],
+     "exec": "try {\n  setTimeout(() => { try { throw new Error('later') } catch { console.log('inner') } })\n} catch { console.log('outer') }\nconsole.log('after')"
+    },
+    {
+     "tag": "Catch scope",
+     "q": "What is wrong with <code>try { const data = JSON.parse(s); render(data) } catch { showError(\"bad JSON\") }</code>?",
+     "opts": [
+      "Nothing",
+      "It also catches bugs inside render and wrongly reports them as bad JSON",
+      "JSON.parse never throws",
+      "catch needs a parameter"
+     ],
+     "ans": 1,
+     "why": [
+      "Keep try blocks small: only around the line that can fail in the way you are handling."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>safeParse(text, fallback)</code>: return <code>{ ok: true, value }</code> for valid JSON, or <code>{ ok: false, error, value: fallback }</code> where error is the SyntaxError message. Do not swallow other kinds of errors.",
+    "examples": [
+     "safeParse('{\"a\":1}').value.a  // 1",
+     "safeParse(\"{\", null).ok  // false"
+    ],
+    "hint": "Catch, check <code>e instanceof SyntaxError</code>, and rethrow anything else.",
+    "fn": "safeParse",
+    "starter": "function safeParse(text, fallback) {\n  // your code\n}",
+    "solution": "function safeParse(text, fallback) {\n  try {\n    return { ok: true, value: JSON.parse(text) }\n  } catch (e) {\n    if (!(e instanceof SyntaxError)) throw e\n    return { ok: false, error: e.message, value: fallback }\n  }\n}",
+    "checks": [
+     {
+      "t": "valid JSON",
+      "verify": "const r = safeParse('{\"a\":1}'); assert(r && r.ok === true && r.value.a === 1, \"valid\")"
+     },
+     {
+      "t": "invalid JSON gives the fallback and a message",
+      "verify": "const r = safeParse(\"{\", 42); assert(r && r.ok === false && r.value === 42 && typeof r.error === \"string\" && r.error.length > 0, \"invalid\")"
+     },
+     {
+      "t": "other errors are not swallowed",
+      "verify": "let thrown = false; try { safeParse({ toString() { throw new RangeError(\"boom\") } }) } catch (e) { thrown = e instanceof RangeError }; assert(thrown, \"should rethrow\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "try/catch catches synchronous throws in its block; finally always runs; never return from finally. Keep try blocks small and rethrow what you do not handle.",
+    "mistakes": [
+     "Huge try blocks that hide unrelated bugs.",
+     "return inside finally swallowing errors.",
+     "Expecting try/catch to catch errors thrown later in callbacks."
+    ]
+   }
+  },
+  {
+   "id": "error-types",
+   "prereqs": [
+    "try-catch"
+   ],
+   "dryRun": {
+    "title": "Which error is it?",
+    "columns": [
+     "code",
+     "error type",
+     "meaning"
+    ],
+    "rows": [
+     [
+      "undefinedVar",
+      "ReferenceError",
+      "name does not exist"
+     ],
+     [
+      "null.x",
+      "TypeError",
+      "wrong kind of value for the operation"
+     ],
+     [
+      "new Array(-1)",
+      "RangeError",
+      "number out of allowed range"
+     ],
+     [
+      "JSON.parse(\"{\")",
+      "SyntaxError",
+      "text is not valid syntax"
+     ],
+     [
+      "decodeURI(\"%\")",
+      "URIError",
+      "bad URI escape"
+     ],
+     [
+      "Promise.any([Promise.reject(1)]) rejects with",
+      "AggregateError",
+      "several errors at once"
+     ]
+    ],
+    "hit": 1,
+    "note": "All built-in errors inherit from <code>Error</code> and carry <code>name</code>, <code>message</code> and <code>stack</code>. Check the type with <code>instanceof</code> (or <code>name</code>), never by matching message text."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const tries = [() =&gt; x.y, () =&gt; null.y, () =&gt; (1).toFixed(200), () =&gt; JSON.parse('{')]\nconsole.log(tries.map((f) =&gt; { try { f() } catch (e) { return e.name } }).join(' '))</code></pre>",
+     "opts": [
+      "<code>TypeError TypeError RangeError SyntaxError</code>",
+      "<code>ReferenceError ReferenceError RangeError SyntaxError</code>",
+      "<code>ReferenceError TypeError TypeError SyntaxError</code>",
+      "<code>ReferenceError TypeError RangeError SyntaxError</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Unknown name → ReferenceError, property of null → TypeError, toFixed(200) → RangeError, bad JSON → SyntaxError."
+     ],
+     "exec": "const tries = [() => x.y, () => null.y, () => (1).toFixed(200), () => JSON.parse('{')]\nconsole.log(tries.map((f) => { try { f() } catch (e) { return e.name } }).join(' '))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const e = new TypeError('bad')\nconsole.log(e instanceof Error, e.name, String(e))</code></pre>",
+     "opts": [
+      "<code>true TypeError TypeError: bad</code>",
+      "<code>false TypeError bad</code>",
+      "<code>true Error TypeError: bad</code>",
+      "<code>true TypeError bad</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "TypeError extends Error. String(e) is \"name: message\"."
+     ],
+     "exec": "const e = new TypeError('bad')\nconsole.log(e instanceof Error, e.name, String(e))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>try { throw 'just a string' } catch (e) { console.log(typeof e, e.stack) }</code></pre>",
+     "opts": [
+      "<code>object undefined</code>",
+      "<code>string string</code>",
+      "<code>string undefined</code>",
+      "<code>error undefined</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "You can throw anything, but a string has no stack trace or name. Always throw Error objects."
+     ],
+     "exec": "try { throw 'just a string' } catch (e) { console.log(typeof e, e.stack) }"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const e = new Error('top', { cause: new Error('db down') })\nconsole.log(e.cause.message)</code></pre>",
+     "opts": [
+      "<code>top</code>",
+      "<code>undefined</code>",
+      "<code>TypeError</code>",
+      "<code>db down</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "The <code>cause</code> option keeps the original error when you wrap it with a clearer message."
+     ],
+     "exec": "const e = new Error('top', { cause: new Error('db down') })\nconsole.log(e.cause.message)"
+    },
+    {
+     "tag": "Pick one",
+     "q": "Your function gets a negative quantity. Which error fits best?",
+     "opts": [
+      "<code>TypeError</code>",
+      "<code>RangeError</code>",
+      "<code>SyntaxError</code>",
+      "<code>ReferenceError</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "The type is right (a number) but the value is outside the allowed range."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>classify(fn)</code>: run fn and return <code>\"ok\"</code>, or <code>\"bad-input\"</code> for TypeError/RangeError, <code>\"bad-syntax\"</code> for SyntaxError, and <code>\"bug\"</code> for anything else (including non-Error throws).",
+    "examples": [
+     "classify(() => null.x)  // \"bad-input\"",
+     "classify(() => { throw \"str\" })  // \"bug\""
+    ],
+    "hint": "Use instanceof checks in order inside catch.",
+    "fn": "classify",
+    "starter": "function classify(fn) {\n  // your code\n}",
+    "solution": "function classify(fn) {\n  try { fn(); return 'ok' } catch (e) {\n    if (e instanceof TypeError || e instanceof RangeError) return 'bad-input'\n    if (e instanceof SyntaxError) return 'bad-syntax'\n    return 'bug'\n  }\n}",
+    "checks": [
+     {
+      "t": "ok when nothing throws",
+      "verify": "assert(classify(() => 1) === \"ok\", \"ok\")"
+     },
+     {
+      "t": "type and range errors are bad input, syntax is bad syntax",
+      "verify": "assert(classify(() => null.x) === \"bad-input\" && classify(() => (1).toFixed(500)) === \"bad-input\" && classify(() => JSON.parse(\"{\")) === \"bad-syntax\", \"types\")"
+     },
+     {
+      "t": "everything else is a bug",
+      "verify": "assert(classify(() => { throw \"s\" }) === \"bug\" && classify(() => undefinedName) === \"bug\", \"bug\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Built-in errors: ReferenceError, TypeError, RangeError, SyntaxError, URIError, AggregateError. Branch on type, throw Error objects, wrap with { cause }.",
+    "mistakes": [
+     "Throwing strings.",
+     "Matching e.message text to decide what happened."
+    ]
+   }
+  },
+  {
+   "id": "custom-errors",
+   "prereqs": [
+    "error-types"
+   ],
+   "dryRun": {
+    "title": "class NotFoundError extends Error",
+    "columns": [
+     "part",
+     "why"
+    ],
+    "rows": [
+     [
+      "constructor(msg, opts) { super(msg, opts) }",
+      "keeps message and cause"
+     ],
+     [
+      "this.name = \"NotFoundError\"",
+      "so logs and String(e) show the real type"
+     ],
+     [
+      "extra fields: this.status = 404",
+      "structured data, not text parsing"
+     ],
+     [
+      "catch: e instanceof NotFoundError",
+      "branch on the type"
+     ]
+    ],
+    "hit": 1,
+    "note": "Custom error classes give each failure a type you can check and fields you can read (status, code, field name). Set <code>name</code> so stack traces say what happened."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>class AppError extends Error {}\nconst e = new AppError('x')\nconsole.log(e.name, e instanceof AppError, e instanceof Error)</code></pre>",
+     "opts": [
+      "<code>AppError true true</code>",
+      "<code>Error false true</code>",
+      "<code>Error true true</code>",
+      "<code>AppError false false</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Without setting this.name, the name is inherited from Error.prototype: \"Error\"."
+     ],
+     "exec": "class AppError extends Error {}\nconst e = new AppError('x')\nconsole.log(e.name, e instanceof AppError, e instanceof Error)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>class HttpError extends Error { constructor(status, msg) { super(msg); this.name = 'HttpError'; this.status = status } }\nconst e = new HttpError(404, 'nope')\nconsole.log(String(e), e.status)</code></pre>",
+     "opts": [
+      "<code>HttpError: nope 404</code>",
+      "<code>Error: nope 404</code>",
+      "<code>HttpError 404</code>",
+      "<code>nope undefined</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "String(e) uses name and message. The status is a real field."
+     ],
+     "exec": "class HttpError extends Error { constructor(status, msg) { super(msg); this.name = 'HttpError'; this.status = status } }\nconst e = new HttpError(404, 'nope')\nconsole.log(String(e), e.status)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>class ValidationError extends Error { constructor(field) { super(field + ' is invalid'); this.name = this.constructor.name; this.field = field } }\nclass EmailError extends ValidationError {}\nconsole.log(new EmailError('email').name)</code></pre>",
+     "opts": [
+      "<code>ValidationError</code>",
+      "<code>Error</code>",
+      "<code>EmailError</code>",
+      "<code>undefined</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "this.constructor.name gives the actual subclass name, so subclasses do not need their own constructor."
+     ],
+     "exec": "class ValidationError extends Error { constructor(field) { super(field + ' is invalid'); this.name = this.constructor.name; this.field = field } }\nclass EmailError extends ValidationError {}\nconsole.log(new EmailError('email').name)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>try { throw new Error('boom', { cause: 'disk' }) } catch (e) { console.log(e.message, e.cause) }</code></pre>",
+     "opts": [
+      "<code>boom disk</code>",
+      "<code>boom undefined</code>",
+      "<code>disk boom</code>",
+      "<code>Error disk</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "cause can be any value, usually the original error."
+     ],
+     "exec": "try { throw new Error('boom', { cause: 'disk' }) } catch (e) { console.log(e.message, e.cause) }"
+    },
+    {
+     "tag": "Design",
+     "q": "Why are typed errors better than returning <code>null</code> on failure?",
+     "opts": [
+      "They are faster",
+      "They use less memory",
+      "null is not allowed in JavaScript",
+      "The caller learns WHY it failed and cannot accidentally ignore it"
+     ],
+     "ans": 3,
+     "why": [
+      "null forces callers to guess what went wrong."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Create <code>class HttpError extends Error</code> with <code>status</code>, and <code>class NotFoundError extends HttpError</code> (status 404, name \"NotFoundError\"). Then write <code>toResponse(err)</code> returning <code>{ status, message }</code>: the error's status for HttpErrors, else 500 with message \"Internal error\".",
+    "examples": [
+     "toResponse(new NotFoundError(\"no user\"))  // { status: 404, message: \"no user\" }",
+     "toResponse(new Error(\"x\"))  // { status: 500, message: \"Internal error\" }"
+    ],
+    "hint": "Set this.name = this.constructor.name in HttpError; NotFoundError calls super(404, message).",
+    "fn": "toResponse",
+    "starter": "class HttpError extends Error {}\nclass NotFoundError extends HttpError {}\nfunction toResponse(err) {\n  // your code\n}",
+    "solution": "class HttpError extends Error {\n  constructor(status, message, options) {\n    super(message, options)\n    this.name = this.constructor.name\n    this.status = status\n  }\n}\nclass NotFoundError extends HttpError {\n  constructor(message) { super(404, message) }\n}\nfunction toResponse(err) {\n  return err instanceof HttpError ? { status: err.status, message: err.message } : { status: 500, message: 'Internal error' }\n}",
+    "checks": [
+     {
+      "t": "NotFoundError has status and name",
+      "verify": "const e = new NotFoundError(\"no user\"); assert(e.status === 404 && e.name === \"NotFoundError\" && e instanceof HttpError && e instanceof Error, \"class\")"
+     },
+     {
+      "t": "HttpErrors map to their status",
+      "verify": "const r = toResponse(new NotFoundError(\"no user\")); assert(r && r.status === 404 && r.message === \"no user\", \"404\")"
+     },
+     {
+      "t": "other errors hide their message",
+      "verify": "const r = toResponse(new Error(\"secret\")); assert(r && r.status === 500 && r.message === \"Internal error\", \"500\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Extend Error, call super(message, options), set name, add structured fields. Branch with instanceof.",
+    "mistakes": [
+     "Forgetting this.name, so logs say just \"Error\".",
+     "Leaking internal messages of unexpected errors to users."
+    ]
+   }
+  },
+  {
+   "id": "debugging",
+   "prereqs": [
+    "custom-errors"
+   ],
+   "dryRun": {
+    "title": "A bug hunt, in order",
+    "columns": [
+     "step",
+     "tool",
+     "question it answers"
+    ],
+    "rows": [
+     [
+      "1. reproduce",
+      "smallest input that fails",
+      "can I make it fail on demand?"
+     ],
+     [
+      "2. read the error",
+      "message + stack",
+      "which line, which call path?"
+     ],
+     [
+      "3. inspect state",
+      "debugger / breakpoint",
+      "what are the values right there?"
+     ],
+     [
+      "4. narrow down",
+      "console.table, binary search in code",
+      "where does good turn bad?"
+     ],
+     [
+      "5. fix + test",
+      "a test for that input",
+      "will it stay fixed?"
+     ]
+    ],
+    "hit": 1,
+    "note": "The stack trace is the most useful text in debugging: read it top-down to find your own code. Use breakpoints (or the <code>debugger</code> statement) instead of guessing, and <code>console.table</code>, <code>console.time</code>, <code>console.trace</code> for quick looks."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log([1, 2, 3].map((n) =&gt; n * 2), String([1, 2, 3]))</code></pre>",
+     "opts": [
+      "<code>[ 2, 4, 6 ] [1,2,3]</code>",
+      "<code>[ 2, 4, 6 ] 1,2,3</code>",
+      "<code>2,4,6 1,2,3</code>",
+      "<code>[2,4,6] 1,2,3</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "console.log prints arrays in an inspect format, while String() joins with commas. When logging, prefer the object itself over string concatenation."
+     ],
+     "exec": "console.log([1, 2, 3].map((n) => n * 2), String([1, 2, 3]))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const obj = { n: 1 }\nconst log = []\nlog.push(JSON.stringify(obj))\nobj.n = 2\nconsole.log(log[0])</code></pre>",
+     "opts": [
+      "<code>{\"n\":2}</code>",
+      "<code>{\"n\":1}</code>",
+      "<code>{n: 1}</code>",
+      "<code>[object Object]</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Logging a copy (JSON.stringify) captures the value at that moment. Browsers show live objects in the console, which can mislead you."
+     ],
+     "exec": "const obj = { n: 1 }\nconst log = []\nlog.push(JSON.stringify(obj))\nobj.n = 2\nconsole.log(log[0])"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function f() { return new Error('where').stack.split('\\n')[1].includes('at f') }\nconsole.log(f())</code></pre>",
+     "opts": [
+      "<code>false</code>",
+      "<code>undefined</code>",
+      "<code>at f</code>",
+      "<code>true</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "A stack trace lists the call path, innermost first; line 2 is the function where the Error was created."
+     ],
+     "exec": "function f() { return new Error('where').stack.split('\\n')[1].includes('at f') }\nconsole.log(f())"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const t0 = performance.now()\nfor (let i = 0; i &lt; 1e5; i++) {}\nconsole.log(typeof (performance.now() - t0))</code></pre>",
+     "opts": [
+      "<code>number</code>",
+      "<code>undefined</code>",
+      "<code>bigint</code>",
+      "<code>string</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "performance.now() gives a high-resolution millisecond number for timing (console.time does the same with a label)."
+     ],
+     "exec": "const t0 = performance.now()\nfor (let i = 0; i < 1e5; i++) {}\nconsole.log(typeof (performance.now() - t0))"
+    },
+    {
+     "tag": "First move",
+     "q": "A user reports \"the total is wrong sometimes\". What is your first step?",
+     "opts": [
+      "Rewrite the total function",
+      "Add try/catch everywhere",
+      "Find an input that reproduces it every time",
+      "Add console.log to every line"
+     ],
+     "ans": 2,
+     "why": [
+      "Without a reliable reproduction you cannot tell if a fix worked."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>findFirstBad(items, isGood)</code>: items go from all good to all bad at some point. Return the index of the first bad item using binary search (like <code>git bisect</code>), or -1 if all are good. isGood must be called at most ~log2(n)+2 times.",
+    "examples": [
+     "findFirstBad([1, 1, 1, 0, 0], (x) => x === 1)  // 3",
+     "findFirstBad([1, 1], (x) => x === 1)  // -1"
+    ],
+    "hint": "lo = 0, hi = n. While lo &lt; hi: mid; if good, lo = mid + 1, else hi = mid. Answer lo (or -1 if lo === n).",
+    "fn": "findFirstBad",
+    "starter": "function findFirstBad(items, isGood) {\n  // your code\n}",
+    "solution": "function findFirstBad(items, isGood) {\n  let lo = 0, hi = items.length\n  while (lo < hi) {\n    const mid = (lo + hi) >> 1\n    if (isGood(items[mid])) lo = mid + 1\n    else hi = mid\n  }\n  return lo === items.length ? -1 : lo\n}",
+    "checks": [
+     {
+      "t": "finds the first bad index",
+      "verify": "assert(findFirstBad([1, 1, 1, 0, 0], (x) => x === 1) === 3 && findFirstBad([0], (x) => x === 1) === 0, \"index\")"
+     },
+     {
+      "t": "all good gives -1",
+      "verify": "assert(findFirstBad([1, 1], (x) => x === 1) === -1 && findFirstBad([], () => true) === -1, \"none\")"
+     },
+     {
+      "t": "uses few checks",
+      "verify": "const big = Array.from({ length: 1024 }, (_, i) => i < 700); let calls = 0; const r = findFirstBad(big, (x) => (calls++, x)); assert(r === 700 && calls <= 12, \"too many calls: \" + calls)"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Reproduce, read the stack, inspect with breakpoints, narrow down by halving, then lock the fix with a test.",
+    "mistakes": [
+     "Changing code before you can reproduce the bug.",
+     "Trusting a live object in the console that changed after logging."
+    ]
+   }
+  }
+ ]
+}

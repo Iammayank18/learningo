@@ -10,6 +10,8 @@ export interface TestCase {
 
 export interface Problem {
   id: string
+  /** LeetCode number and URL slug (https://leetcode.com/problems/<slug>/) */
+  lc?: { n: number; slug: string }
   /** DSA lesson id this problem belongs to */
   lesson: string
   title: string

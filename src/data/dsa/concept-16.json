@@ -1,0 +1,687 @@
+{
+  "items": [
+    {
+      "id": "frequency-counting",
+      "prereqs": [
+        "hashmaps"
+      ],
+      "dryRun": {
+        "title": "countChars(\"banana\")",
+        "columns": [
+          "step",
+          "char",
+          "counts after this step"
+        ],
+        "rows": [
+          [
+            "1",
+            "b",
+            "{b: 1}"
+          ],
+          [
+            "2",
+            "a",
+            "{b: 1, a: 1}"
+          ],
+          [
+            "3",
+            "n",
+            "{b: 1, a: 1, n: 1}"
+          ],
+          [
+            "4",
+            "a",
+            "{b: 1, a: 2, n: 1}"
+          ],
+          [
+            "5",
+            "n",
+            "{b: 1, a: 2, n: 2}"
+          ],
+          [
+            "6",
+            "a",
+            "{b: 1, a: 3, n: 2}"
+          ]
+        ],
+        "hit": 5,
+        "note": "One pass, six steps. Every step does the same thing: <b>read the current count (or 0), add 1, store it back</b>. After the last step the map answers any \"how many\" question in O(1)."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const count = {}\nfor (const ch of 'aabc') count[ch] = (count[ch] || 0) + 1\nconsole.log(count.a, count.c, String(count.z))</code></pre>",
+          "opts": [
+            "<code>2 1 undefined</code>",
+            "<code>2 1 0</code>",
+            "<code>3 1 undefined</code>",
+            "<code>2 2 undefined</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "<code>a</code> appears twice, <code>c</code> once. <code>z</code> was never counted, so the key does not exist and the lookup gives <code>undefined</code>, not <code>0</code>.",
+            "Trap: forgetting that a missing key is <code>undefined</code>. Use <code>(count[z] || 0)</code> when you need a number."
+          ],
+          "exec": "const count = {}\nfor (const ch of 'aabc') count[ch] = (count[ch] || 0) + 1\nconsole.log(count.a, count.c, String(count.z))"
+        },
+        {
+          "tag": "Spot the bug",
+          "q": "<pre><code>const c = {}\nfor (const ch of 'aa') c[ch]++\nconsole.log(String(c.a))</code></pre>",
+          "opts": [
+            "<code>2</code>",
+            "<code>1</code>",
+            "<code>NaN</code>",
+            "<code>0</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "The first time, <code>c.a</code> is <code>undefined</code>, and <code>undefined + 1</code> is <code>NaN</code>. Once a count is <code>NaN</code>, it stays <code>NaN</code> forever.",
+            "Fix: start from zero with <code>c[ch] = (c[ch] || 0) + 1</code>, or use <code>Map</code> with <code>m.get(k) ?? 0</code>."
+          ],
+          "exec": "const c = {}\nfor (const ch of 'aa') c[ch]++\nconsole.log(String(c.a))"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const m = new Map()\nfor (const n of [1, 1, 2]) m.set(n, (m.get(n) || 0) + 1)\nconsole.log(m.get(1), m.size)</code></pre>",
+          "opts": [
+            "<code>2 2</code>",
+            "<code>2 3</code>",
+            "<code>1 2</code>",
+            "<code>3 2</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "The value <code>1</code> is counted twice and <code>2</code> once, so <code>m.get(1)</code> is 2. The map has two distinct keys, so <code>m.size</code> is 2, not 3.",
+            "Trap: reading <code>size</code> as the number of items in the input. It is the number of <b>distinct</b> keys."
+          ],
+          "exec": "const m = new Map()\nfor (const n of [1, 1, 2]) m.set(n, (m.get(n) || 0) + 1)\nconsole.log(m.get(1), m.size)"
+        },
+        {
+          "tag": "Pick the right tool",
+          "q": "You must check whether two lowercase words (only letters <code>a</code> to <code>z</code>) are anagrams. Which counting structure is best?",
+          "opts": [
+            "A nested loop that removes matched letters one by one",
+            "A <code>Map</code> that you sort by key before comparing",
+            "An array of 26 numbers, one slot per letter",
+            "A <code>Set</code> of the letters of each word"
+          ],
+          "ans": 2,
+          "why": [
+            "With a fixed alphabet, <code>counts[ch.charCodeAt(0) - 97]++</code> is fast and uses O(1) extra space (26 slots).",
+            "A set forgets how many times a letter appears, so \"aab\" and \"abb\" would look equal. Trap: using a set when counts matter."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Think it through",
+          "q": "You count the letters of <code>\"listen\"</code>, then <b>subtract</b> one for every letter of <code>\"silent\"</code>. When are the two words anagrams?",
+          "opts": [
+            "When the map has no keys left",
+            "When every count ends at <code>0</code>",
+            "When the last subtraction gives a negative number",
+            "When both words have the same first letter"
+          ],
+          "ans": 1,
+          "why": [
+            "Same letters with the same counts cancel each other exactly. Any count that is not 0 means one word has an extra or a missing letter.",
+            "Trap: checking only the keys. A map can keep a key whose value is 0, so look at the <b>values</b>."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "Write <code>isAnagram(a, b)</code>. Return <code>true</code> if <code>b</code> uses exactly the same letters as <code>a</code>, the same number of times (any order). Both strings may contain any characters.",
+        "examples": [
+          "isAnagram(\"listen\", \"silent\")  // true",
+          "isAnagram(\"rat\", \"car\")         // false",
+          "isAnagram(\"aab\", \"abb\")        // false"
+        ],
+        "hint": "Count the letters of <code>a</code>, then walk through <code>b</code> and subtract. If a count goes below zero (or the lengths differ), return <code>false</code>.",
+        "fn": "isAnagram",
+        "starter": "function isAnagram(a, b) {\n  // your code\n}\n",
+        "solution": "function isAnagram(a, b) {\n  if (a.length !== b.length) return false\n  const count = new Map()\n  for (const ch of a) count.set(ch, (count.get(ch) || 0) + 1)\n  for (const ch of b) {\n    const left = (count.get(ch) || 0) - 1\n    if (left < 0) return false\n    count.set(ch, left)\n  }\n  return true\n}",
+        "checks": [
+          {
+            "t": "true for a real anagram",
+            "verify": "assert(isAnagram('listen', 'silent') === true, 'listen / silent should be true')"
+          },
+          {
+            "t": "false when the letters differ",
+            "verify": "assert(isAnagram('rat', 'car') === false, 'rat / car should be false')"
+          },
+          {
+            "t": "counts matter, not only which letters appear",
+            "verify": "assert(isAnagram('aab', 'abb') === false, 'aab / abb should be false')"
+          },
+          {
+            "t": "different lengths are never anagrams",
+            "verify": "assert(isAnagram('ab', 'abc') === false, 'ab / abc should be false')"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Frequency counting turns \"how many of each?\" into one O(n) pass and O(k) space, where k is the number of distinct values. Read the count (or 0), add 1, store it back.",
+        "mistakes": [
+          "Doing <code>count[x]++</code> on a key that does not exist yet, which gives <code>NaN</code>.",
+          "Using a <code>Set</code> when the number of occurrences matters.",
+          "Comparing two maps with <code>===</code>. Compare them key by key, or subtract one from the other."
+        ]
+      }
+    },
+    {
+      "id": "fast-slow-pointers",
+      "prereqs": [
+        "linked-lists",
+        "two-pointers"
+      ],
+      "dryRun": {
+        "title": "middle of 1 → 2 → 3 → 4 → 5",
+        "columns": [
+          "step",
+          "slow",
+          "fast",
+          "what happens"
+        ],
+        "rows": [
+          [
+            "start",
+            "1",
+            "1",
+            "both at the head"
+          ],
+          [
+            "1",
+            "2",
+            "3",
+            "slow moves 1, fast moves 2"
+          ],
+          [
+            "2",
+            "3",
+            "5",
+            "slow moves 1, fast moves 2"
+          ],
+          [
+            "stop",
+            "3",
+            "5",
+            "<code>fast.next</code> is null, so we stop"
+          ]
+        ],
+        "hit": 3,
+        "note": "Fast covers two nodes for every one node of slow. When fast reaches the end, slow has covered exactly half the list, so <b>slow is the middle</b>. No length counting, no second pass."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const list = (a) => a.reduceRight((next, val) => ({ val, next }), null)\nlet slow = list([1, 2, 3, 4, 5]), fast = slow\nwhile (fast &amp;&amp; fast.next) { slow = slow.next; fast = fast.next.next }\nconsole.log(slow.val)</code></pre>",
+          "opts": [
+            "<code>2</code>",
+            "<code>3</code>",
+            "<code>4</code>",
+            "<code>5</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "Slow moves two times (1 to 2 to 3) while fast moves 1 to 3 to 5. Fast has no <code>next</code>, so the loop stops with slow on <code>3</code>.",
+            "Trap: counting from the middle of the <b>values</b> instead of the nodes you actually visit."
+          ],
+          "exec": "const list = (a) => a.reduceRight((next, val) => ({ val, next }), null)\nlet slow = list([1, 2, 3, 4, 5]), fast = slow\nwhile (fast && fast.next) { slow = slow.next; fast = fast.next.next }\nconsole.log(slow.val)"
+        },
+        {
+          "tag": "Edge case",
+          "q": "<pre><code>const list = (a) => a.reduceRight((next, val) => ({ val, next }), null)\nlet slow = list([1, 2, 3, 4]), fast = slow\nwhile (fast &amp;&amp; fast.next) { slow = slow.next; fast = fast.next.next }\nconsole.log(slow.val)</code></pre>",
+          "opts": [
+            "<code>2</code>",
+            "<code>3</code>",
+            "<code>4</code>",
+            "<code>1</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "With an even length there are two middles (2 and 3). This loop condition (<code>fast &amp;&amp; fast.next</code>) ends on the <b>second</b> one, which is <code>3</code>.",
+            "If you need the first middle, stop earlier with <code>fast.next &amp;&amp; fast.next.next</code>."
+          ],
+          "exec": "const list = (a) => a.reduceRight((next, val) => ({ val, next }), null)\nlet slow = list([1, 2, 3, 4]), fast = slow\nwhile (fast && fast.next) { slow = slow.next; fast = fast.next.next }\nconsole.log(slow.val)"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const a = { val: 1, next: null }, b = { val: 2, next: null }, c = { val: 3, next: null }\na.next = b; b.next = c; c.next = b   // 3 points back to 2\nlet slow = a, fast = a, steps = 0\nwhile (fast &amp;&amp; fast.next) {\n  slow = slow.next; fast = fast.next.next; steps++\n  if (slow === fast) break\n}\nconsole.log(slow === fast, steps)</code></pre>",
+          "opts": [
+            "<code>true 2</code>",
+            "<code>true 1</code>",
+            "<code>false 2</code>",
+            "<code>true 3</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "Step 1: slow is on 2, fast is on 3. Step 2: slow is on 3, and fast goes 3 to 2 to 3, so both stand on <code>3</code>. They meet, so there is a cycle, after 2 steps.",
+            "A cycle traps fast inside the loop, and fast gains one node on slow every step, so they must meet."
+          ],
+          "exec": "const a = { val: 1, next: null }, b = { val: 2, next: null }, c = { val: 3, next: null }\na.next = b; b.next = c; c.next = b\nlet slow = a, fast = a, steps = 0\nwhile (fast && fast.next) {\n  slow = slow.next; fast = fast.next.next; steps++\n  if (slow === fast) break\n}\nconsole.log(slow === fast, steps)"
+        },
+        {
+          "tag": "Think it through",
+          "q": "In a list <b>without</b> a cycle, how does the fast and slow loop end?",
+          "opts": [
+            "Slow reaches the end first",
+            "Fast reaches <code>null</code> (or the last node) and the loop stops",
+            "Slow and fast meet at the middle",
+            "It never ends"
+          ],
+          "ans": 1,
+          "why": [
+            "Fast moves faster, so it always reaches the end first. The check <code>fast &amp;&amp; fast.next</code> stops the loop there, and the answer is \"no cycle\".",
+            "Trap: checking only <code>fast.next</code>. If fast is already <code>null</code>, reading <code>fast.next</code> crashes."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Pick the right tool",
+          "q": "You must detect a cycle in a linked list and you are not allowed to use extra memory that grows with the list. What do you use?",
+          "opts": [
+            "A <code>Set</code> of visited nodes",
+            "Fast and slow pointers",
+            "Sort the nodes by value",
+            "Reverse the whole list first"
+          ],
+          "ans": 1,
+          "why": [
+            "Fast and slow pointers use two variables, so the extra space is <b>O(1)</b>. A set of nodes would take O(n).",
+            "Both run in O(n) time. The difference is memory."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "Write <code>middleValue(head)</code>. The list is made of nodes like <code>{ val, next }</code>. Return the <code>val</code> of the middle node. For an even length, return the <b>second</b> of the two middle nodes.",
+        "examples": [
+          "middleValue(list([1, 2, 3, 4, 5]))  // 3",
+          "middleValue(list([1, 2, 3, 4]))     // 3",
+          "middleValue(list([7]))              // 7"
+        ],
+        "hint": "Move <code>slow</code> by one node and <code>fast</code> by two. Loop while <code>fast</code> and <code>fast.next</code> both exist.",
+        "fn": "middleValue",
+        "starter": "// helper to build a list from an array: list([1, 2, 3])\nconst list = (a) => a.reduceRight((next, val) => ({ val, next }), null)\n\nfunction middleValue(head) {\n  // your code\n}\n",
+        "solution": "const list = (a) => a.reduceRight((next, val) => ({ val, next }), null)\n\nfunction middleValue(head) {\n  let slow = head, fast = head\n  while (fast && fast.next) {\n    slow = slow.next\n    fast = fast.next.next\n  }\n  return slow.val\n}",
+        "checks": [
+          {
+            "t": "odd length",
+            "verify": "assert(middleValue(list([1, 2, 3, 4, 5])) === 3, 'expected 3')"
+          },
+          {
+            "t": "even length gives the second middle",
+            "verify": "assert(middleValue(list([1, 2, 3, 4])) === 3, 'expected 3')"
+          },
+          {
+            "t": "a single node",
+            "verify": "assert(middleValue(list([7])) === 7, 'expected 7')"
+          },
+          {
+            "t": "two nodes",
+            "verify": "assert(middleValue(list([1, 2])) === 2, 'expected 2')"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Two pointers at different speeds share one pass: when fast finishes, slow is at the middle; if there is a cycle, fast catches slow. Time O(n), extra space O(1).",
+        "mistakes": [
+          "Checking <code>fast.next</code> without first checking <code>fast</code>, which crashes on even-length lists.",
+          "Forgetting that an even-length list has two middles, and returning the wrong one.",
+          "Using a <code>Set</code> of nodes when the problem asks for O(1) extra space."
+        ]
+      }
+    },
+    {
+      "id": "top-k",
+      "prereqs": [
+        "heap"
+      ],
+      "dryRun": {
+        "title": "2nd largest of [3, 2, 1, 5, 6, 4] (k = 2)",
+        "columns": [
+          "step",
+          "number",
+          "heap after push",
+          "popped (smallest)",
+          "heap after"
+        ],
+        "rows": [
+          [
+            "1",
+            "3",
+            "{3}",
+            "–",
+            "{3}"
+          ],
+          [
+            "2",
+            "2",
+            "{2, 3}",
+            "–",
+            "{2, 3}"
+          ],
+          [
+            "3",
+            "1",
+            "{1, 2, 3}",
+            "1",
+            "{2, 3}"
+          ],
+          [
+            "4",
+            "5",
+            "{2, 3, 5}",
+            "2",
+            "{3, 5}"
+          ],
+          [
+            "5",
+            "6",
+            "{3, 5, 6}",
+            "3",
+            "{5, 6}"
+          ],
+          [
+            "6",
+            "4",
+            "{4, 5, 6}",
+            "4",
+            "{5, 6}"
+          ]
+        ],
+        "hit": 5,
+        "note": "The heap never holds more than <b>k = 2</b> numbers: the two biggest seen so far. The smallest of them sits on top, so <code>peek()</code> is the 2nd largest: <b>5</b>."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>console.log([3, 2, 1, 5, 6, 4].sort((a, b) =&gt; b - a)[1])</code></pre>",
+          "opts": [
+            "<code>4</code>",
+            "<code>2</code>",
+            "<code>6</code>",
+            "<code>5</code>"
+          ],
+          "ans": 3,
+          "why": [
+            "Sorted from big to small: 6, 5, 4, 3, 2, 1. Index 1 is the 2nd largest, which is <code>5</code>.",
+            "This works but costs O(n log n). A heap of size k does the job in O(n log k)."
+          ],
+          "exec": "console.log([3, 2, 1, 5, 6, 4].sort((a, b) => b - a)[1])"
+        },
+        {
+          "tag": "Edge case",
+          "q": "<pre><code>console.log([10, 9, 1].sort().join(','))</code></pre>",
+          "opts": [
+            "<code>1,9,10</code>",
+            "<code>1,10,9</code>",
+            "<code>10,9,1</code>",
+            "<code>9,10,1</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "Without a compare function, <code>sort</code> turns the numbers into <b>strings</b> and sorts them as text. As text, <code>\"10\"</code> comes before <code>\"9\"</code>.",
+            "Always write <code>sort((a, b) =&gt; a - b)</code> for numbers."
+          ],
+          "exec": "console.log([10, 9, 1].sort().join(','))"
+        },
+        {
+          "tag": "Pick the right tool",
+          "q": "You need the <b>k largest</b> numbers of a very long list. Which heap do you keep, and how big?",
+          "opts": [
+            "A min-heap that never holds more than k numbers",
+            "A max-heap that never holds more than k numbers",
+            "A min-heap with all n numbers",
+            "A max-heap with all n numbers"
+          ],
+          "ans": 0,
+          "why": [
+            "The top of a min-heap is the <b>smallest</b> of the kept numbers, so it is the first one to throw away when a bigger number arrives. What stays are the k largest.",
+            "Trap: using a max-heap of size k keeps the k smallest instead."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Complexity",
+          "q": "A list has <code>n</code> numbers and you keep a heap of size <code>k</code>. What is the time cost of the whole scan?",
+          "opts": [
+            "<code>O(k log n)</code>",
+            "<code>O(n)</code>",
+            "<code>O(n log k)</code>",
+            "<code>O(n log n)</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "Each of the n numbers does one push and at most one pop on a heap of size k, and each costs O(log k). So the total is <b>O(n log k)</b>.",
+            "When k is much smaller than n, this beats sorting (O(n log n)). Space is O(k)."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Pick the right tool",
+          "q": "Numbers keep arriving one by one, and after each one you must report the <b>top 3</b> so far. What is the best idea?",
+          "opts": [
+            "Sort the whole list after every new number",
+            "Keep a min-heap of size 3 and update it",
+            "Keep every number in a <code>Set</code>",
+            "Scan the whole list three times"
+          ],
+          "ans": 1,
+          "why": [
+            "A heap of size 3 updates in O(log 3), which is constant. Sorting after each number would cost O(n log n) every time.",
+            "This \"keep only the best k\" idea is exactly what a top-k heap is for."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "Write <code>kthLargest(nums, k)</code> with the <code>MinHeap</code> given in the starter. Push every number. When the heap grows bigger than <code>k</code>, pop the smallest. At the end, return the top of the heap.",
+        "examples": [
+          "kthLargest([3, 2, 1, 5, 6, 4], 2)  // 5",
+          "kthLargest([3, 2, 3, 1, 2, 4, 5, 5, 6], 4)  // 4",
+          "kthLargest([7], 1)  // 7"
+        ],
+        "hint": "Use <code>heap.push(x)</code>; <code>if (heap.size() &gt; k) heap.pop()</code>; and finally <code>heap.peek()</code>.",
+        "fn": "kthLargest",
+        "starter": "// Given: a small min-heap. Do not change it.\nclass MinHeap {\n  constructor() { this.a = [] }\n  size() { return this.a.length }\n  peek() { return this.a[0] }\n  push(x) {\n    const a = this.a\n    a.push(x)\n    let i = a.length - 1\n    while (i > 0) {\n      const p = (i - 1) >> 1\n      if (a[p] <= a[i]) break\n      ;[a[p], a[i]] = [a[i], a[p]]\n      i = p\n    }\n  }\n  pop() {\n    const a = this.a\n    const top = a[0]\n    const last = a.pop()\n    if (a.length) {\n      a[0] = last\n      let i = 0\n      for (;;) {\n        let l = 2 * i + 1, r = l + 1, m = i\n        if (l < a.length && a[l] < a[m]) m = l\n        if (r < a.length && a[r] < a[m]) m = r\n        if (m === i) break\n        ;[a[m], a[i]] = [a[i], a[m]]\n        i = m\n      }\n    }\n    return top\n  }\n}\n\nfunction kthLargest(nums, k) {\n  // your code\n}\n",
+        "solution": "class MinHeap {\n  constructor() { this.a = [] }\n  size() { return this.a.length }\n  peek() { return this.a[0] }\n  push(x) {\n    const a = this.a\n    a.push(x)\n    let i = a.length - 1\n    while (i > 0) {\n      const p = (i - 1) >> 1\n      if (a[p] <= a[i]) break\n      ;[a[p], a[i]] = [a[i], a[p]]\n      i = p\n    }\n  }\n  pop() {\n    const a = this.a\n    const top = a[0]\n    const last = a.pop()\n    if (a.length) {\n      a[0] = last\n      let i = 0\n      for (;;) {\n        let l = 2 * i + 1, r = l + 1, m = i\n        if (l < a.length && a[l] < a[m]) m = l\n        if (r < a.length && a[r] < a[m]) m = r\n        if (m === i) break\n        ;[a[m], a[i]] = [a[i], a[m]]\n        i = m\n      }\n    }\n    return top\n  }\n}\n\nfunction kthLargest(nums, k) {\n  const heap = new MinHeap()\n  for (const x of nums) {\n    heap.push(x)\n    if (heap.size() > k) heap.pop()\n  }\n  return heap.peek()\n}",
+        "checks": [
+          {
+            "t": "the 2nd largest",
+            "verify": "assert(kthLargest([3, 2, 1, 5, 6, 4], 2) === 5, 'expected 5')"
+          },
+          {
+            "t": "duplicates count as separate numbers",
+            "verify": "assert(kthLargest([3, 2, 3, 1, 2, 4, 5, 5, 6], 4) === 4, 'expected 4')"
+          },
+          {
+            "t": "k equal to the length gives the smallest",
+            "verify": "assert(kthLargest([5, 1, 9], 3) === 1, 'expected 1')"
+          },
+          {
+            "t": "a single number",
+            "verify": "assert(kthLargest([7], 1) === 7, 'expected 7')"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "To get the k largest, keep a <b>min-heap of size k</b>: push each number, pop the smallest when the heap is bigger than k. Time O(n log k), space O(k).",
+        "mistakes": [
+          "Using a max-heap of size k, which keeps the k smallest.",
+          "Calling <code>sort()</code> on numbers without a compare function, so <code>10</code> sorts before <code>9</code>.",
+          "Letting the heap grow to n numbers, which loses the O(n log k) advantage."
+        ]
+      }
+    },
+    {
+      "id": "cycle-detection",
+      "prereqs": [
+        "graph-repr",
+        "dfs-graphs"
+      ],
+      "dryRun": {
+        "title": "directed graph 0 → 1 → 2 → 0",
+        "columns": [
+          "step",
+          "visit",
+          "state of 0 / 1 / 2",
+          "what happens"
+        ],
+        "rows": [
+          [
+            "1",
+            "0",
+            "visiting / – / –",
+            "mark 0 as \"visiting\", look at its neighbour 1"
+          ],
+          [
+            "2",
+            "1",
+            "visiting / visiting / –",
+            "mark 1, look at its neighbour 2"
+          ],
+          [
+            "3",
+            "2",
+            "visiting / visiting / visiting",
+            "mark 2, look at its neighbour 0"
+          ],
+          [
+            "4",
+            "0 again",
+            "visiting / visiting / visiting",
+            "0 is still \"visiting\": we came back to a node on <b>our own path</b>"
+          ]
+        ],
+        "hit": 3,
+        "note": "A node marked <b>visiting</b> is on the path we are walking right now. Meeting it again means the path loops back: <b>a cycle</b>. A node marked <b>done</b> is safe to meet again."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>// buggy: only remembers \"visited\"\nconst g = { 0: [1, 2], 1: [3], 2: [3], 3: [] }\nconst seen = new Set()\nconst dfs = (n) =&gt; {\n  if (seen.has(n)) return true\n  seen.add(n)\n  return g[n].some(dfs)\n}\nconsole.log(dfs(0))</code></pre>",
+          "opts": [
+            "<code>false</code>",
+            "<code>true</code>",
+            "<code>undefined</code>",
+            "<code>it throws an error</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "It prints <code>true</code>, which is <b>wrong</b>: this graph has no cycle. Node 3 is reached from 1 and again from 2. The second time it is already in <code>seen</code>, so the code says \"cycle\" even though 0, 1, 2, 3 never loop.",
+            "In a <b>directed</b> graph, meeting a visited node is not enough. It must be on the <b>current path</b>."
+          ],
+          "exec": "const g = { 0: [1, 2], 1: [3], 2: [3], 3: [] }\nconst seen = new Set()\nconst dfs = (n) => {\n  if (seen.has(n)) return true\n  seen.add(n)\n  return g[n].some(dfs)\n}\nconsole.log(dfs(0))"
+        },
+        {
+          "tag": "Think it through",
+          "q": "In a directed graph, which three states does each node need during DFS?",
+          "opts": [
+            "open, closed, deleted",
+            "small, medium, big",
+            "not visited, visiting (on the current path), done",
+            "left, right, parent"
+          ],
+          "ans": 2,
+          "why": [
+            "\"Visiting\" means the node is on the path from the start to here. \"Done\" means all of its neighbours were fully explored. Meeting a <b>visiting</b> node is a cycle; meeting a <b>done</b> node is fine.",
+            "The diamond graph (0 to 1 and 2, both to 3) is why two states are not enough."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Think it through",
+          "q": "In an <b>undirected</b> graph, edge <code>A - B</code> means A is a neighbour of B and B is a neighbour of A. When DFS goes from A to B and sees A again, why is this not a cycle?",
+          "opts": [
+            "Because the graph is small",
+            "Because B has no other neighbours",
+            "Because A is already visited",
+            "Because A is B's parent, and it is the same edge, not a new one"
+          ],
+          "ans": 3,
+          "why": [
+            "In an undirected graph, the edge you just used shows up again from the other side. A real cycle is when you meet a visited node that is <b>not your parent</b>.",
+            "So undirected detection passes the parent along: <code>dfs(next, node)</code>. Union-Find is another way."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Complexity",
+          "q": "A graph has <code>V</code> nodes and <code>E</code> edges. What is the time cost of DFS cycle detection?",
+          "opts": [
+            "<code>O(V + E)</code>",
+            "<code>O(V × E)</code>",
+            "<code>O(E²)</code>",
+            "<code>O(V)</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "Each node is entered once and each edge is looked at once (twice in an undirected graph, which is still O(E)). So the total is <b>O(V + E)</b>.",
+            "Space is O(V) for the states and the recursion path."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Pick the right tool",
+          "q": "A course list says \"take 1 before 0\" and \"take 0 before 1\". You must tell whether all courses can be finished. What is this problem?",
+          "opts": [
+            "Shortest path",
+            "Cycle detection in a directed graph",
+            "Counting islands",
+            "Finding the minimum spanning tree"
+          ],
+          "ans": 1,
+          "why": [
+            "Courses are nodes, \"before\" rules are directed edges. You can finish everything only if there is <b>no cycle</b>. Here 0 needs 1 and 1 needs 0, so it is impossible.",
+            "This is the idea behind the problem Course Schedule, and it leads straight to topological sort."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "Write <code>hasCycle(n, edges)</code> for a <b>directed</b> graph with nodes <code>0..n-1</code>. Each edge is <code>[from, to]</code>. Return <code>true</code> if the graph has a cycle.",
+        "examples": [
+          "hasCycle(3, [[0, 1], [1, 2], [2, 0]])  // true",
+          "hasCycle(4, [[0, 1], [0, 2], [1, 3], [2, 3]])  // false",
+          "hasCycle(2, [[0, 0]])  // true (a self-loop)"
+        ],
+        "hint": "Keep a state per node: 0 = not visited, 1 = visiting, 2 = done. If DFS meets a node in state 1, return <code>true</code>. Set the state to 2 when you leave a node.",
+        "fn": "hasCycle",
+        "starter": "function hasCycle(n, edges) {\n  // your code\n}\n",
+        "solution": "function hasCycle(n, edges) {\n  const g = Array.from({ length: n }, () => [])\n  for (const [a, b] of edges) g[a].push(b)\n  const state = new Array(n).fill(0)\n  const dfs = (node) => {\n    if (state[node] === 1) return true\n    if (state[node] === 2) return false\n    state[node] = 1\n    for (const next of g[node]) if (dfs(next)) return true\n    state[node] = 2\n    return false\n  }\n  for (let i = 0; i < n; i++) if (dfs(i)) return true\n  return false\n}",
+        "checks": [
+          {
+            "t": "a simple loop",
+            "verify": "assert(hasCycle(3, [[0, 1], [1, 2], [2, 0]]) === true, 'expected true')"
+          },
+          {
+            "t": "a diamond is not a cycle",
+            "verify": "assert(hasCycle(4, [[0, 1], [0, 2], [1, 3], [2, 3]]) === false, 'expected false')"
+          },
+          {
+            "t": "a self-loop is a cycle",
+            "verify": "assert(hasCycle(2, [[0, 0]]) === true, 'expected true')"
+          },
+          {
+            "t": "the cycle is not reachable from node 0",
+            "verify": "assert(hasCycle(4, [[0, 1], [2, 3], [3, 2]]) === true, 'expected true')"
+          },
+          {
+            "t": "no edges at all",
+            "verify": "assert(hasCycle(3, []) === false, 'expected false')"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Directed graph: DFS with three states (not visited, visiting, done). Meeting a <b>visiting</b> node means a cycle. Undirected graph: meeting a visited node that is <b>not your parent</b> means a cycle. Time O(V + E).",
+        "mistakes": [
+          "Using only a <code>visited</code> set on a directed graph, which reports a false cycle on a diamond.",
+          "Forgetting to start DFS from every node, so a cycle in a separate part of the graph is missed.",
+          "In an undirected graph, treating the edge back to the parent as a cycle."
+        ]
+      }
+    }
+  ],
+  "flags": []
+}

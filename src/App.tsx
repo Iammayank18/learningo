@@ -49,7 +49,7 @@ function AppInner() {
     case 'lesson': view = a && b ? <LessonPage courseId={a} lessonId={b} /> : null; fullscreen = true; break
     case 'read': view = a && b ? <Read courseId={a} lessonId={b} /> : null; break
     case 'review': view = <Review />; break
-    case 'code': if (a) { view = <CodeProblem id={a} />; fullscreen = true } else view = <CodeIndex />; break
+    case 'code': if (a?.startsWith('t:')) view = <CodeIndex key={a} topic={a.slice(2)} />; else if (a) { view = <CodeProblem id={a} />; fullscreen = true } else view = <CodeIndex />; break
     case 'roadmaps': view = <Roadmaps id={a} />; break
     case 'courses': view = <Courses />; break
     case 'stats': view = <Stats />; break

@@ -1,0 +1,739 @@
+{
+ "course": "js-mastery",
+ "items": [
+  {
+   "id": "dom-manipulation",
+   "prereqs": [
+    "observer"
+   ],
+   "dryRun": {
+    "title": "Adding 1,000 list items",
+    "columns": [
+     "approach",
+     "reflows / repaints",
+     "note"
+    ],
+    "rows": [
+     [
+      "append each item to the live list",
+      "up to 1,000 layout passes if you read layout in between",
+      "slow"
+     ],
+     [
+      "build in a DocumentFragment, append once",
+      "1",
+      "fast"
+     ],
+     [
+      "innerHTML = big string",
+      "1, but parses HTML",
+      "XSS risk with user data"
+     ],
+     [
+      "read offsetHeight, write style, read again…",
+      "forced sync layout each time (\"layout thrashing\")",
+      "batch reads, then writes"
+     ]
+    ],
+    "hit": 3,
+    "note": "Changing the DOM is cheap; making the browser <b>recalculate layout</b> is not. Reading a layout value (offsetHeight, getBoundingClientRect) right after a write forces a reflow. Batch reads first, then writes, and insert many nodes at once. Use <code>textContent</code> for user text: <code>innerHTML</code> runs it as HTML."
+   },
+   "think": [
+    {
+     "tag": "Pick one",
+     "q": "You show a user's comment on the page. Which is safe?",
+     "opts": [
+      "<code>el.innerHTML = comment</code>",
+      "<code>el.outerHTML = comment</code>",
+      "<code>el.textContent = comment</code>",
+      "<code>document.write(comment)</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "textContent never parses HTML, so a comment like &lt;img onerror=…&gt; is shown as text, not executed."
+     ]
+    },
+    {
+     "tag": "Thrashing",
+     "q": "<code>for (const el of items) { el.style.width = box.offsetWidth + \"px\" }</code> is slow. Why?",
+     "opts": [
+      "Each loop reads offsetWidth after a style write, forcing a fresh layout every time",
+      "style.width is slow to set",
+      "for…of is slow",
+      "offsetWidth is cached"
+     ],
+     "ans": 0,
+     "why": [
+      "Read offsetWidth once before the loop, then only write in the loop."
+     ]
+    },
+    {
+     "tag": "Fragment",
+     "q": "What does appending a DocumentFragment do?",
+     "opts": [
+      "Adds a wrapper element",
+      "Clones the children",
+      "Nothing until render()",
+      "Moves all its children into the target in one insertion; the fragment itself is not added"
+     ],
+     "ans": 3,
+     "why": [
+      "One insertion means one layout instead of many."
+     ]
+    },
+    {
+     "tag": "Reflow vs repaint",
+     "q": "Changing which property usually avoids layout and only triggers compositing?",
+     "opts": [
+      "<code>width</code>",
+      "<code>transform</code>",
+      "<code>top</code>",
+      "<code>font-size</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "transform and opacity can be animated on the compositor; geometry changes need layout."
+     ]
+    },
+    {
+     "tag": "Live lists",
+     "q": "<code>const items = document.getElementsByClassName(\"x\")</code>, then you remove one element with that class. What happens to items.length?",
+     "opts": [
+      "It stays the same",
+      "It drops by one: getElementsByClassName returns a live collection",
+      "It throws",
+      "It becomes 0"
+     ],
+     "ans": 1,
+     "why": [
+      "querySelectorAll returns a static NodeList; getElementsBy* return live collections."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>renderList(items)</code> that returns an HTML string <code>&lt;ul&gt;&lt;li&gt;…&lt;/li&gt;…&lt;/ul&gt;</code> for an array of strings, escaping &amp;, &lt;, &gt;, \" and ' so user text can never become HTML.",
+    "examples": [
+     "renderList([\"a\", \"b\"])  // \"<ul><li>a</li><li>b</li></ul>\"",
+     "renderList([\"<b>x</b>\"])  // \"<ul><li>&lt;b&gt;x&lt;/b&gt;</li></ul>\""
+    ],
+    "hint": "Replace &amp; first, then the others. Build the whole string and assign innerHTML once.",
+    "fn": "renderList",
+    "starter": "function renderList(items) {\n  // your code\n}",
+    "solution": "function renderList(items) {\n  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\"/g, '&quot;').replace(/'/g, '&#39;')\n  return '<ul>' + items.map((t) => '<li>' + esc(t) + '</li>').join('') + '</ul>'\n}",
+    "checks": [
+     {
+      "t": "renders items",
+      "verify": "assert(renderList([\"a\", \"b\"]) === \"<ul><li>a</li><li>b</li></ul>\", \"basic\")"
+     },
+     {
+      "t": "escapes HTML",
+      "verify": "assert(renderList([\"<img src=x onerror=alert(1)>\"]) === \"<ul><li>&lt;img src=x onerror=alert(1)&gt;</li></ul>\", \"escape\")"
+     },
+     {
+      "t": "escapes & first and quotes",
+      "verify": "assert(renderList([`a & \"b\" 'c'`]) === \"<ul><li>a &amp; &quot;b&quot; &#39;c&#39;</li></ul>\", \"amp and quotes\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Batch DOM reads before writes, insert many nodes at once, animate transform/opacity, and use textContent for user text.",
+    "mistakes": [
+     "innerHTML with user data (XSS).",
+     "Reading layout inside a loop that writes styles."
+    ]
+   }
+  },
+  {
+   "id": "event-delegation",
+   "prereqs": [
+    "dom-manipulation"
+   ],
+   "dryRun": {
+    "title": "Click on <span> inside <button data-id=\"7\"> inside <ul id=\"list\">",
+    "columns": [
+     "phase",
+     "where the event is",
+     "listener on ul sees"
+    ],
+    "rows": [
+     [
+      "capture",
+      "window → document → ul → button",
+      "only with { capture: true }"
+     ],
+     [
+      "target",
+      "span",
+      "e.target = span"
+     ],
+     [
+      "bubble",
+      "span → button → ul",
+      "e.currentTarget = ul"
+     ],
+     [
+      "in the ul listener",
+      "e.target.closest(\"button\")",
+      "the button with data-id=\"7\""
+     ]
+    ],
+    "hit": 3,
+    "note": "Events bubble up from the clicked element. <b>Delegation</b> = one listener on a parent that handles clicks for all children, current and future, using <code>e.target.closest(selector)</code>. Fewer listeners, and dynamically added items just work."
+   },
+   "think": [
+    {
+     "tag": "target vs currentTarget",
+     "q": "A listener on <code>ul</code> fires for a click on an <code>li</code> inside it. What are e.target and e.currentTarget?",
+     "opts": [
+      "both are ul",
+      "both are li",
+      "target = ul, currentTarget = li",
+      "target = li (what was clicked), currentTarget = ul (where the listener is)"
+     ],
+     "ans": 3,
+     "why": [
+      "currentTarget is always the element the listener is attached to."
+     ]
+    },
+    {
+     "tag": "Why closest",
+     "q": "The li contains an icon <code>&lt;svg&gt;</code>. Clicking the icon gives e.target = svg. How do you get the li?",
+     "opts": [
+      "<code>e.target.closest(\"li\")</code>",
+      "<code>e.target.parentNode</code>",
+      "<code>e.currentTarget</code>",
+      "<code>e.target.li</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "closest walks up to the nearest matching ancestor (or itself), whatever was clicked inside."
+     ]
+    },
+    {
+     "tag": "Stop",
+     "q": "What does <code>e.stopPropagation()</code> in the li handler do to a delegated listener on ul?",
+     "opts": [
+      "Nothing",
+      "It cancels the default action",
+      "The ul listener never sees the click",
+      "It removes the ul listener"
+     ],
+     "ans": 2,
+     "why": [
+      "It stops bubbling. preventDefault is the one that stops the default action (like following a link)."
+     ]
+    },
+    {
+     "tag": "Non-bubbling",
+     "q": "Which event does NOT bubble, so it needs focusin or capture for delegation?",
+     "opts": [
+      "<code>click</code>",
+      "<code>input</code>",
+      "<code>keydown</code>",
+      "<code>focus</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "focus/blur do not bubble; focusin/focusout do."
+     ]
+    },
+    {
+     "tag": "Benefit",
+     "q": "A table gets 500 rows added by fetch after load. Why delegation?",
+     "opts": [
+      "It makes clicks faster",
+      "One listener on the table handles all rows, including rows added later",
+      "It avoids CSS",
+      "It is required by tables"
+     ],
+     "ans": 1,
+     "why": [
+      "No need to attach (and later remove) 500 listeners."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Implement delegation without a browser. Nodes are plain objects <code>{ tag, id?, parent }</code>. Write <code>closest(node, tag, root)</code>: walk up from node (inclusive) and return the first node with that tag, stopping (null) once you pass root. Then <code>delegate(root, tag, handler)</code> returns a listener <code>(event) =&gt; …</code> that calls handler(match, event) only when closest finds a match.",
+    "examples": [
+     "closest(span, \"button\", ul)  // the button",
+     "delegate(ul, \"button\", (b) => b.id)({ target: span })"
+    ],
+    "hint": "Loop: while (n) { if (n.tag === tag) return n; if (n === root) return null; n = n.parent }.",
+    "fn": "delegate",
+    "starter": "function closest(node, tag, root) {\n  // your code\n}\nfunction delegate(root, tag, handler) {\n  // your code\n}",
+    "solution": "function closest(node, tag, root) {\n  for (let n = node; n; n = n.parent) {\n    if (n.tag === tag) return n\n    if (n === root) return null\n  }\n  return null\n}\nfunction delegate(root, tag, handler) {\n  return (event) => {\n    const match = closest(event.target, tag, root)\n    if (match) handler(match, event)\n  }\n}",
+    "checks": [
+     {
+      "t": "finds the nearest ancestor",
+      "verify": "const ul = { tag: \"ul\" }, b = { tag: \"button\", id: 7, parent: ul }, s = { tag: \"span\", parent: b }; assert(closest(s, \"button\", ul) === b && closest(b, \"button\", ul) === b, \"closest\")"
+     },
+     {
+      "t": "does not leave the root",
+      "verify": "const body = { tag: \"button\" }, ul = { tag: \"ul\", parent: body }, li = { tag: \"li\", parent: ul }; assert(closest(li, \"button\", ul) === null, \"escaped root\")"
+     },
+     {
+      "t": "delegate calls the handler only for matches",
+      "verify": "const ul = { tag: \"ul\" }, b = { tag: \"button\", id: 7, parent: ul }, s = { tag: \"span\", parent: b }, other = { tag: \"p\", parent: ul }; const got = []; const l = delegate(ul, \"button\", (m) => got.push(m.id)); l({ target: s }); l({ target: other }); assert(got.join() === \"7\", got.join())"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Events bubble; put one listener on a parent and use e.target.closest(selector) to find the item. Use focusin/capture for non-bubbling events.",
+    "mistakes": [
+     "Using e.target directly when the click can land on a child element.",
+     "Confusing stopPropagation with preventDefault."
+    ]
+   }
+  },
+  {
+   "id": "fetch-xhr",
+   "prereqs": [
+    "event-delegation"
+   ],
+   "dryRun": {
+    "title": "const res = await fetch(url); const data = await res.json()",
+    "columns": [
+     "moment",
+     "what you have",
+     "fails how"
+    ],
+    "rows": [
+     [
+      "network error / CORS / offline",
+      "fetch rejects",
+      "TypeError"
+     ],
+     [
+      "server answers 404 or 500",
+      "fetch RESOLVES, res.ok = false",
+      "you must check it"
+     ],
+     [
+      "res.json() on bad JSON",
+      "rejects",
+      "SyntaxError"
+     ],
+     [
+      "res.json() a second time",
+      "rejects",
+      "body already used"
+     ],
+     [
+      "timeout",
+      "never settles by itself",
+      "use AbortController"
+     ]
+    ],
+    "hit": 1,
+    "note": "fetch only rejects when no response arrives. An HTTP error is still a response: check <code>res.ok</code> (status 200–299). The body is a stream you can read once. Cancel or time out requests with an <code>AbortController</code>. XHR is the old callback API; fetch replaced it."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const res = new Response('not found', { status: 404 })\nconsole.log(res.ok, res.status)</code></pre>",
+     "opts": [
+      "<code>true 404</code>",
+      "<code>false 200</code>",
+      "<code>false 404</code>",
+      "<code>undefined 404</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "404 is a valid response, so fetch would resolve; ok is false because the status is not 2xx."
+     ],
+     "exec": "const res = new Response('not found', { status: 404 })\nconsole.log(res.ok, res.status)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const res = new Response('{\"a\":1}')\nres.json().then(async (d) =&gt; { console.log(d.a); try { await res.json() } catch (e) { console.log(e.name) } })</code></pre>",
+     "opts": [
+      "<code>1 TypeError</code>",
+      "<code>1 1</code>",
+      "<code>1 SyntaxError</code>",
+      "<code>undefined TypeError</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "The body stream is consumed once. Clone the response (res.clone()) if you need it twice."
+     ],
+     "exec": "const res = new Response('{\"a\":1}')\nres.json().then(async (d) => { console.log(d.a); try { await res.json() } catch (e) { console.log(e.name) } })"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const ac = new AbortController()\nconst p = new Promise((_, reject) =&gt; ac.signal.addEventListener('abort', () =&gt; reject(ac.signal.reason)))\nac.abort()\np.catch((e) =&gt; console.log(e.name))</code></pre>",
+     "opts": [
+      "<code>TypeError</code>",
+      "<code>undefined</code>",
+      "<code>AbortError</code>",
+      "<code>Error</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "abort() rejects with an AbortError (a DOMException). fetch reacts to the signal the same way."
+     ],
+     "exec": "const ac = new AbortController()\nconst p = new Promise((_, reject) => ac.signal.addEventListener('abort', () => reject(ac.signal.reason)))\nac.abort()\np.catch((e) => console.log(e.name))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const u = new URL('/api/users?page=2', 'https://example.com')\nu.searchParams.set('q', 'a b&amp;c')\nconsole.log(u.href)</code></pre>",
+     "opts": [
+      "<code>https://example.com/api/users?page=2&amp;q=a+b%26c</code>",
+      "<code>https://example.com/api/users?page=2&amp;q=a b&amp;c</code>",
+      "<code>/api/users?page=2&amp;q=a%20b%26c</code>",
+      "<code>https://example.com/api/users?q=a+b%26c</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "URLSearchParams encodes values for you. Never build query strings by hand."
+     ],
+     "exec": "const u = new URL('/api/users?page=2', 'https://example.com')\nu.searchParams.set('q', 'a b&c')\nconsole.log(u.href)"
+    },
+    {
+     "tag": "Pick one",
+     "q": "Which fetch option sends cookies to a different origin?",
+     "opts": [
+      "<code>mode: 'no-cors'</code>",
+      "<code>cache: 'reload'</code>",
+      "<code>keepalive: true</code>",
+      "<code>credentials: 'include'</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Cross-origin cookies need credentials: \"include\" and the server must allow it (CORS with credentials)."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>fetchJson(url, { fetchImpl = fetch, timeoutMs = 5000 } = {})</code>: call fetchImpl(url, { signal }), throw <code>Error(\"HTTP \" + status)</code> when !res.ok, return parsed JSON, and abort with <code>Error(\"timeout\")</code> after timeoutMs.",
+    "examples": [
+     "await fetchJson(\"/x\", { fetchImpl: async () => new Response('{\"a\":1}') })  // { a: 1 }",
+     "// 404 → throws \"HTTP 404\""
+    ],
+    "hint": "Create an AbortController, setTimeout(() =&gt; ac.abort(), timeoutMs), and in catch turn an AbortError into Error(\"timeout\"). Clear the timer in finally.",
+    "fn": "fetchJson",
+    "starter": "async function fetchJson(url, { fetchImpl = fetch, timeoutMs = 5000 } = {}) {\n  // your code\n}",
+    "solution": "async function fetchJson(url, { fetchImpl = fetch, timeoutMs = 5000 } = {}) {\n  const ac = new AbortController()\n  const t = setTimeout(() => ac.abort(), timeoutMs)\n  try {\n    const res = await fetchImpl(url, { signal: ac.signal })\n    if (!res.ok) throw new Error('HTTP ' + res.status)\n    return await res.json()\n  } catch (e) {\n    if (e.name === 'AbortError') throw new Error('timeout')\n    throw e\n  } finally {\n    clearTimeout(t)\n  }\n}",
+    "checks": [
+     {
+      "t": "returns parsed JSON",
+      "verify": "const d = await fetchJson(\"/x\", { fetchImpl: async () => new Response('{\"a\":1}') }); assert(d && d.a === 1, \"json\")"
+     },
+     {
+      "t": "HTTP errors throw with the status",
+      "verify": "let e; try { await fetchJson(\"/x\", { fetchImpl: async () => new Response(\"no\", { status: 404 }) }) } catch (x) { e = x }; assert(e && e.message === \"HTTP 404\", \"404\")"
+     },
+     {
+      "t": "slow requests time out",
+      "verify": "const slow = (u, { signal }) => new Promise((res, rej) => signal.addEventListener(\"abort\", () => rej(signal.reason))); let e; try { await fetchJson(\"/x\", { fetchImpl: slow, timeoutMs: 20 }) } catch (x) { e = x }; assert(e && e.message === \"timeout\", \"timeout\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "fetch rejects only on network failure: check res.ok. Read the body once. Use AbortController for timeouts and cancelling.",
+    "mistakes": [
+     "Assuming fetch throws on 404/500.",
+     "Building query strings by hand instead of URLSearchParams.",
+     "No timeout on requests."
+    ]
+   }
+  },
+  {
+   "id": "storage",
+   "prereqs": [
+    "fetch-xhr"
+   ],
+   "dryRun": {
+    "title": "Where to keep data in the browser",
+    "columns": [
+     "storage",
+     "size",
+     "lives until",
+     "readable by JS?"
+    ],
+    "rows": [
+     [
+      "localStorage",
+      "~5 MB, strings only",
+      "deleted by the user/app",
+      "yes (sync API)"
+     ],
+     [
+      "sessionStorage",
+      "~5 MB",
+      "the tab closes",
+      "yes"
+     ],
+     [
+      "cookie",
+      "~4 KB, sent with every request",
+      "its expiry",
+      "unless HttpOnly"
+     ],
+     [
+      "IndexedDB",
+      "large, structured data",
+      "deleted",
+      "yes (async API)"
+     ],
+     [
+      "memory (a variable)",
+      "RAM",
+      "page reload",
+      "yes"
+     ]
+    ],
+    "hit": 2,
+    "note": "localStorage stores <b>strings</b> only (use JSON), is synchronous (blocks the main thread on big data) and shared by all tabs of the same origin. Never store tokens there if you can use an HttpOnly cookie: any XSS can read localStorage."
+   },
+   "think": [
+    {
+     "tag": "Strings",
+     "q": "<code>localStorage.setItem(\"n\", 5); typeof localStorage.getItem(\"n\")</code> gives?",
+     "opts": [
+      "<code>\"number\"</code>",
+      "<code>\"string\"</code>",
+      "<code>\"object\"</code>",
+      "<code>\"undefined\"</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Everything is converted to a string. Objects become \"[object Object]\" unless you JSON.stringify them."
+     ]
+    },
+    {
+     "tag": "Missing key",
+     "q": "What does <code>localStorage.getItem(\"nope\")</code> return?",
+     "opts": [
+      "<code>undefined</code>",
+      "<code>null</code>",
+      "<code>\"\"</code>",
+      "It throws"
+     ],
+     "ans": 1,
+     "why": [
+      "getItem returns null for missing keys (unlike property access, which gives undefined)."
+     ]
+    },
+    {
+     "tag": "Security",
+     "q": "Why is storing an auth token in localStorage risky?",
+     "opts": [
+      "It expires after 5 minutes",
+      "It is sent to every website",
+      "It is slow",
+      "Any injected script (XSS) can read it; an HttpOnly cookie cannot be read by JS"
+     ],
+     "ans": 3,
+     "why": [
+      "Protect against XSS anyway; HttpOnly limits the damage."
+     ]
+    },
+    {
+     "tag": "Tabs",
+     "q": "Tab A changes localStorage. How can tab B react?",
+     "opts": [
+      "Listen to the window \"storage\" event, which fires in other tabs of the same origin",
+      "It cannot",
+      "Poll every second only",
+      "Use sessionStorage"
+     ],
+     "ans": 0,
+     "why": [
+      "The storage event fires in the other tabs, not the one that wrote."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const data = { when: new Date(0), tags: new Set(['a']) }\nconst back = JSON.parse(JSON.stringify(data))\nconsole.log(typeof back.when, JSON.stringify(back.tags))</code></pre>",
+     "opts": [
+      "<code>object [\"a\"]</code>",
+      "<code>string [\"a\"]</code>",
+      "<code>string {}</code>",
+      "<code>object {}</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Saving through JSON turns Dates into strings and Sets into {}. Convert them yourself when saving and loading."
+     ],
+     "exec": "const data = { when: new Date(0), tags: new Set(['a']) }\nconst back = JSON.parse(JSON.stringify(data))\nconsole.log(typeof back.when, JSON.stringify(back.tags))"
+    }
+   ],
+   "try": {
+    "task": "Write <code>createStore(storage, ns)</code> over any object with getItem/setItem/removeItem (localStorage in the browser). It returns <code>{ set(key, value, ttlMs?), get(key, fallback) }</code>: values are JSON-encoded under <code>ns:key</code>, expired or corrupt entries return the fallback (and are removed).",
+    "examples": [
+     "const s = createStore(localStorage, \"app\"); s.set(\"user\", { id: 1 }); s.get(\"user\").id  // 1",
+     "s.set(\"otp\", \"1234\", 10); // after 10 ms: s.get(\"otp\", null) → null"
+    ],
+    "hint": "Store { v, exp } as JSON. In get, JSON.parse inside try/catch; check exp against Date.now().",
+    "fn": "createStore",
+    "starter": "function createStore(storage, ns) {\n  // your code\n}",
+    "solution": "function createStore(storage, ns) {\n  const k = (key) => `${ns}:${key}`\n  return {\n    set(key, value, ttlMs) {\n      storage.setItem(k(key), JSON.stringify({ v: value, exp: ttlMs ? Date.now() + ttlMs : null }))\n    },\n    get(key, fallback) {\n      const raw = storage.getItem(k(key))\n      if (raw === null) return fallback\n      try {\n        const { v, exp } = JSON.parse(raw)\n        if (exp !== null && Date.now() > exp) { storage.removeItem(k(key)); return fallback }\n        return v\n      } catch {\n        storage.removeItem(k(key)); return fallback\n      }\n    },\n  }\n}",
+    "checks": [
+     {
+      "t": "round-trips objects under a namespace",
+      "verify": "const m = new Map(); const st = { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k) }; const s = createStore(st, \"app\"); s.set(\"user\", { id: 1 }); assert(s.get(\"user\").id === 1 && m.has(\"app:user\"), \"roundtrip\")"
+     },
+     {
+      "t": "expired entries return the fallback",
+      "verify": "const m = new Map(); const st = { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k) }; const s = createStore(st, \"a\"); s.set(\"otp\", \"1\", 10); await sleep(25); assert(s.get(\"otp\", null) === null && !m.has(\"a:otp\"), \"ttl\")"
+     },
+     {
+      "t": "corrupt or missing entries return the fallback",
+      "verify": "const m = new Map([[\"a:bad\", \"{oops\"]]); const st = { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k) }; const s = createStore(st, \"a\"); assert(s.get(\"bad\", 7) === 7 && s.get(\"none\", 8) === 8, \"fallback\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "localStorage: strings only, synchronous, per origin, readable by any script. JSON-encode, handle corrupt data, and keep secrets in HttpOnly cookies.",
+    "mistakes": [
+     "Storing objects without JSON.stringify.",
+     "Putting auth tokens in localStorage.",
+     "Trusting stored data to always parse."
+    ]
+   }
+  },
+  {
+   "id": "service-workers",
+   "prereqs": [
+    "storage"
+   ],
+   "dryRun": {
+    "title": "Caching strategies for a request",
+    "columns": [
+     "strategy",
+     "first look at",
+     "good for"
+    ],
+    "rows": [
+     [
+      "cache first",
+      "cache, then network if missing",
+      "app shell, fonts, versioned assets"
+     ],
+     [
+      "network first",
+      "network, cache if offline",
+      "HTML, API data that must be fresh"
+     ],
+     [
+      "stale-while-revalidate",
+      "cache now, update cache in background",
+      "avatars, non-critical data"
+     ],
+     [
+      "network only",
+      "network",
+      "payments, analytics"
+     ]
+    ],
+    "hit": 2,
+    "note": "A service worker is a script the browser runs between your page and the network. It intercepts <code>fetch</code> events and can answer from the <b>Cache API</b>, which makes offline apps and instant repeat loads possible. It needs HTTPS and has a lifecycle: install → waiting → activate."
+   },
+   "think": [
+    {
+     "tag": "Lifecycle",
+     "q": "You deploy a new service worker. Why do users still get the old one?",
+     "opts": [
+      "Browsers cache it for a week",
+      "Service workers never update",
+      "The page must call update() every time",
+      "The new worker waits until all tabs using the old one are closed (unless you call skipWaiting)"
+     ],
+     "ans": 3,
+     "why": [
+      "That waiting step protects open tabs from a mid-session switch."
+     ]
+    },
+    {
+     "tag": "Scope",
+     "q": "A service worker at <code>/app/sw.js</code> controls which pages by default?",
+     "opts": [
+      "Every page on the origin",
+      "Pages under /app/",
+      "Only /app/sw.js",
+      "Other origins too"
+     ],
+     "ans": 1,
+     "why": [
+      "Scope is the folder of the script unless a header allows wider."
+     ]
+    },
+    {
+     "tag": "Pick one",
+     "q": "Which strategy fits an HTML page that must show the latest content when online but still open offline?",
+     "opts": [
+      "Cache first",
+      "Cache only",
+      "Network first, falling back to cache",
+      "Stale-while-revalidate with no network"
+     ],
+     "ans": 2,
+     "why": [
+      "Fresh when possible, available when not."
+     ]
+    },
+    {
+     "tag": "DOM",
+     "q": "Can a service worker change the page's DOM directly?",
+     "opts": [
+      "No: it has no DOM; it talks to pages with postMessage",
+      "Yes, with document",
+      "Only during install",
+      "Only with skipWaiting"
+     ],
+     "ans": 0,
+     "why": [
+      "Like Web Workers, service workers run without a document."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const cache = new Map()\nconst put = (url, body) =&gt; cache.set(url, body)\nput('/a.js', 'v1')\nconst hit = cache.get('/a.js') ?? 'network'\nconst miss = cache.get('/b.js') ?? 'network'\nconsole.log(hit, miss)</code></pre>",
+     "opts": [
+      "<code>network network</code>",
+      "<code>v1 v1</code>",
+      "<code>v1 network</code>",
+      "<code>undefined network</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Cache first in miniature: answer from the cache when present, go to the network only for misses."
+     ],
+     "exec": "const cache = new Map()\nconst put = (url, body) => cache.set(url, body)\nput('/a.js', 'v1')\nconst hit = cache.get('/a.js') ?? 'network'\nconst miss = cache.get('/b.js') ?? 'network'\nconsole.log(hit, miss)"
+    }
+   ],
+   "try": {
+    "task": "Write the two core strategies over injected helpers (so they run anywhere): <code>cacheFirst(url, cache, fetchImpl)</code> returns the cached value or fetches, stores and returns it; <code>staleWhileRevalidate(url, cache, fetchImpl)</code> returns the cached value at once (if any) but always refreshes the cache in the background. <code>cache</code> is a Map.",
+    "examples": [
+     "await cacheFirst(\"/a\", new Map([[\"/a\", \"old\"]]), fetchFn)  // \"old\", no fetch",
+     "await staleWhileRevalidate(\"/a\", cache, fetchFn)  // \"old\" now, cache becomes \"new\""
+    ],
+    "hint": "cacheFirst: if (cache.has(url)) return it. SWR: start const p = fetchImpl(url).then(v =&gt; (cache.set(url, v), v)); return cache.has(url) ? cache.get(url) : p.",
+    "fn": "cacheFirst",
+    "starter": "async function cacheFirst(url, cache, fetchImpl) {\n  // your code\n}\nasync function staleWhileRevalidate(url, cache, fetchImpl) {\n  // your code\n}",
+    "solution": "async function cacheFirst(url, cache, fetchImpl) {\n  if (cache.has(url)) return cache.get(url)\n  const v = await fetchImpl(url)\n  cache.set(url, v)\n  return v\n}\nasync function staleWhileRevalidate(url, cache, fetchImpl) {\n  const fresh = fetchImpl(url).then((v) => { cache.set(url, v); return v })\n  if (cache.has(url)) { fresh.catch(() => {}); return cache.get(url) }\n  return fresh\n}",
+    "checks": [
+     {
+      "t": "cacheFirst uses the cache without fetching",
+      "verify": "let n = 0; const v = await cacheFirst(\"/a\", new Map([[\"/a\", \"old\"]]), async () => (n++, \"new\")); assert(v === \"old\" && n === 0, \"hit\")"
+     },
+     {
+      "t": "cacheFirst fetches and stores on a miss",
+      "verify": "const c = new Map(); const v = await cacheFirst(\"/a\", c, async () => \"new\"); assert(v === \"new\" && c.get(\"/a\") === \"new\", \"miss\")"
+     },
+     {
+      "t": "stale-while-revalidate answers old, then refreshes",
+      "verify": "const c = new Map([[\"/a\", \"old\"]]); const v = await staleWhileRevalidate(\"/a\", c, async () => \"new\"); await sleep(5); assert(v === \"old\" && c.get(\"/a\") === \"new\", \"swr\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "A service worker intercepts requests and answers from the Cache API. Pick a strategy per resource: cache first for static assets, network first for fresh content, SWR for \"good enough now\".",
+    "mistakes": [
+     "Caching HTML cache-first and never seeing updates.",
+     "Forgetting that a new worker waits until old tabs close."
+    ]
+   }
+  }
+ ]
+}

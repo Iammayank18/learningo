@@ -1,0 +1,925 @@
+{
+ "problems": [
+  {
+   "id": "deep-clone",
+   "diff": "Medium",
+   "fn": "deepClone",
+   "signature": "deepClone(value)",
+   "learn": {
+    "what": [
+     "A <b>deep clone</b> is a copy of a value where every nested object, array, Map and Set is copied too. Changing the copy never changes the original.",
+     "A normal copy such as <code>{ ...obj }</code> is <b>shallow</b>: the top level is new, but nested objects are still shared. A deep clone walks the whole structure and builds a new container for each level.",
+     "Two things make this harder than it looks. Some values need special handling (<code>Date</code>, <code>RegExp</code>, <code>Map</code>, <code>Set</code>), and objects can point back to themselves (<b>circular references</b>). A <code>WeakMap</code> that remembers \"original → copy\" solves the second problem.",
+     "Think of photocopying a binder of linked pages. If page 3 says \"see page 1\", the copy must say \"see copied page 1\", not send you back to the original binder."
+    ],
+    "how": {
+     "steps": [
+      "If the value is a primitive, return it as it is. There is nothing to copy.",
+      "If you have <b>already cloned</b> this exact object, return the earlier copy from the WeakMap. This stops infinite loops and keeps shared references shared.",
+      "Pick the right way to build the empty copy: a new Date, a new RegExp, a new Map, a new Set, an array, or a plain object.",
+      "<b>Register</b> the new empty copy in the WeakMap <i>before</i> you fill it.",
+      "Clone every child with the same recursive function and put the results into the copy."
+     ],
+     "diagram": "a = { name: 'a' }; a.self = a\n\nclone(a)        seen: {}\n  new copy A'   seen: { a -> A' }      <- register first\n  clone(a.self)\n    a is in seen -> return A'\n  A'.self = A'\nResult: A'.self === A'  (not a)"
+    },
+    "where": [
+     [
+      "State snapshots",
+      "Undo/redo and time-travel tools keep a full copy of the state before each change."
+     ],
+     [
+      "Safe mutation",
+      "Copy a config or form object, edit the copy freely, and keep the original untouched."
+     ],
+     [
+      "Worker messages",
+      "The built-in <code>structuredClone</code> does this job for messages between threads."
+     ],
+     [
+      "Not a fit",
+      "Class instances with private fields, DOM nodes and functions cannot be cloned by a simple walker. Very large graphs are also slow, so clone only what you need."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "What does this code produce?<pre><code>const copy = JSON.parse(JSON.stringify({\n  d: new Date(0),\n  u: undefined,\n  n: NaN\n}))</code></pre>",
+     "opts": [
+      "<code>{ d: Date, u: undefined, n: NaN }</code>, an exact copy",
+      "<code>{ d: \"1970-01-01T00:00:00.000Z\", n: null }</code>",
+      "<code>{ d: 0, n: null }</code>",
+      "It throws a TypeError because of the Date"
+     ],
+     "ans": 1,
+     "why": [
+      "JSON has no Date type, so the date becomes an ISO string. <code>undefined</code> values are dropped, and <code>NaN</code> becomes <code>null</code>.",
+      "The trap is thinking JSON round-tripping is a deep clone. It only works for plain JSON data."
+     ]
+    },
+    {
+     "tag": "Why does this fail?",
+     "q": "A naive clone has no WeakMap:<pre><code>function clone(v) {\n  if (typeof v !== \"object\" || v === null) return v\n  const out = {}\n  for (const k of Object.keys(v)) out[k] = clone(v[k])\n  return out\n}\nconst a = {}\na.me = a\nclone(a)</code></pre>What happens?",
+     "opts": [
+      "It returns <code>{ me: {} }</code>",
+      "It returns a copy where <code>copy.me === copy</code>",
+      "It throws <code>RangeError: Maximum call stack size exceeded</code>",
+      "It returns <code>{}</code> because the loop skips cycles"
+     ],
+     "ans": 2,
+     "why": [
+      "<code>clone(a)</code> calls <code>clone(a.me)</code>, which is <code>clone(a)</code> again. Nothing records that <code>a</code> was already visited, so the recursion never ends.",
+      "The trap is expecting JavaScript to detect cycles by itself. It does not."
+     ]
+    },
+    {
+     "tag": "Spot the bug",
+     "q": "Someone adds a WeakMap but registers the copy <b>after</b> filling it:<pre><code>const out = {}\nfor (const k of Object.keys(v)) out[k] = clone(v[k], seen)\nseen.set(v, out)\nreturn out</code></pre>Does this fix the circular case <code>a.me = a</code>?",
+     "opts": [
+      "No. When the loop reaches <code>a.me</code>, <code>a</code> is not in <code>seen</code> yet, so it recurses forever",
+      "Yes. The WeakMap is filled before the function returns",
+      "Yes, but only for arrays",
+      "No, because WeakMap cannot store objects as keys"
+     ],
+     "ans": 0,
+     "why": [
+      "The lookup happens at the start of every call. At that moment the outer call has not reached <code>seen.set</code>, so the lookup misses.",
+      "Register the empty copy first, then fill it. That is the whole trick."
+     ]
+    },
+    {
+     "tag": "Edge case",
+     "q": "The clone checks only <code>typeof value === \"object\"</code> and then calls <code>Object.keys(value)</code>. What happens for <code>deepClone({ a: null })</code>?",
+     "opts": [
+      "It returns <code>{ a: null }</code>",
+      "It throws a TypeError because <code>Object.keys(null)</code> is invalid",
+      "It returns <code>{ a: {} }</code>",
+      "It returns <code>{ a: undefined }</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "<code>typeof null</code> is <code>\"object\"</code>, an old quirk of JavaScript. The check lets <code>null</code> through and <code>Object.keys(null)</code> throws.",
+      "Always test <code>value === null</code> together with the typeof check."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "After a correct deep clone with a WeakMap:<pre><code>const shared = { n: 1 }\nconst src = { p: shared, q: shared }\nconst c = deepClone(src)\nconsole.log(c.p === c.q, c.p === shared)</code></pre>",
+     "opts": [
+      "<code>false false</code>",
+      "<code>true true</code>",
+      "<code>false true</code>",
+      "<code>true false</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Both <code>p</code> and <code>q</code> pointed to the same object, so the WeakMap returns the same copy for both. The copy keeps the original sharing structure (<code>c.p === c.q</code>), but it is a new object (<code>c.p !== shared</code>).",
+      "A clone without the WeakMap would create two separate copies and quietly change the shape of the data."
+     ]
+    }
+   ],
+   "pseudo": "deepClone(value, seen = empty weak map)\n  if value is not an object (or is null)\n    if it is a function, return nothing\n    otherwise return the value itself\n  if seen already has value\n    return the stored copy\n  if value is a Date\n    return a new Date with the same time\n  if value is a RegExp\n    return a new RegExp with the same source and flags\n  if value is a Map\n    make an empty Map, store it in seen\n    for each entry, clone the key and the value, add them\n    return it\n  if value is a Set\n    same idea with items\n  if value is an array\n    make an empty array, store it in seen\n    clone each item into the same position\n    return it\n  otherwise it is a plain object\n    make an empty object with the same prototype, store it in seen\n    for each own key, clone the value\n    skip keys whose value is a function\n    return it\n  // bonus: copy symbol keys too",
+   "watch": [
+    "At which exact moment do you save the new empty copy in the WeakMap, and why does the order matter?",
+    "How do you tell <code>null</code>, arrays, Dates and plain objects apart, given that <code>typeof</code> says \"object\" for all of them?",
+    "If two properties point to the same object, should the copy contain one object or two?"
+   ],
+   "build": {
+    "minutes": 25,
+    "problem": "Implement <b>deepClone(value)</b> that copies primitives, arrays, plain objects, Date, RegExp, Map, Set and circular references, without using <code>JSON.stringify</code>.",
+    "reqs": [
+     "Return primitives as they are.",
+     "Clone arrays and plain objects recursively, with no shared nested references.",
+     "Copy Date and RegExp (keep the time, source and flags).",
+     "Clone Map and Set, including their object keys and values.",
+     "Handle circular references with a WeakMap, and keep shared references shared.",
+     "Skip function-valued properties."
+    ],
+    "checks": [
+     {
+      "t": "Nested objects and arrays are fully independent",
+      "test": "const o = { a: 1, b: { c: [1, 2] } }; const c = deepClone(o);\nc.b.c.push(3);\nconsole.log(c !== o, c.b !== o.b, o.b.c.length); // expected: true true 2",
+      "verify": "const o = { a: 1, b: { c: [1, 2] } }; const c = deepClone(o);\nassert(c !== o && c.b !== o.b && c.b.c !== o.b.c, 'nested containers must be new');\nassert(c.a === 1 && c.b.c[1] === 2, 'values must be equal');\nc.b.c.push(3); assert(o.b.c.length === 2, 'changing the copy must not change the original')",
+      "gap": "You are probably copying only the top level. Recurse into every child that is an object or array, and assign the cloned child, not the original."
+     },
+     {
+      "t": "Date is copied as a real Date",
+      "test": "const d = new Date(1e12); const c = deepClone({ d });\nconsole.log(c.d instanceof Date, c.d !== d, c.d.getTime() === d.getTime()); // expected: true true true",
+      "verify": "const d = new Date(1e12); const c = deepClone({ d });\nassert(c.d instanceof Date, 'must stay a Date'); assert(c.d !== d, 'must be a new Date');\nassert(c.d.getTime() === d.getTime(), 'time must match')",
+      "gap": "A Date has no own enumerable keys, so a plain-object walk turns it into <code>{}</code>. Check <code>instanceof Date</code> first and build <code>new Date(original.getTime())</code>."
+     },
+     {
+      "t": "RegExp keeps its source and flags",
+      "test": "const r = /a+/gi; const c = deepClone(r);\nconsole.log(c !== r, c.source, c.flags); // expected: true a+ gi",
+      "verify": "const r = /a+/gi; const c = deepClone(r);\nassert(c !== r && c instanceof RegExp, 'must be a new RegExp'); assert(c.source === 'a+' && c.flags === 'gi', 'source and flags must match')",
+      "gap": "Create the copy with <code>new RegExp(r.source, r.flags)</code>. Walking its keys gives an empty object."
+     },
+     {
+      "t": "Map and Set contents are cloned, not shared",
+      "test": "const m = new Map([['k', { x: 1 }]]); const s = new Set([{ y: 2 }]);\nconst c = deepClone({ m, s });\nconsole.log(c.m.get('k') !== m.get('k'), c.m.get('k').x, [...c.s][0] !== [...s][0], [...c.s][0].y); // expected: true 1 true 2",
+      "verify": "const m = new Map([['k', { x: 1 }]]); const s = new Set([{ y: 2 }]);\nconst c = deepClone({ m, s });\nassert(c.m instanceof Map && c.s instanceof Set, 'must stay Map and Set');\nassert(c.m !== m && c.m.get('k') !== m.get('k') && c.m.get('k').x === 1, 'Map values must be cloned');\nassert([...c.s][0] !== [...s][0] && [...c.s][0].y === 2, 'Set items must be cloned')",
+      "gap": "Map and Set keep their data in internal slots, so <code>Object.keys</code> sees nothing. Create a new Map or Set and add cloned entries one by one."
+     },
+     {
+      "t": "Circular references do not crash and stay circular",
+      "test": "const a = { name: 'a' }; a.self = a;\nconst c = deepClone(a);\nconsole.log(c !== a, c.self === c, c.name); // expected: true true a",
+      "verify": "const a = { name: 'a' }; a.self = a; const c = deepClone(a);\nassert(c !== a, 'must be a new object'); assert(c.self === c, 'the cycle must point to the copy, not the original'); assert(c.name === 'a', 'values copied')",
+      "gap": "Save the new empty copy in the WeakMap <i>before</i> cloning its children, and look in the WeakMap at the start of every call."
+     },
+     {
+      "t": "Shared references stay shared inside the copy",
+      "test": "const shared = { n: 1 }; const c = deepClone({ p: shared, q: shared });\nconsole.log(c.p === c.q, c.p !== shared); // expected: true true",
+      "verify": "const shared = { n: 1 }; const c = deepClone({ p: shared, q: shared });\nassert(c.p === c.q, 'p and q must be the same copied object'); assert(c.p !== shared, 'must not point to the original')",
+      "gap": "If your WeakMap stores every visited object (not only on cycles), the second visit returns the same copy automatically. Make sure you save objects when you first clone them."
+     },
+     {
+      "t": "Function-valued properties are skipped",
+      "test": "const c = deepClone({ f() {}, n: 1 });\nconsole.log('f' in c, c.n); // expected: false 1",
+      "verify": "const c = deepClone({ f() {}, n: 1 });\nassert(!('f' in c), 'function property must be skipped'); assert(c.n === 1, 'other values copied')",
+      "gap": "Check <code>typeof value === \"function\"</code> and skip the key (or return undefined for a top-level function) instead of copying the reference."
+     }
+    ]
+   },
+   "solution": "function deepClone(value, seen = new WeakMap()) {\n  if (value === null || typeof value !== 'object') {\n    return typeof value === 'function' ? undefined : value;\n  }\n  if (seen.has(value)) return seen.get(value);\n  if (value instanceof Date) return new Date(value.getTime());\n  if (value instanceof RegExp) {\n    const re = new RegExp(value.source, value.flags);\n    re.lastIndex = value.lastIndex;\n    return re;\n  }\n  if (value instanceof Map) {\n    const out = new Map();\n    seen.set(value, out);\n    value.forEach((v, k) => out.set(deepClone(k, seen), deepClone(v, seen)));\n    return out;\n  }\n  if (value instanceof Set) {\n    const out = new Set();\n    seen.set(value, out);\n    value.forEach((v) => out.add(deepClone(v, seen)));\n    return out;\n  }\n  if (Array.isArray(value)) {\n    const out = [];\n    seen.set(value, out);\n    value.forEach((v, i) => { out[i] = deepClone(v, seen); });\n    return out;\n  }\n  const out = Object.create(Object.getPrototypeOf(value));\n  seen.set(value, out);\n  for (const key of Object.keys(value)) {\n    if (typeof value[key] === 'function') continue;\n    out[key] = deepClone(value[key], seen);\n  }\n  return out;\n}",
+   "notes": [
+    "Primitives and <code>null</code> are the base case. Check <code>null</code> explicitly because <code>typeof null</code> is \"object\".",
+    "The WeakMap records \"original → copy\". It breaks cycles and keeps shared references shared.",
+    "Register the empty copy <b>before</b> filling it, otherwise a child that points back to the parent cannot find it.",
+    "Special objects (Date, RegExp, Map, Set) keep data in internal slots, so each needs its own constructor call.",
+    "For production code, prefer the built-in <code>structuredClone</code>. It handles these cases, but it throws on functions."
+   ],
+   "next": [
+    "Also copy <b>Symbol</b> keys and property descriptors (getters and setters).",
+    "Support typed arrays, <code>Error</code> objects and <code>Boolean/Number/String</code> wrapper objects.",
+    "Write <code>deepEqual(a, b)</code> that handles the same set of types and cycles."
+   ]
+  },
+  {
+   "id": "once",
+   "diff": "Easy",
+   "fn": "once",
+   "signature": "once(fn)",
+   "learn": {
+    "what": [
+     "<code>once(fn)</code> returns a new function. The first time you call it, it runs <code>fn</code> and remembers the result. Every later call skips <code>fn</code> and returns that remembered result.",
+     "The wrapper needs two pieces of memory that survive between calls: \"did I run already?\" and \"what was the result?\". A <b>closure</b> keeps both alive without any global variable.",
+     "Think of a one-time password. The first use works. After that, the system just tells you \"already used\" and never opens the door again."
+    ],
+    "how": {
+     "steps": [
+      "Create two variables in the outer function: a <code>called</code> flag and a <code>result</code> slot.",
+      "Return a wrapper function that accepts any arguments.",
+      "On the <b>first</b> call: set the flag, run the original function with the same <code>this</code> and arguments, and store what it returns.",
+      "On every call: return the stored result. Later arguments are ignored.",
+      "Optional: attach a <code>reset()</code> method that clears the flag and result."
+     ],
+     "diagram": "const init = once(connect)\n\ninit(1)   called=false -> run connect(1) -> result R, called=true -> R\ninit(2)   called=true  -> skip          -> R\ninit(3)   called=true  -> skip          -> R\n\ninit.reset()  -> called=false, result=undefined\ninit(4)   runs connect(4) again"
+    },
+    "where": [
+     [
+      "Initialisation",
+      "Open a database connection or load a config file once, even if many parts of the page ask for it."
+     ],
+     [
+      "Event handlers",
+      "Make sure a \"submit\" or \"pay\" action cannot run twice if a user double-clicks."
+     ],
+     [
+      "Lazy setup",
+      "Create an expensive object the first time it is needed, then reuse it."
+     ],
+     [
+      "Watch out",
+      "If <code>fn</code> is async, you cache the promise, not the final value. Also, a call that throws is still counted as the one call."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const double = once((x) =&gt; x * 2)\nconsole.log(double(2), double(5))</code></pre>What is printed?",
+     "opts": [
+      "<code>4 10</code>",
+      "<code>4 undefined</code>",
+      "<code>4 4</code>",
+      "<code>10 10</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "The first call runs with <code>2</code> and caches <code>4</code>. The second call does not run <code>fn</code>, so the argument <code>5</code> is ignored and the cached <code>4</code> comes back.",
+      "The trap is thinking the wrapper recomputes with new arguments. It only remembers."
+     ]
+    },
+    {
+     "tag": "Spot the bug",
+     "q": "<pre><code>function once(fn) {\n  return function (...args) {\n    let called = false\n    let result\n    if (!called) {\n      called = true\n      result = fn(...args)\n    }\n    return result\n  }\n}</code></pre>If you call the wrapper three times, how many times does <code>fn</code> run?",
+     "opts": [
+      "3 times, because <code>called</code> is created fresh on every call",
+      "1 time, because <code>called</code> becomes true",
+      "0 times, because <code>called</code> starts as false",
+      "2 times, the first and the last"
+     ],
+     "ans": 0,
+     "why": [
+      "The variables live <b>inside</b> the returned function, so each call gets its own new <code>called = false</code>. The memory does not survive between calls.",
+      "The flag must be declared in the outer function, so every call shares it through the closure."
+     ]
+    },
+    {
+     "tag": "Why does this fail?",
+     "q": "The wrapper calls the original with <code>fn(...args)</code> instead of <code>fn.apply(this, args)</code>. In strict-mode code, what happens here?<pre><code>const o = { n: 1, get: once(function () { return this.n }) }\no.get()</code></pre>",
+     "opts": [
+      "It returns <code>1</code>",
+      "It returns <code>undefined</code>",
+      "It returns <code>null</code>",
+      "It throws a TypeError, because <code>this</code> is <code>undefined</code> inside <code>fn</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "A plain call <code>fn(...args)</code> has no object in front of it, so <code>this</code> is lost. In strict mode that means <code>undefined</code>, and <code>this.n</code> throws.",
+      "Use <code>fn.apply(this, args)</code> inside a normal <code>function</code> wrapper. An arrow function wrapper would also lose the caller's <code>this</code>."
+     ]
+    },
+    {
+     "tag": "Edge case",
+     "q": "A developer caches like this:<pre><code>return function (...args) {\n  if (result) return result\n  result = fn.apply(this, args)\n  return result\n}</code></pre>With <code>const f = once(() =&gt; 0)</code>, how many times does the function run after <code>f(); f(); f()</code>?",
+     "opts": [
+      "1 time",
+      "3 times, because <code>0</code> is falsy so the cache looks empty",
+      "0 times",
+      "It throws a ReferenceError"
+     ],
+     "ans": 1,
+     "why": [
+      "The guard checks the <b>value</b>, not whether a call happened. A result of <code>0</code>, <code>\"\"</code>, <code>false</code> or <code>undefined</code> looks \"not cached\", so <code>fn</code> runs again.",
+      "Use a separate boolean flag. It says \"I already ran\" no matter what the result was."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const f = once((x) =&gt; x + 1)\nf(1)\nf.reset()\nconsole.log(f(10))</code></pre>",
+     "opts": [
+      "<code>11</code>",
+      "<code>2</code>",
+      "<code>undefined</code>",
+      "<code>10</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "<code>reset()</code> clears the flag and the stored result, so the next call behaves like a first call. It runs with <code>10</code> and returns <code>11</code>.",
+      "If <code>reset</code> forgot to clear the flag, you would get the old <code>2</code>."
+     ]
+    }
+   ],
+   "pseudo": "once(fn)\n  remember \"called\" = false\n  remember \"result\" = nothing\n  create wrapper(any arguments)\n    if called is false\n      set called to true\n      run fn with the wrapper's own \"this\" and the same arguments\n      save what it returns as result\n    return result\n  give the wrapper a reset action\n    set called to false\n    clear the result\n  return the wrapper",
+   "watch": [
+    "Where do <code>called</code> and <code>result</code> live, so they survive from one call to the next?",
+    "What if the result is <code>0</code>, <code>false</code> or <code>undefined</code>? Can your check still tell that the function already ran?",
+    "Which <code>this</code> does the original function see when the wrapper is used as a method?"
+   ],
+   "build": {
+    "minutes": 10,
+    "problem": "Implement <b>once(fn)</b> that returns a wrapper running <code>fn</code> only on the first call and returning the same result afterwards.",
+    "reqs": [
+     "Run <code>fn</code> only on the first call.",
+     "Later calls return the first result without running <code>fn</code>.",
+     "Pass all arguments and the correct <code>this</code> on the first call.",
+     "Cache results that are falsy, including <code>undefined</code>.",
+     "Bonus: add a <code>reset()</code> method on the wrapper."
+    ],
+    "checks": [
+     {
+      "t": "The first call runs fn and returns its value",
+      "test": "let n = 0; const f = once(() => { n++; return 'hi' });\nconsole.log(f(), n); // expected: hi 1",
+      "verify": "let n = 0; const f = once(() => { n++; return 'hi' });\nassert(f() === 'hi' && n === 1, 'first call must run fn and return its value')",
+      "gap": "On the first call you must run <code>fn</code> and <b>return</b> its result. Check that you return the value on every path."
+     },
+     {
+      "t": "Later calls return the cached value and do not run fn",
+      "test": "let n = 0; const f = once((x) => { n++; return x * 2 });\nconsole.log(f(2), f(5), f(9), n); // expected: 4 4 4 1",
+      "verify": "let n = 0; const f = once((x) => { n++; return x * 2 });\nassert(f(2) === 4 && f(5) === 4 && f(9) === 4, 'must return the first result'); assert(n === 1, 'fn must run once')",
+      "gap": "The flag and result must live in the outer function (the closure). If you declare them inside the wrapper, each call starts fresh."
+     },
+     {
+      "t": "All arguments reach fn on the first call",
+      "test": "const f = once((...a) => a.join('-'));\nconsole.log(f(1, 2, 3)); // expected: 1-2-3",
+      "verify": "const f = once((...a) => a.join('-'));\nassert(f(1, 2, 3) === '1-2-3', 'all arguments must be passed')",
+      "gap": "Use a rest parameter <code>(...args)</code> and spread or <code>apply</code> them. Do not hard-code one argument."
+     },
+     {
+      "t": "The caller's this is preserved",
+      "test": "const o = { v: 7, get: once(function () { return this.v }) };\nconsole.log(o.get()); // expected: 7",
+      "verify": "const o = { v: 7, get: once(function () { return this.v }) };\nassert(o.get() === 7, 'this must be the object the method was called on')",
+      "gap": "The wrapper must be a normal <code>function</code> (not an arrow) and call <code>fn.apply(this, args)</code> so <code>this</code> is forwarded."
+     },
+     {
+      "t": "Falsy and undefined results are cached too",
+      "test": "let n = 0; const f = once(() => { n++; return 0 });\nf(); f(); f();\nconsole.log(n); // expected: 1",
+      "verify": "let n = 0; const f = once(() => { n++; return 0 }); f(); f(); f();\nassert(n === 1, 'a falsy result must not trigger another call'); let m = 0; const g = once(() => { m++ }); g(); g(); assert(m === 1, 'undefined result must be cached too')",
+      "gap": "Do not use the result to decide whether to run. Keep a separate boolean <code>called</code> flag."
+     },
+     {
+      "t": "reset() lets the function run again",
+      "test": "let n = 0; const f = once((x) => { n++; return x });\nf(1); f.reset();\nconsole.log(f(2), n); // expected: 2 2",
+      "verify": "let n = 0; const f = once((x) => { n++; return x }); f(1);\nassert(typeof f.reset === 'function', 'reset must exist'); f.reset();\nassert(f(2) === 2 && n === 2, 'after reset the next call must run fn again')",
+      "gap": "Attach <code>reset</code> to the wrapper function object and clear <b>both</b> the flag and the cached result."
+     }
+    ]
+   },
+   "solution": "function once(fn) {\n  let called = false;\n  let result;\n  function wrapper(...args) {\n    if (!called) {\n      called = true;\n      result = fn.apply(this, args);\n    }\n    return result;\n  }\n  wrapper.reset = function () {\n    called = false;\n    result = undefined;\n  };\n  return wrapper;\n}",
+   "notes": [
+    "The closure holds <code>called</code> and <code>result</code>, so state survives between calls with no globals.",
+    "A separate boolean flag is safer than checking the result, because any value (even <code>undefined</code>) can be a valid result.",
+    "<code>fn.apply(this, args)</code> forwards the caller's <code>this</code> and all arguments.",
+    "A normal function is needed for the wrapper so that <code>this</code> is the caller. An arrow function would capture the outer <code>this</code> instead."
+   ],
+   "next": [
+    "Write <code>before(n, fn)</code> that runs <code>fn</code> for the first <code>n - 1</code> calls and then caches the last result.",
+    "Make <code>once</code> work for async functions so that parallel callers share one promise.",
+    "Decide what should happen if <code>fn</code> throws: cache the error, or allow a retry?"
+   ]
+  },
+  {
+   "id": "groupby",
+   "diff": "Easy",
+   "fn": "groupBy",
+   "signature": "groupBy(array, key)",
+   "learn": {
+    "what": [
+     "<code>groupBy(array, key)</code> sorts the items of an array into labelled buckets. It returns an object where each property name is a group label, and each value is the array of items in that group.",
+     "The <code>key</code> can be a <b>property name</b> such as <code>\"role\"</code>, or a <b>function</b> that computes the label, such as <code>(u) =&gt; u.age &gt; 30 ? \"senior\" : \"junior\"</code>. In both cases you get one label per item.",
+     "Think of sorting laundry into baskets by colour. Each shirt goes into exactly one basket, and the baskets are created the first time you need them."
+    ],
+    "how": {
+     "steps": [
+      "Decide how to get a label: call the function, or read the property.",
+      "Start with an empty result object.",
+      "For each item, compute its label.",
+      "If the result has no bucket for that label yet, create an empty array.",
+      "Push the item into the bucket. Return the result object at the end."
+     ],
+     "diagram": "users, key = \"role\"\n {ann, admin}  -> admin: [ann]\n {bob, user}   -> user:  [bob]\n {cy,  admin}  -> admin: [ann, cy]\n\nresult = { admin: [ann, cy], user: [bob] }"
+    },
+    "where": [
+     [
+      "Tables and lists",
+      "Show orders grouped by status, or contacts grouped by first letter."
+     ],
+     [
+      "Analytics",
+      "Count events per day or per page by grouping first, then taking each bucket's length."
+     ],
+     [
+      "Data prep",
+      "Group API rows by an id before building a nested UI."
+     ],
+     [
+      "Watch out",
+      "Labels become string property names. <code>1</code> and <code>\"1\"</code> land in the same bucket, and keys like <code>\"constructor\"</code> can clash with built-in names."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const r = groupBy([6.1, 4.2, 6.3], Math.floor)\nconsole.log(Object.keys(r))</code></pre>",
+     "opts": [
+      "<code>[\"6\", \"4\"]</code>",
+      "<code>[\"4\", \"6\"]</code>",
+      "<code>[6, 4]</code>",
+      "<code>[6.1, 4.2, 6.3]</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Object keys are always strings, so the numbers become <code>\"6\"</code> and <code>\"4\"</code>. Integer-like keys are also listed in <b>ascending numeric order</b>, not in insertion order.",
+      "The trap is expecting the order of first appearance. If order matters, use a <code>Map</code>."
+     ]
+    },
+    {
+     "tag": "Why does this fail?",
+     "q": "The accumulator is a normal <code>{}</code>:<pre><code>acc[k] = acc[k] || []\nacc[k].push(item)</code></pre>What happens for <code>groupBy([{ t: \"constructor\" }], \"t\")</code>?",
+     "opts": [
+      "It works and returns <code>{ constructor: [item] }</code>",
+      "It returns <code>{}</code> because the key is reserved",
+      "It silently drops the item",
+      "It throws a TypeError, because <code>acc.constructor</code> is the <code>Object</code> function, so it is not replaced and has no <code>push</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "A normal object inherits properties like <code>constructor</code> and <code>toString</code>. <code>acc[\"constructor\"]</code> is already truthy, so the code skips creating an array and calls <code>push</code> on a function.",
+      "Use <code>Object.create(null)</code> for the accumulator, or check with <code>Object.hasOwn</code>."
+     ]
+    },
+    {
+     "tag": "Edge case",
+     "q": "<pre><code>groupBy([{ a: 1 }, { b: 2 }], \"a\")</code></pre>What are the keys of the result?",
+     "opts": [
+      "<code>[\"1\", \"undefined\"]</code>",
+      "<code>[\"1\"]</code>, because items without the key are skipped",
+      "<code>[\"1\", \"\"]</code>",
+      "It throws, because the second item has no <code>a</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Reading a missing property gives <code>undefined</code>, and using it as a key turns it into the string <code>\"undefined\"</code>. The second item goes into that bucket.",
+      "This is the behaviour the task asks for. You can change it later if you prefer to skip those items."
+     ]
+    },
+    {
+     "tag": "Reference or copy?",
+     "q": "<pre><code>const users = [{ name: \"Ann\", role: \"admin\" }]\nconst g = groupBy(users, \"role\")\nconsole.log(g.admin[0] === users[0])</code></pre>",
+     "opts": [
+      "<code>false</code>, because grouping copies each item",
+      "<code>false</code>, because the array is rebuilt",
+      "<code>true</code>, because the buckets hold the same object references",
+      "<code>undefined</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Grouping only <b>moves references</b> into new arrays. The objects themselves are not copied, so changing <code>g.admin[0].name</code> also changes <code>users[0]</code>.",
+      "The original <b>array</b> is not changed, which is what \"no mutation\" means here."
+     ]
+    }
+   ],
+   "pseudo": "groupBy(array, key)\n  decide how to read a label from an item\n    if key is a function, call it with the item\n    otherwise read the property named by key\n  create an empty result with no inherited properties\n  for each item in the array\n    compute its label\n    if the result has no bucket for that label\n      create an empty list for it\n    add the item to that list\n  return the result\n  // bonus: also pass the index to a function key",
+   "watch": [
+    "What type are the labels in the final object, even if your function returns numbers?",
+    "What does a missing property give you, and which bucket does it end up in?",
+    "Could a label like <code>\"constructor\"</code> collide with something the result object already has?"
+   ],
+   "build": {
+    "minutes": 10,
+    "problem": "Implement <b>groupBy(array, key)</b> where <code>key</code> is a property name or a function, returning an object that maps each label to an array of items.",
+    "reqs": [
+     "Support a string key such as <code>\"role\"</code>.",
+     "Support a function key such as <code>(u) =&gt; u.age &gt; 30 ? \"senior\" : \"junior\"</code>.",
+     "Keep the original items and their order, and do not mutate the input array.",
+     "Return an empty object for an empty array.",
+     "Items with a missing key go under <code>\"undefined\"</code>."
+    ],
+    "checks": [
+     {
+      "t": "Groups by a string property",
+      "test": "const u = [{ n: 'a', r: 'x' }, { n: 'b', r: 'y' }, { n: 'c', r: 'x' }];\nconst g = groupBy(u, 'r');\nconsole.log(g.x.map(i => i.n).join(), g.y.length); // expected: a,c 1",
+      "verify": "const u = [{ n: 'a', r: 'x' }, { n: 'b', r: 'y' }, { n: 'c', r: 'x' }]; const g = groupBy(u, 'r');\nassert(g.x.map(i => i.n).join() === 'a,c' && g.y.length === 1, 'must group by property and keep order')",
+      "gap": "Read the label with <code>item[key]</code> and push the item into <code>result[label]</code>. Create the array the first time a label appears."
+     },
+     {
+      "t": "Groups by a function",
+      "test": "const g = groupBy([20, 35, 50], n => n > 30 ? 'senior' : 'junior');\nconsole.log(g.junior, g.senior); // expected: [20] [35, 50]",
+      "verify": "const g = groupBy([20, 35, 50], n => n > 30 ? 'senior' : 'junior');\nassert(g.junior.length === 1 && g.junior[0] === 20 && g.senior.length === 2, 'must group by function result')",
+      "gap": "Check <code>typeof key === \"function\"</code> and call <code>key(item)</code> to get the label instead of reading a property."
+     },
+     {
+      "t": "Items are the same objects and the input is not changed",
+      "test": "const u = [{ r: 'x' }]; const g = groupBy(u, 'r');\nconsole.log(g.x[0] === u[0], u.length); // expected: true 1",
+      "verify": "const u = [{ r: 'x' }]; const g = groupBy(u, 'r');\nassert(g.x[0] === u[0], 'items must be the same references'); assert(u.length === 1 && u[0].r === 'x', 'input must not change')",
+      "gap": "Push the original item, not a copy, and never <code>splice</code> or <code>pop</code> from the input array."
+     },
+     {
+      "t": "An empty array gives an empty object",
+      "test": "console.log(Object.keys(groupBy([], 'r')).length); // expected: 0",
+      "verify": "assert(Object.keys(groupBy([], 'r')).length === 0, 'empty input must give empty result')",
+      "gap": "Start from an empty object and return it even when the loop never runs. Do not return <code>null</code> or <code>undefined</code>."
+     },
+     {
+      "t": "A missing key goes under \"undefined\"",
+      "test": "const g = groupBy([{ a: 1 }, { b: 2 }], 'a');\nconsole.log(Object.keys(g).join()); // expected: 1,undefined",
+      "verify": "const g = groupBy([{ a: 1 }, { b: 2 }], 'a');\nassert(g['1'].length === 1 && g['undefined'].length === 1, 'missing key must be grouped under undefined')",
+      "gap": "Do not skip items whose label is <code>undefined</code>. Using it as an object key already produces the string <code>\"undefined\"</code>."
+     },
+     {
+      "t": "Labels that match built-in names still work",
+      "test": "const g = groupBy([{ t: 'constructor' }, { t: 'toString' }], 't');\nconsole.log(g.constructor.length, g.toString.length); // expected: 1 1",
+      "verify": "const g = groupBy([{ t: 'constructor' }, { t: 'toString' }], 't');\nassert(Array.isArray(g['constructor']) && g['constructor'].length === 1, 'constructor bucket must be an array');\nassert(Array.isArray(g['toString']) && g['toString'].length === 1, 'toString bucket must be an array')",
+      "gap": "A plain <code>{}</code> already has <code>constructor</code> and <code>toString</code>. Create the result with <code>Object.create(null)</code> (or check with <code>Object.hasOwn</code>)."
+     }
+    ]
+   },
+   "solution": "function groupBy(array, key) {\n  const getLabel = typeof key === 'function'\n    ? key\n    : (item) => (item == null ? undefined : item[key]);\n  const result = Object.create(null);\n  array.forEach((item, index) => {\n    const label = getLabel(item, index);\n    if (!(label in result)) result[label] = [];\n    result[label].push(item);\n  });\n  return result;\n}",
+   "notes": [
+    "One label per item, then \"create bucket if missing, push item\". That is the whole algorithm.",
+    "Object keys are strings, so numeric labels become strings and integer-like keys are ordered numerically.",
+    "<code>Object.create(null)</code> gives an object with no inherited names, so a label like <code>\"constructor\"</code> is safe.",
+    "Items are placed by reference. The input array and its items are not changed.",
+    "You can write this with <code>reduce</code>. A plain loop is easier to read for beginners."
+   ],
+   "next": [
+    "Return a <code>Map</code> instead, so non-string labels and insertion order are kept.",
+    "Add <code>countBy(array, key)</code> that returns how many items are in each group.",
+    "Compare with the built-in <code>Object.groupBy</code> and list the differences."
+   ]
+  },
+  {
+   "id": "array-methods",
+   "diff": "Easy",
+   "fn": "myMap",
+   "signature": "myMap(arr, fn) · myFilter(arr, fn) · myReduce(arr, fn, initialValue?)",
+   "learn": {
+    "what": [
+     "<code>map</code>, <code>filter</code> and <code>reduce</code> are the three workhorses of array code. Each walks through an array and calls your callback for every item. <code>map</code> builds a new array of results, <code>filter</code> keeps the items you approve, and <code>reduce</code> folds everything into one value.",
+     "Writing them yourself shows what the callback receives: <b>(item, index, array)</b>. It also shows the details that people forget, such as what <code>reduce</code> does when there is no starting value, and that the built-ins skip empty slots in sparse arrays.",
+     "Think of an assembly line. <code>map</code> changes each product, <code>filter</code> removes the faulty ones, and <code>reduce</code> packs everything into a single box."
+    ],
+    "how": {
+     "steps": [
+      "Check the callback first. If it is not a function, throw a <code>TypeError</code>.",
+      "<b>myMap:</b> make a result array of the same length. For each existing item, store <code>callback(item, index, array)</code> at the same index.",
+      "<b>myFilter:</b> make an empty result. For each existing item, push it only if the callback returns a truthy value.",
+      "<b>myReduce:</b> keep an accumulator. Use the initial value if one was given, otherwise take the first existing item and start from the next one. Replace the accumulator with each callback result.",
+      "An empty array with no initial value has nothing to start from, so <code>myReduce</code> throws a <code>TypeError</code>."
+     ],
+     "diagram": "myReduce([1, 2, 3], add)         (no initial value)\n acc = 1        start at index 1\n acc = add(1, 2) = 3\n acc = add(3, 3) = 6        -> 6\n\nmyReduce([1, 2, 3], add, 10)     (initial value)\n acc = 10       start at index 0\n 10 -> 11 -> 13 -> 16       -> 16"
+    },
+    "where": [
+     [
+      "UI lists",
+      "<code>map</code> turns data into rows or components, and <code>filter</code> removes items that should not be shown."
+     ],
+     [
+      "Totals",
+      "<code>reduce</code> sums prices, counts items by type, or builds a lookup object."
+     ],
+     [
+      "Pipelines",
+      "Chain them: filter the active users, map them to names, reduce them to a count."
+     ],
+     [
+      "Watch out",
+      "Chaining many of them walks the array many times. For very large arrays, one <code>reduce</code> or a single loop can be faster."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log([\"1\", \"2\", \"3\"].map(parseInt))</code></pre>",
+     "opts": [
+      "<code>[1, 2, 3]</code>",
+      "<code>[1, NaN, NaN]</code>",
+      "<code>[1, NaN, 3]</code>",
+      "It throws a TypeError"
+     ],
+     "ans": 1,
+     "why": [
+      "<code>map</code> calls the callback as <code>(item, index, array)</code>. So <code>parseInt</code> receives the index as its second argument, the <b>radix</b>: <code>parseInt(\"2\", 1)</code> and <code>parseInt(\"3\", 2)</code> are <code>NaN</code>.",
+      "This is why your <code>myMap</code> must pass the index. It is also why you should wrap such callbacks: <code>(x) =&gt; parseInt(x)</code>."
+     ]
+    },
+    {
+     "tag": "Edge case",
+     "q": "A custom reduce decides \"no initial value\" with <code>if (initialValue === undefined)</code>. What goes wrong with this call?<pre><code>[].reduce((a, b) =&gt; a + b, undefined)</code></pre>",
+     "opts": [
+      "The built-in returns <code>undefined</code>, but this custom version throws, because it cannot tell \"no value\" from \"undefined was passed\"",
+      "Nothing, both behave the same",
+      "Both throw a TypeError",
+      "The built-in throws, the custom version returns <code>undefined</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Passing <code>undefined</code> <b>explicitly</b> is still \"an initial value was given\". The built-in checks how many arguments were passed, not what their value is.",
+      "Use <code>arguments.length</code> (or a rest parameter) to know whether the third argument exists."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "How many times is the callback called, and what is returned?<pre><code>let calls = 0\nconst r = [1, 2, 3].reduce((a, b) =&gt; { calls++; return a + b })\nconsole.log(calls, r)</code></pre>",
+     "opts": [
+      "<code>3 6</code>",
+      "<code>3 7</code>",
+      "<code>1 6</code>",
+      "<code>2 6</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Without an initial value, the first item becomes the accumulator, and the loop starts at index 1. With three items that means only <b>two</b> callbacks: <code>1 + 2</code>, then <code>3 + 3</code>.",
+      "If you always start at index 0, you call the callback one time too many."
+     ]
+    },
+    {
+     "tag": "Spot the bug",
+     "q": "Someone writes <code>myMap</code> like this:<pre><code>function myMap(arr, fn) {\n  const out = []\n  for (const x of arr) out.push(fn(x))\n  return out\n}</code></pre>What does <code>myMap([\"a\", \"b\"], (x, i) =&gt; i)</code> return?",
+     "opts": [
+      "<code>[0, 1]</code>",
+      "<code>[undefined, undefined]</code>",
+      "<code>[\"a\", \"b\"]</code>",
+      "It throws, because <code>i</code> is not defined"
+     ],
+     "ans": 1,
+     "why": [
+      "The callback is called with only the item, so its second parameter <code>i</code> is <code>undefined</code>. The result is <code>[undefined, undefined]</code>.",
+      "Use an indexed loop and call <code>fn(arr[i], i, arr)</code>."
+     ]
+    },
+    {
+     "tag": "Edge case",
+     "q": "What does the built-in <code>map</code> do here?<pre><code>let calls = 0\nconst r = [1, , 3].map((x) =&gt; { calls++; return x * 2 })</code></pre>",
+     "opts": [
+      "<code>calls</code> is 3 and <code>r</code> is <code>[2, NaN, 6]</code>",
+      "<code>calls</code> is 3 and <code>r</code> is <code>[2, undefined, 6]</code>",
+      "<code>calls</code> is 2 and <code>r</code> keeps the empty slot: <code>[2, empty, 6]</code>",
+      "<code>calls</code> is 2 and <code>r</code> is <code>[2, 6]</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Array methods skip <b>holes</b> in sparse arrays. The callback is not called for the empty slot, and <code>map</code> keeps the hole at the same index, so the length stays 3.",
+      "Test it with <code>index in arr</code> before calling the callback."
+     ]
+    }
+   ],
+   "pseudo": "check the callback\n  if it is not a function, throw a TypeError\n\nmyMap(arr, fn)\n  make a result list with the same length as arr\n  for each position i from the start to the end\n    if arr has a real item at i\n      store fn(item, i, arr) at position i in the result\n  return the result\n\nmyFilter(arr, fn)\n  make an empty result list\n  for each position i\n    if arr has a real item at i\n      if fn(item, i, arr) is truthy, add the item to the result\n  return the result\n\nmyReduce(arr, fn, initialValue)\n  if an initial value was passed (even undefined)\n    accumulator = initial value, start at position 0\n  otherwise\n    find the first real item, use it as the accumulator\n    if there is none, throw a TypeError\n    start after it\n  for each remaining real item\n    accumulator = fn(accumulator, item, i, arr)\n  return the accumulator",
+   "watch": [
+    "Which three values does the callback receive, and in which order?",
+    "How do you know that an initial value was passed, when the caller might pass <code>undefined</code> on purpose?",
+    "What should happen for an empty slot in the array?"
+   ],
+   "build": {
+    "minutes": 15,
+    "problem": "Implement <b>myMap</b>, <b>myFilter</b> and <b>myReduce</b> as standalone functions (<code>myMap(arr, fn)</code> and so on) without using the built-in <code>map</code>, <code>filter</code> or <code>reduce</code>.",
+    "reqs": [
+     "<code>myMap</code> returns a new array of <code>fn(item, index, array)</code> results.",
+     "<code>myFilter</code> returns a new array of items for which <code>fn</code> returns a truthy value.",
+     "<code>myReduce</code> uses the first item as the start when no initial value is passed.",
+     "All three pass <code>(item, index, array)</code> to the callback and do not change the input.",
+     "Throw a <code>TypeError</code> if the callback is not a function, and for an empty array in <code>myReduce</code> with no initial value.",
+     "Bonus: skip empty slots in sparse arrays like the built-ins."
+    ],
+    "checks": [
+     {
+      "t": "myMap passes (item, index, array) and returns a new array",
+      "test": "const a = ['a', 'b'];\nconst r = myMap(a, (x, i, arr) => x + i + (arr === a));\nconsole.log(r, r !== a); // expected: ['a0true', 'b1true'] true",
+      "verify": "const a = ['a', 'b']; const r = myMap(a, (x, i, arr) => x + i + (arr === a));\nassert(r.length === 2 && r[0] === 'a0true' && r[1] === 'b1true', 'callback must get item, index, array'); assert(r !== a, 'must return a new array')",
+      "gap": "Use an indexed loop and call <code>fn(arr[i], i, arr)</code>. Calling <code>fn(item)</code> leaves the index and array as <code>undefined</code>."
+     },
+     {
+      "t": "myMap does not change the input",
+      "test": "const a = [1, 2, 3]; myMap(a, x => x * 2);\nconsole.log(a); // expected: [1, 2, 3]",
+      "verify": "const a = [1, 2, 3]; const r = myMap(a, x => x * 2);\nassert(a.join() === '1,2,3', 'input must stay the same'); assert(r.join() === '2,4,6', 'result must be doubled')",
+      "gap": "Write results into a separate output array. Never assign back into <code>arr[i]</code>."
+     },
+     {
+      "t": "myFilter keeps items with a truthy result",
+      "test": "const r = myFilter([1, 2, 3, 4], (x, i) => x % 2 === 0 || i === 0);\nconsole.log(r); // expected: [1, 2, 4]",
+      "verify": "const r = myFilter([1, 2, 3, 4], (x, i) => x % 2 === 0 || i === 0);\nassert(r.join() === '1,2,4', 'must keep truthy results and pass the index'); assert(myFilter([], () => true).length === 0, 'empty in, empty out')",
+      "gap": "Push the <b>original item</b> (not the callback result) when the callback returns a truthy value."
+     },
+     {
+      "t": "myReduce with an initial value",
+      "test": "console.log(myReduce([1, 2, 3], (a, x) => a + x, 10)); // expected: 16",
+      "verify": "assert(myReduce([1, 2, 3], (a, x) => a + x, 10) === 16, 'must start from the initial value');\nconst seen = []; myReduce(['a', 'b'], (acc, x, i, arr) => { seen.push(i + ':' + arr.length); return acc }, 0);\nassert(seen.join() === '0:2,1:2', 'callback must get index and array')",
+      "gap": "With an initial value the accumulator starts as that value and the loop starts at index 0."
+     },
+     {
+      "t": "Without an initial value, the first item starts it and the loop begins at index 1",
+      "test": "let calls = 0;\nconst r = myReduce([1, 2, 3], (a, x) => { calls++; return a + x });\nconsole.log(r, calls); // expected: 6 2",
+      "verify": "let calls = 0; const r = myReduce([1, 2, 3], (a, x) => { calls++; return a + x });\nassert(r === 6 && calls === 2, 'must start at index 1 and call the callback twice')",
+      "gap": "When there is no initial value, set <code>acc = arr[0]</code> and begin the loop at index 1. Starting at 0 calls the callback once too often."
+     },
+     {
+      "t": "An explicit undefined counts as an initial value; empty without one throws",
+      "test": "console.log(myReduce([], (a, x) => a + x, undefined));\ntry { myReduce([], (a, x) => a + x) } catch (e) { console.log(e instanceof TypeError) }\n// expected: undefined, then true",
+      "verify": "assert(myReduce([], (a, x) => a + x, undefined) === undefined, 'explicit undefined is an initial value');\nlet threw = false; try { myReduce([], (a, x) => a + x) } catch (e) { threw = e instanceof TypeError } assert(threw, 'empty array without initial value must throw TypeError')",
+      "gap": "Do not test the value of <code>initialValue</code>. Count the arguments (<code>arguments.length</code> or a rest parameter) to know whether it was passed."
+     },
+     {
+      "t": "A non-function callback throws a TypeError",
+      "test": "for (const f of [myMap, myFilter, myReduce]) {\n  try { f([1], 'nope') } catch (e) { console.log(e instanceof TypeError) }\n}\n// expected: true, true, true",
+      "verify": "for (const f of [myMap, myFilter, myReduce]) {\n  let ok = false; try { f([1], 'nope') } catch (e) { ok = e instanceof TypeError }\n  assert(ok, 'must throw TypeError for a non-function callback')\n}",
+      "gap": "Add <code>if (typeof fn !== \"function\") throw new TypeError(...)</code> at the very top of each function."
+     }
+    ]
+   },
+   "solution": "function assertFn(fn) {\n  if (typeof fn !== 'function') throw new TypeError(String(fn) + ' is not a function');\n}\n\nfunction myMap(arr, fn, thisArg) {\n  assertFn(fn);\n  const out = new Array(arr.length);\n  for (let i = 0; i < arr.length; i++) {\n    if (i in arr) out[i] = fn.call(thisArg, arr[i], i, arr);\n  }\n  return out;\n}\n\nfunction myFilter(arr, fn, thisArg) {\n  assertFn(fn);\n  const out = [];\n  for (let i = 0; i < arr.length; i++) {\n    if (i in arr && fn.call(thisArg, arr[i], i, arr)) out.push(arr[i]);\n  }\n  return out;\n}\n\nfunction myReduce(arr, fn) {\n  assertFn(fn);\n  let i = 0;\n  let acc;\n  if (arguments.length >= 3) {\n    acc = arguments[2];\n  } else {\n    while (i < arr.length && !(i in arr)) i++;\n    if (i >= arr.length) throw new TypeError('Reduce of empty array with no initial value');\n    acc = arr[i++];\n  }\n  for (; i < arr.length; i++) {\n    if (i in arr) acc = fn(acc, arr[i], i, arr);\n  }\n  return acc;\n}",
+   "notes": [
+    "All three share one shape: validate the callback, loop by index, and call it with <code>(item, index, array)</code>.",
+    "<code>myMap</code> allocates the result with the input length, so holes stay holes.",
+    "<code>myFilter</code> pushes the original item, not the callback result.",
+    "<code>myReduce</code> reads <code>arguments.length</code> because \"no initial value\" is different from \"initial value is undefined\".",
+    "The <code>i in arr</code> check makes the functions skip holes in sparse arrays, like the built-ins."
+   ],
+   "next": [
+    "Add them as <code>Array.prototype.myMap</code> and so on, so that <code>this</code> is the array.",
+    "Write <code>myReduceRight</code> and <code>myFlatMap</code>.",
+    "Rebuild <code>myMap</code> and <code>myFilter</code> using only <code>myReduce</code>."
+   ]
+  },
+  {
+   "id": "bind",
+   "diff": "Easy",
+   "fn": "Function.prototype.myBind",
+   "signature": "fn.myBind(thisArg, ...partials)",
+   "learn": {
+    "what": [
+     "<code>bind</code> takes a function and gives you a <b>new function</b> with two things locked in: the value of <code>this</code>, and optionally the first few arguments. The original function is not called yet.",
+     "Locking <code>this</code> fixes the classic problem of a method losing its object when you pass it around as a callback. Locking arguments is called <b>partial application</b>: <code>add.bind(null, 1)</code> is a new function that already has <code>1</code> as its first argument.",
+     "There is one special rule. If you call a bound function with <code>new</code>, the locked <code>this</code> is ignored, and the new object is used instead.",
+     "Think of a phone with a speed-dial button. Pressing it always calls the same person (<code>this</code>), and you can also pre-type the first digits (partial arguments)."
+    ],
+    "how": {
+     "steps": [
+      "Remember the original function (<code>this</code> inside <code>myBind</code>), the locked <code>thisArg</code> and the partial arguments.",
+      "Return a new function. When it is called, join the partial arguments with the new arguments, partials first.",
+      "For a normal call, run the original with the locked <code>this</code> and the joined arguments.",
+      "For a call with <code>new</code>, ignore the locked <code>this</code>. Construct a new object from the original function with the joined arguments.",
+      "Return whatever the original returns."
+     ],
+     "diagram": "const b = add.myBind(ctx, 1, 2)\n\nb(3, 4)\n  args = [1, 2] + [3, 4] = [1, 2, 3, 4]\n  call:  add with this = ctx, args\n\nnew b(3, 4)\n  this is ignored\n  build a new object from add, args [1, 2, 3, 4]"
+    },
+    "where": [
+     [
+      "Event handlers",
+      "Pass <code>this.handleClick.bind(this)</code> in older class components so the method keeps its instance."
+     ],
+     [
+      "Partial application",
+      "Create <code>double = multiply.bind(null, 2)</code> from a general function."
+     ],
+     [
+      "Borrowing methods",
+      "Call a method of one object on another, with the right <code>this</code>."
+     ],
+     [
+      "Not a fit",
+      "Arrow functions ignore <code>bind</code> for <code>this</code>, because they use the <code>this</code> of the place where they were written."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function who() { return this.name }\nconst a = { name: \"A\" }\nconst b = { name: \"B\" }\nconsole.log(who.bind(a).bind(b)())</code></pre>",
+     "opts": [
+      "<code>\"B\"</code>",
+      "<code>undefined</code>",
+      "<code>\"A\"</code>",
+      "It throws a TypeError"
+     ],
+     "ans": 2,
+     "why": [
+      "The first <code>bind</code> locks <code>this</code> to <code>a</code>. The second <code>bind</code> wraps the already bound function, and its <code>this</code> is thrown away by the first one.",
+      "A bound function's <code>this</code> cannot be changed again, not even with <code>call</code> or <code>apply</code>."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function P() { this.k = 1 }\nconst B = P.bind({ k: 99 })\nconsole.log(new B().k)</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>99</code>",
+      "<code>undefined</code>",
+      "It throws, because a bound function cannot be used with <code>new</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "With <code>new</code>, the locked <code>this</code> (<code>{ k: 99 }</code>) is ignored. A brand new object is created and <code>P</code> sets <code>k</code> to 1 on it.",
+      "This is the behaviour your <code>myBind</code> has to copy. A version that always uses <code>apply(thisArg, ...)</code> would return the wrong object."
+     ]
+    },
+    {
+     "tag": "Spot the bug",
+     "q": "<pre><code>Function.prototype.myBind = function (ctx, ...partials) {\n  return function (...args) {\n    return this.apply(ctx, [...partials, ...args])\n  }\n}</code></pre>Why does <code>sayHi.myBind(user)()</code> fail?",
+     "opts": [
+      "Partials must come after the new arguments",
+      "<code>apply</code> cannot take an array",
+      "The spread syntax is not allowed here",
+      "Inside the inner function, <code>this</code> is not the original function. It is whatever the call site gives, so <code>this.apply</code> breaks"
+     ],
+     "ans": 3,
+     "why": [
+      "<code>this</code> inside <code>myBind</code> is the original function, but the inner regular function gets its <b>own</b> <code>this</code> when it is called. With a plain call, <code>this</code> is <code>undefined</code> or the global object.",
+      "Save the original in a variable, for example <code>const target = this</code>, and use <code>target</code> inside."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let n = 1\nfunction show(x) { return x }\nconst b = show.bind(null, n)\nn = 2\nconsole.log(b())</code></pre>",
+     "opts": [
+      "<code>2</code>",
+      "<code>1</code>",
+      "<code>undefined</code>",
+      "<code>NaN</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Partial arguments are evaluated and stored at the moment you call <code>bind</code>. The value <code>1</code> was copied, so changing <code>n</code> later does not matter.",
+      "If you bind an <b>object</b>, the reference is stored, so changes <i>inside</i> that object are visible later."
+     ]
+    }
+   ],
+   "pseudo": "myBind(thisArg, ...partials)\n  if the thing being bound is not a function, throw a TypeError\n  remember the original function\n  create a bound function that takes any new arguments\n    join the partial arguments with the new arguments, partials first\n    if it was called with \"new\"\n      create a new object from the original function with the joined arguments\n        (the locked \"this\" is ignored)\n      return that object\n    otherwise\n      call the original with the locked \"this\" and the joined arguments\n      return its result\n  return the bound function\n  // bonus: make sure new objects still pass \"instanceof original\"",
+   "watch": [
+    "Inside your returned function, how do you still reach the <b>original</b> function?",
+    "How can the bound function tell that it was called with <code>new</code>?",
+    "Do the partial arguments stay the same for every call of the bound function?"
+   ],
+   "build": {
+    "minutes": 15,
+    "problem": "Implement <b>Function.prototype.myBind(thisArg, ...partials)</b> without using the built-in <code>bind</code>.",
+    "reqs": [
+     "Return a new function that calls the original with <code>this</code> fixed to <code>thisArg</code>.",
+     "Support partial application: <code>f.myBind(ctx, a, b)(c, d)</code> calls <code>f</code> with <code>a, b, c, d</code>.",
+     "Do not call the original at bind time.",
+     "When the bound function is called with <code>new</code>, ignore the bound <code>this</code> and create an instance of the original.",
+     "Instances made with <code>new</code> must be <code>instanceof</code> the original function."
+    ],
+    "checks": [
+     {
+      "t": "this is fixed, even with call or a detached call",
+      "test": "function get() { return this.v }\nconst b = get.myBind({ v: 42 });\nconsole.log(b(), b.call({ v: 9 })); // expected: 42 42",
+      "verify": "function get() { return this.v } const b = get.myBind({ v: 42 });\nassert(b() === 42, 'bound this must be used'); assert(b.call({ v: 9 }) === 42, 'call must not override the bound this')",
+      "gap": "Always call the original with <code>target.apply(thisArg, args)</code>. Never use the <code>this</code> of the bound function for a normal call."
+     },
+     {
+      "t": "Partial arguments come first, then the new arguments",
+      "test": "function add(a, b, c, d) { return [a, b, c, d].join('-') }\nconsole.log(add.myBind(null, 1, 2)(3, 4)); // expected: 1-2-3-4",
+      "verify": "function add(a, b, c, d) { return [a, b, c, d].join('-') }\nassert(add.myBind(null, 1, 2)(3, 4) === '1-2-3-4', 'partials must be prepended')",
+      "gap": "Build the final list as <code>partials.concat(newArgs)</code> (or spread both) on every call."
+     },
+     {
+      "t": "Binding does not call the function",
+      "test": "let n = 0; function f() { n++ }\nf.myBind(null);\nconsole.log(n); // expected: 0",
+      "verify": "let n = 0; function f() { n++ } const b = f.myBind(null); assert(n === 0, 'bind must not call the function'); b(); assert(n === 1, 'calling the bound function runs it once')",
+      "gap": "Return a function. Do not call the original inside <code>myBind</code> itself."
+     },
+     {
+      "t": "The same bound function works for many calls",
+      "test": "function f(a, b) { return a + b }\nconst b = f.myBind(null, 1);\nconsole.log(b(2), b(3)); // expected: 3 4",
+      "verify": "function f(a, b) { return a + b } const b = f.myBind(null, 1);\nassert(b(2) === 3 && b(3) === 4, 'partials must stay the same for each call')",
+      "gap": "Do not change the <code>partials</code> array (for example with <code>push</code>). Create a new joined array for each call."
+     },
+     {
+      "t": "With new, the bound this is ignored",
+      "test": "function P(x, y) { this.x = x; this.y = y }\nconst B = P.myBind({ ignored: true }, 1);\nconst p = new B(2);\nconsole.log(p.x, p.y, p.ignored, p instanceof P); // expected: 1 2 undefined true",
+      "verify": "function P(x, y) { this.x = x; this.y = y } const B = P.myBind({ ignored: true }, 1); const p = new B(2);\nassert(p.x === 1 && p.y === 2, 'new must use partial and new arguments'); assert(p.ignored === undefined, 'bound this must be ignored with new'); assert(p instanceof P, 'instance must be instanceof the original')",
+      "gap": "Detect <code>new</code> with <code>new.target</code>. In that case build the object with <code>Reflect.construct(target, args)</code> and do not use <code>thisArg</code>."
+     },
+     {
+      "t": "Instances can use methods from the original prototype",
+      "test": "function P(x) { this.x = x }\nP.prototype.double = function () { return this.x * 2 };\nconst B = P.myBind(null);\nconsole.log(new B(4).double()); // expected: 8",
+      "verify": "function P(x) { this.x = x } P.prototype.double = function () { return this.x * 2 };\nconst B = P.myBind(null); assert(new B(4).double() === 8, 'instances must inherit from the original prototype')",
+      "gap": "Create the instance from the <b>original</b> function (<code>Reflect.construct(target, args)</code>), so it gets the original <code>prototype</code>."
+     },
+     {
+      "t": "Calling myBind on a non-function throws a TypeError",
+      "test": "try { Function.prototype.myBind.call({}) } catch (e) { console.log(e instanceof TypeError) }\n// expected: true",
+      "verify": "let ok = false; try { Function.prototype.myBind.call({}) } catch (e) { ok = e instanceof TypeError } assert(ok, 'must throw TypeError')",
+      "gap": "At the start, check <code>typeof this !== \"function\"</code> and throw a <code>TypeError</code>."
+     }
+    ]
+   },
+   "solution": "Function.prototype.myBind = function (thisArg, ...partials) {\n  if (typeof this !== 'function') {\n    throw new TypeError('Bind must be called on a function');\n  }\n  const target = this;\n  function bound(...args) {\n    const allArgs = partials.concat(args);\n    if (new.target) {\n      return Reflect.construct(target, allArgs);\n    }\n    return target.apply(thisArg, allArgs);\n  }\n  return bound;\n};",
+   "notes": [
+    "Save <code>this</code> in <code>target</code> first. Inside the returned function <code>this</code> means something else.",
+    "The new arguments go <b>after</b> the partials, and a fresh joined array is created on every call.",
+    "<code>new.target</code> is only defined when the function was called with <code>new</code>. That is the clean way to detect construction.",
+    "<code>Reflect.construct(target, args)</code> builds the object from the original function, so <code>instanceof</code> and prototype methods work.",
+    "The real <code>bind</code> also sets the name (<code>\"bound f\"</code>) and length of the new function. That is a good extension."
+   ],
+   "next": [
+    "Set <code>bound.name</code> to <code>\"bound \" + target.name</code> and subtract the partial count from <code>length</code>.",
+    "Implement <code>Function.prototype.myCall</code> and <code>myApply</code> without using <code>call</code> or <code>apply</code> (hint: a temporary property on an object).",
+    "Write <code>partial(fn, ...args)</code> that locks arguments but leaves <code>this</code> alone."
+   ]
+  }
+ ]
+}

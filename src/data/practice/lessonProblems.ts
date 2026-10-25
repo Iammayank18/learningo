@@ -1,0 +1,102 @@
+/**
+ * Hand-picked problems shown at the end of each DSA lesson: 1 to 2, easier one first.
+ * Values are LeetCode slugs from catalog.json (or from the app's own problems).
+ * Lessons that are not listed here (or listed with []) show no problem.
+ */
+export const LESSON_PROBLEMS: Record<string, string[]> = {
+  // Foundations
+  'big-o': ['missing-number', 'squares-of-a-sorted-array'],
+  'space-complexity': ['reverse-string', 'remove-duplicates-from-sorted-array'],
+  '5-step': ['fizz-buzz', 'longest-common-prefix'],
+  'arrays': ['move-zeroes', 'best-time-to-buy-and-sell-stock'],
+  'objects-map-set': ['contains-duplicate', 'jewels-and-stones'],
+  'recursion': ['fibonacci-number', 'power-of-two'],
+  'fibonacci': ['n-th-tribonacci-number', 'pascals-triangle'],
+  // Arrays, Strings & Hashing
+  'arrays-2': ['plus-one', 'product-of-array-except-self'],
+  'strings': ['valid-anagram', 'first-unique-character-in-a-string'],
+  'static-dynamic-arrays': ['remove-element', 'shuffle-the-array'],
+  'hashmaps': ['two-sum', 'group-anagrams'],
+  'frequency-counting': ['ransom-note', 'valid-anagram'],
+  'hashset': ['intersection-of-two-arrays', 'longest-consecutive-sequence'],
+  'prefix-sum': ['range-sum-query-immutable', 'subarray-sum-equals-k'],
+  'kadanes': ['maximum-subarray', 'maximum-product-subarray'],
+  'matrix-2d': ['rotate-image', 'spiral-matrix'],
+  'hash-impl': ['design-hashset', 'design-hashmap'],
+  'boyer-moore': ['majority-element', 'majority-element-ii'],
+  'string-matching': ['find-the-index-of-the-first-occurrence-in-a-string', 'repeated-dna-sequences'],
+  // Two pointers & sliding window
+  'two-pointers': ['valid-palindrome', 'two-sum-ii-input-array-is-sorted'],
+  'sliding-window': ['maximum-average-subarray-i', 'longest-substring-without-repeating-characters'],
+  // Stack, queue, linked lists
+  'stacks': ['valid-parentheses', 'min-stack'],
+  'queue': ['time-needed-to-buy-tickets', 'number-of-students-unable-to-eat-lunch'],
+  'deque': ['design-circular-queue'],
+  'linked-lists': ['reverse-linked-list', 'merge-two-sorted-lists'],
+  'fast-slow-pointers': ['middle-of-the-linked-list', 'linked-list-cycle'],
+  'monotonic-stack': ['next-greater-element-i', 'daily-temperatures'],
+  'doubly-linked-lists': ['lru-cache'],
+  'monotonic-stack-2': ['largest-rectangle-in-histogram', 'trapping-rain-water'],
+  // Binary search & sorting
+  'linear-search': ['find-pivot-index', 'find-all-numbers-disappeared-in-an-array'],
+  'binary-search': ['binary-search', 'search-insert-position'],
+  'search-range': ['first-bad-version', 'search-in-rotated-sorted-array'],
+  'binary-search-2': ['koko-eating-bananas', 'split-array-largest-sum'],
+  'insertion-sort': ['array-partition-i'],
+  'merge-sort': ['merge-sorted-array', 'sort-list'],
+  'partition-algos': ['sort-array-by-parity', 'largest-number'],
+  'dutch-national-flag': ['sort-colors'],
+  'quick-select': ['kth-largest-element-in-an-array'],
+  'bucket-sort': ['top-k-frequent-elements'],
+  // Trees
+  'binary-tree': ['invert-binary-tree', 'same-tree'],
+  'dfs': ['binary-tree-inorder-traversal', 'path-sum'],
+  'bfs': ['binary-tree-level-order-traversal', 'binary-tree-right-side-view'],
+  'tree-measurements': ['maximum-depth-of-binary-tree', 'diameter-of-binary-tree'],
+  'bst': ['validate-binary-search-tree', 'lowest-common-ancestor-of-a-binary-search-tree'],
+  'construct-tree': ['convert-sorted-array-to-binary-search-tree', 'construct-binary-tree-from-preorder-and-inorder-traversal'],
+  'dfs-iterative': ['binary-tree-paths'],
+  'balanced-bst': ['balanced-binary-tree'],
+  // Heap
+  'heap': ['kth-largest-element-in-a-stream', 'last-stone-weight'],
+  'top-k': ['top-k-frequent-elements', 'k-closest-points-to-origin'],
+  'heap-variations': ['merge-k-sorted-lists', 'task-scheduler'],
+  'two-heaps': ['find-median-from-data-stream'],
+  // Intervals, greedy, backtracking
+  'intervals': ['merge-intervals', 'insert-interval'],
+  'greedy': ['assign-cookies', 'jump-game'],
+  'backtracking': ['subsets', 'permutations'],
+  // Graphs
+  'graph-repr': ['find-the-town-judge', 'find-if-path-exists-in-graph'],
+  'bfs-graphs': ['rotting-oranges', 'walls-and-gates'],
+  'dfs-graphs': ['flood-fill', 'number-of-islands'],
+  'grid-problems': ['max-area-of-island', 'surrounded-regions'],
+  'cycle-detection': ['graph-valid-tree', 'find-eventual-safe-states'],
+  'topological-sort': ['course-schedule', 'course-schedule-ii'],
+  'union-find': ['number-of-provinces', 'accounts-merge'],
+  'dijkstra': ['network-delay-time', 'path-with-minimum-effort'],
+  'mst': ['min-cost-to-connect-all-points', 'connecting-cities-with-minimum-cost'],
+  'bellman-ford': ['cheapest-flights-within-k-stops'],
+  'floyd-warshall': ['find-the-city-with-the-smallest-number-of-neighbors-at-a-threshold-distance'],
+  'euler-path': ['reconstruct-itinerary'],
+  // Dynamic programming
+  'memo-vs-tab': ['climbing-stairs', 'unique-paths'],
+  'identify-dp': ['decode-ways', 'word-break'],
+  'dp-1d': ['min-cost-climbing-stairs', 'house-robber'],
+  'dp-2d-grid': ['minimum-path-sum', 'triangle'],
+  'dp-2d-seq': ['is-subsequence', 'longest-common-subsequence'],
+  'dp-unbounded': ['coin-change', 'perfect-squares'],
+  'knapsack': ['partition-equal-subset-sum', 'target-sum'],
+  'dp-state-machine': ['best-time-to-buy-and-sell-stock-ii', 'best-time-to-buy-and-sell-stock-with-cooldown'],
+  'dp-interval': ['longest-palindromic-substring', 'longest-palindromic-subsequence'],
+  'dp-bitmask': ['partition-to-k-equal-sum-subsets', 'can-i-win'],
+  'dp-digit': ['count-numbers-with-unique-digits', 'numbers-at-most-n-given-digit-set'],
+  // Tries & bits
+  'trie-structure': ['implement-trie-prefix-tree', 'longest-word-in-dictionary'],
+  'trie-ops': ['design-add-and-search-words-data-structure', 'search-suggestions-system'],
+  'xor': ['single-number', 'xor-queries-of-a-subarray'],
+  'bit-shifts': ['reverse-bits', 'counting-bits'],
+  'n-minus-1': ['power-of-two', 'number-of-1-bits'],
+  // Interview prep
+  'timed-mocks': ['word-search', 'longest-consecutive-sequence'],
+}

@@ -1,0 +1,1747 @@
+{
+ "course": "js-mastery",
+ "items": [
+  {
+   "id": "scope",
+   "prereqs": [
+    "variables"
+   ],
+   "dryRun": {
+    "title": "Where is x looked up? (scope chain)",
+    "columns": [
+     "code running in",
+     "looks in",
+     "finds"
+    ],
+    "rows": [
+     [
+      "inner()",
+      "inner's own scope",
+      "nothing"
+     ],
+     [
+      "inner()",
+      "outer's scope (where inner was WRITTEN)",
+      "x = \"outer\""
+     ],
+     [
+      "outer()",
+      "global",
+      "x = \"global\" (not reached)"
+     ],
+     [
+      "a function defined in global but called inside outer",
+      "its own, then global",
+      "x = \"global\""
+     ]
+    ],
+    "hit": 1,
+    "note": "Scope is <b>lexical</b>: a function looks up names where it was <b>written</b>, not where it is called. Each { } block (with let/const) and each function makes a new scope."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const x = 'global'\nfunction show() { return x }\nfunction run() { const x = 'local'; return show() }\nconsole.log(run())</code></pre>",
+     "opts": [
+      "<code>local</code>",
+      "<code>undefined</code>",
+      "<code>global</code>",
+      "<code>ReferenceError</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "<code>show</code> was written at the top level, so it sees the global <code>x</code>. Where it is called does not matter."
+     ],
+     "exec": "const x = 'global'\nfunction show() { return x }\nfunction run() { const x = 'local'; return show() }\nconsole.log(run())"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let n = 1\n{ let n = 2; { n = 3 } }\nconsole.log(n)</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>3</code>",
+      "<code>2</code>",
+      "<code>undefined</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "The inner <code>n = 3</code> assigns to the nearest <code>n</code>, the block one. The outer <code>n</code> is untouched."
+     ],
+     "exec": "let n = 1\n{ let n = 2; { n = 3 } }\nconsole.log(n)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function f() { y = 5 }\nf()\nconsole.log(typeof y)</code></pre>",
+     "opts": [
+      "<code>undefined</code>",
+      "<code>ReferenceError</code>",
+      "<code>object</code>",
+      "<code>number</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Assigning to an undeclared name in sloppy mode creates a <b>global</b> variable. In strict mode (and in modules) it throws instead."
+     ],
+     "exec": "function f() { y = 5 }\nf()\nconsole.log(typeof y)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const items = [1, 2]\nfor (const i of items) { const sq = i * i }\nconsole.log(typeof sq, typeof i)</code></pre>",
+     "opts": [
+      "<code>number number</code>",
+      "<code>undefined undefined</code>",
+      "<code>number undefined</code>",
+      "<code>ReferenceError</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Both <code>sq</code> and <code>i</code> live only inside the loop body block."
+     ],
+     "exec": "const items = [1, 2]\nfor (const i of items) { const sq = i * i }\nconsole.log(typeof sq, typeof i)"
+    },
+    {
+     "tag": "Why it matters",
+     "q": "Why is lexical scope what makes closures possible?",
+     "opts": [
+      "Because every variable is global",
+      "A function keeps access to the variables of the place it was written, even after that place has finished running",
+      "Because functions copy all variables when called",
+      "Because let is hoisted"
+     ],
+     "ans": 1,
+     "why": [
+      "The next lessons rely on this: the scope chain is fixed at write time."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>makeIdGenerator(prefix)</code> that returns a function giving <code>prefix-1</code>, <code>prefix-2</code>… Each generator has its own count, and nothing leaks into the global scope.",
+    "examples": [
+     "const a = makeIdGenerator(\"u\"); a(); a()  // \"u-1\", \"u-2\"",
+     "makeIdGenerator(\"x\")()  // \"x-1\" (separate count)"
+    ],
+    "hint": "Keep the counter in a <code>let</code> inside <code>makeIdGenerator</code>.",
+    "fn": "makeIdGenerator",
+    "starter": "function makeIdGenerator(prefix) {\n  // your code\n}",
+    "solution": "function makeIdGenerator(prefix) {\n  let n = 0\n  return () => `${prefix}-${++n}`\n}",
+    "checks": [
+     {
+      "t": "counts up",
+      "verify": "const a = makeIdGenerator(\"u\"); assert(a() === \"u-1\" && a() === \"u-2\", \"sequence\")"
+     },
+     {
+      "t": "each generator has its own counter",
+      "verify": "const a = makeIdGenerator(\"a\"), b = makeIdGenerator(\"b\"); a(); a(); assert(b() === \"b-1\", \"separate\")"
+     },
+     {
+      "t": "no global variable is created",
+      "verify": "const before = Object.keys(globalThis).length; makeIdGenerator(\"z\")(); assert(Object.keys(globalThis).length === before, \"leaked a global\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Scope is decided where code is <b>written</b>. Lookups walk outwards: block → function → … → global.",
+    "mistakes": [
+     "Assigning to an undeclared name and creating a global by accident.",
+     "Thinking a function sees the variables of its <i>caller</i>."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Counter",
+     "diff": "easy",
+     "lc": "counter"
+    }
+   ]
+  },
+  {
+   "id": "hoisting",
+   "prereqs": [
+    "scope"
+   ],
+   "dryRun": {
+    "title": "What exists before the first line runs",
+    "columns": [
+     "declaration",
+     "hoisted?",
+     "value before its line"
+    ],
+    "rows": [
+     [
+      "function f() {}",
+      "yes, whole function",
+      "callable"
+     ],
+     [
+      "var a = 1",
+      "name only",
+      "undefined"
+     ],
+     [
+      "let b = 1",
+      "name only, in TDZ",
+      "ReferenceError"
+     ],
+     [
+      "const c = 1",
+      "name only, in TDZ",
+      "ReferenceError"
+     ],
+     [
+      "const g = () => {}",
+      "like const",
+      "ReferenceError"
+     ],
+     [
+      "class K {}",
+      "in TDZ",
+      "ReferenceError"
+     ]
+    ],
+    "hit": 2,
+    "note": "Before running a scope, JavaScript registers every declaration in it. Function declarations are ready to call; <code>var</code> starts as undefined; <code>let</code>, <code>const</code> and <code>class</code> exist but are in the <b>temporal dead zone</b> until their line runs."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log(typeof hi, typeof bye)\nfunction hi() {}\nvar bye = function () {}</code></pre>",
+     "opts": [
+      "<code>function function</code>",
+      "<code>undefined undefined</code>",
+      "<code>function ReferenceError</code>",
+      "<code>function undefined</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "The function declaration is hoisted whole. <code>bye</code> is a <code>var</code>: its name exists but its value is still undefined."
+     ],
+     "exec": "console.log(typeof hi, typeof bye)\nfunction hi() {}\nvar bye = function () {}"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>try { console.log(x) } catch (e) { console.log(e.constructor.name) }\nlet x = 1</code></pre>",
+     "opts": [
+      "<code>ReferenceError</code>",
+      "<code>undefined</code>",
+      "<code>1</code>",
+      "<code>SyntaxError</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "<code>x</code> is in the temporal dead zone until its <code>let</code> line runs, so reading it throws a ReferenceError."
+     ],
+     "exec": "try { console.log(x) } catch (e) { console.log(e.constructor.name) }\nlet x = 1"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>var v = 'outer'\nfunction f() { console.log(v); var v = 'inner' }\nf()</code></pre>",
+     "opts": [
+      "<code>outer</code>",
+      "<code>inner</code>",
+      "<code>undefined</code>",
+      "<code>ReferenceError</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Inside <code>f</code>, the local <code>var v</code> is hoisted to the top of <code>f</code>, shadowing the outer one, and is undefined at the log."
+     ],
+     "exec": "var v = 'outer'\nfunction f() { console.log(v); var v = 'inner' }\nf()"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let t = 'outer'\nfunction g() { try { return t } finally {} ; let t = 'inner' }\ntry { g() } catch (e) { console.log(e.name) }</code></pre>",
+     "opts": [
+      "<code>outer</code>",
+      "<code>undefined</code>",
+      "<code>inner</code>",
+      "<code>ReferenceError</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "The local <code>let t</code> exists for the whole function body but is in the TDZ before its line. It shadows the outer <code>t</code>, so reading it throws."
+     ],
+     "exec": "let t = 'outer'\nfunction g() { try { return t } finally {} ; let t = 'inner' }\ntry { g() } catch (e) { console.log(e.name) }"
+    },
+    {
+     "tag": "Why TDZ?",
+     "q": "Why did let/const get a temporal dead zone instead of starting as undefined like var?",
+     "opts": [
+      "To make code faster",
+      "So reading a variable before it is set is a loud error instead of a silent undefined",
+      "Because const has no value yet",
+      "For compatibility with var"
+     ],
+     "ans": 1,
+     "why": [
+      "A silent undefined hides bugs. The TDZ turns them into a clear ReferenceError."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>whatHappens(code)</code>: run a snippet with <code>new Function(code)</code> and return <code>\"ok\"</code>, or the error name (e.g. <code>\"ReferenceError\"</code>) if it throws. Then use it to confirm the TDZ cases.",
+    "examples": [
+     "whatHappens(\"let a = 1; return a\")  // \"ok\"",
+     "whatHappens(\"return b; let b = 1\")  // \"ReferenceError\""
+    ],
+    "hint": "Wrap the call in try/catch and return <code>e.name</code>.",
+    "fn": "whatHappens",
+    "starter": "function whatHappens(code) {\n  // your code\n}",
+    "solution": "function whatHappens(code) {\n  try { new Function(code)(); return 'ok' } catch (e) { return e.name }\n}",
+    "checks": [
+     {
+      "t": "normal code is ok",
+      "verify": "assert(whatHappens(\"let a = 1; return a\") === \"ok\", \"ok\")"
+     },
+     {
+      "t": "reading let/const before the line is a ReferenceError",
+      "verify": "assert(whatHappens(\"return b; let b = 1\") === \"ReferenceError\" && whatHappens(\"c; const c = 1\") === \"ReferenceError\", \"TDZ\")"
+     },
+     {
+      "t": "var and function declarations do not throw",
+      "verify": "assert(whatHappens(\"v; var v = 1\") === \"ok\" && whatHappens(\"f(); function f() {}\") === \"ok\", \"hoisted\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Function declarations are fully hoisted, <code>var</code> starts as undefined, <code>let/const/class</code> are in the TDZ until their line.",
+    "mistakes": [
+     "Calling a function expression or arrow before its line.",
+     "A local declaration later in a function shadowing an outer name for the <i>whole</i> function."
+    ]
+   }
+  },
+  {
+   "id": "execution-context",
+   "prereqs": [
+    "hoisting"
+   ],
+   "dryRun": {
+    "title": "Call stack for: main() → a() → b()",
+    "columns": [
+     "step",
+     "stack (top last)",
+     "what happens"
+    ],
+    "rows": [
+     [
+      "1",
+      "global",
+      "script starts: global context created"
+     ],
+     [
+      "2",
+      "global, main",
+      "main called: new context pushed"
+     ],
+     [
+      "3",
+      "global, main, a",
+      "a called"
+     ],
+     [
+      "4",
+      "global, main, a, b",
+      "b runs and returns"
+     ],
+     [
+      "5",
+      "global, main, a",
+      "b popped"
+     ],
+     [
+      "6",
+      "global",
+      "a and main finished"
+     ]
+    ],
+    "hit": 3,
+    "note": "Every call creates an <b>execution context</b> (its variables, its <code>this</code>, a link to the outer scope) and pushes it on the <b>call stack</b>. Returning pops it. JavaScript runs one context at a time."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function a() { console.log('a start'); b(); console.log('a end') }\nfunction b() { console.log('b') }\na()</code></pre>",
+     "opts": [
+      "<code>a start a end b</code>",
+      "<code>b a start a end</code>",
+      "<code>a start b a end</code>",
+      "<code>a start b</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "b runs completely, in the middle of a, then control returns to a."
+     ],
+     "exec": "function a() { console.log('a start'); b(); console.log('a end') }\nfunction b() { console.log('b') }\na()"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function depth(n) { try { return depth(n + 1) } catch { return n &gt; 1000 } }\nconsole.log(depth(0))</code></pre>",
+     "opts": [
+      "<code>true</code>",
+      "<code>false</code>",
+      "<code>undefined</code>",
+      "<code>RangeError</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Infinite recursion keeps pushing contexts until the stack overflows (RangeError). It is caught at the deepest level, where <code>n</code> is far above 1000."
+     ],
+     "exec": "function depth(n) { try { return depth(n + 1) } catch { return n > 1000 } }\nconsole.log(depth(0))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function outer() { const x = 1; return function inner() { return x } }\nconst fn = outer()\nconsole.log(fn())</code></pre>",
+     "opts": [
+      "<code>undefined</code>",
+      "<code>ReferenceError</code>",
+      "<code>1</code>",
+      "<code>null</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "outer's context was popped, but inner still holds a link to outer's variables. That link is a closure (next lesson)."
+     ],
+     "exec": "function outer() { const x = 1; return function inner() { return x } }\nconst fn = outer()\nconsole.log(fn())"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log(1)\nsetTimeout(() =&gt; console.log(2), 0)\nconsole.log(3)</code></pre>",
+     "opts": [
+      "<code>1 3 2</code>",
+      "<code>1 2 3</code>",
+      "<code>2 1 3</code>",
+      "<code>3 1 2</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "The timeout callback can only run when the stack is empty, after the whole script finishes. (The event loop lesson covers this.)"
+     ],
+     "exec": "console.log(1)\nsetTimeout(() => console.log(2), 0)\nconsole.log(3)"
+    },
+    {
+     "tag": "Read the error",
+     "q": "A stack trace shows the same function 10,000 times and \"Maximum call stack size exceeded\". Most likely cause?",
+     "opts": [
+      "A memory leak in a Map",
+      "An infinite while loop",
+      "A slow network request",
+      "Recursion with a missing or wrong base case"
+     ],
+     "ans": 3,
+     "why": [
+      "A while loop freezes the page but does not grow the stack. Only unbounded nested calls overflow it."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>sumTo(n)</code> that adds 1..n <b>without recursion</b>, so <code>sumTo(1e6)</code> does not blow the stack, and <code>sumToRec(n)</code> recursively. Compare them on a large n.",
+    "examples": [
+     "sumTo(4)  // 10",
+     "sumTo(1e6)  // 500000500000"
+    ],
+    "hint": "A loop uses one context. The recursive version adds one context per call.",
+    "fn": "sumTo",
+    "starter": "function sumTo(n) {\n  // your code\n}\nfunction sumToRec(n) {\n  // your code\n}",
+    "solution": "function sumTo(n) {\n  let s = 0\n  for (let i = 1; i <= n; i++) s += i\n  return s\n}\nfunction sumToRec(n) {\n  return n <= 0 ? 0 : n + sumToRec(n - 1)\n}",
+    "checks": [
+     {
+      "t": "small values",
+      "verify": "assert(sumTo(4) === 10 && sumToRec(4) === 10, \"small\")"
+     },
+     {
+      "t": "the loop version handles a million",
+      "verify": "assert(sumTo(1e6) === 500000500000, \"big\")"
+     },
+     {
+      "t": "the recursive version overflows on a million",
+      "verify": "let threw = false; try { sumToRec(1e6) } catch (e) { threw = e instanceof RangeError }; assert(threw, \"expected a RangeError\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Each call pushes an execution context on the call stack; return pops it. One thing runs at a time.",
+    "mistakes": [
+     "Unbounded recursion: \"Maximum call stack size exceeded\".",
+     "Thinking a setTimeout(…, 0) callback runs before the current code finishes."
+    ]
+   }
+  },
+  {
+   "id": "closures",
+   "prereqs": [
+    "execution-context"
+   ],
+   "dryRun": {
+    "title": "const c = makeCounter(); c(); c()",
+    "columns": [
+     "call",
+     "count (kept in closure)",
+     "returns"
+    ],
+    "rows": [
+     [
+      "makeCounter()",
+      "0 (created)",
+      "a function"
+     ],
+     [
+      "c()",
+      "1",
+      "1"
+     ],
+     [
+      "c()",
+      "2",
+      "2"
+     ],
+     [
+      "makeCounter() again",
+      "new count = 0",
+      "a NEW, separate function"
+     ]
+    ],
+    "hit": 2,
+    "note": "A <b>closure</b> is a function plus the variables of the scope it was created in. They stay alive as long as the function does. Every call of the outer function creates a fresh set."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function makeCounter() { let c = 0; return () =&gt; ++c }\nconst a = makeCounter(), b = makeCounter()\na(); a()\nconsole.log(a(), b())</code></pre>",
+     "opts": [
+      "<code>3 3</code>",
+      "<code>3 1</code>",
+      "<code>1 1</code>",
+      "<code>3 0</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "<code>a</code> and <code>b</code> each have their own <code>c</code>."
+     ],
+     "exec": "function makeCounter() { let c = 0; return () => ++c }\nconst a = makeCounter(), b = makeCounter()\na(); a()\nconsole.log(a(), b())"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const fns = []\nfor (var i = 0; i &lt; 3; i++) fns.push(() =&gt; i)\nconsole.log(fns.map((f) =&gt; f()).join(''))</code></pre>",
+     "opts": [
+      "<code>012</code>",
+      "<code>333</code>",
+      "<code>000</code>",
+      "<code>undefined</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "All three closures share the same <code>var i</code>, which is 3 after the loop."
+     ],
+     "exec": "const fns = []\nfor (var i = 0; i < 3; i++) fns.push(() => i)\nconsole.log(fns.map((f) => f()).join(''))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function once(fn) { let done = false, r; return (...a) =&gt; done ? r : (done = true, r = fn(...a)) }\nconst init = once((x) =&gt; x * 2)\nconsole.log(init(5), init(100))</code></pre>",
+     "opts": [
+      "<code>10 200</code>",
+      "<code>undefined 200</code>",
+      "<code>10 undefined</code>",
+      "<code>10 10</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "The closure remembers <code>done</code> and the first result, so later calls return 10 again."
+     ],
+     "exec": "function once(fn) { let done = false, r; return (...a) => done ? r : (done = true, r = fn(...a)) }\nconst init = once((x) => x * 2)\nconsole.log(init(5), init(100))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let x = 1\nconst f = () =&gt; x\nx = 2\nconsole.log(f())</code></pre>",
+     "opts": [
+      "<code>2</code>",
+      "<code>1</code>",
+      "<code>undefined</code>",
+      "<code>ReferenceError</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "A closure keeps a <b>live link</b> to the variable, not a copy of its value at creation time."
+     ],
+     "exec": "let x = 1\nconst f = () => x\nx = 2\nconsole.log(f())"
+    },
+    {
+     "tag": "Memory",
+     "q": "A closure holds a reference to a 50 MB array it never uses again. What happens?",
+     "opts": [
+      "It is freed when the outer function returns",
+      "JavaScript copies only what is used, always",
+      "The array cannot be garbage collected while the closure is reachable",
+      "It is freed after 1 minute"
+     ],
+     "ans": 2,
+     "why": [
+      "Keep long-lived closures (event handlers, timers, caches) from capturing big data they do not need."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>createBank(initial)</code> returning <code>{ deposit(n), withdraw(n), balance() }</code>. The balance must be private (no property to change it), and withdraw must throw if there is not enough money.",
+    "examples": [
+     "const acc = createBank(100); acc.deposit(50); acc.balance()  // 150",
+     "acc.withdraw(500)  // throws"
+    ],
+    "hint": "Keep <code>let balance</code> inside createBank; the three methods close over it.",
+    "fn": "createBank",
+    "starter": "function createBank(initial) {\n  // your code\n}",
+    "solution": "function createBank(initial) {\n  let balance = initial\n  return {\n    deposit(n) { balance += n; return balance },\n    withdraw(n) { if (n > balance) throw new Error('insufficient funds'); balance -= n; return balance },\n    balance() { return balance },\n  }\n}",
+    "checks": [
+     {
+      "t": "deposit and withdraw change the balance",
+      "verify": "const a = createBank(100); a.deposit(50); a.withdraw(30); assert(a.balance() === 120, \"balance\")"
+     },
+     {
+      "t": "withdrawing too much throws",
+      "verify": "const a = createBank(10); let t = false; try { a.withdraw(11) } catch { t = true }; assert(t && a.balance() === 10, \"must throw and keep balance\")"
+     },
+     {
+      "t": "the balance is private",
+      "verify": "const a = createBank(5); a.balance = () => 1e9; const b = createBank(5); assert(b.balance() === 5 && Object.keys(createBank(1)).every((k) => typeof createBank(1)[k] === \"function\"), \"no data fields\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "A closure is a function that remembers its birth scope. Use it for private state; remember it also keeps that state alive.",
+    "mistakes": [
+     "<code>var</code> in loops with callbacks.",
+     "Accidentally capturing large objects in long-lived handlers.",
+     "Expecting a closure to hold a snapshot value instead of a live variable."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Counter II",
+     "diff": "easy",
+     "lc": "counter-ii"
+    },
+    {
+     "name": "once(fn)",
+     "diff": "easy",
+     "mc": "once"
+    }
+   ]
+  },
+  {
+   "id": "iife",
+   "prereqs": [
+    "closures"
+   ],
+   "dryRun": {
+    "title": "(function () { const secret = 1 })()",
+    "columns": [
+     "part",
+     "what it does",
+     "result"
+    ],
+    "rows": [
+     [
+      "( function () {...} )",
+      "turns the function into an expression",
+      "a function value"
+     ],
+     [
+      "()",
+      "calls it immediately",
+      "runs once"
+     ],
+     [
+      "const secret inside",
+      "private to that run",
+      "not visible outside"
+     ],
+     [
+      "return value",
+      "handed to the caller",
+      "often an object of methods"
+     ]
+    ],
+    "hit": 1,
+    "note": "An IIFE creates a private scope and runs once. Before ES modules and let/const, it was the standard way to avoid globals; today you still meet it in older code and for one-off setup."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const counter = (() =&gt; { let n = 0; return { inc: () =&gt; ++n } })()\ncounter.inc(); counter.inc()\nconsole.log(counter.inc(), typeof n)</code></pre>",
+     "opts": [
+      "<code>1 number</code>",
+      "<code>3 number</code>",
+      "<code>2 undefined</code>",
+      "<code>3 undefined</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "The IIFE ran once and returned an object whose method closes over <code>n</code>. <code>n</code> itself is not visible outside."
+     ],
+     "exec": "const counter = (() => { let n = 0; return { inc: () => ++n } })()\ncounter.inc(); counter.inc()\nconsole.log(counter.inc(), typeof n)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>var result = (function (a, b) { return a + b })(2, 3)\nconsole.log(result)</code></pre>",
+     "opts": [
+      "<code>undefined</code>",
+      "<code>5</code>",
+      "<code>23</code>",
+      "<code>function</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "The IIFE is called with 2 and 3 immediately, so result holds 5, not a function."
+     ],
+     "exec": "var result = (function (a, b) { return a + b })(2, 3)\nconsole.log(result)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const x = 'outer';\n(function () { const x = 'inner' })()\nconsole.log(x)</code></pre>",
+     "opts": [
+      "<code>inner</code>",
+      "<code>undefined</code>",
+      "<code>outer</code>",
+      "<code>ReferenceError</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "The inner <code>x</code> lives only in the IIFE's own scope."
+     ],
+     "exec": "const x = 'outer';\n(function () { const x = 'inner' })()\nconsole.log(x)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const r = (async () =&gt; 42)()\nconsole.log(r instanceof Promise)</code></pre>",
+     "opts": [
+      "<code>true</code>",
+      "<code>false</code>",
+      "<code>42</code>",
+      "<code>undefined</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "An async IIFE returns a Promise. It is a common way to use await in a script without top-level await."
+     ],
+     "exec": "const r = (async () => 42)()\nconsole.log(r instanceof Promise)"
+    },
+    {
+     "tag": "Syntax",
+     "q": "Why are the wrapping parentheses needed in <code>(function () {})()</code>?",
+     "opts": [
+      "To make it async",
+      "To make it faster",
+      "Without them, a line starting with function is a declaration, which cannot be called in place",
+      "They are optional style"
+     ],
+     "ans": 2,
+     "why": [
+      "The parentheses make the parser read it as an expression."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>makeConfig</code> as an IIFE (the variable holds the result, not a function) that exposes <code>get(key)</code> and <code>set(key, value)</code> over a private object. <code>set</code> must reject unknown keys; the known keys are <code>theme</code> (\"light\") and <code>lang</code> (\"en\").",
+    "examples": [
+     "makeConfig.get(\"theme\")  // \"light\"",
+     "makeConfig.set(\"color\", 1)  // throws"
+    ],
+    "hint": "const makeConfig = (() =&gt; { const data = {...}; return { get, set } })()",
+    "fn": "makeConfig.get",
+    "starter": "const makeConfig = undefined // replace with an IIFE",
+    "solution": "const makeConfig = (() => {\n  const data = { theme: 'light', lang: 'en' }\n  return {\n    get: (k) => data[k],\n    set(k, v) { if (!Object.hasOwn(data, k)) throw new Error('unknown key ' + k); data[k] = v },\n  }\n})()",
+    "checks": [
+     {
+      "t": "defaults are readable",
+      "verify": "assert(makeConfig.get(\"theme\") === \"light\" && makeConfig.get(\"lang\") === \"en\", \"defaults\")"
+     },
+     {
+      "t": "set changes a known key",
+      "verify": "makeConfig.set(\"lang\", \"hi\"); assert(makeConfig.get(\"lang\") === \"hi\", \"set\")"
+     },
+     {
+      "t": "unknown keys are rejected and data is private",
+      "verify": "let t = false; try { makeConfig.set(\"color\", 1) } catch { t = true }; assert(t && !(\"data\" in makeConfig), \"private\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "An IIFE runs once and gives you a private scope. Modules replaced most uses, but the pattern (and async IIFEs) still appear.",
+    "mistakes": [
+     "Forgetting the semicolon before a line that starts with <code>(</code>.",
+     "Assigning the function instead of calling it."
+    ]
+   }
+  },
+  {
+   "id": "arrow-fn",
+   "prereqs": [
+    "iife"
+   ],
+   "dryRun": {
+    "title": "Arrow vs normal function",
+    "columns": [
+     "feature",
+     "function () {}",
+     "() => {}"
+    ],
+    "rows": [
+     [
+      "own this",
+      "yes, set by the call",
+      "no, uses the outer this"
+     ],
+     [
+      "arguments object",
+      "yes",
+      "no"
+     ],
+     [
+      "can be used with new",
+      "yes",
+      "no (TypeError)"
+     ],
+     [
+      "prototype property",
+      "yes",
+      "no"
+     ],
+     [
+      "implicit return",
+      "no",
+      "yes for expression bodies"
+     ]
+    ],
+    "hit": 0,
+    "note": "Arrows are short, but the big difference is <b>this</b>: an arrow has no this of its own and uses the one from where it was written. That makes them great as callbacks inside methods, and wrong as methods themselves."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const o = { n: 1, normal() { return this.n }, arrow: () =&gt; typeof this }\nconsole.log(o.normal(), o.arrow())</code></pre>",
+     "opts": [
+      "<code>1 object</code>",
+      "<code>1 number</code>",
+      "<code>undefined object</code>",
+      "<code>1 undefined</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "The method gets <code>this = o</code>, so 1.",
+      "The arrow has no this of its own: it uses the top-level this (the global object in a plain script), so <code>typeof this</code> is \"object\", and it is not o."
+     ],
+     "exec": "const o = { n: 1, normal() { return this.n }, arrow: () => typeof this }\nconsole.log(o.normal(), o.arrow())"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const timer = { s: 0, start() { [1, 2, 3].forEach(() =&gt; this.s++); return this.s } }\nconsole.log(timer.start())</code></pre>",
+     "opts": [
+      "<code>0</code>",
+      "<code>NaN</code>",
+      "<code>TypeError</code>",
+      "<code>3</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "The arrow callback uses start's this, which is timer. A normal function callback would get undefined/global this."
+     ],
+     "exec": "const timer = { s: 0, start() { [1, 2, 3].forEach(() => this.s++); return this.s } }\nconsole.log(timer.start())"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const f = () =&gt; ({ a: 1 })\nconst g = () =&gt; { a: 1 }\nconsole.log(f().a, g())</code></pre>",
+     "opts": [
+      "<code>1 { a: 1 }</code>",
+      "<code>1 undefined</code>",
+      "<code>undefined undefined</code>",
+      "<code>1 1</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "<code>{ a: 1 }</code> after an arrow is read as a block with a label <code>a:</code>, so g returns undefined. Wrap an object literal in parentheses."
+     ],
+     "exec": "const f = () => ({ a: 1 })\nconst g = () => { a: 1 }\nconsole.log(f().a, g())"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const A = () =&gt; {}\ntry { new A() } catch (e) { console.log(e.name) }</code></pre>",
+     "opts": [
+      "<code>SyntaxError</code>",
+      "<code>TypeError</code>",
+      "<code>ReferenceError</code>",
+      "<code>undefined</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Arrows cannot be constructors."
+     ],
+     "exec": "const A = () => {}\ntry { new A() } catch (e) { console.log(e.name) }"
+    },
+    {
+     "tag": "Pick one",
+     "q": "Which is a bad place for an arrow function?",
+     "opts": [
+      "A .map callback",
+      "A setTimeout callback inside a method",
+      "A small helper like const add = (a, b) => a + b",
+      "An object method that uses this"
+     ],
+     "ans": 3,
+     "why": [
+      "As a method, the arrow would not get the object as this."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>makeTimer()</code> returning <code>{ ticks: 0, tick(n) }</code> where <code>tick(n)</code> uses <code>Array.from({ length: n }).forEach(...)</code> to add 1 to <code>this.ticks</code> n times and returns the new total. Use the right kind of function in each place.",
+    "examples": [
+     "const t = makeTimer(); t.tick(3)  // 3",
+     "t.tick(2)  // 5"
+    ],
+    "hint": "Method: shorthand (gets this). Callback inside: arrow (reuses that this).",
+    "fn": "makeTimer",
+    "starter": "function makeTimer() {\n  // your code\n}",
+    "solution": "function makeTimer() {\n  return {\n    ticks: 0,\n    tick(n) {\n      Array.from({ length: n }).forEach(() => { this.ticks++ })\n      return this.ticks\n    },\n  }\n}",
+    "checks": [
+     {
+      "t": "tick adds n",
+      "verify": "const t = makeTimer(); assert(t.tick(3) === 3, \"3\")"
+     },
+     {
+      "t": "totals accumulate",
+      "verify": "const t = makeTimer(); t.tick(3); assert(t.tick(2) === 5 && t.ticks === 5, \"5\")"
+     },
+     {
+      "t": "two timers are independent",
+      "verify": "const a = makeTimer(), b = makeTimer(); a.tick(4); assert(b.tick(1) === 1, \"independent\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Arrows have no own this, arguments or prototype. Use them for callbacks; use normal method syntax for methods.",
+    "mistakes": [
+     "Arrow functions as object methods.",
+     "Returning an object literal without parentheses."
+    ]
+   }
+  },
+  {
+   "id": "this",
+   "prereqs": [
+    "arrow-fn"
+   ],
+   "dryRun": {
+    "title": "What decides this (most important first)",
+    "columns": [
+     "call looks like",
+     "this is",
+     "example"
+    ],
+    "rows": [
+     [
+      "new Fn()",
+      "the new object",
+      "new User()"
+     ],
+     [
+      "fn.call(x) / apply / bind(x)",
+      "x",
+      "f.call(obj)"
+     ],
+     [
+      "obj.fn()",
+      "obj (left of the dot)",
+      "user.greet()"
+     ],
+     [
+      "fn() plain call",
+      "undefined (strict) / global (sloppy)",
+      "const g = user.greet; g()"
+     ],
+     [
+      "arrow function",
+      "this of the outer scope",
+      "() => this"
+     ]
+    ],
+    "hit": 3,
+    "note": "<code>this</code> is decided by <b>how</b> a function is called, not where it is written (arrows are the exception). Losing the dot loses the object."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>'use strict'\nconst user = { name: 'A', hi() { return this?.name } }\nconst hi = user.hi\nconsole.log(user.hi(), hi())</code></pre>",
+     "opts": [
+      "<code>A undefined</code>",
+      "<code>A A</code>",
+      "<code>undefined undefined</code>",
+      "<code>A TypeError</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Called as <code>user.hi()</code>, this is user. Copied out and called plainly, this is undefined in strict mode, so <code>this?.name</code> is undefined."
+     ],
+     "exec": "'use strict'\nconst user = { name: 'A', hi() { return this?.name } }\nconst hi = user.hi\nconsole.log(user.hi(), hi())"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const o = { v: 1, get() { return this.v } }\nconst p = { v: 2, get: o.get }\nconsole.log(p.get())</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>undefined</code>",
+      "<code>2</code>",
+      "<code>TypeError</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "The function is shared, but it is called as <code>p.get()</code>, so this is p."
+     ],
+     "exec": "const o = { v: 1, get() { return this.v } }\nconst p = { v: 2, get: o.get }\nconsole.log(p.get())"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function Person(n) { this.n = n }\nconst x = new Person('z')\nconsole.log(x.n)</code></pre>",
+     "opts": [
+      "<code>undefined</code>",
+      "<code>TypeError</code>",
+      "<code>Person</code>",
+      "<code>z</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "With new, this is a fresh object which is returned automatically."
+     ],
+     "exec": "function Person(n) { this.n = n }\nconst x = new Person('z')\nconsole.log(x.n)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>'use strict'\nconst btn = { label: 'ok', click() { setTimeout(function () { console.log(this === btn) }, 0) } }\nbtn.click()</code></pre>",
+     "opts": [
+      "<code>true</code>",
+      "<code>false</code>",
+      "<code>undefined</code>",
+      "<code>TypeError</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "A plain callback passed to setTimeout is not called as <code>btn.something()</code>, so it does not get btn as this. (In Node it is a Timeout object, in browsers the window.) Use an arrow."
+     ],
+     "exec": "'use strict'\nconst btn = { label: 'ok', click() { setTimeout(function () { console.log(this === btn) }, 0) } }\nbtn.click()"
+    },
+    {
+     "tag": "Fix it",
+     "q": "<code>button.addEventListener(\"click\", this.save)</code> inside a class throws \"Cannot read properties of undefined\". Best fix?",
+     "opts": [
+      "<code>addEventListener(\"click\", save)</code>",
+      "<code>addEventListener(\"click\", this.save())</code>",
+      "<code>addEventListener(\"click\", () =&gt; this.save())</code>",
+      "Make save an async function"
+     ],
+     "ans": 2,
+     "why": [
+      "Passing <code>this.save</code> detaches it from the object. Wrap it in an arrow, or bind it once in the constructor."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>bindAll(obj)</code>: replace every function-valued own property of <code>obj</code> with a version bound to <code>obj</code>, so methods can be passed around as callbacks. Return obj.",
+    "examples": [
+     "const c = bindAll({ n: 1, get() { return this.n } }); const g = c.get; g()  // 1",
+     "bindAll({ x: 1 }).x  // 1"
+    ],
+    "hint": "Loop over <code>Object.keys(obj)</code>; for functions do <code>obj[k] = obj[k].bind(obj)</code>.",
+    "fn": "bindAll",
+    "starter": "function bindAll(obj) {\n  // your code\n}",
+    "solution": "function bindAll(obj) {\n  for (const k of Object.keys(obj)) if (typeof obj[k] === 'function') obj[k] = obj[k].bind(obj)\n  return obj\n}",
+    "checks": [
+     {
+      "t": "a detached method still sees the object",
+      "verify": "const c = bindAll({ n: 1, get() { return this.n } }); const g = c.get; assert(g() === 1, \"this lost\")"
+     },
+     {
+      "t": "non-function values are untouched",
+      "verify": "const o = bindAll({ x: 1, s: \"a\" }); assert(o.x === 1 && o.s === \"a\", \"values\")"
+     },
+     {
+      "t": "works as a callback",
+      "verify": "const c = bindAll({ total: 0, add(v) { this.total += v } }); [1, 2, 3].forEach(c.add); assert(c.total === 6, \"callback\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "this = how the function is called: new → new object, call/apply/bind → given value, obj.fn() → obj, plain call → undefined (strict). Arrows inherit it.",
+    "mistakes": [
+     "Passing <code>obj.method</code> as a callback and losing this.",
+     "Expecting this inside a nested normal function to be the outer object."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Calculator with Method Chaining",
+     "diff": "easy",
+     "lc": "calculator-with-method-chaining"
+    }
+   ]
+  },
+  {
+   "id": "call-apply-bind",
+   "prereqs": [
+    "this"
+   ],
+   "dryRun": {
+    "title": "fn = function (a, b) { return this.x + a + b }, obj = { x: 1 }",
+    "columns": [
+     "call",
+     "this",
+     "args",
+     "result"
+    ],
+    "rows": [
+     [
+      "fn.call(obj, 2, 3)",
+      "obj",
+      "2, 3",
+      "6"
+     ],
+     [
+      "fn.apply(obj, [2, 3])",
+      "obj",
+      "[2, 3] as an array",
+      "6"
+     ],
+     [
+      "const g = fn.bind(obj, 2)",
+      "obj (fixed)",
+      "2 fixed",
+      "a new function"
+     ],
+     [
+      "g(3)",
+      "obj",
+      "2, 3",
+      "6"
+     ],
+     [
+      "g.call({ x: 100 }, 3)",
+      "still obj",
+      "2, 3",
+      "6 (bind wins)"
+     ]
+    ],
+    "hit": 4,
+    "note": "<b>call</b> and <b>apply</b> invoke now with a chosen this (apply takes an array). <b>bind</b> returns a new function with this (and optionally some arguments) locked in. A bound function cannot be re-bound."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function greet(g, p) { return g + ' ' + this.name + p }\nconsole.log(greet.call({ name: 'A' }, 'hi', '!'), greet.apply({ name: 'B' }, ['yo', '?']))</code></pre>",
+     "opts": [
+      "<code>hi A! yo B?</code>",
+      "<code>hi undefined! yo undefined?</code>",
+      "<code>undefined undefined</code>",
+      "<code>hi A! yo B!x</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "call takes the arguments one by one, apply as an array. Same result shape."
+     ],
+     "exec": "function greet(g, p) { return g + ' ' + this.name + p }\nconsole.log(greet.call({ name: 'A' }, 'hi', '!'), greet.apply({ name: 'B' }, ['yo', '?']))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function f() { return this.v }\nconst b = f.bind({ v: 1 })\nconsole.log(b.call({ v: 2 }), b.bind({ v: 3 })())</code></pre>",
+     "opts": [
+      "<code>2 3</code>",
+      "<code>1 3</code>",
+      "<code>1 1</code>",
+      "<code>undefined undefined</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Once bound, this is fixed. call and a second bind cannot change it."
+     ],
+     "exec": "function f() { return this.v }\nconst b = f.bind({ v: 1 })\nconsole.log(b.call({ v: 2 }), b.bind({ v: 3 })())"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log(Math.max.apply(null, [3, 9, 2]), Math.max(...[3, 9, 2]))</code></pre>",
+     "opts": [
+      "<code>9 9</code>",
+      "<code>NaN 9</code>",
+      "<code>9 NaN</code>",
+      "<code>3 9</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "apply spreads an array into arguments, which is what spread syntax does today."
+     ],
+     "exec": "console.log(Math.max.apply(null, [3, 9, 2]), Math.max(...[3, 9, 2]))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const add = (a, b) =&gt; a + b\nconst add5 = add.bind(null, 5)\nconsole.log(add5(10), add5.length)</code></pre>",
+     "opts": [
+      "<code>15 2</code>",
+      "<code>NaN 1</code>",
+      "<code>15 0</code>",
+      "<code>15 1</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "bind can pre-fill arguments (partial application). The bound function's length drops by the number of pre-filled args."
+     ],
+     "exec": "const add = (a, b) => a + b\nconst add5 = add.bind(null, 5)\nconsole.log(add5(10), add5.length)"
+    },
+    {
+     "tag": "Arrows",
+     "q": "What does <code>arrowFn.call(obj)</code> do to this inside an arrow function?",
+     "opts": [
+      "Sets this to obj",
+      "Nothing: arrows ignore call/apply/bind for this",
+      "Throws a TypeError",
+      "Sets this to undefined"
+     ],
+     "ans": 1,
+     "why": [
+      "Arrows always use the outer this. Arguments still pass through."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Implement <code>myBind(fn, ctx, ...preset)</code> without using <code>bind</code>: return a function that calls fn with this = ctx and the preset arguments followed by new ones.",
+    "examples": [
+     "myBind(function (a, b) { return this.x + a + b }, { x: 1 }, 2)(3)  // 6",
+     "myBind(Math.max, null, 5)(1, 9)  // 9"
+    ],
+    "hint": "Return <code>(...args) =&gt; fn.apply(ctx, [...preset, ...args])</code>.",
+    "fn": "myBind",
+    "starter": "function myBind(fn, ctx, ...preset) {\n  // your code\n}",
+    "solution": "function myBind(fn, ctx, ...preset) {\n  return function (...args) {\n    return fn.apply(ctx, [...preset, ...args])\n  }\n}",
+    "checks": [
+     {
+      "t": "this is the given context",
+      "verify": "assert(myBind(function () { return this.x }, { x: 7 })() === 7, \"this\")"
+     },
+     {
+      "t": "preset and later arguments combine in order",
+      "verify": "assert(myBind(function (a, b, c) { return [a, b, c].join(\"\") }, null, \"a\", \"b\")(\"c\") === \"abc\", \"args\")"
+     },
+     {
+      "t": "the original function is not changed",
+      "verify": "function f() { return this && this.x }; const b = myBind(f, { x: 1 }); assert(typeof b === \"function\" && b() === 1 && f.call({ x: 2 }) === 2, \"original changed or not bound\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "call/apply: run now with a chosen this. bind: make a new function with this (and args) fixed for good.",
+    "mistakes": [
+     "Using bind and expecting a later call() to override it.",
+     "Using call/apply on arrow functions to change this."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Function.prototype.myBind",
+     "diff": "medium",
+     "mc": "bind"
+    }
+   ]
+  },
+  {
+   "id": "hof",
+   "prereqs": [
+    "call-apply-bind"
+   ],
+   "dryRun": {
+    "title": "[1, 2, 3, 4].filter(isEven).map(double).reduce(sum, 0)",
+    "columns": [
+     "step",
+     "input",
+     "output"
+    ],
+    "rows": [
+     [
+      "filter(isEven)",
+      "[1, 2, 3, 4]",
+      "[2, 4]"
+     ],
+     [
+      "map(double)",
+      "[2, 4]",
+      "[4, 8]"
+     ],
+     [
+      "reduce(sum, 0)",
+      "acc 0 + 4",
+      "4"
+     ],
+     [
+      "reduce continues",
+      "acc 4 + 8",
+      "12"
+     ]
+    ],
+    "hit": 3,
+    "note": "A <b>higher-order function</b> takes a function or returns one. map, filter and reduce take callbacks and return new arrays (or a value) without changing the original."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log([1, 2, 3].map((x, i) =&gt; x * i))</code></pre>",
+     "opts": [
+      "<code>[ 1, 2, 3 ]</code>",
+      "<code>[ 0, 2, 6 ]</code>",
+      "<code>[ 0, 1, 2 ]</code>",
+      "<code>[ 1, 4, 9 ]</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "map passes (value, index, array). 1×0, 2×1, 3×2."
+     ],
+     "exec": "console.log([1, 2, 3].map((x, i) => x * i))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log(['1', '2', '3'].map(parseInt))</code></pre>",
+     "opts": [
+      "<code>[ 1, 2, 3 ]</code>",
+      "<code>[ 1, 1, 1 ]</code>",
+      "<code>[ NaN, NaN, NaN ]</code>",
+      "<code>[ 1, NaN, NaN ]</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "map passes the index as parseInt's radix: parseInt(\"1\", 0) = 1, parseInt(\"2\", 1) = NaN, parseInt(\"3\", 2) = NaN. Use <code>map(Number)</code> or an arrow."
+     ],
+     "exec": "console.log(['1', '2', '3'].map(parseInt))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log([].reduce((a, b) =&gt; a + b, 0))\ntry { [].reduce((a, b) =&gt; a + b) } catch (e) { console.log(e.name) }</code></pre>",
+     "opts": [
+      "<code>0 TypeError</code>",
+      "<code>undefined TypeError</code>",
+      "<code>0 undefined</code>",
+      "<code>NaN TypeError</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "With an initial value an empty array returns it. Without one, reduce on an empty array throws a TypeError."
+     ],
+     "exec": "console.log([].reduce((a, b) => a + b, 0))\ntry { [].reduce((a, b) => a + b) } catch (e) { console.log(e.name) }"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const arr = [3, 1, 2]\nconst sorted = arr.toSorted()\narr.sort()\nconsole.log(sorted === arr, arr.join(''))</code></pre>",
+     "opts": [
+      "<code>true 312</code>",
+      "<code>false 312</code>",
+      "<code>false 123</code>",
+      "<code>true 123</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "<code>toSorted</code> returns a new array. <code>sort</code> sorts in place and returns the same array."
+     ],
+     "exec": "const arr = [3, 1, 2]\nconst sorted = arr.toSorted()\narr.sort()\nconsole.log(sorted === arr, arr.join(''))"
+    },
+    {
+     "tag": "Pick one",
+     "q": "You need the first user with age over 30, or undefined. Which?",
+     "opts": [
+      "<code>users.filter((u) =&gt; u.age &gt; 30)</code>",
+      "<code>users.map((u) =&gt; u.age &gt; 30)</code>",
+      "<code>users.some((u) =&gt; u.age &gt; 30)</code>",
+      "<code>users.find((u) =&gt; u.age &gt; 30)</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "find returns the element (stops early). filter returns an array, some returns a boolean."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>myMap(arr, fn)</code>, <code>myFilter(arr, fn)</code> and <code>myReduce(arr, fn, init)</code> without using the built-ins. Callbacks receive (value, index).",
+    "examples": [
+     "myMap([1, 2], (x) => x * 2)  // [2, 4]",
+     "myReduce([1, 2, 3], (a, b) => a + b, 0)  // 6"
+    ],
+    "hint": "Plain for loops. myReduce starts the accumulator at init.",
+    "fn": "myMap",
+    "starter": "function myMap(arr, fn) {\n  // your code\n}\nfunction myFilter(arr, fn) {\n  // your code\n}\nfunction myReduce(arr, fn, init) {\n  // your code\n}",
+    "solution": "function myMap(arr, fn) {\n  const out = []\n  for (let i = 0; i < arr.length; i++) out.push(fn(arr[i], i))\n  return out\n}\nfunction myFilter(arr, fn) {\n  const out = []\n  for (let i = 0; i < arr.length; i++) if (fn(arr[i], i)) out.push(arr[i])\n  return out\n}\nfunction myReduce(arr, fn, init) {\n  let acc = init\n  for (let i = 0; i < arr.length; i++) acc = fn(acc, arr[i], i)\n  return acc\n}",
+    "checks": [
+     {
+      "t": "myMap passes value and index",
+      "verify": "assert(JSON.stringify(myMap([5, 6], (x, i) => x * i)) === \"[0,6]\", \"map\")"
+     },
+     {
+      "t": "myFilter keeps matching items",
+      "verify": "assert(JSON.stringify(myFilter([1, 2, 3, 4], (x) => x % 2 === 0)) === \"[2,4]\", \"filter\")"
+     },
+     {
+      "t": "myReduce folds with the initial value",
+      "verify": "assert(myReduce([1, 2, 3], (a, b) => a + b, 10) === 16 && myReduce([], (a, b) => a + b, 0) === 0, \"reduce\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "map transforms, filter selects, reduce folds, find/some stop early. They return new values; sort (not toSorted) mutates.",
+    "mistakes": [
+     "<code>.map(parseInt)</code>.",
+     "reduce on a possibly empty array without an initial value.",
+     "Mutating the original array with sort/reverse/splice by accident."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Apply Transform Over Each Element in Array",
+     "diff": "easy",
+     "lc": "apply-transform-over-each-element-in-array"
+    },
+    {
+     "name": "Array Reduce Transformation",
+     "diff": "easy",
+     "lc": "array-reduce-transformation"
+    }
+   ]
+  },
+  {
+   "id": "currying",
+   "prereqs": [
+    "hof"
+   ],
+   "dryRun": {
+    "title": "curry((a, b, c) => a + b + c)",
+    "columns": [
+     "call",
+     "arguments so far",
+     "enough? (3)",
+     "returns"
+    ],
+    "rows": [
+     [
+      "c(1)",
+      "[1]",
+      "no",
+      "a function"
+     ],
+     [
+      "c(1)(2)",
+      "[1, 2]",
+      "no",
+      "a function"
+     ],
+     [
+      "c(1)(2)(3)",
+      "[1, 2, 3]",
+      "yes",
+      "6"
+     ],
+     [
+      "c(1, 2)(3)",
+      "[1, 2, 3]",
+      "yes",
+      "6"
+     ]
+    ],
+    "hit": 2,
+    "note": "<b>Currying</b> turns f(a, b, c) into a chain that collects arguments until it has <code>fn.length</code> of them, then calls f. <b>Partial application</b> fixes some arguments now and the rest later."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const add = (a) =&gt; (b) =&gt; (c) =&gt; a + b + c\nconsole.log(add(1)(2)(3), typeof add(1)(2))</code></pre>",
+     "opts": [
+      "<code>6 number</code>",
+      "<code>6 function</code>",
+      "<code>123 function</code>",
+      "<code>6 undefined</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Each call returns the next function until the last one adds."
+     ],
+     "exec": "const add = (a) => (b) => (c) => a + b + c\nconsole.log(add(1)(2)(3), typeof add(1)(2))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const f = (a, b = 2, c) =&gt; a\nconsole.log(f.length)</code></pre>",
+     "opts": [
+      "<code>3</code>",
+      "<code>2</code>",
+      "<code>1</code>",
+      "<code>0</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "<code>length</code> counts parameters before the first default. Generic curry helpers depend on length, so defaults break them."
+     ],
+     "exec": "const f = (a, b = 2, c) => a\nconsole.log(f.length)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const compose = (...fns) =&gt; (x) =&gt; fns.reduceRight((v, f) =&gt; f(v), x)\nconsole.log(compose((x) =&gt; x + 1, (x) =&gt; x * 10)(2))</code></pre>",
+     "opts": [
+      "<code>21</code>",
+      "<code>30</code>",
+      "<code>12</code>",
+      "<code>3</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "compose runs right to left: 2 × 10 = 20, then + 1 = 21."
+     ],
+     "exec": "const compose = (...fns) => (x) => fns.reduceRight((v, f) => f(v), x)\nconsole.log(compose((x) => x + 1, (x) => x * 10)(2))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const pipe = (...fns) =&gt; (x) =&gt; fns.reduce((v, f) =&gt; f(v), x)\nconsole.log(pipe((x) =&gt; x + 1, (x) =&gt; x * 10)(2))</code></pre>",
+     "opts": [
+      "<code>21</code>",
+      "<code>12</code>",
+      "<code>30</code>",
+      "<code>20</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "pipe runs left to right: 2 + 1 = 3, then × 10 = 30."
+     ],
+     "exec": "const pipe = (...fns) => (x) => fns.reduce((v, f) => f(v), x)\nconsole.log(pipe((x) => x + 1, (x) => x * 10)(2))"
+    },
+    {
+     "tag": "Why",
+     "q": "Why curry a function like <code>log(level)(message)</code>?",
+     "opts": [
+      "To make specialised versions once and reuse them, e.g. const warn = log(\"warn\")",
+      "It runs faster",
+      "It uses less memory",
+      "It is required by JavaScript"
+     ],
+     "ans": 0,
+     "why": [
+      "Currying is about reuse and composition, not speed."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Implement <code>curry(fn)</code>: keep collecting arguments (one or many per call) until there are at least <code>fn.length</code>, then call fn.",
+    "examples": [
+     "curry((a, b, c) => a + b + c)(1)(2)(3)  // 6",
+     "curry((a, b, c) => a + b + c)(1, 2)(3)  // 6"
+    ],
+    "hint": "Return a function that takes ...args; if args.length >= fn.length call fn, else return a function that takes more and calls again with all of them.",
+    "fn": "curry",
+    "starter": "function curry(fn) {\n  // your code\n}",
+    "solution": "function curry(fn) {\n  return function curried(...args) {\n    if (args.length >= fn.length) return fn.apply(this, args)\n    return (...more) => curried.apply(this, [...args, ...more])\n  }\n}",
+    "checks": [
+     {
+      "t": "one argument at a time",
+      "verify": "assert(curry((a, b, c) => a + b + c)(1)(2)(3) === 6, \"1,1,1\")"
+     },
+     {
+      "t": "several at once",
+      "verify": "const s = curry((a, b, c) => a + b + c); assert(s(1, 2)(3) === 6 && s(1)(2, 3) === 6 && s(1, 2, 3) === 6, \"mixed\")"
+     },
+     {
+      "t": "partial results are reusable",
+      "verify": "const add3 = curry((a, b, c) => a + b + c); const one = add3(1); assert(one(2)(3) === 6 && one(10)(20) === 31, \"reuse\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Currying collects arguments until fn.length is reached. compose runs right-to-left, pipe left-to-right.",
+    "mistakes": [
+     "Currying functions with default or rest parameters (fn.length is wrong).",
+     "Mixing up compose and pipe order."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Function Composition",
+     "diff": "easy",
+     "lc": "function-composition"
+    },
+    {
+     "name": "curry(fn)",
+     "diff": "medium",
+     "mc": "curry"
+    }
+   ]
+  },
+  {
+   "id": "memoization",
+   "prereqs": [
+    "currying"
+   ],
+   "dryRun": {
+    "title": "memoFib(5) with a cache",
+    "columns": [
+     "call",
+     "cache before",
+     "computed?",
+     "cache after"
+    ],
+    "rows": [
+     [
+      "fib(1), fib(0)",
+      "{}",
+      "yes",
+      "{1:1, 0:0}"
+     ],
+     [
+      "fib(2)",
+      "{1, 0}",
+      "yes (uses cache)",
+      "+ {2:1}"
+     ],
+     [
+      "fib(3)",
+      "{0..2}",
+      "yes",
+      "+ {3:2}"
+     ],
+     [
+      "fib(4)",
+      "{0..3}",
+      "yes",
+      "+ {4:3}"
+     ],
+     [
+      "fib(3) again",
+      "{0..4}",
+      "no, cached",
+      "same"
+     ],
+     [
+      "fib(5)",
+      "{0..4}",
+      "yes",
+      "+ {5:5}"
+     ]
+    ],
+    "hit": 4,
+    "note": "<b>Memoization</b> stores results by input so repeated calls are instant. It only works for <b>pure</b> functions (same input → same output, no side effects), and the cache key must uniquely describe the input."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let calls = 0\nconst sq = (x) =&gt; (calls++, x * x)\nconst cache = new Map()\nconst msq = (x) =&gt; cache.has(x) ? cache.get(x) : (cache.set(x, sq(x)), cache.get(x))\nmsq(3); msq(3); msq(4)\nconsole.log(calls)</code></pre>",
+     "opts": [
+      "<code>3</code>",
+      "<code>1</code>",
+      "<code>0</code>",
+      "<code>2</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "3 is computed once, then read from the cache. 4 is new."
+     ],
+     "exec": "let calls = 0\nconst sq = (x) => (calls++, x * x)\nconst cache = new Map()\nconst msq = (x) => cache.has(x) ? cache.get(x) : (cache.set(x, sq(x)), cache.get(x))\nmsq(3); msq(3); msq(4)\nconsole.log(calls)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const key = (...a) =&gt; a.join(',')\nconsole.log(key(1, 23) === key(12, 3), key('1,2') === key(1, 2))</code></pre>",
+     "opts": [
+      "<code>true false</code>",
+      "<code>false true</code>",
+      "<code>false false</code>",
+      "<code>true true</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "(1, 23) and (12, 3) give different strings, but \"1,2\" as a single argument collides with (1, 2). Use <code>JSON.stringify(args)</code> for safer keys."
+     ],
+     "exec": "const key = (...a) => a.join(',')\nconsole.log(key(1, 23) === key(12, 3), key('1,2') === key(1, 2))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const m = new Map()\nm.set({ id: 1 }, 'x')\nconsole.log(m.get({ id: 1 }))</code></pre>",
+     "opts": [
+      "<code>x</code>",
+      "<code>undefined</code>",
+      "<code>null</code>",
+      "<code>TypeError</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Object keys compare by identity. A cache keyed by object arguments only hits for the same object."
+     ],
+     "exec": "const m = new Map()\nm.set({ id: 1 }, 'x')\nconsole.log(m.get({ id: 1 }))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let n = 0\nconst now = () =&gt; ++n\nconst cache = {}\nconst memoNow = () =&gt; cache.v ?? (cache.v = now())\nconsole.log(memoNow(), memoNow(), now())</code></pre>",
+     "opts": [
+      "<code>1 2 3</code>",
+      "<code>1 1 1</code>",
+      "<code>1 1 3</code>",
+      "<code>1 1 2</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Memoising an impure function freezes its first answer. That is a bug, not an optimisation."
+     ],
+     "exec": "let n = 0\nconst now = () => ++n\nconst cache = {}\nconst memoNow = () => cache.v ?? (cache.v = now())\nconsole.log(memoNow(), memoNow(), now())"
+    },
+    {
+     "tag": "Trade-off",
+     "q": "What is the main cost of memoization?",
+     "opts": [
+      "Memory: the cache grows with every new input unless you limit it",
+      "It makes the first call slower by 10x",
+      "It only works on numbers",
+      "It breaks async code"
+     ],
+     "ans": 0,
+     "why": [
+      "Use a bounded cache (LRU) or WeakMap for object keys when inputs are many."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Implement <code>memoize(fn)</code> that caches by all arguments (use <code>JSON.stringify(args)</code> as the key) and exposes <code>.calls()</code> returning how many times fn really ran.",
+    "examples": [
+     "const f = memoize((a, b) => a + b); f(1, 2); f(1, 2); f.calls()  // 1",
+     "f(2, 1); f.calls()  // 2"
+    ],
+    "hint": "Keep a Map and a counter in the closure; attach a calls method to the returned function.",
+    "fn": "memoize",
+    "starter": "function memoize(fn) {\n  // your code\n}",
+    "solution": "function memoize(fn) {\n  const cache = new Map()\n  let n = 0\n  const m = (...args) => {\n    const k = JSON.stringify(args)\n    if (!cache.has(k)) { n++; cache.set(k, fn(...args)) }\n    return cache.get(k)\n  }\n  m.calls = () => n\n  return m\n}",
+    "checks": [
+     {
+      "t": "repeated calls hit the cache",
+      "verify": "const f = memoize((a, b) => a + b); f(1, 2); f(1, 2); assert(f(1, 2) === 3 && f.calls() === 1, \"cache\")"
+     },
+     {
+      "t": "different arguments compute again",
+      "verify": "const f = memoize((a, b) => a + b); f(1, 2); f(2, 1); assert(f.calls() === 2, \"args\")"
+     },
+     {
+      "t": "falsy results are cached too",
+      "verify": "let n = 0; const f = memoize(() => { n++; return 0 }); f(); f(); assert(n === 1, \"0 must be cached\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Cache results of pure functions by a key that fully describes the input. Watch memory and never memoise impure functions.",
+    "mistakes": [
+     "Using <code>cache[k] || compute()</code> so 0/\"\"/false results are never cached.",
+     "Weak keys like args.join(\",\").",
+     "Memoising functions that depend on time or outside state."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Memoize",
+     "diff": "medium",
+     "lc": "memoize"
+    },
+    {
+     "name": "memoize(fn, resolver)",
+     "diff": "medium",
+     "mc": "memoize"
+    }
+   ]
+  }
+ ]
+}

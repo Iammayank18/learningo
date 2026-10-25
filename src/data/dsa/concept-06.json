@@ -1,0 +1,724 @@
+{
+  "items": [
+    {
+      "id": "prefix-sum",
+      "prereqs": [
+        "arrays",
+        "hashmaps"
+      ],
+      "dryRun": {
+        "title": "Prefix sums of [2, 4, 1, 3], then the sum of indexes 1..2",
+        "columns": [
+          "step",
+          "nums[i]",
+          "prefix so far",
+          "how"
+        ],
+        "rows": [
+          [
+            "i = 0",
+            "2",
+            "0, 2",
+            "0 + 2"
+          ],
+          [
+            "i = 1",
+            "4",
+            "0, 2, 6",
+            "2 + 4"
+          ],
+          [
+            "i = 2",
+            "1",
+            "0, 2, 6, 7",
+            "6 + 1"
+          ],
+          [
+            "i = 3",
+            "3",
+            "0, 2, 6, 7, 10",
+            "7 + 3"
+          ],
+          [
+            "query 1..2",
+            "-",
+            "7 - 2 = 5",
+            "prefix[3] - prefix[1]"
+          ]
+        ],
+        "hit": 4,
+        "note": "The prefix array has <b>one extra slot at the front</b> (a 0). Then any range sum is one subtraction: <code>prefix[r + 1] - prefix[l]</code>."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const nums = [2, 4, 1, 3]\nconst p = [0]\nfor (const x of nums) p.push(p[p.length - 1] + x)\nconsole.log(p.join(\",\"), p[3] - p[1])</code></pre>",
+          "opts": [
+            "<code>0,2,6,7,10 5</code>",
+            "<code>2,6,7,10 5</code>",
+            "<code>0,2,6,7,10 7</code>",
+            "<code>0,2,6,7,10 4</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "<code>p[k]</code> is the sum of the first k items. The array is 5 long because of the extra leading 0.",
+            "<code>p[3] - p[1]</code> is 7 - 2 = 5, which is <code>nums[1] + nums[2]</code> = 4 + 1."
+          ],
+          "exec": "const nums = [2, 4, 1, 3]\nconst p = [0]\nfor (const x of nums) p.push(p[p.length - 1] + x)\nconsole.log(p.join(\",\"), p[3] - p[1])"
+        },
+        {
+          "tag": "Off by one",
+          "q": "<p>With <code>p[0] = 0</code> and <code>p[k]</code> = sum of the first k items, what is the sum of <code>nums[l..r]</code> (both ends included)?</p>",
+          "opts": [
+            "<code>p[r + 1] - p[l]</code>",
+            "<code>p[r] - p[l]</code>",
+            "<code>p[r] - p[l - 1]</code>",
+            "<code>p[r + 1] - p[l + 1]</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "<code>p[r + 1]</code> holds everything up to and including index r. Subtracting <code>p[l]</code> removes everything before l.",
+            "The extra leading 0 is what makes <code>l = 0</code> work without a special case."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>You have n numbers and q range-sum questions. What is the total time with a prefix array?</p>",
+          "opts": [
+            "<code>O(n * q)</code>",
+            "<code>O(n + q)</code>",
+            "<code>O(q log n)</code>",
+            "<code>O(n²)</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "Building the prefix array is O(n), and each question is one subtraction, O(1). Total O(n + q).",
+            "Summing each range again by hand costs O(n) per question, so O(n * q)."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Subarray sum = k",
+          "q": "<pre><code>const nums = [1, 2, 3], k = 3\nconst seen = new Map([[0, 1]])\nlet sum = 0, count = 0\nfor (const x of nums) {\n  sum += x\n  count += seen.get(sum - k) || 0\n  seen.set(sum, (seen.get(sum) || 0) + 1)\n}\nconsole.log(count)</code></pre>",
+          "opts": [
+            "<code>1</code>",
+            "<code>2</code>",
+            "<code>3</code>",
+            "<code>0</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "The subarrays that add up to 3 are <code>[1, 2]</code> and <code>[3]</code>, so the answer is 2.",
+            "A subarray ends here with sum k exactly when an earlier prefix equals <code>sum - k</code>. The map counts those earlier prefixes."
+          ],
+          "exec": "const nums = [1, 2, 3], k = 3\nconst seen = new Map([[0, 1]])\nlet sum = 0, count = 0\nfor (const x of nums) {\n  sum += x\n  count += seen.get(sum - k) || 0\n  seen.set(sum, (seen.get(sum) || 0) + 1)\n}\nconsole.log(count)"
+        },
+        {
+          "tag": "Why seed the map?",
+          "q": "<p>In the \"subarray sum equals k\" code, the map starts as <code>{ 0: 1 }</code>. Why?</p>",
+          "opts": [
+            "To avoid an empty map error",
+            "So subarrays that start at index 0 are counted",
+            "Because the first number is always 0",
+            "To count the empty array"
+          ],
+          "ans": 1,
+          "why": [
+            "A subarray from index 0 has <code>prefix = sum</code> and nothing before it. That is the same as \"an earlier prefix of 0\", so we pretend one exists.",
+            "Without the seed, <code>[1, 2]</code> with k = 3 would be missed."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>rangeSums(nums, queries)</code>. Each query is <code>[l, r]</code> (both included). Return the array of range sums. It must run in O(n + q).</p>",
+        "examples": [
+          "rangeSums([2, 4, 1, 3], [[1, 2], [0, 3]])  // [5, 10]",
+          "rangeSums([5], [[0, 0]])  // [5]"
+        ],
+        "hint": "<p>Build <code>p</code> with a leading 0. Then each answer is <code>p[r + 1] - p[l]</code>.</p>",
+        "fn": "rangeSums",
+        "starter": "function rangeSums(nums, queries) {\n  // your code\n}",
+        "solution": "function rangeSums(nums, queries) {\n  const p = [0]\n  for (const x of nums) p.push(p[p.length - 1] + x)\n  return queries.map(([l, r]) => p[r + 1] - p[l])\n}",
+        "checks": [
+          {
+            "t": "two queries",
+            "verify": "assert(JSON.stringify(rangeSums([2, 4, 1, 3], [[1, 2], [0, 3]])) === \"[5,10]\", \"expected [5,10]\")"
+          },
+          {
+            "t": "a range that starts at 0",
+            "verify": "assert(JSON.stringify(rangeSums([1, 2, 3], [[0, 0], [0, 1]])) === \"[1,3]\", \"expected [1,3]\")"
+          },
+          {
+            "t": "negative numbers",
+            "verify": "assert(JSON.stringify(rangeSums([-2, 5, -1], [[0, 2], [1, 1]])) === \"[2,5]\", \"expected [2,5]\")"
+          },
+          {
+            "t": "one item",
+            "verify": "assert(JSON.stringify(rangeSums([5], [[0, 0]])) === \"[5]\", \"expected [5]\")"
+          },
+          {
+            "t": "a big input stays fast",
+            "verify": "const n = 100000; const nums = Array.from({ length: n }, (_, i) => i % 7); const qs = Array.from({ length: n }, (_, i) => [i % 50, n - 1 - (i % 50)]); const t0 = Date.now(); const out = rangeSums(nums, qs); assert(out.length === n && Date.now() - t0 < 300, \"too slow, are you re-adding every range?\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Build <b>prefix sums once</b> (with a leading 0), then every range sum is <code>p[r + 1] - p[l]</code>. With a map of earlier prefixes it also counts subarrays with a given sum.",
+        "mistakes": [
+          "Forgetting the leading 0 and special-casing <code>l = 0</code>.",
+          "Off-by-one: using <code>p[r]</code> when r is inclusive.",
+          "Forgetting to seed the map with <code>{ 0: 1 }</code>.",
+          "Using a sliding window when numbers can be negative (it needs prefix sums)."
+        ]
+      }
+    },
+    {
+      "id": "binary-search-2",
+      "prereqs": [
+        "binary-search",
+        "search-range"
+      ],
+      "dryRun": {
+        "title": "Smallest ship capacity to carry [3, 2, 2, 4, 1, 4] in at most 3 days",
+        "columns": [
+          "lo",
+          "hi",
+          "mid",
+          "days needed",
+          "decision"
+        ],
+        "rows": [
+          [
+            "4",
+            "16",
+            "10",
+            "2 (fine)",
+            "hi = 10"
+          ],
+          [
+            "4",
+            "10",
+            "7",
+            "3 (fine)",
+            "hi = 7"
+          ],
+          [
+            "4",
+            "7",
+            "5",
+            "4 (too many)",
+            "lo = 6"
+          ],
+          [
+            "6",
+            "7",
+            "6",
+            "3 (fine)",
+            "hi = 6"
+          ],
+          [
+            "6",
+            "6",
+            "-",
+            "lo equals hi",
+            "answer is 6"
+          ]
+        ],
+        "hit": 4,
+        "note": "The answer is not in an array. It is a number between <b>max item (4)</b> and <b>sum of all (16)</b>. For each guess we count days, which gives a yes or no, and that yes/no flips only once."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const w = [3, 2, 2, 4, 1, 4]\nconst days = (cap) =&gt; {\n  let d = 1, cur = 0\n  for (const x of w) {\n    if (cur + x &gt; cap) { d++; cur = 0 }\n    cur += x\n  }\n  return d\n}\nconsole.log(days(10), days(7), days(5))</code></pre>",
+          "opts": [
+            "<code>2 3 4</code>",
+            "<code>3 3 3</code>",
+            "<code>2 2 4</code>",
+            "<code>1 3 5</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "Capacity 10: <code>[3,2,2]</code>, then <code>[4,1,4]</code> = 2 days. Capacity 7: <code>[3,2,2]</code>, <code>[4,1]</code>, <code>[4]</code> = 3 days. Capacity 5 needs 4 days.",
+            "A bigger capacity never needs more days. This one-way behaviour is what makes binary search legal."
+          ],
+          "exec": "const w = [3, 2, 2, 4, 1, 4]\nconst days = (cap) => {\n  let d = 1, cur = 0\n  for (const x of w) {\n    if (cur + x > cap) { d++; cur = 0 }\n    cur += x\n  }\n  return d\n}\nconsole.log(days(10), days(7), days(5))"
+        },
+        {
+          "tag": "Search bounds",
+          "q": "<p>For \"smallest capacity to ship all packages in D days\", what is the smallest sensible lower bound for the search?</p>",
+          "opts": [
+            "0",
+            "1",
+            "The largest single package",
+            "The sum of all packages"
+          ],
+          "ans": 2,
+          "why": [
+            "A ship smaller than the heaviest package could never carry it. So the answer is at least <code>max(weights)</code>.",
+            "The upper bound is the sum: one ship carrying everything in one day."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Maximize",
+          "q": "<p>You want the <b>largest</b> x such that <code>ok(x)</code> is true, and <code>ok</code> goes T T T F F. When <code>ok(mid)</code> is true, what is the safe move?</p>",
+          "opts": [
+            "lo = mid, with the upper middle: mid = lo + ceil((hi - lo) / 2)",
+            "hi = mid - 1",
+            "hi = mid",
+            "return mid"
+          ],
+          "ans": 0,
+          "why": [
+            "<code>mid</code> works, but something bigger might too. So keep it: <code>lo = mid</code>.",
+            "With the normal lower middle, <code>lo = mid</code> can loop forever when hi = lo + 1. Using the upper middle fixes that."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>Each guess costs one O(n) pass. The answer range has size S. What is the total time?</p>",
+          "opts": [
+            "<code>O(n)</code>",
+            "<code>O(n log S)</code>",
+            "<code>O(n * S)</code>",
+            "<code>O(log n)</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "Binary search tries about log₂(S) guesses, and each one scans the n items.",
+            "Trying every capacity one by one would be O(n * S)."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "When does it apply?",
+          "q": "<p>Which wording usually points to \"binary search on the answer\"?</p>",
+          "opts": [
+            "\"Return all pairs that sum to k\"",
+            "\"Minimize the largest...\", \"maximize the smallest...\", \"find the minimum speed such that...\"",
+            "\"Find the longest palindromic substring\"",
+            "\"Count the islands\""
+          ],
+          "ans": 1,
+          "why": [
+            "These ask for the best value of something, and a bigger or smaller value only ever makes it easier or harder.",
+            "If you can test one guess quickly and the yes/no flips only once, you can search for the boundary."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>minCapacity(weights, days)</code>. Packages must be shipped <b>in the given order</b>, each day a ship carries a run of packages with total weight at most the capacity. Return the smallest capacity that ships everything within <code>days</code> days.</p>",
+        "examples": [
+          "minCapacity([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 5)  // 15",
+          "minCapacity([3, 2, 2, 4, 1, 4], 3)  // 6"
+        ],
+        "hint": "<p>Search <code>lo = max(weights)</code>, <code>hi = sum(weights)</code>. For each <code>mid</code>, count the days greedily. If days &lt;= limit, <code>hi = mid</code>, else <code>lo = mid + 1</code>.</p>",
+        "fn": "minCapacity",
+        "starter": "function minCapacity(weights, days) {\n  // your code\n}",
+        "solution": "function minCapacity(weights, days) {\n  let lo = Math.max(...weights)\n  let hi = weights.reduce((a, b) => a + b, 0)\n  const need = (cap) => {\n    let d = 1\n    let cur = 0\n    for (const w of weights) {\n      if (cur + w > cap) {\n        d++\n        cur = 0\n      }\n      cur += w\n    }\n    return d\n  }\n  while (lo < hi) {\n    const mid = lo + Math.floor((hi - lo) / 2)\n    if (need(mid) <= days) hi = mid\n    else lo = mid + 1\n  }\n  return lo\n}",
+        "checks": [
+          {
+            "t": "ten packages in five days",
+            "verify": "assert(minCapacity([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 5) === 15, \"expected 15\")"
+          },
+          {
+            "t": "the lesson example",
+            "verify": "assert(minCapacity([3, 2, 2, 4, 1, 4], 3) === 6, \"expected 6\")"
+          },
+          {
+            "t": "another case",
+            "verify": "assert(minCapacity([1, 2, 3, 1, 1], 4) === 3, \"expected 3\")"
+          },
+          {
+            "t": "one day means the sum",
+            "verify": "assert(minCapacity([4, 5, 6], 1) === 15, \"expected 15\")"
+          },
+          {
+            "t": "as many days as packages means the heaviest",
+            "verify": "assert(minCapacity([4, 9, 6], 3) === 9 && minCapacity([7], 1) === 7, \"expected 9 and 7\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "When a guess can be tested in O(n) and the answer flips from \"no\" to \"yes\" only once, <b>binary search the answer</b>: O(n log S). Pick bounds that surely contain it.",
+        "mistakes": [
+          "Wrong bounds (a lower bound that is too small, or an upper bound that cannot work).",
+          "Using <code>lo = mid</code> with the lower middle and looping forever.",
+          "Testing a guess with a check that is not monotonic.",
+          "Mixing up \"minimize\" (first true) and \"maximize\" (last true) updates."
+        ]
+      }
+    },
+    {
+      "id": "kadanes",
+      "prereqs": [
+        "arrays",
+        "prefix-sum"
+      ],
+      "dryRun": {
+        "title": "Kadane's on [2, -5, 3, 4, -1]",
+        "columns": [
+          "x",
+          "cur = max(x, cur + x)",
+          "best",
+          "what happened"
+        ],
+        "rows": [
+          [
+            "2",
+            "2",
+            "2",
+            "start"
+          ],
+          [
+            "-5",
+            "-3",
+            "2",
+            "keep going, but the sum is negative now"
+          ],
+          [
+            "3",
+            "3",
+            "3",
+            "restart: starting fresh (3) beats -3 + 3 = 0"
+          ],
+          [
+            "4",
+            "7",
+            "7",
+            "extend: 3 + 4"
+          ],
+          [
+            "-1",
+            "6",
+            "7",
+            "extend, best stays 7"
+          ]
+        ],
+        "hit": 2,
+        "note": "<code>cur</code> is the best sum of a subarray that <b>ends here</b>. If the sum before is negative, it only hurts, so we <b>restart</b>. The answer is the best <code>cur</code> seen: 7 (the subarray [3, 4])."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>let cur = 0, best = -Infinity\nfor (const x of [-2, 1, -3, 4, -1, 2, 1, -5, 4]) {\n  cur = Math.max(x, cur + x)\n  best = Math.max(best, cur)\n}\nconsole.log(best)</code></pre>",
+          "opts": [
+            "<code>6</code>",
+            "<code>5</code>",
+            "<code>9</code>",
+            "<code>4</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "The best subarray is <code>[4, -1, 2, 1]</code> with sum 6.",
+            "At each item there are only two choices: extend the old subarray, or start a new one at this item."
+          ],
+          "exec": "let cur = 0, best = -Infinity\nfor (const x of [-2, 1, -3, 4, -1, 2, 1, -5, 4]) {\n  cur = Math.max(x, cur + x)\n  best = Math.max(best, cur)\n}\nconsole.log(best)"
+        },
+        {
+          "tag": "Spot the bug",
+          "q": "<pre><code>let cur = 0, best = 0\nfor (const x of [-3, -1, -2]) {\n  cur = Math.max(x, cur + x)\n  best = Math.max(best, cur)\n}\nconsole.log(best)</code></pre><p>The correct answer is -1 (the best non-empty subarray). What does this print?</p>",
+          "opts": [
+            "<code>-1</code>",
+            "<code>0</code>",
+            "<code>-3</code>",
+            "<code>-6</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "Starting <code>best = 0</code> means \"an empty subarray with sum 0\" always wins. The code returns 0, which is wrong when every number is negative.",
+            "Start with <code>best = -Infinity</code> (or <code>nums[0]</code>)."
+          ],
+          "exec": "let cur = 0, best = 0\nfor (const x of [-3, -1, -2]) {\n  cur = Math.max(x, cur + x)\n  best = Math.max(best, cur)\n}\nconsole.log(best)"
+        },
+        {
+          "tag": "What does cur mean?",
+          "q": "<p>At index i, what does <code>cur</code> hold?</p>",
+          "opts": [
+            "The sum of the whole array so far",
+            "The best subarray sum anywhere in the array",
+            "The best sum of a subarray that ends exactly at i",
+            "The largest item so far"
+          ],
+          "ans": 2,
+          "why": [
+            "It must end at i, so the next item can extend it. <code>best</code> is the separate variable that remembers the maximum over all i.",
+            "Mixing the two up is the most common bug."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "When to restart",
+          "q": "<p>When should the running subarray be dropped and a new one started at x?</p>",
+          "opts": [
+            "When x is negative",
+            "When the running sum before x is negative (it can only make things worse)",
+            "Every k items",
+            "When x is the maximum so far"
+          ],
+          "ans": 1,
+          "why": [
+            "A negative running sum added to anything makes it smaller, so starting fresh at x is better. That is exactly <code>max(x, cur + x)</code>.",
+            "A negative x alone is fine to include if the sum before it is big."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>What are the time and extra space of Kadane's algorithm?</p>",
+          "opts": [
+            "<code>O(n) time, O(1) space</code>",
+            "<code>O(n²) time, O(1) space</code>",
+            "<code>O(n) time, O(n) space</code>",
+            "<code>O(n log n) time, O(1) space</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "One pass and two numbers: <code>cur</code> and <code>best</code>. Trying every subarray would be O(n²) or O(n³).",
+            "It is a tiny dynamic programming idea with the table shrunk to one value."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>maxSubarray(nums)</code>. Return the largest sum of a <b>non-empty</b> run of neighbouring items.</p>",
+        "examples": [
+          "maxSubarray([-2, 1, -3, 4, -1, 2, 1, -5, 4])  // 6",
+          "maxSubarray([-3, -1, -2])  // -1"
+        ],
+        "hint": "<p>Keep <code>cur</code> (best sum ending here) and <code>best</code>. For each x: <code>cur = Math.max(x, cur + x)</code>, then <code>best = Math.max(best, cur)</code>. Start <code>best</code> at the first item, not 0.</p>",
+        "fn": "maxSubarray",
+        "starter": "function maxSubarray(nums) {\n  // your code\n}",
+        "solution": "function maxSubarray(nums) {\n  let cur = nums[0]\n  let best = nums[0]\n  for (let i = 1; i < nums.length; i++) {\n    cur = Math.max(nums[i], cur + nums[i])\n    best = Math.max(best, cur)\n  }\n  return best\n}",
+        "checks": [
+          {
+            "t": "the classic example",
+            "verify": "assert(maxSubarray([-2, 1, -3, 4, -1, 2, 1, -5, 4]) === 6, \"expected 6\")"
+          },
+          {
+            "t": "all negative",
+            "verify": "assert(maxSubarray([-3, -1, -2]) === -1, \"expected -1\")"
+          },
+          {
+            "t": "one item",
+            "verify": "assert(maxSubarray([5]) === 5 && maxSubarray([-4]) === -4, \"single item\")"
+          },
+          {
+            "t": "all positive",
+            "verify": "assert(maxSubarray([1, 2, 3]) === 6, \"expected 6\")"
+          },
+          {
+            "t": "a big input stays fast",
+            "verify": "const big = Array.from({ length: 200000 }, (_, i) => (i % 3 === 0 ? -2 : 1)); const t0 = Date.now(); const r = maxSubarray(big); assert(typeof r === \"number\" && Date.now() - t0 < 200, \"too slow, it must be one pass\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "At every item choose: <b>extend</b> the running subarray or <b>restart</b> here, <code>cur = max(x, cur + x)</code>. Track the best <code>cur</code>. O(n) time, O(1) space.",
+        "mistakes": [
+          "Starting <code>best</code> at 0, which breaks arrays where every number is negative.",
+          "Confusing <code>cur</code> (must end here) with <code>best</code> (anywhere).",
+          "Resetting <code>cur</code> to 0 instead of to x.",
+          "Forgetting that the subarray must be non-empty."
+        ]
+      }
+    },
+    {
+      "id": "monotonic-stack",
+      "prereqs": [
+        "stacks",
+        "arrays"
+      ],
+      "dryRun": {
+        "title": "Next greater item for [2, 1, 2, 4, 3]  (stack keeps indexes; shown as values)",
+        "columns": [
+          "i",
+          "x",
+          "stack before",
+          "popped, their answer is x",
+          "stack after"
+        ],
+        "rows": [
+          [
+            "0",
+            "2",
+            "[ ]",
+            "-",
+            "[2]"
+          ],
+          [
+            "1",
+            "1",
+            "[2]",
+            "-",
+            "[2, 1]"
+          ],
+          [
+            "2",
+            "2",
+            "[2, 1]",
+            "1 (answer 2)",
+            "[2, 2]"
+          ],
+          [
+            "3",
+            "4",
+            "[2, 2]",
+            "2 and 2 (answer 4)",
+            "[4]"
+          ],
+          [
+            "4",
+            "3",
+            "[4]",
+            "-",
+            "[4, 3]"
+          ],
+          [
+            "end",
+            "-",
+            "[4, 3]",
+            "no answer: -1, -1",
+            "[ ]"
+          ]
+        ],
+        "hit": 3,
+        "note": "Items wait on the stack until something <b>bigger</b> arrives. Then they are popped and get their answer. Final answer: <code>[4, 2, 4, -1, -1]</code>."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const nums = [2, 1, 2, 4, 3]\nconst res = Array(nums.length).fill(-1)\nconst st = []\nfor (let i = 0; i &lt; nums.length; i++) {\n  while (st.length &amp;&amp; nums[st[st.length - 1]] &lt; nums[i]) {\n    res[st.pop()] = nums[i]\n  }\n  st.push(i)\n}\nconsole.log(res.join(\",\"))</code></pre>",
+          "opts": [
+            "<code>4,2,4,-1,-1</code>",
+            "<code>2,2,4,4,-1</code>",
+            "<code>4,4,4,-1,-1</code>",
+            "<code>1,2,3,-1,-1</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "The 1 (index 1) is popped by the second 2, so its answer is 2. Both 2s are later popped by the 4, so each gets 4.",
+            "Items left on the stack at the end never found a bigger one, so they keep the starting <code>-1</code>."
+          ],
+          "exec": "const nums = [2, 1, 2, 4, 3]\nconst res = Array(nums.length).fill(-1)\nconst st = []\nfor (let i = 0; i < nums.length; i++) {\n  while (st.length && nums[st[st.length - 1]] < nums[i]) {\n    res[st.pop()] = nums[i]\n  }\n  st.push(i)\n}\nconsole.log(res.join(\",\"))"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const t = [73, 74, 75, 71, 69, 72, 76, 73]\nconst ans = Array(t.length).fill(0)\nconst st = []\nfor (let i = 0; i &lt; t.length; i++) {\n  while (st.length &amp;&amp; t[st[st.length - 1]] &lt; t[i]) {\n    const j = st.pop()\n    ans[j] = i - j\n  }\n  st.push(i)\n}\nconsole.log(ans.join(\",\"))</code></pre>",
+          "opts": [
+            "<code>1,1,4,2,1,1,0,0</code>",
+            "<code>1,1,1,1,1,1,0,0</code>",
+            "<code>74,75,76,72,72,76,0,0</code>",
+            "<code>1,1,4,1,1,1,0,0</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "This is \"daily temperatures\": when index i pops index j, the wait is <code>i - j</code> days. Day 2 (75) waits 4 days for day 6 (76).",
+            "Because we need distances, the stack stores <b>indexes</b>, and the value is one lookup away."
+          ],
+          "exec": "const t = [73, 74, 75, 71, 69, 72, 76, 73]\nconst ans = Array(t.length).fill(0)\nconst st = []\nfor (let i = 0; i < t.length; i++) {\n  while (st.length && t[st[st.length - 1]] < t[i]) {\n    const j = st.pop()\n    ans[j] = i - j\n  }\n  st.push(i)\n}\nconsole.log(ans.join(\",\"))"
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>There is a <code>while</code> loop inside a <code>for</code> loop. Why is the whole thing O(n) and not O(n²)?</p>",
+          "opts": [
+            "Because the while loop runs only once",
+            "Because every index is pushed once and popped at most once",
+            "Because the stack is sorted",
+            "It is O(n²) in the worst case"
+          ],
+          "ans": 1,
+          "why": [
+            "The total number of pops can never be more than the total number of pushes, which is n. So the inner loop does n steps in total, not n per item.",
+            "This \"amortised\" argument is why the pattern is worth knowing."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Stack order",
+          "q": "<p>For \"next greater item\", how are the values on the stack ordered from bottom to top?</p>",
+          "opts": [
+            "Increasing",
+            "Decreasing (or equal)",
+            "Random",
+            "Sorted by index, descending"
+          ],
+          "ans": 1,
+          "why": [
+            "Anything smaller than the new item is popped before it is pushed, so what remains is a decreasing run. That is where the name \"monotonic\" comes from.",
+            "For \"next smaller\", flip the comparison and the stack becomes increasing."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "When to use it",
+          "q": "<p>Which question is a typical monotonic stack problem?</p>",
+          "opts": [
+            "Find two numbers that add to a target",
+            "For each day, how many days until a warmer day?",
+            "Is this string a palindrome?",
+            "Count the paths in a grid"
+          ],
+          "ans": 1,
+          "why": [
+            "\"Next greater / next smaller / how far until something bigger\" is the signal.",
+            "It also appears in \"largest rectangle in a histogram\" and \"trapping rain water\"."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>nextGreater(nums)</code>. For each item, return the <b>next bigger value to its right</b>, or <code>-1</code> if there is none. It must be O(n).</p>",
+        "examples": [
+          "nextGreater([2, 1, 2, 4, 3])  // [4, 2, 4, -1, -1]",
+          "nextGreater([5, 4, 3])  // [-1, -1, -1]"
+        ],
+        "hint": "<p>Keep a stack of indexes whose answer is not known yet. For each <code>i</code>, while the item at the top is smaller than <code>nums[i]</code>, pop it and set its answer. Then push <code>i</code>.</p>",
+        "fn": "nextGreater",
+        "starter": "function nextGreater(nums) {\n  // your code\n}",
+        "solution": "function nextGreater(nums) {\n  const res = new Array(nums.length).fill(-1)\n  const st = []\n  for (let i = 0; i < nums.length; i++) {\n    while (st.length && nums[st[st.length - 1]] < nums[i]) {\n      res[st.pop()] = nums[i]\n    }\n    st.push(i)\n  }\n  return res\n}",
+        "checks": [
+          {
+            "t": "the lesson example",
+            "verify": "assert(JSON.stringify(nextGreater([2, 1, 2, 4, 3])) === \"[4,2,4,-1,-1]\", \"expected [4,2,4,-1,-1]\")"
+          },
+          {
+            "t": "a decreasing array",
+            "verify": "assert(JSON.stringify(nextGreater([5, 4, 3])) === \"[-1,-1,-1]\", \"expected all -1\")"
+          },
+          {
+            "t": "an increasing array",
+            "verify": "assert(JSON.stringify(nextGreater([1, 2, 3])) === \"[2,3,-1]\", \"expected [2,3,-1]\")"
+          },
+          {
+            "t": "equal values are not \"greater\"",
+            "verify": "assert(JSON.stringify(nextGreater([3, 3, 5])) === \"[5,5,-1]\", \"expected [5,5,-1]\")"
+          },
+          {
+            "t": "empty array and one item, then a big input",
+            "verify": "assert(JSON.stringify(nextGreater([])) === \"[]\" && JSON.stringify(nextGreater([9])) === \"[-1]\", \"edge cases\"); const big = Array.from({ length: 100000 }, (_, i) => 100000 - i); const t0 = Date.now(); nextGreater(big); assert(Date.now() - t0 < 200, \"too slow, it must be O(n)\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Keep a stack of items still waiting for an answer. A new item <b>pops everything smaller</b> and becomes their answer. Each index is pushed and popped once: <b>O(n)</b>.",
+        "mistakes": [
+          "Storing values when the answer needs a distance (store indexes).",
+          "Using <code>&lt;=</code> when equal values should not count as \"greater\".",
+          "Forgetting that items left on the stack have no answer (use the default).",
+          "Calling the loop O(n²) or writing a nested scan instead."
+        ]
+      }
+    }
+  ],
+  "flags": [
+    "prefix-sum: the subarray-sum-k lesson code is only a predict-output; the full problem is P02.",
+    "binary-search-2: the dry-run table is traced by hand (concept dry runs are not machine-run). The days() values for 10, 7 and 5 are machine-checked, the value for 6 is not.",
+    "monotonic-stack: the dry-run table is traced by hand. Both predict-output questions are machine-checked."
+  ]
+}

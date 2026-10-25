@@ -1,0 +1,1211 @@
+{
+  "items": [
+    {
+      "id": "linear-search",
+      "prereqs": [
+        "arrays",
+        "big-o"
+      ],
+      "dryRun": {
+        "title": "Find 7 in [4, 9, 7, 2]",
+        "columns": [
+          "i",
+          "value",
+          "equals 7?",
+          "what we do"
+        ],
+        "rows": [
+          [
+            "0",
+            "4",
+            "no",
+            "move on"
+          ],
+          [
+            "1",
+            "9",
+            "no",
+            "move on"
+          ],
+          [
+            "2",
+            "7",
+            "yes",
+            "return 2 and stop"
+          ],
+          [
+            "3",
+            "2",
+            "-",
+            "never looked at"
+          ]
+        ],
+        "hit": 2,
+        "note": "The scan <b>stops at the first match</b>. In the worst case (target is last, or missing) it looks at all n items: O(n)."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>console.log([4, 9, 7, 2].indexOf(7))</code></pre>",
+          "opts": [
+            "<code>2</code>",
+            "<code>3</code>",
+            "<code>7</code>",
+            "<code>-1</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "<code>indexOf</code> is a linear search. It returns the <b>position</b> of the first match, not the value.",
+            "The value 7 sits at index 2."
+          ],
+          "exec": "console.log([4, 9, 7, 2].indexOf(7))"
+        },
+        {
+          "tag": "Not found",
+          "q": "<pre><code>console.log([1, 2, 3].indexOf(5))</code></pre>",
+          "opts": [
+            "<code>0</code>",
+            "<code>-1</code>",
+            "<code>undefined</code>",
+            "<code>null</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "When nothing matches, <code>indexOf</code> returns <b>-1</b>. Index 0 is a real position, so it cannot mean \"missing\".",
+            "Your own search function should follow the same rule."
+          ],
+          "exec": "console.log([1, 2, 3].indexOf(5))"
+        },
+        {
+          "tag": "Edge case",
+          "q": "<pre><code>console.log([NaN].indexOf(NaN), [NaN].includes(NaN))</code></pre>",
+          "opts": [
+            "<code>-1 true</code>",
+            "<code>0 true</code>",
+            "<code>-1 false</code>",
+            "<code>0 false</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "<code>indexOf</code> compares with <code>===</code>, and <code>NaN === NaN</code> is false. So it never finds NaN.",
+            "<code>includes</code> uses \"same value zero\", which treats NaN as equal to itself."
+          ],
+          "exec": "console.log([NaN].indexOf(NaN), [NaN].includes(NaN))"
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>What is the worst-case time of a linear search over n unsorted items?</p>",
+          "opts": [
+            "<code>O(1)</code>",
+            "<code>O(log n)</code>",
+            "<code>O(n)</code>",
+            "<code>O(n²)</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "If the target is last or missing, every item is checked once: O(n).",
+            "On unsorted data nothing faster is possible, because any unchecked item could be the target."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Pick the right tool",
+          "q": "<p>Which case is a good fit for a plain linear scan?</p>",
+          "opts": [
+            "Searching a sorted array of 10 million items thousands of times",
+            "Searching a small or unsorted array once",
+            "Looking up users by id inside a loop of 100,000 calls",
+            "Searching a sorted array for the first value that is at least x"
+          ],
+          "ans": 1,
+          "why": [
+            "One search on unsorted or tiny data is cheap, and sorting first would cost more than the scan.",
+            "For many searches, build a hash map (O(1) each) or keep the data sorted and use binary search."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>findLast(nums, target)</code>. Return the <b>last</b> index where <code>target</code> appears, or <code>-1</code> if it is not there. Do not use <code>lastIndexOf</code>.</p>",
+        "examples": [
+          "findLast([1, 2, 3, 2], 2)  // 3",
+          "findLast([1, 2, 3], 9)  // -1"
+        ],
+        "hint": "<p>Walk from the end, <code>i = nums.length - 1</code> down to 0, and return the first index that matches.</p>",
+        "fn": "findLast",
+        "starter": "function findLast(nums, target) {\n  // your code\n}",
+        "solution": "function findLast(nums, target) {\n  for (let i = nums.length - 1; i >= 0; i--) {\n    if (nums[i] === target) return i\n  }\n  return -1\n}",
+        "checks": [
+          {
+            "t": "target appears twice",
+            "verify": "assert(findLast([1, 2, 3, 2], 2) === 3, \"expected 3\")"
+          },
+          {
+            "t": "target appears once",
+            "verify": "assert(findLast([5, 6, 7], 5) === 0, \"expected 0\")"
+          },
+          {
+            "t": "target is missing",
+            "verify": "assert(findLast([1, 2, 3], 9) === -1, \"expected -1\")"
+          },
+          {
+            "t": "empty array",
+            "verify": "assert(findLast([], 1) === -1, \"expected -1\")"
+          },
+          {
+            "t": "all items are equal",
+            "verify": "assert(findLast([4, 4, 4, 4], 4) === 3, \"expected 3\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Linear search checks items one by one: <b>O(n) time, O(1) space</b>. It is the right answer for unsorted or tiny data, and the baseline that faster methods must beat.",
+        "mistakes": [
+          "Returning 0 for \"not found\" (0 is a real index). Use -1.",
+          "Using <code>indexOf</code> to look for NaN.",
+          "Scanning again and again inside a loop, which quietly makes the whole solution O(n²).",
+          "Forgetting that the scan can stop at the first match."
+        ]
+      }
+    },
+    {
+      "id": "binary-search",
+      "prereqs": [
+        "linear-search",
+        "big-o"
+      ],
+      "dryRun": {
+        "title": "Find 38 in [2, 5, 8, 12, 16, 23, 38, 56]",
+        "columns": [
+          "lo",
+          "hi",
+          "mid",
+          "arr[mid]",
+          "decision"
+        ],
+        "rows": [
+          [
+            "0",
+            "7",
+            "3",
+            "12",
+            "12 is less than 38, so lo = 4"
+          ],
+          [
+            "4",
+            "7",
+            "5",
+            "23",
+            "23 is less than 38, so lo = 6"
+          ],
+          [
+            "6",
+            "7",
+            "6",
+            "38",
+            "found: return 6"
+          ]
+        ],
+        "hit": 2,
+        "note": "Eight items took three looks. Each look throws away <b>half</b> of what is left, so n items need about log₂(n) looks."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>let lo = 0, hi = 7\nconst mid = lo + Math.floor((hi - lo) / 2)\nconsole.log(mid)</code></pre>",
+          "opts": [
+            "<code>3</code>",
+            "<code>4</code>",
+            "<code>3.5</code>",
+            "<code>2</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "The middle of 0 and 7 is 3.5, and <code>Math.floor</code> rounds it down to 3.",
+            "Writing <code>lo + (hi - lo) / 2</code> instead of <code>(lo + hi) / 2</code> is a habit from languages where lo + hi can overflow."
+          ],
+          "exec": "let lo = 0, hi = 7\nconst mid = lo + Math.floor((hi - lo) / 2)\nconsole.log(mid)"
+        },
+        {
+          "tag": "Spot the bug",
+          "q": "<pre><code>function bs(a, t) {\n  let lo = 0, hi = a.length - 1\n  while (lo &lt; hi) {\n    const m = (lo + hi) &gt;&gt; 1\n    if (a[m] === t) return m\n    if (a[m] &lt; t) lo = m + 1\n    else hi = m - 1\n  }\n  return -1\n}\nconsole.log(bs([5], 5))</code></pre>",
+          "opts": [
+            "<code>0</code>",
+            "<code>-1</code>",
+            "<code>undefined</code>",
+            "<code>5</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "With one item, <code>lo</code> and <code>hi</code> are both 0, so <code>lo &lt; hi</code> is false and the loop never runs. The item is never checked.",
+            "Fix: use <code>lo &lt;= hi</code>. When the two meet, there is still one candidate left to check."
+          ],
+          "exec": "function bs(a, t) {\n  let lo = 0, hi = a.length - 1\n  while (lo < hi) {\n    const m = (lo + hi) >> 1\n    if (a[m] === t) return m\n    if (a[m] < t) lo = m + 1\n    else hi = m - 1\n  }\n  return -1\n}\nconsole.log(bs([5], 5))"
+        },
+        {
+          "tag": "How fast?",
+          "q": "<pre><code>console.log(Math.ceil(Math.log2(1000000)))</code></pre><p>Binary search on 1,000,000 sorted items needs at most about how many looks?</p>",
+          "opts": [
+            "<code>20</code>",
+            "<code>1000</code>",
+            "<code>500000</code>",
+            "<code>1000000</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "Halving 1,000,000 down to 1 takes about 20 steps, because 2²⁰ is just over a million.",
+            "A linear scan could need a million looks. That gap is the whole point."
+          ],
+          "exec": "console.log(Math.ceil(Math.log2(1000000)))"
+        },
+        {
+          "tag": "Precondition",
+          "q": "<p>What must be true about the data before binary search works?</p>",
+          "opts": [
+            "It must have an even length",
+            "It must be sorted (or otherwise monotonic)",
+            "It must have no duplicates",
+            "It must contain only numbers"
+          ],
+          "ans": 1,
+          "why": [
+            "Discarding half is only safe when the order tells you which half cannot hold the target.",
+            "Duplicates and odd lengths are fine. On unsorted data the answer is simply wrong."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Infinite loop",
+          "q": "<p>Inside <code>while (lo &lt;= hi)</code> you write <code>lo = mid</code> instead of <code>lo = mid + 1</code>. When can the loop run forever?</p>",
+          "opts": [
+            "When lo equals mid and the target is bigger than arr[mid]",
+            "Never, the two are the same",
+            "Only when the array is empty",
+            "Only when the target is found"
+          ],
+          "ans": 0,
+          "why": [
+            "If <code>lo === mid</code> (for example lo = 4, hi = 5, so mid = 4) then <code>lo = mid</code> changes nothing, and the same range repeats forever.",
+            "You already checked <code>mid</code>, so always step <b>past</b> it: <code>lo = mid + 1</code> or <code>hi = mid - 1</code>."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>binarySearch(nums, target)</code>. <code>nums</code> is sorted in increasing order. Return the index of <code>target</code>, or <code>-1</code>. It must run in O(log n).</p>",
+        "examples": [
+          "binarySearch([-1, 0, 3, 5, 9, 12], 9)  // 4",
+          "binarySearch([-1, 0, 3, 5, 9, 12], 2)  // -1"
+        ],
+        "hint": "<p>Keep <code>lo</code> and <code>hi</code> as the inclusive range that can still hold the target. Loop while <code>lo &lt;= hi</code>, look at <code>mid</code>, and move one boundary <b>past</b> mid.</p>",
+        "fn": "binarySearch",
+        "starter": "function binarySearch(nums, target) {\n  // your code\n}",
+        "solution": "function binarySearch(nums, target) {\n  let lo = 0\n  let hi = nums.length - 1\n  while (lo <= hi) {\n    const mid = lo + Math.floor((hi - lo) / 2)\n    if (nums[mid] === target) return mid\n    if (nums[mid] < target) lo = mid + 1\n    else hi = mid - 1\n  }\n  return -1\n}",
+        "checks": [
+          {
+            "t": "target in the middle",
+            "verify": "assert(binarySearch([-1, 0, 3, 5, 9, 12], 9) === 4, \"expected 4\")"
+          },
+          {
+            "t": "target not present",
+            "verify": "assert(binarySearch([-1, 0, 3, 5, 9, 12], 2) === -1, \"expected -1\")"
+          },
+          {
+            "t": "first and last items",
+            "verify": "assert(binarySearch([1, 3, 5, 7], 1) === 0 && binarySearch([1, 3, 5, 7], 7) === 3, \"first or last item missed\")"
+          },
+          {
+            "t": "one item and empty array",
+            "verify": "assert(binarySearch([5], 5) === 0 && binarySearch([5], 4) === -1 && binarySearch([], 1) === -1, \"edge cases\")"
+          },
+          {
+            "t": "a big array stays fast",
+            "verify": "const big = Array.from({ length: 1000000 }, (_, i) => i * 2); const t0 = Date.now(); const r = binarySearch(big, 777778); assert(r === 388889 && Date.now() - t0 < 50, \"wrong or too slow, did you scan the array?\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "On sorted data, look at the middle and <b>throw away half</b> each time: O(log n) time, O(1) space. Keep an inclusive range and always step past mid.",
+        "mistakes": [
+          "Using <code>lo &lt; hi</code> and skipping the last candidate.",
+          "Setting <code>lo = mid</code> or <code>hi = mid</code> and looping forever.",
+          "Running it on unsorted data.",
+          "Mixing the two styles: an inclusive <code>hi = n - 1</code> with an exclusive loop condition."
+        ]
+      }
+    },
+    {
+      "id": "search-range",
+      "prereqs": [
+        "binary-search",
+        "linear-search"
+      ],
+      "dryRun": {
+        "title": "First index with a value ≥ 5 in [1, 3, 5, 5, 5, 8, 9]  (hi starts at n = 7)",
+        "columns": [
+          "lo",
+          "hi",
+          "mid",
+          "arr[mid] ≥ 5 ?",
+          "next"
+        ],
+        "rows": [
+          [
+            "0",
+            "7",
+            "3",
+            "yes (5)",
+            "hi = 3, mid could be the answer"
+          ],
+          [
+            "0",
+            "3",
+            "1",
+            "no (3)",
+            "lo = 2"
+          ],
+          [
+            "2",
+            "3",
+            "2",
+            "yes (5)",
+            "hi = 2"
+          ],
+          [
+            "2",
+            "2",
+            "-",
+            "lo equals hi",
+            "stop, the answer is 2"
+          ]
+        ],
+        "hit": 3,
+        "note": "The array looks like <b>F F T T T T T</b>. We are not looking for a value, we are looking for the <b>first T</b>. When the test is true, <code>hi = mid</code> (keep mid); when false, <code>lo = mid + 1</code>."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>function lb(a, t) {\n  let lo = 0, hi = a.length\n  while (lo &lt; hi) {\n    const m = (lo + hi) &gt;&gt; 1\n    if (a[m] &gt;= t) hi = m\n    else lo = m + 1\n  }\n  return lo\n}\nconst a = [1, 3, 5, 5, 5, 8, 9]\nconsole.log(lb(a, 5), lb(a, 6), lb(a, 10))</code></pre>",
+          "opts": [
+            "<code>2 5 7</code>",
+            "<code>4 5 7</code>",
+            "<code>2 5 6</code>",
+            "<code>2 4 7</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "<code>lb(a, 5)</code> is the <b>first</b> 5, at index 2. <code>lb(a, 6)</code> is where 6 would go: before the 8, at index 5.",
+            "Nothing is ≥ 10, so the answer is <code>a.length</code> = 7, one past the end."
+          ],
+          "exec": "function lb(a, t) {\n  let lo = 0, hi = a.length\n  while (lo < hi) {\n    const m = (lo + hi) >> 1\n    if (a[m] >= t) hi = m\n    else lo = m + 1\n  }\n  return lo\n}\nconst a = [1, 3, 5, 5, 5, 8, 9]\nconsole.log(lb(a, 5), lb(a, 6), lb(a, 10))"
+        },
+        {
+          "tag": "Not found",
+          "q": "<p>In the \"first index ≥ target\" search, no value is ≥ the target. What should it return?</p>",
+          "opts": [
+            "<code>-1</code>",
+            "<code>nums.length</code>",
+            "<code>0</code>",
+            "<code>undefined</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "The answer is the <b>insertion position</b>, and a value bigger than everything belongs at the end: index <code>nums.length</code>.",
+            "This is why <code>hi</code> starts at <code>n</code> and not <code>n - 1</code>."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Count occurrences",
+          "q": "<p>The array is sorted: <code>[1, 3, 5, 5, 5, 8, 9]</code>. How do you count the 5s in O(log n)?</p>",
+          "opts": [
+            "Scan from the first 5 to the last 5",
+            "Binary search for any 5 and double it",
+            "First index with a value &gt; 5, minus first index with a value ≥ 5",
+            "Sort the array again"
+          ],
+          "ans": 2,
+          "why": [
+            "The first index with a value &gt; 5 is 5, and the first with a value ≥ 5 is 2. The difference, 3, is the count.",
+            "Two boundary searches give the whole run of equal values without walking it."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Answer space",
+          "q": "<pre><code>const piles = [3, 6, 7, 11]\nconst hours = (k) =&gt; piles.reduce((s, p) =&gt; s + Math.ceil(p / k), 0)\nconsole.log(hours(4), hours(3))</code></pre><p>This is \"minimum eating speed\". What do these two numbers tell you?</p>",
+          "opts": [
+            "<code>8 10</code>",
+            "<code>7 9</code>",
+            "<code>8 8</code>",
+            "<code>10 8</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "At speed 4 it takes 1 + 2 + 2 + 3 = 8 hours. At speed 3 it takes 1 + 2 + 3 + 4 = 10 hours.",
+            "A faster speed never takes longer, so \"can finish in h hours\" goes F F F T T T. That is a boundary, and we can binary search it even though no array exists."
+          ],
+          "exec": "const piles = [3, 6, 7, 11]\nconst hours = (k) => piles.reduce((s, p) => s + Math.ceil(p / k), 0)\nconsole.log(hours(4), hours(3))"
+        },
+        {
+          "tag": "Template",
+          "q": "<p>You are finding the first index where the test is true. The test is true at <code>mid</code>. What do you do?</p>",
+          "opts": [
+            "<code>hi = mid</code>",
+            "<code>hi = mid - 1</code>",
+            "<code>lo = mid + 1</code>",
+            "<code>return mid</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "<code>mid</code> passes, but an earlier index might pass too. So keep <code>mid</code> inside the range: <code>hi = mid</code>.",
+            "If the test is false, <code>mid</code> cannot be the answer, so <code>lo = mid + 1</code>."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>lowerBound(nums, target)</code>. <code>nums</code> is sorted. Return the <b>first</b> index <code>i</code> with <code>nums[i] &gt;= target</code>, or <code>nums.length</code> if there is none.</p>",
+        "examples": [
+          "lowerBound([1, 3, 5, 5, 5, 8], 5)  // 2",
+          "lowerBound([1, 3, 5, 5, 5, 8], 6)  // 5",
+          "lowerBound([1, 3], 10)  // 2"
+        ],
+        "hint": "<p>Start with <code>lo = 0</code>, <code>hi = nums.length</code>. While <code>lo &lt; hi</code>: if <code>nums[mid] &gt;= target</code> then <code>hi = mid</code>, else <code>lo = mid + 1</code>. Return <code>lo</code>.</p>",
+        "fn": "lowerBound",
+        "starter": "function lowerBound(nums, target) {\n  // your code\n}",
+        "solution": "function lowerBound(nums, target) {\n  let lo = 0\n  let hi = nums.length\n  while (lo < hi) {\n    const mid = lo + Math.floor((hi - lo) / 2)\n    if (nums[mid] >= target) hi = mid\n    else lo = mid + 1\n  }\n  return lo\n}",
+        "checks": [
+          {
+            "t": "the first of several equal values",
+            "verify": "assert(lowerBound([1, 3, 5, 5, 5, 8], 5) === 2, \"expected 2\")"
+          },
+          {
+            "t": "a value that is missing",
+            "verify": "assert(lowerBound([1, 3, 5, 5, 5, 8], 6) === 5, \"expected 5\")"
+          },
+          {
+            "t": "bigger than everything",
+            "verify": "assert(lowerBound([1, 3], 10) === 2, \"expected 2 (the length)\")"
+          },
+          {
+            "t": "smaller than everything",
+            "verify": "assert(lowerBound([4, 6], 1) === 0, \"expected 0\")"
+          },
+          {
+            "t": "empty array",
+            "verify": "assert(lowerBound([], 3) === 0, \"expected 0\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Picture the data as <b>F F F T T T</b> and binary search for the first T. If the test is true use <code>hi = mid</code>, otherwise <code>lo = mid + 1</code>. The same idea works on an answer range, not only on arrays.",
+        "mistakes": [
+          "Using <code>hi = mid - 1</code> when the test is true, which can skip the answer.",
+          "Starting <code>hi</code> at <code>n - 1</code>, so \"not found\" cannot return <code>n</code>.",
+          "Returning -1 instead of the insertion position.",
+          "Using a test that is not monotonic (it must flip only once)."
+        ]
+      }
+    },
+    {
+      "id": "insertion-sort",
+      "prereqs": [
+        "arrays",
+        "big-o"
+      ],
+      "dryRun": {
+        "title": "Insertion sort on [5, 2, 4, 1]",
+        "columns": [
+          "i",
+          "key",
+          "items shifted right",
+          "array after"
+        ],
+        "rows": [
+          [
+            "1",
+            "2",
+            "5",
+            "2 5 4 1"
+          ],
+          [
+            "2",
+            "4",
+            "5",
+            "2 4 5 1"
+          ],
+          [
+            "3",
+            "1",
+            "5, 4, 2",
+            "1 2 4 5"
+          ]
+        ],
+        "hit": 2,
+        "note": "The part to the left of <code>i</code> is <b>always sorted</b>. Each round takes the next item (the key) and slides it left to its place. A nearly sorted array needs few shifts."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const a = [3, 1, 2]\nlet shifts = 0\nfor (let i = 1; i &lt; a.length; i++) {\n  const key = a[i]\n  let j = i - 1\n  while (j &gt;= 0 &amp;&amp; a[j] &gt; key) {\n    a[j + 1] = a[j]\n    j--\n    shifts++\n  }\n  a[j + 1] = key\n}\nconsole.log(a.join(\",\"), shifts)</code></pre>",
+          "opts": [
+            "<code>1,2,3 2</code>",
+            "<code>1,2,3 3</code>",
+            "<code>1,2,3 1</code>",
+            "<code>3,1,2 0</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "Key 1 shifts the 3 once: <code>[1, 3, 2]</code>. Key 2 shifts the 3 once: <code>[1, 2, 3]</code>. That is 2 shifts.",
+            "Count the shifts and you know the work. Fewer shifts means a faster run."
+          ],
+          "exec": "const a = [3, 1, 2]\nlet shifts = 0\nfor (let i = 1; i < a.length; i++) {\n  const key = a[i]\n  let j = i - 1\n  while (j >= 0 && a[j] > key) {\n    a[j + 1] = a[j]\n    j--\n    shifts++\n  }\n  a[j + 1] = key\n}\nconsole.log(a.join(\",\"), shifts)"
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>What is the time of insertion sort on an array that is <b>already sorted</b>?</p>",
+          "opts": [
+            "<code>O(n)</code>",
+            "<code>O(n log n)</code>",
+            "<code>O(n²)</code>",
+            "<code>O(1)</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "Each key is compared once with its left neighbour and stays. That is n - 1 cheap steps.",
+            "The worst case (reverse order) is O(n²), because every key slides all the way to the front."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Stability",
+          "q": "<p>In the shifting loop you change <code>a[j] &gt; key</code> to <code>a[j] &gt;= key</code>. What happens?</p>",
+          "opts": [
+            "It stops being stable",
+            "It no longer sorts",
+            "It becomes O(n)",
+            "It crashes"
+          ],
+          "ans": 0,
+          "why": [
+            "With <code>&gt;=</code>, a key slides past an <b>equal</b> item, so equal items swap their original order.",
+            "Stable means equal items keep their order. It matters when you sort objects by one field and want the earlier order kept for ties."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "JS gotcha",
+          "q": "<pre><code>console.log([10, 9, 1].sort().join(\",\"))</code></pre>",
+          "opts": [
+            "<code>1,9,10</code>",
+            "<code>1,10,9</code>",
+            "<code>10,9,1</code>",
+            "<code>9,10,1</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "Without a compare function, <code>sort</code> turns items into <b>strings</b> and compares those. \"10\" comes before \"9\".",
+            "Always pass one: <code>nums.sort((a, b) =&gt; a - b)</code>."
+          ],
+          "exec": "console.log([10, 9, 1].sort().join(\",\"))"
+        },
+        {
+          "tag": "When to use it",
+          "q": "<p>When is insertion sort a good choice?</p>",
+          "opts": [
+            "A huge random array",
+            "A tiny or nearly sorted array",
+            "An array that must never be changed",
+            "A linked list of a million items"
+          ],
+          "ans": 1,
+          "why": [
+            "It has almost no overhead, and it is O(n) when little is out of place. Real sort routines use it for small chunks.",
+            "On a huge random array its O(n²) loses to O(n log n) sorts."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>insertionSort(nums)</code>. Return a <b>new</b> sorted array in increasing order using insertion sort. The input must stay unchanged.</p>",
+        "examples": [
+          "insertionSort([5, 2, 4, 1])  // [1, 2, 4, 5]",
+          "insertionSort([3, 3, 1])  // [1, 3, 3]"
+        ],
+        "hint": "<p>Copy the array. For each <code>i</code> from 1: save <code>key = a[i]</code>, then while the left neighbour is bigger, shift it right. Finally drop the key into the gap.</p>",
+        "fn": "insertionSort",
+        "starter": "function insertionSort(nums) {\n  // your code\n}",
+        "solution": "function insertionSort(nums) {\n  const a = [...nums]\n  for (let i = 1; i < a.length; i++) {\n    const key = a[i]\n    let j = i - 1\n    while (j >= 0 && a[j] > key) {\n      a[j + 1] = a[j]\n      j--\n    }\n    a[j + 1] = key\n  }\n  return a\n}",
+        "checks": [
+          {
+            "t": "a small unsorted array",
+            "verify": "assert(JSON.stringify(insertionSort([5, 2, 4, 1])) === \"[1,2,4,5]\", \"expected [1,2,4,5]\")"
+          },
+          {
+            "t": "duplicates",
+            "verify": "assert(JSON.stringify(insertionSort([3, 3, 1, 2, 2])) === \"[1,2,2,3,3]\", \"expected [1,2,2,3,3]\")"
+          },
+          {
+            "t": "already sorted and reversed",
+            "verify": "assert(JSON.stringify(insertionSort([1, 2, 3])) === \"[1,2,3]\" && JSON.stringify(insertionSort([3, 2, 1])) === \"[1,2,3]\", \"sorted or reversed input\")"
+          },
+          {
+            "t": "does not change the input",
+            "verify": "const x = [3, 1, 2]; insertionSort(x); assert(JSON.stringify(x) === \"[3,1,2]\", \"the input was changed\")"
+          },
+          {
+            "t": "negative numbers, one item, empty",
+            "verify": "assert(JSON.stringify(insertionSort([-1, -5, 2, 0])) === \"[-5,-1,0,2]\" && JSON.stringify(insertionSort([7])) === \"[7]\" && JSON.stringify(insertionSort([])) === \"[]\", \"edge cases\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Keep a sorted prefix and <b>slide each new item left</b> into place. O(n²) worst case, <b>O(n) when nearly sorted</b>, O(1) space, and stable.",
+        "mistakes": [
+          "Using <code>&gt;=</code> in the shift test and losing stability.",
+          "Writing to <code>a[j]</code> instead of <code>a[j + 1]</code> after the loop.",
+          "Forgetting to save the key before shifting, so it gets overwritten.",
+          "Calling <code>sort()</code> on numbers without a compare function."
+        ]
+      }
+    },
+    {
+      "id": "partition-algos",
+      "prereqs": [
+        "insertion-sort",
+        "binary-search"
+      ],
+      "dryRun": {
+        "title": "Partition [3, 8, 2, 5, 1, 4] around the last item, pivot = 4",
+        "columns": [
+          "j",
+          "a[j]",
+          "smaller than 4?",
+          "next free slot",
+          "array"
+        ],
+        "rows": [
+          [
+            "0",
+            "3",
+            "yes: swap into slot 0",
+            "1",
+            "3 8 2 5 1 4"
+          ],
+          [
+            "1",
+            "8",
+            "no",
+            "1",
+            "3 8 2 5 1 4"
+          ],
+          [
+            "2",
+            "2",
+            "yes: swap into slot 1",
+            "2",
+            "3 2 8 5 1 4"
+          ],
+          [
+            "3",
+            "5",
+            "no",
+            "2",
+            "3 2 8 5 1 4"
+          ],
+          [
+            "4",
+            "1",
+            "yes: swap into slot 2",
+            "3",
+            "3 2 1 5 8 4"
+          ],
+          [
+            "end",
+            "-",
+            "put the pivot in slot 3",
+            "-",
+            "3 2 1 4 8 5"
+          ]
+        ],
+        "hit": 5,
+        "note": "After one pass the pivot sits at index 3, its <b>final</b> sorted position. Everything left is smaller, everything right is not. Quick sort now repeats this on each side."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const a = [3, 8, 2, 5, 1, 4]\nconst last = a.length - 1\nlet i = 0\nfor (let j = 0; j &lt; last; j++) {\n  if (a[j] &lt; a[last]) {\n    ;[a[i], a[j]] = [a[j], a[i]]\n    i++\n  }\n}\n;[a[i], a[last]] = [a[last], a[i]]\nconsole.log(i, a.join(\",\"))</code></pre>",
+          "opts": [
+            "<code>3 3,2,1,4,8,5</code>",
+            "<code>3 3,8,2,5,1,4</code>",
+            "<code>4 3,2,1,4,8,5</code>",
+            "<code>3 1,2,3,4,5,8</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "Three items (3, 2, 1) are smaller than 4, so the pivot lands at index 3. The big items 8 and 5 end up on the right.",
+            "Only the pivot is guaranteed to be in its final place. The two sides are <b>not</b> sorted yet."
+          ],
+          "exec": "const a = [3, 8, 2, 5, 1, 4]\nconst last = a.length - 1\nlet i = 0\nfor (let j = 0; j < last; j++) {\n  if (a[j] < a[last]) {\n    ;[a[i], a[j]] = [a[j], a[i]]\n    i++\n  }\n}\n;[a[i], a[last]] = [a[last], a[i]]\nconsole.log(i, a.join(\",\"))"
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>Always taking the last item as the pivot, what input makes quick sort slow (O(n²))?</p>",
+          "opts": [
+            "A random array",
+            "An array of all different values",
+            "An array that is already sorted",
+            "A very short array"
+          ],
+          "ans": 2,
+          "why": [
+            "On sorted input the last item is the biggest, so every split is \"everything\" and \"nothing\". The depth becomes n instead of log n.",
+            "Fix: pick a random pivot, or the median of three."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Average case",
+          "q": "<p>Why is quick sort O(n log n) on average?</p>",
+          "opts": [
+            "Each partition pass is O(1)",
+            "A typical pivot splits the array into two similar halves, so there are about log n levels of O(n) work",
+            "It sorts the array before it starts",
+            "It never compares two items"
+          ],
+          "ans": 1,
+          "why": [
+            "Each level of splitting costs O(n) in total, and balanced splits give about log n levels.",
+            "The risk is only an unlucky pivot, which is rare when it is chosen at random."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "The pivot",
+          "q": "<p>After one partition, what is guaranteed about the pivot?</p>",
+          "opts": [
+            "It is the smallest item",
+            "It sits in its final sorted position",
+            "Both sides are fully sorted",
+            "It is in the middle of the array"
+          ],
+          "ans": 1,
+          "why": [
+            "Everything smaller is to its left and everything bigger to its right, so no later step can move it.",
+            "The sides still need their own sorting. That is the recursion."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Compare",
+          "q": "<p>Compared with merge sort, quick sort on an array:</p>",
+          "opts": [
+            "Sorts in place with only O(log n) stack, but has an O(n²) worst case",
+            "Always runs in O(n log n) and needs O(n) extra space",
+            "Is stable and needs no recursion",
+            "Only works on numbers"
+          ],
+          "ans": 0,
+          "why": [
+            "Merge sort does its work while <b>joining</b> and needs a helper array. Quick sort does its work while <b>splitting</b> and swaps in place.",
+            "Quick sort is usually faster in practice because it has low overhead, but it is not stable."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>partition(nums)</code>. Use the <b>last</b> item as the pivot and rearrange <code>nums</code> <b>in place</b> so smaller items are on its left and the rest on its right. Return the index where the pivot ends up.</p>",
+        "examples": [
+          "const a = [3, 8, 2, 5, 1, 4]; partition(a)  // 3, and a is now like [3, 2, 1, 4, 8, 5]",
+          "partition([7])  // 0"
+        ],
+        "hint": "<p>Keep <code>i</code> as the next free slot for a small item. For <code>j</code> from 0 to <code>n - 2</code>, swap <code>a[j]</code> into slot <code>i</code> when it is smaller than the pivot. At the end swap the pivot into slot <code>i</code>.</p>",
+        "fn": "partition",
+        "starter": "function partition(nums) {\n  // your code\n}",
+        "solution": "function partition(nums) {\n  const last = nums.length - 1\n  const pivot = nums[last]\n  let i = 0\n  for (let j = 0; j < last; j++) {\n    if (nums[j] < pivot) {\n      ;[nums[i], nums[j]] = [nums[j], nums[i]]\n      i++\n    }\n  }\n  ;[nums[i], nums[last]] = [nums[last], nums[i]]\n  return i\n}",
+        "checks": [
+          {
+            "t": "the pivot lands in its final place",
+            "verify": "const a = [3, 8, 2, 5, 1, 4]; const p = partition(a); assert(p === 3 && a[3] === 4, \"expected the pivot 4 at index 3, got index \" + p)"
+          },
+          {
+            "t": "smaller on the left, the rest on the right",
+            "verify": "const a = [9, 4, 7, 1, 8, 2, 6, 5, 3, 0, 5]; const pv = a[a.length - 1]; const p = partition(a); assert(a[p] === pv, \"the pivot is not at the returned index\"); for (let k = 0; k < p; k++) assert(a[k] < pv, \"left side has a big item at \" + k); for (let k = p + 1; k < a.length; k++) assert(a[k] >= pv, \"right side has a small item at \" + k)"
+          },
+          {
+            "t": "no item is lost",
+            "verify": "const a = [5, 1, 5, 2, 9, 3]; partition(a); assert(JSON.stringify([...a].sort((x, y) => x - y)) === \"[1,2,3,5,5,9]\", \"items were lost or changed\")"
+          },
+          {
+            "t": "all equal and one item",
+            "verify": "const e = [2, 2, 2]; const p = partition(e); assert(e[p] === 2 && partition([7]) === 0, \"all-equal or single item\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Partition puts the pivot in its <b>final spot</b> with smaller items on the left. Quick sort repeats it on both sides: O(n log n) average, O(n²) with bad pivots, in place.",
+        "mistakes": [
+          "Forgetting the last swap that puts the pivot into place.",
+          "Looping <code>j</code> up to the pivot index, so the pivot is compared with itself.",
+          "Always picking the last item on sorted input (use a random pivot).",
+          "Thinking both sides are already sorted after one pass."
+        ]
+      }
+    },
+    {
+      "id": "quick-select",
+      "prereqs": [
+        "partition-algos",
+        "binary-search"
+      ],
+      "dryRun": {
+        "title": "3rd smallest of [7, 2, 9, 4, 1]  (target index 2 in sorted order)",
+        "columns": [
+          "range",
+          "pivot",
+          "pivot lands at",
+          "target index 2 is..."
+        ],
+        "rows": [
+          [
+            "0..4",
+            "1",
+            "0",
+            "to the right, go there"
+          ],
+          [
+            "1..4",
+            "7",
+            "3",
+            "to the left, go there"
+          ],
+          [
+            "1..2",
+            "4",
+            "2",
+            "found: the answer is 4"
+          ]
+        ],
+        "hit": 2,
+        "note": "We only follow <b>one side</b> each time. The work is about n + n/2 + n/4 + ... = 2n, so O(n) on average, while a full sort is O(n log n)."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>function qs(a, k) {\n  let lo = 0, hi = a.length - 1\n  while (true) {\n    const p = a[hi]\n    let i = lo\n    for (let j = lo; j &lt; hi; j++) {\n      if (a[j] &lt; p) {\n        ;[a[i], a[j]] = [a[j], a[i]]\n        i++\n      }\n    }\n    ;[a[i], a[hi]] = [a[hi], a[i]]\n    if (i === k) return a[i]\n    if (i &lt; k) lo = i + 1\n    else hi = i - 1\n  }\n}\nconsole.log(qs([7, 2, 9, 4, 1], 2))</code></pre>",
+          "opts": [
+            "<code>4</code>",
+            "<code>2</code>",
+            "<code>7</code>",
+            "<code>9</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "Index 2 of the sorted array <code>[1, 2, 4, 7, 9]</code> is 4. The loop only partitions the side that holds index 2.",
+            "It never sorts the whole array, yet it finds the right value."
+          ],
+          "exec": "function qs(a, k) {\n  let lo = 0, hi = a.length - 1\n  while (true) {\n    const p = a[hi]\n    let i = lo\n    for (let j = lo; j < hi; j++) {\n      if (a[j] < p) {\n        ;[a[i], a[j]] = [a[j], a[i]]\n        i++\n      }\n    }\n    ;[a[i], a[hi]] = [a[hi], a[i]]\n    if (i === k) return a[i]\n    if (i < k) lo = i + 1\n    else hi = i - 1\n  }\n}\nconsole.log(qs([7, 2, 9, 4, 1], 2))"
+        },
+        {
+          "tag": "Index maths",
+          "q": "<p>You want the <b>k-th largest</b> item (k = 1 is the biggest) in an array of n items. Which index do you look for in sorted-ascending order?</p>",
+          "opts": [
+            "<code>n - k</code>",
+            "<code>k</code>",
+            "<code>k - 1</code>",
+            "<code>n - k + 1</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "With n = 5 and k = 2, the 2nd largest is at index 3 of the ascending array, and 5 - 2 = 3.",
+            "The largest (k = 1) is at index n - 1, the last one."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>What are the average and worst case times of quick select?</p>",
+          "opts": [
+            "O(n) average, O(n²) worst",
+            "O(log n) average, O(n) worst",
+            "O(n log n) always",
+            "O(n) always"
+          ],
+          "ans": 0,
+          "why": [
+            "Average: the range shrinks by about half each time, so the total is about 2n.",
+            "Worst: bad pivots shrink the range by one each time. A random pivot makes that very unlikely."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Why only one side?",
+          "q": "<p>After partitioning, the pivot is at index p and you want index k, with k greater than p. Why can you ignore the left side?</p>",
+          "opts": [
+            "Because it is empty",
+            "Every item there is smaller than the pivot, so the item at index k is not among them",
+            "Because the left side is already sorted",
+            "Because k counts from the right"
+          ],
+          "ans": 1,
+          "why": [
+            "The left side holds exactly the p smallest items, and k is past them. The answer must be on the right.",
+            "That \"throw away a side\" step is the same idea as binary search."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Pick the right tool",
+          "q": "<p>You need the median of one big array, once. Which is the best fit?</p>",
+          "opts": [
+            "Sort it, then read the middle",
+            "Quick select for the middle index",
+            "Binary search on the unsorted array",
+            "A hash map of counts"
+          ],
+          "ans": 1,
+          "why": [
+            "Quick select finds one rank in O(n) average. Sorting does more work than needed.",
+            "If you need many ranks, or the data keeps changing, a heap or a sorted structure is better."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>kthLargest(nums, k)</code>. Return the k-th largest value (k = 1 is the largest). Duplicates count separately. Do not change the input array. Aim for O(n) average using quick select.</p>",
+        "examples": [
+          "kthLargest([3, 2, 1, 5, 6, 4], 2)  // 5",
+          "kthLargest([3, 2, 3, 1, 2, 4, 5, 5, 6], 4)  // 4"
+        ],
+        "hint": "<p>Copy the array, set <code>target = n - k</code>, and loop: partition (with a random pivot swapped to the end), compare the pivot index with <code>target</code>, and keep only the side that holds it.</p>",
+        "fn": "kthLargest",
+        "starter": "function kthLargest(nums, k) {\n  // your code\n}",
+        "solution": "function kthLargest(nums, k) {\n  const a = [...nums]\n  const target = a.length - k\n  let lo = 0\n  let hi = a.length - 1\n  while (true) {\n    const r = lo + Math.floor(Math.random() * (hi - lo + 1))\n    ;[a[r], a[hi]] = [a[hi], a[r]]\n    const pivot = a[hi]\n    let i = lo\n    for (let j = lo; j < hi; j++) {\n      if (a[j] < pivot) {\n        ;[a[i], a[j]] = [a[j], a[i]]\n        i++\n      }\n    }\n    ;[a[i], a[hi]] = [a[hi], a[i]]\n    if (i === target) return a[i]\n    if (i < target) lo = i + 1\n    else hi = i - 1\n  }\n}",
+        "checks": [
+          {
+            "t": "second largest",
+            "verify": "assert(kthLargest([3, 2, 1, 5, 6, 4], 2) === 5, \"expected 5\")"
+          },
+          {
+            "t": "duplicates count separately",
+            "verify": "assert(kthLargest([3, 2, 3, 1, 2, 4, 5, 5, 6], 4) === 4, \"expected 4\")"
+          },
+          {
+            "t": "k = 1 and k = n",
+            "verify": "assert(kthLargest([7, 1, 9, 3], 1) === 9 && kthLargest([7, 1, 9, 3], 4) === 1, \"k = 1 or k = n\")"
+          },
+          {
+            "t": "does not change the input",
+            "verify": "const x = [3, 1, 2]; kthLargest(x, 1); assert(JSON.stringify(x) === \"[3,1,2]\", \"the input was changed\")"
+          },
+          {
+            "t": "a big sorted array",
+            "verify": "const big = Array.from({ length: 20000 }, (_, i) => i); const t0 = Date.now(); const r = kthLargest(big, 100); assert(r === 19900 && Date.now() - t0 < 500, \"wrong or too slow (use a random pivot)\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Quick select = one partition step, then follow only the side that holds the target index: <b>O(n) average</b>, O(n²) worst, no full sort. For k-th largest the index is <code>n - k</code>.",
+        "mistakes": [
+          "Mixing up k-th largest and k-th smallest (the index is <code>n - k</code>, not <code>k</code>).",
+          "Following both sides, which turns it back into quick sort.",
+          "Always using the last item as pivot on sorted data.",
+          "Changing the caller's array without saying so."
+        ]
+      }
+    },
+    {
+      "id": "dutch-national-flag",
+      "prereqs": [
+        "partition-algos",
+        "arrays-2"
+      ],
+      "dryRun": {
+        "title": "Sort [2, 0, 1, 2, 0] with lo = 0, mid = 0, hi = 4",
+        "columns": [
+          "lo",
+          "mid",
+          "hi",
+          "a[mid]",
+          "action",
+          "array after"
+        ],
+        "rows": [
+          [
+            "0",
+            "0",
+            "4",
+            "2",
+            "swap with hi, hi-- (mid stays)",
+            "0 0 1 2 2"
+          ],
+          [
+            "0",
+            "0",
+            "3",
+            "0",
+            "swap with lo, lo++, mid++",
+            "0 0 1 2 2"
+          ],
+          [
+            "1",
+            "1",
+            "3",
+            "0",
+            "swap with lo, lo++, mid++",
+            "0 0 1 2 2"
+          ],
+          [
+            "2",
+            "2",
+            "3",
+            "1",
+            "mid++",
+            "0 0 1 2 2"
+          ],
+          [
+            "2",
+            "3",
+            "3",
+            "2",
+            "swap with hi, hi--",
+            "0 0 1 2 2"
+          ]
+        ],
+        "hit": 0,
+        "note": "Look at the first row: after swapping a 2 to the back, <b>mid stays</b>. The item that came from <code>hi</code> has not been looked at yet. Everything between <code>mid</code> and <code>hi</code> is still unknown."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>function sort(a) {\n  let lo = 0, mid = 0, hi = a.length - 1\n  while (mid &lt;= hi) {\n    if (a[mid] === 0) {\n      ;[a[lo], a[mid]] = [a[mid], a[lo]]\n      lo++\n      mid++\n    } else if (a[mid] === 1) {\n      mid++\n    } else {\n      ;[a[mid], a[hi]] = [a[hi], a[mid]]\n      hi--\n    }\n  }\n  return a\n}\nconsole.log(sort([2, 0, 2, 1, 1, 0]).join(\"\"))</code></pre>",
+          "opts": [
+            "<code>001122</code>",
+            "<code>221100</code>",
+            "<code>012012</code>",
+            "<code>000112</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "The three zones end up as 0s on the left, 1s in the middle and 2s on the right: <code>001122</code>.",
+            "It makes one pass and uses no extra array."
+          ],
+          "exec": "function sort(a) {\n  let lo = 0, mid = 0, hi = a.length - 1\n  while (mid <= hi) {\n    if (a[mid] === 0) {\n      ;[a[lo], a[mid]] = [a[mid], a[lo]]\n      lo++\n      mid++\n    } else if (a[mid] === 1) {\n      mid++\n    } else {\n      ;[a[mid], a[hi]] = [a[hi], a[mid]]\n      hi--\n    }\n  }\n  return a\n}\nconsole.log(sort([2, 0, 2, 1, 1, 0]).join(\"\"))"
+        },
+        {
+          "tag": "Spot the bug",
+          "q": "<pre><code>function bad(a) {\n  let lo = 0, mid = 0, hi = a.length - 1\n  while (mid &lt;= hi) {\n    if (a[mid] === 0) {\n      ;[a[lo], a[mid]] = [a[mid], a[lo]]\n      lo++\n      mid++\n    } else if (a[mid] === 1) {\n      mid++\n    } else {\n      ;[a[mid], a[hi]] = [a[hi], a[mid]]\n      hi--\n      mid++\n    }\n  }\n  return a\n}\nconsole.log(bad([1, 2, 0]).join(\",\"))</code></pre>",
+          "opts": [
+            "<code>0,1,2</code>",
+            "<code>1,0,2</code>",
+            "<code>2,1,0</code>",
+            "<code>1,2,0</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "This version moves <code>mid</code> after swapping with <code>hi</code>. The 0 that came from the back is never looked at, so it stays in the wrong place.",
+            "Rule: after a swap with <code>hi</code>, do not move <code>mid</code>. The swapped-in item is still unchecked."
+          ],
+          "exec": "function bad(a) {\n  let lo = 0, mid = 0, hi = a.length - 1\n  while (mid <= hi) {\n    if (a[mid] === 0) {\n      ;[a[lo], a[mid]] = [a[mid], a[lo]]\n      lo++\n      mid++\n    } else if (a[mid] === 1) {\n      mid++\n    } else {\n      ;[a[mid], a[hi]] = [a[hi], a[mid]]\n      hi--\n      mid++\n    }\n  }\n  return a\n}\nconsole.log(bad([1, 2, 0]).join(\",\"))"
+        },
+        {
+          "tag": "Zones",
+          "q": "<p>While the loop runs, which part of the array is <b>not yet looked at</b>?</p>",
+          "opts": [
+            "Between mid and hi (inclusive)",
+            "Between lo and mid",
+            "Left of lo",
+            "Right of hi"
+          ],
+          "ans": 0,
+          "why": [
+            "Left of <code>lo</code> are 0s, from <code>lo</code> up to <code>mid - 1</code> are 1s, and right of <code>hi</code> are 2s. Only <code>mid..hi</code> is unknown.",
+            "The loop ends when <code>mid</code> passes <code>hi</code>, because nothing unknown is left."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>What are the time and extra space of the three-pointer sort?</p>",
+          "opts": [
+            "<code>O(n) time, O(1) space</code>",
+            "<code>O(n log n) time, O(1) space</code>",
+            "<code>O(n) time, O(n) space</code>",
+            "<code>O(n²) time, O(1) space</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "Each step either moves <code>mid</code> forward or moves <code>hi</code> backward, so the loop runs at most n times.",
+            "No second array is made. A counting approach needs two passes, and this needs one."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Why swap with hi?",
+          "q": "<p>When <code>a[mid]</code> is 2, why is the answer to move it to <code>hi</code>?</p>",
+          "opts": [
+            "Because 2 is the biggest value, so it belongs at the right end",
+            "Because hi is always 2",
+            "To keep the array stable",
+            "Because it saves one comparison"
+          ],
+          "ans": 0,
+          "why": [
+            "A 2 belongs in the right zone, which starts at <code>hi</code>. Swapping it there makes the zone one item bigger, so <code>hi--</code>.",
+            "The same idea sorts any three groups: \"small\", \"equal to pivot\" and \"large\"."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>sortColors(nums)</code>. The array has only 0s, 1s and 2s. Sort it <b>in place</b>, in one pass, with O(1) extra space. Return the same array. Do not use <code>sort</code>.</p>",
+        "examples": [
+          "sortColors([2, 0, 2, 1, 1, 0])  // [0, 0, 1, 1, 2, 2]",
+          "sortColors([2, 0, 1])  // [0, 1, 2]"
+        ],
+        "hint": "<p>Use <code>lo = 0</code>, <code>mid = 0</code>, <code>hi = n - 1</code>. While <code>mid &lt;= hi</code>: 0 swaps with <code>lo</code> (both move up), 1 just moves <code>mid</code>, 2 swaps with <code>hi</code> and only <code>hi</code> moves back.</p>",
+        "fn": "sortColors",
+        "starter": "function sortColors(nums) {\n  // your code\n}",
+        "solution": "function sortColors(nums) {\n  let lo = 0\n  let mid = 0\n  let hi = nums.length - 1\n  while (mid <= hi) {\n    if (nums[mid] === 0) {\n      ;[nums[lo], nums[mid]] = [nums[mid], nums[lo]]\n      lo++\n      mid++\n    } else if (nums[mid] === 1) {\n      mid++\n    } else {\n      ;[nums[mid], nums[hi]] = [nums[hi], nums[mid]]\n      hi--\n    }\n  }\n  return nums\n}",
+        "checks": [
+          {
+            "t": "the standard example",
+            "verify": "assert(JSON.stringify(sortColors([2, 0, 2, 1, 1, 0])) === \"[0,0,1,1,2,2]\", \"expected [0,0,1,1,2,2]\")"
+          },
+          {
+            "t": "the case that breaks \"mid++ after hi swap\"",
+            "verify": "assert(JSON.stringify(sortColors([1, 2, 0])) === \"[0,1,2]\" && JSON.stringify(sortColors([2, 2, 0, 0])) === \"[0,0,2,2]\", \"check the swap with hi\")"
+          },
+          {
+            "t": "only one colour, one item, empty",
+            "verify": "assert(JSON.stringify(sortColors([1, 1, 1])) === \"[1,1,1]\" && JSON.stringify(sortColors([2])) === \"[2]\" && JSON.stringify(sortColors([])) === \"[]\", \"edge cases\")"
+          },
+          {
+            "t": "changes the same array",
+            "verify": "const a = [2, 1, 0]; const r = sortColors(a); assert(r === a && JSON.stringify(a) === \"[0,1,2]\", \"must sort in place and return the same array\")"
+          },
+          {
+            "t": "does not call sort",
+            "verify": "const orig = Array.prototype.sort; Array.prototype.sort = function () { throw new Error(\"do not use sort\") }; try { assert(JSON.stringify(sortColors([1, 0, 2, 1, 0])) === \"[0,0,1,1,2]\", \"wrong result\") } finally { Array.prototype.sort = orig }"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Three pointers split the array into <b>0s | 1s | unknown | 2s</b>. One pass, O(n) time, O(1) space. After swapping with <code>hi</code>, <b>do not move mid</b>.",
+        "mistakes": [
+          "Moving <code>mid</code> after a swap with <code>hi</code>, which skips an unchecked item.",
+          "Using <code>mid &lt; hi</code> and missing the last unknown item.",
+          "Sorting with <code>sort()</code> or a counting pass when one pass is asked for.",
+          "Not knowing the idea also covers any \"small / equal / large\" split."
+        ]
+      }
+    }
+  ],
+  "flags": [
+    "partition-algos: the try-it checks properties (pivot place, left smaller, right not) instead of one exact array, because many valid partitions exist.",
+    "dutch-national-flag: the \"does not call sort\" check temporarily replaces Array.prototype.sort. It restores it in a finally block.",
+    "quick-select: the try-it reference solution uses a random pivot, so the 20,000 item timing check is a loose bound (500 ms).",
+    "The dry-run tables are traced by hand (dry runs of concept lessons are not machine-run)."
+  ]
+}

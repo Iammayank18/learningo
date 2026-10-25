@@ -1,0 +1,1158 @@
+{
+ "problems": [
+  {
+   "id": "object-assign",
+   "diff": "Easy",
+   "fn": "objectAssign",
+   "signature": "objectAssign(target, ...sources)",
+   "learn": {
+    "what": [
+     "<code>Object.assign(target, ...sources)</code> copies properties from one or more source objects onto a target object, and returns the target. It is a quick way to merge objects or to fill defaults.",
+     "It copies only <b>own, enumerable</b> properties (string keys and also Symbol keys). It reads each value from the source with a normal property read, so <b>getters run</b>, and it writes with a normal property write on the target, so <b>setters run</b>.",
+     "The copy is <b>shallow</b>. Nested objects are not cloned, only their references are copied.",
+     "Think of moving sticky notes from several boards onto one main board. Later boards win if two notes have the same label, and the main board is the one you get back."
+    ],
+    "how": {
+     "steps": [
+      "If the target is <code>null</code> or <code>undefined</code>, throw a <code>TypeError</code>. Otherwise turn it into an object.",
+      "Go through the sources in order. Skip <code>null</code> and <code>undefined</code>.",
+      "Turn each other source into an object (a string becomes an object with index keys).",
+      "List the source's own enumerable keys (strings and symbols).",
+      "For each key, read <code>source[key]</code> and write <code>target[key] = value</code>. Return the target."
+     ],
+     "diagram": "objectAssign(t, A, null, B)\n\nt = { }\nA = { x: 1, y: 2 }  ->  t = { x: 1, y: 2 }\nnull                ->  skipped\nB = { y: 9, z: 3 }  ->  t = { x: 1, y: 9, z: 3 }\n\nreturn t   (the same object that was passed in)"
+    },
+    "where": [
+     [
+      "Default options",
+      "Merge user options over defaults: <code>Object.assign({}, defaults, options)</code>."
+     ],
+     [
+      "Updating state",
+      "Create a changed copy of a small state object without touching the old one."
+     ],
+     [
+      "Mixins",
+      "Copy helper methods from one object onto another."
+     ],
+     [
+      "Not a fit",
+      "Deep structures. Nested objects stay shared, so use a deep clone or a deep merge instead."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const r = Object.assign({}, \"ab\", null, [9])\nconsole.log(r)</code></pre>",
+     "opts": [
+      "<code>{ 0: \"a\", 1: \"b\" }</code>",
+      "<code>{ 0: 9 }</code>",
+      "It throws a TypeError because of <code>null</code>",
+      "<code>{ 0: 9, 1: \"b\" }</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "The string becomes an object with the keys <code>\"0\"</code> and <code>\"1\"</code>. <code>null</code> is skipped. The array <code>[9]</code> then overwrites key <code>\"0\"</code>, while key <code>\"1\"</code> stays.",
+      "Primitive sources are coerced to objects, and a later source wins on a clash."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const src = { get x() { return 5 } }\nconst r = Object.assign({}, src)\nconsole.log(Object.getOwnPropertyDescriptor(r, \"x\"))</code></pre>What is <code>r.x</code> in the copy?",
+     "opts": [
+      "A getter, copied from the source",
+      "A plain data property with the value <code>5</code>",
+      "Nothing, getters are skipped",
+      "A data property with the value <code>undefined</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "<code>Object.assign</code> reads <code>src.x</code> (which runs the getter) and then assigns the result. So the target gets the <b>value</b> 5 at copy time.",
+      "To copy getters themselves, use <code>Object.defineProperties</code> with <code>Object.getOwnPropertyDescriptors</code>."
+     ]
+    },
+    {
+     "tag": "Why does this surprise people?",
+     "q": "<pre><code>const a = { n: { v: 1 } }\nconst c = Object.assign({}, a)\nc.n.v = 2\nconsole.log(a.n.v)</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>undefined</code>",
+      "<code>2</code>",
+      "It throws"
+     ],
+     "ans": 2,
+     "why": [
+      "The copy is shallow. <code>c.n</code> and <code>a.n</code> are the <b>same object</b>, so changing it through one is visible through the other.",
+      "Only the top-level property was copied, and its value is a reference. Use a deep clone when you need independent nested data."
+     ]
+    },
+    {
+     "tag": "Edge case",
+     "q": "<pre><code>const s = Symbol(\"id\")\nconst r = Object.assign({}, { [s]: 1, a: 2 })\nconsole.log(Object.getOwnPropertySymbols(r).length)</code></pre>",
+     "opts": [
+      "<code>1</code>, because own enumerable Symbol keys are copied too",
+      "<code>0</code>, because only string keys are copied",
+      "It throws a TypeError for Symbol keys",
+      "<code>2</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Many people think only string keys are copied. In fact <code>Object.assign</code> copies <b>enumerable own Symbol keys</b> as well. <code>Object.keys</code> alone would miss them.",
+      "List them with <code>Object.getOwnPropertySymbols</code> and check that each one is enumerable."
+     ]
+    },
+    {
+     "tag": "Spot the difference",
+     "q": "<pre><code>const t = { set x(v) { this.log = \"set \" + v } }\nObject.assign(t, { x: 5 })\nconsole.log(t.log)</code></pre>",
+     "opts": [
+      "<code>undefined</code>",
+      "<code>\"set 5\"</code>",
+      "<code>5</code>",
+      "It throws, because <code>t</code> has no data property <code>x</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "The target is written with a normal assignment (<code>t.x = 5</code>), which calls the setter. A copy made with <code>Object.defineProperty</code> would replace the setter and never call it.",
+      "So your version should use <code>target[key] = value</code>."
+     ]
+    }
+   ],
+   "pseudo": "objectAssign(target, ...sources)\n  if target is null or undefined, throw a TypeError\n  make sure target is an object (wrap a primitive)\n  for each source, in order\n    if source is null or undefined, skip it\n    make sure source is an object (a string becomes an object of its characters)\n    collect its own string keys and its own symbol keys\n    keep only the keys that are enumerable\n    for each key\n      read the value from the source (this runs getters)\n      write the value to the target (this runs setters)\n  return the target",
+   "watch": [
+    "Which properties should be skipped: inherited ones, hidden (non-enumerable) ones, or both?",
+    "Does a normal read and write on the target run getters and setters? Is that what you want here?",
+    "What should happen when a source is <code>null</code>, <code>undefined</code>, or a string?"
+   ],
+   "build": {
+    "minutes": 10,
+    "problem": "Implement <b>objectAssign(target, ...sources)</b> that behaves like <code>Object.assign</code> without calling it.",
+    "reqs": [
+     "Copy own enumerable properties from every source onto the target, and return the target itself.",
+     "Later sources overwrite earlier ones.",
+     "Skip <code>null</code> and <code>undefined</code> sources. Throw a <code>TypeError</code> for a <code>null</code> or <code>undefined</code> target.",
+     "Do not copy inherited or non-enumerable properties.",
+     "Read with the source's getters, write with the target's setters, and copy enumerable Symbol keys too.",
+     "Coerce primitive sources (for example a string)."
+    ],
+    "checks": [
+     {
+      "t": "Copies properties, returns the target, later sources win",
+      "test": "const t = { a: 1 };\nconst r = objectAssign(t, { b: 2, a: 3 }, { b: 4 });\nconsole.log(r === t, t); // expected: true { a: 3, b: 4 }",
+      "verify": "const t = { a: 1 }; const r = objectAssign(t, { b: 2, a: 3 }, { b: 4 });\nassert(r === t, 'must return the same target object'); assert(t.a === 3 && t.b === 4, 'later sources must overwrite')",
+      "gap": "Return the <b>target object that was passed in</b>, not a new object, and loop through the sources in order."
+     },
+     {
+      "t": "null and undefined sources are skipped",
+      "test": "const t = objectAssign({}, null, undefined, { a: 1 });\nconsole.log(t); // expected: { a: 1 }",
+      "verify": "const t = objectAssign({}, null, undefined, { a: 1 }); assert(t.a === 1 && Object.keys(t).length === 1, 'must skip null and undefined sources')",
+      "gap": "Add <code>if (source == null) continue</code> inside the source loop. <code>Object.keys(null)</code> would throw."
+     },
+     {
+      "t": "Inherited and non-enumerable properties are not copied",
+      "test": "const src = Object.create({ inherited: 1 });\nsrc.own = 2;\nObject.defineProperty(src, 'hidden', { value: 3, enumerable: false });\nconsole.log(objectAssign({}, src)); // expected: { own: 2 }",
+      "verify": "const src = Object.create({ inherited: 1 }); src.own = 2; Object.defineProperty(src, 'hidden', { value: 3, enumerable: false });\nconst r = objectAssign({}, src); assert(r.own === 2, 'own copied'); assert(!('inherited' in r) && !('hidden' in r), 'inherited and hidden must not be copied')",
+      "gap": "Do not use <code>for...in</code> (it includes inherited keys). Use <code>Object.keys</code> or check <code>propertyIsEnumerable</code> on own keys."
+     },
+     {
+      "t": "Getters on the source run, and setters on the target run",
+      "test": "let reads = 0;\nconst src = { get x() { reads++; return 5 } };\nconst t = { set y(v) { this.got = v } };\nobjectAssign(t, src, { y: 7 });\nconsole.log(reads, t.x, t.got); // expected: 1 5 7",
+      "verify": "let reads = 0; const src = { get x() { reads++; return 5 } }; const t = { set y(v) { this.got = v } };\nobjectAssign(t, src, { y: 7 }); assert(reads === 1 && t.x === 5, 'source getter must run once and the value be copied'); assert(t.got === 7, 'target setter must run')",
+      "gap": "Use plain <code>target[key] = source[key]</code>. Copying descriptors with <code>defineProperty</code> skips the target setter."
+     },
+     {
+      "t": "Enumerable Symbol keys are copied",
+      "test": "const s = Symbol('id');\nconst r = objectAssign({}, { [s]: 1, a: 2 });\nconsole.log(r[s], r.a); // expected: 1 2",
+      "verify": "const s = Symbol('id'); const r = objectAssign({}, { [s]: 1, a: 2 }); assert(r[s] === 1 && r.a === 2, 'symbol key must be copied')",
+      "gap": "Also loop over <code>Object.getOwnPropertySymbols(source)</code> and copy the ones that are enumerable."
+     },
+     {
+      "t": "Primitive sources are coerced; a null target throws",
+      "test": "console.log(objectAssign({}, 'ab', 5)); // expected: { 0: 'a', 1: 'b' }\ntry { objectAssign(null, {}) } catch (e) { console.log(e instanceof TypeError) } // expected: true",
+      "verify": "const r = objectAssign({}, 'ab', 5); assert(r[0] === 'a' && r[1] === 'b' && Object.keys(r).length === 2, 'string source must give index keys, number gives nothing');\nlet ok = false; try { objectAssign(null, {}) } catch (e) { ok = e instanceof TypeError } assert(ok, 'null target must throw TypeError')",
+      "gap": "Wrap each source with <code>Object(source)</code> before listing keys, and throw a <code>TypeError</code> at the start if the target is <code>null</code> or <code>undefined</code>."
+     }
+    ]
+   },
+   "solution": "function objectAssign(target, ...sources) {\n  if (target == null) {\n    throw new TypeError('Cannot convert undefined or null to object');\n  }\n  const to = Object(target);\n  for (const source of sources) {\n    if (source == null) continue;\n    const from = Object(source);\n    const keys = Object.keys(from).concat(\n      Object.getOwnPropertySymbols(from).filter((s) =>\n        Object.prototype.propertyIsEnumerable.call(from, s)\n      )\n    );\n    for (const key of keys) {\n      to[key] = from[key];\n    }\n  }\n  return to;\n}",
+   "notes": [
+    "The copy is shallow: nested objects are shared by reference.",
+    "<code>Object.keys</code> returns only own enumerable string keys. Symbols need their own step.",
+    "<code>to[key] = from[key]</code> is the spec's read-then-write, so getters and setters behave correctly.",
+    "<code>null</code>/<code>undefined</code> sources are skipped, but a <code>null</code>/<code>undefined</code> target is an error.",
+    "Spreading <code>{ ...a, ...b }</code> is similar, but it defines properties instead of calling target setters."
+   ],
+   "next": [
+    "Write <code>deepMerge(target, ...sources)</code> that merges nested plain objects instead of replacing them.",
+    "Copy accessors too, using <code>Object.getOwnPropertyDescriptors</code>.",
+    "Explain why <code>Object.assign(obj, JSON.parse(userInput))</code> with a <code>__proto__</code> key can be dangerous."
+   ]
+  },
+  {
+   "id": "array-from",
+   "diff": "Medium",
+   "fn": "arrayFrom",
+   "signature": "arrayFrom(items, mapFn?, thisArg?)",
+   "learn": {
+    "what": [
+     "<code>Array.from</code> creates a real array from something that is not one yet. It accepts two kinds of input: <b>iterables</b> (strings, Sets, Maps, generators, anything with <code>Symbol.iterator</code>) and <b>array-like objects</b> (objects with a <code>length</code> and numbered keys, such as <code>{ 0: \"a\", 1: \"b\", length: 2 }</code>).",
+     "An optional <code>mapFn</code> transforms every item while the array is built, so <code>Array.from(x, fn)</code> works like <code>Array.from(x).map(fn)</code> but in one pass. The function gets <code>(value, index)</code>.",
+     "If an object is both iterable and array-like, the <b>iterator wins</b>.",
+     "Think of a conveyor belt that delivers items one by one (an iterable) or a numbered shelf where you pick items by position (array-like). Either way, you put the items into a proper box: an array."
+    ],
+    "how": {
+     "steps": [
+      "Reject <code>null</code> and <code>undefined</code> with a <code>TypeError</code>. If <code>mapFn</code> is given, it must be a function.",
+      "Check whether the input has a <code>Symbol.iterator</code> method.",
+      "If yes, walk it with <code>for...of</code> and add each value to a new array (mapped, if <code>mapFn</code> exists).",
+      "If not, read <code>length</code> (turn it into a safe non-negative whole number) and read <code>items[0]</code> up to <code>items[length - 1]</code>.",
+      "Return the new array. The input is never changed."
+     ],
+     "diagram": "Iterable:      \"a😀\"   -> for...of -> [\"a\", \"😀\"]   (2 items)\n\nArray-like:    { 0: \"x\", 1: \"y\", length: 2 }\n               i = 0..1 -> items[i] -> [\"x\", \"y\"]\n\nLength only:   { length: 3 } with mapFn (_, i) => i * 2\n               -> [0, 2, 4]"
+    },
+    "where": [
+     [
+      "DOM lists",
+      "<code>Array.from(document.querySelectorAll(\"li\"))</code> gives you <code>map</code> and <code>filter</code> on a NodeList."
+     ],
+     [
+      "Counting loops",
+      "<code>Array.from({ length: 5 }, (_, i) =&gt; i + 1)</code> creates <code>[1, 2, 3, 4, 5]</code>."
+     ],
+     [
+      "Sets and Maps",
+      "Turn <code>new Set(list)</code> back into an array to remove duplicates."
+     ],
+     [
+      "Watch out",
+      "Strings are split into code points, not into UTF-16 units, so emoji stay in one piece."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>Array.from({ length: 3 }, (_, i) =&gt; i * 2)</code></pre>",
+     "opts": [
+      "<code>[]</code>",
+      "<code>[undefined, undefined, undefined]</code>",
+      "<code>[0, 2, 4]</code>",
+      "It throws, because the object is not iterable"
+     ],
+     "ans": 2,
+     "why": [
+      "An object with only <code>length: 3</code> is array-like. Reading missing indexes gives <code>undefined</code> items, and the map function receives each index, so the result is <code>[0, 2, 4]</code>.",
+      "Without the map function you would get three <code>undefined</code> values."
+     ]
+    },
+    {
+     "tag": "Edge case",
+     "q": "Which expression gives <code>2</code> for the string <code>\"a😀\"</code>?",
+     "opts": [
+      "<code>Array.from(\"a😀\").length</code>",
+      "<code>\"a😀\".length</code>",
+      "<code>\"a😀\".split(\"\").length</code>",
+      "All three give 2"
+     ],
+     "ans": 0,
+     "why": [
+      "The emoji takes two UTF-16 units, so <code>.length</code> and <code>split(\"\")</code> both give 3 and cut the emoji in half.",
+      "Strings are iterable by <b>code point</b>, and <code>Array.from</code> uses the iterator, so you get 2 items."
+     ]
+    },
+    {
+     "tag": "Pick the right path",
+     "q": "<pre><code>const o = {\n  length: 5,\n  *[Symbol.iterator]() { yield \"x\" }\n}\nArray.from(o)</code></pre>",
+     "opts": [
+      "<code>[undefined, undefined, undefined, undefined, undefined]</code>",
+      "<code>[\"x\", undefined, undefined, undefined, undefined]</code>",
+      "It throws, because the object is ambiguous",
+      "<code>[\"x\"]</code>, because the iterator is checked first"
+     ],
+     "ans": 3,
+     "why": [
+      "If the input has a <code>Symbol.iterator</code> method, <code>Array.from</code> uses it and ignores <code>length</code>.",
+      "This is why the iterable check must come <b>before</b> the length-based loop."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>Array.from([10, 20], function () { return arguments.length })</code></pre>",
+     "opts": [
+      "<code>[3, 3]</code>",
+      "<code>[2, 2]</code>",
+      "<code>[1, 1]</code>",
+      "<code>[10, 20]</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "The map function of <code>Array.from</code> is called with <code>(value, index)</code> only. Unlike <code>Array.prototype.map</code>, it does <b>not</b> receive the array as a third argument.",
+      "If your version passes three arguments, the output becomes <code>[3, 3]</code>."
+     ]
+    },
+    {
+     "tag": "Edge case",
+     "q": "<pre><code>Array.from({ length: -3 })</code></pre>What is returned?",
+     "opts": [
+      "<code>[]</code>",
+      "<code>[undefined, undefined, undefined]</code>",
+      "It throws a RangeError",
+      "<code>[-3]</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "The length is converted to a whole number and then clamped to a minimum of 0. Negative, <code>NaN</code> and missing lengths all become 0.",
+      "A loop like <code>for (i = 0; i &lt; length; i++)</code> already does nothing for a negative length, but <code>new Array(-3)</code> would throw. Do not allocate with the raw length."
+     ]
+    }
+   ],
+   "pseudo": "arrayFrom(items, mapFn, thisArg)\n  if items is null or undefined, throw a TypeError\n  if mapFn was given and is not a function, throw a TypeError\n  make an empty result list\n  define \"convert(value, index)\"\n    if mapFn exists, return mapFn called with thisArg, value, index\n    otherwise return value\n  if items has an iterator method\n    for each value produced by the iterator\n      add convert(value, its position) to the result\n  otherwise (array-like)\n    read items' length\n    turn it into a whole number, minimum 0\n    for each position from 0 up to length - 1\n      add convert(items at that position, position) to the result\n  return the result",
+   "watch": [
+    "Which check comes first when an object is both iterable and array-like?",
+    "What if <code>length</code> is missing, negative, a string, or <code>NaN</code>?",
+    "Which arguments does the map function get, and with which <code>this</code>?"
+   ],
+   "build": {
+    "minutes": 20,
+    "problem": "Implement <b>arrayFrom(items, mapFn?, thisArg?)</b> that builds a new array from an iterable or an array-like object, without calling <code>Array.from</code>.",
+    "reqs": [
+     "Work with array-like objects (<code>length</code> plus indexed items).",
+     "Work with iterables (<code>Symbol.iterator</code>), including strings, Sets and generators.",
+     "Apply the optional <code>mapFn(value, index)</code> with <code>thisArg</code> as <code>this</code>.",
+     "Always return a new array and never change the input.",
+     "Handle empty inputs and bad lengths. Throw a <code>TypeError</code> for <code>null</code>/<code>undefined</code> or a non-function <code>mapFn</code>."
+    ],
+    "checks": [
+     {
+      "t": "Converts an array-like object",
+      "test": "console.log(arrayFrom({ 0: 'a', 1: 'b', length: 2 })); // expected: ['a', 'b']",
+      "verify": "const r = arrayFrom({ 0: 'a', 1: 'b', length: 2 }); assert(Array.isArray(r) && r.join() === 'a,b', 'array-like must be converted')",
+      "gap": "For input without an iterator, read <code>length</code> and loop from 0 to <code>length - 1</code> reading <code>items[i]</code>."
+     },
+     {
+      "t": "Converts iterables (Set, string, generator)",
+      "test": "console.log(arrayFrom(new Set([1, 2, 2, 3])), arrayFrom('a😀'), arrayFrom((function* () { yield 7 })()));\n// expected: [1, 2, 3] ['a', '😀'] [7]",
+      "verify": "assert(arrayFrom(new Set([1, 2, 2, 3])).join() === '1,2,3', 'Set'); const s = arrayFrom('a😀'); assert(s.length === 2 && s[1] === '😀', 'string by code point');\nassert(arrayFrom((function* () { yield 7 })()).join() === '7', 'generator')",
+      "gap": "Check <code>typeof items[Symbol.iterator] === \"function\"</code> and use <code>for...of</code>. Do not rely on <code>length</code> for strings."
+     },
+     {
+      "t": "mapFn gets (value, index) and thisArg",
+      "test": "const r = arrayFrom([5, 6], function (v, i) { return v + i + this.k + arguments.length }, { k: 100 });\nconsole.log(r); // expected: [107, 109]",
+      "verify": "const r = arrayFrom([5, 6], function (v, i) { return v + i + this.k + arguments.length }, { k: 100 });\nassert(r[0] === 107 && r[1] === 109, 'mapFn must get exactly (value, index) and the given this')",
+      "gap": "Call <code>mapFn.call(thisArg, value, index)</code> with two arguments only. Do not pass the array as a third argument."
+     },
+     {
+      "t": "Returns a new array and does not change the input",
+      "test": "const a = [1, 2]; const r = arrayFrom(a);\nconsole.log(r !== a, a); // expected: true [1, 2]",
+      "verify": "const a = [1, 2]; const r = arrayFrom(a); assert(r !== a && r.join() === '1,2' && a.length === 2, 'must be a new array and input unchanged')",
+      "gap": "Create a new empty array for the result and push into it. Do not return the input."
+     },
+     {
+      "t": "Length-only objects and bad lengths",
+      "test": "console.log(arrayFrom({ length: 3 }, (_, i) => i * 2), arrayFrom({ length: -3 }), arrayFrom({ length: '2', 0: 'x' }), arrayFrom({}));\n// expected: [0, 2, 4] [] ['x', undefined] []",
+      "verify": "assert(arrayFrom({ length: 3 }, (_, i) => i * 2).join() === '0,2,4', 'length only');\nassert(arrayFrom({ length: -3 }).length === 0, 'negative length'); const t = arrayFrom({ length: '2', 0: 'x' }); assert(t.length === 2 && t[0] === 'x' && t[1] === undefined, 'string length');\nassert(arrayFrom({}).length === 0, 'no length')",
+      "gap": "Convert the length with <code>Math.trunc(Number(len)) || 0</code> and clamp it to at least 0 before looping."
+     },
+     {
+      "t": "Iterator wins over length",
+      "test": "const o = { length: 5, *[Symbol.iterator]() { yield 'x' } };\nconsole.log(arrayFrom(o)); // expected: ['x']",
+      "verify": "const o = { length: 5, *[Symbol.iterator]() { yield 'x' } }; const r = arrayFrom(o); assert(r.length === 1 && r[0] === 'x', 'iterator must be used before length')",
+      "gap": "Test for the iterator first. Only fall back to the <code>length</code> loop when there is no <code>Symbol.iterator</code>."
+     },
+     {
+      "t": "Bad arguments throw a TypeError",
+      "test": "try { arrayFrom(null) } catch (e) { console.log(e instanceof TypeError) }\ntry { arrayFrom([1], 'nope') } catch (e) { console.log(e instanceof TypeError) }\n// expected: true, true",
+      "verify": "let a = false; try { arrayFrom(null) } catch (e) { a = e instanceof TypeError } assert(a, 'null input');\nlet b = false; try { arrayFrom([1], 'nope') } catch (e) { b = e instanceof TypeError } assert(b, 'non-function mapFn')",
+      "gap": "Validate at the start: <code>items == null</code> is an error, and <code>mapFn</code> must be <code>undefined</code> or a function."
+     }
+    ]
+   },
+   "solution": "function arrayFrom(items, mapFn, thisArg) {\n  if (items == null) {\n    throw new TypeError(items + ' is not iterable or array-like');\n  }\n  if (mapFn !== undefined && typeof mapFn !== 'function') {\n    throw new TypeError(String(mapFn) + ' is not a function');\n  }\n  const convert = (value, index) =>\n    mapFn ? mapFn.call(thisArg, value, index) : value;\n  const out = [];\n  if (typeof items[Symbol.iterator] === 'function') {\n    let i = 0;\n    for (const value of items) {\n      out.push(convert(value, i++));\n    }\n    return out;\n  }\n  const obj = Object(items);\n  const len = Math.max(0, Math.trunc(Number(obj.length)) || 0);\n  for (let i = 0; i < len; i++) {\n    out.push(convert(obj[i], i));\n  }\n  return out;\n}",
+   "notes": [
+    "Two paths: iterate when <code>Symbol.iterator</code> exists, otherwise loop over <code>length</code>. The iterator path must come first.",
+    "Cleaning the length with <code>Math.trunc(Number(...)) || 0</code> handles strings, <code>NaN</code> and negatives.",
+    "The map function gets exactly <code>(value, index)</code> and the optional <code>thisArg</code>.",
+    "Missing indexes in an array-like object read as <code>undefined</code>, so they become <code>undefined</code> items.",
+    "The input is only read, and the result is always a fresh array."
+   ],
+   "next": [
+    "Add a guard for huge lengths so that a bad <code>length</code> cannot freeze the page.",
+    "Write <code>range(start, end, step)</code> using your <code>arrayFrom</code>.",
+    "Implement <code>Array.of</code> and explain how it differs from <code>new Array(3)</code>."
+   ]
+  },
+  {
+   "id": "array-find",
+   "diff": "Easy",
+   "fn": "Array.prototype.myFind",
+   "signature": "arr.myFind(callback, thisArg?)",
+   "learn": {
+    "what": [
+     "<code>find</code> walks through an array from the start and returns the <b>first item</b> for which your callback returns a truthy value. If no item matches, it returns <code>undefined</code>.",
+     "It stops as soon as it finds a match, so the rest of the array is never visited. The callback receives <code>(item, index, array)</code>, and an optional <code>thisArg</code> becomes <code>this</code> inside a regular function callback.",
+     "One detail surprises many people: <code>find</code> <b>does visit empty slots</b> of a sparse array and treats them as <code>undefined</code>. Methods such as <code>map</code>, <code>filter</code> and <code>forEach</code> skip them.",
+     "Think of looking for your keys by checking each pocket in order. You stop as soon as you find them. If every pocket is empty, you come back with nothing."
+    ],
+    "how": {
+     "steps": [
+      "Check that the callback is a function. If not, throw a <code>TypeError</code>.",
+      "Read the length <b>once</b> before the loop starts.",
+      "For each index from 0 to length - 1, read the item (an empty slot reads as <code>undefined</code>).",
+      "Call the callback with <code>(item, index, array)</code> and the right <code>this</code>.",
+      "If the result is truthy, return the item immediately. After the loop, return <code>undefined</code>."
+     ],
+     "diagram": "[5, 8, 12, 3].find(n => n > 6)\n\ni=0  5   5 > 6 ? no\ni=1  8   8 > 6 ? yes  -> return 8      (12 and 3 are never visited)\n\n[1, , 3].find(...)   visits i=0, i=1 (hole -> undefined), i=2"
+    },
+    "where": [
+     [
+      "Lookup by id",
+      "<code>users.find(u =&gt; u.id === id)</code> returns the matching user object."
+     ],
+     [
+      "Settings",
+      "Find the first enabled option, or the first error in a list of validation results."
+     ],
+     [
+      "Components",
+      "Pick the selected tab or the first visible item from a list."
+     ],
+     [
+      "Watch out",
+      "If an item can itself be <code>undefined</code>, a result of <code>undefined</code> is ambiguous. Use <code>findIndex</code> in that case."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let n = 0\n[1, , 3].find(() =&gt; { n++; return false })\nconsole.log(n)</code></pre>",
+     "opts": [
+      "<code>2</code>",
+      "<code>3</code>",
+      "<code>1</code>",
+      "<code>0</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "<code>find</code> visits every index, including the empty slot, which it reads as <code>undefined</code>. So the callback runs 3 times.",
+      "With <code>filter</code> or <code>forEach</code>, you would get 2. Do not add an <code>i in arr</code> check to <code>find</code>."
+     ]
+    },
+    {
+     "tag": "Pick the right tool",
+     "q": "The array is <code>[undefined, 5]</code>. <code>arr.find(x =&gt; x === undefined)</code> returns <code>undefined</code>. What is the best way to know whether a match was found?",
+     "opts": [
+      "Check whether the result is <code>undefined</code>",
+      "Use <code>find</code> twice",
+      "Use <code>filter(...).length</code> and compare with 1",
+      "Use <code>findIndex</code>, because it returns <code>-1</code> when nothing matches"
+     ],
+     "ans": 3,
+     "why": [
+      "A found <code>undefined</code> and \"not found\" look the same in the result of <code>find</code>. <code>findIndex</code> returns the position (or <code>-1</code>), so it cannot be confused.",
+      "The trap is thinking <code>undefined</code> always means \"no match\"."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let calls = 0\nconst r = [1, 2, 3, 4].find((x) =&gt; { calls++; return x &gt; 1 })\nconsole.log(calls, r)</code></pre>",
+     "opts": [
+      "<code>2 2</code>",
+      "<code>4 2</code>",
+      "<code>3 2</code>",
+      "<code>1 1</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "The callback sees <code>1</code> (false) and then <code>2</code> (true). <code>find</code> returns immediately, so the callback is never called for 3 and 4.",
+      "If you build <code>find</code> with <code>filter(...)[0]</code>, you lose this early exit."
+     ]
+    },
+    {
+     "tag": "Why does this fail?",
+     "q": "<pre><code>[5].find(function () { return this.ok }, { ok: true })</code></pre>What is returned, and what changes if the callback becomes an arrow function <code>() =&gt; this.ok</code>?",
+     "opts": [
+      "<code>5</code> for both, because <code>thisArg</code> always works",
+      "<code>5</code> for the regular function. An arrow function ignores <code>thisArg</code>, so <code>this.ok</code> comes from the outer scope",
+      "<code>true</code> for the regular function",
+      "<code>undefined</code> for both"
+     ],
+     "ans": 1,
+     "why": [
+      "The callback returns a truthy value, so the <b>item</b> (<code>5</code>) is returned, never the callback result. Arrow functions have no <code>this</code> of their own, so <code>call(thisArg, ...)</code> cannot change it.",
+      "Always use <code>callback.call(thisArg, item, i, arr)</code>."
+     ]
+    },
+    {
+     "tag": "Edge case",
+     "q": "<pre><code>const a = [1, 2]\na.find((x) =&gt; { if (a.length &lt; 5) a.push(x); return false })\nconsole.log(a.length)</code></pre>",
+     "opts": [
+      "<code>5</code>",
+      "<code>4</code>",
+      "<code>2</code>",
+      "It never ends"
+     ],
+     "ans": 1,
+     "why": [
+      "The length is read <b>once</b> before the loop, so only the original two indexes are visited. The callback pushes twice, giving a final length of 4. Items added during the walk are not visited.",
+      "If you re-read <code>arr.length</code> in every loop test, the loop would run until the length reaches 5."
+     ]
+    }
+   ],
+   "pseudo": "arr.myFind(callback, thisArg)\n  if the array is null or undefined, throw a TypeError\n  if callback is not a function, throw a TypeError\n  read the array's length once and remember it\n  for each position from 0 up to length - 1\n    read the item at that position (a hole reads as undefined)\n    call callback with thisArg as \"this\" and (item, position, array)\n    if the result is truthy\n      return the item\n  return undefined (nothing matched)",
+   "watch": [
+    "Do you return the item, the index, or the callback result when it matches?",
+    "Should an empty slot in the array be skipped or visited?",
+    "Is the length read once before the loop, or on every step?"
+   ],
+   "build": {
+    "minutes": 10,
+    "problem": "Implement <b>Array.prototype.myFind(callback, thisArg)</b> without using <code>find</code>, <code>filter</code> or similar built-ins.",
+    "reqs": [
+     "Return the first item for which the callback returns a truthy value.",
+     "Return <code>undefined</code> when nothing matches.",
+     "Call the callback with <code>(item, index, array)</code> and <code>thisArg</code> as <code>this</code>.",
+     "Stop as soon as a match is found.",
+     "Visit empty slots in sparse arrays as <code>undefined</code>, like the built-in <code>find</code>.",
+     "Throw a <code>TypeError</code> if the callback is not a function."
+    ],
+    "checks": [
+     {
+      "t": "Returns the first matching item",
+      "test": "console.log([5, 8, 12, 3].myFind(n => n > 6)); // expected: 8",
+      "verify": "assert([5, 8, 12, 3].myFind(n => n > 6) === 8, 'must return the first match')",
+      "gap": "Return <code>arr[i]</code> (the item) as soon as the callback is truthy. Do not return the index or the callback result."
+     },
+     {
+      "t": "Returns undefined when nothing matches",
+      "test": "console.log([1, 2].myFind(n => n > 5), [].myFind(() => true)); // expected: undefined undefined",
+      "verify": "assert([1, 2].myFind(n => n > 5) === undefined && [].myFind(() => true) === undefined, 'no match gives undefined')",
+      "gap": "After the loop ends, return <code>undefined</code> explicitly. Make sure an empty array just skips the loop."
+     },
+     {
+      "t": "The callback receives (item, index, array)",
+      "test": "const a = ['x', 'y']; let seen = '';\na.myFind((v, i, arr) => { seen += v + i + (arr === a); return false });\nconsole.log(seen); // expected: x0truey1true",
+      "verify": "const a = ['x', 'y']; let seen = ''; a.myFind((v, i, arr) => { seen += v + i + (arr === a); return false }); assert(seen === 'x0truey1true', 'callback must get item, index and array')",
+      "gap": "Call <code>callback.call(thisArg, arr[i], i, arr)</code> with all three arguments."
+     },
+     {
+      "t": "thisArg is used for regular functions",
+      "test": "console.log([5].myFind(function () { return this.ok }, { ok: true })); // expected: 5",
+      "verify": "assert([5].myFind(function () { return this.ok }, { ok: true }) === 5, 'thisArg must be this inside the callback')",
+      "gap": "Use <code>callback.call(thisArg, ...)</code> or <code>apply</code>. A plain <code>callback(...)</code> call loses <code>this</code>."
+     },
+     {
+      "t": "Stops at the first match",
+      "test": "let calls = 0;\n[1, 2, 3, 4].myFind(x => { calls++; return x > 1 });\nconsole.log(calls); // expected: 2",
+      "verify": "let calls = 0; [1, 2, 3, 4].myFind(x => { calls++; return x > 1 }); assert(calls === 2, 'must stop after the first match')",
+      "gap": "Return from inside the loop. Do not collect all matches first and take the first one."
+     },
+     {
+      "t": "Empty slots are visited as undefined",
+      "test": "let n = 0;\n[1, , 3].myFind(() => { n++; return false });\nconsole.log(n); // expected: 3",
+      "verify": "let n = 0; [1, , 3].myFind(() => { n++; return false }); assert(n === 3, 'holes must be visited');\nassert([1, , 3].myFind(x => x === undefined) === undefined, 'hole is seen as undefined')",
+      "gap": "Use a plain index loop without an <code>i in arr</code> check. Unlike <code>map</code> or <code>forEach</code>, <code>find</code> reads holes as <code>undefined</code>."
+     },
+     {
+      "t": "Items added during the search are not visited; bad callback throws",
+      "test": "const a = [1, 2];\na.myFind(x => { a.push(x); return false });\nconsole.log(a.length); // expected: 4\ntry { [1].myFind('nope') } catch (e) { console.log(e instanceof TypeError) } // expected: true",
+      "verify": "const a = [1, 2]; a.myFind(x => { a.push(x); return false }); assert(a.length === 4, 'length must be read once');\nlet ok = false; try { [1].myFind('nope') } catch (e) { ok = e instanceof TypeError } assert(ok, 'non-function must throw TypeError')",
+      "gap": "Store <code>const len = arr.length</code> before the loop and use it in the loop test. Add a <code>typeof callback !== \"function\"</code> check at the top."
+     }
+    ]
+   },
+   "solution": "Array.prototype.myFind = function (callback, thisArg) {\n  if (this == null) {\n    throw new TypeError('Array.prototype.myFind called on null or undefined');\n  }\n  if (typeof callback !== 'function') {\n    throw new TypeError(String(callback) + ' is not a function');\n  }\n  const arr = Object(this);\n  const len = arr.length >>> 0;\n  for (let i = 0; i < len; i++) {\n    const item = arr[i];\n    if (callback.call(thisArg, item, i, arr)) {\n      return item;\n    }\n  }\n  return undefined;\n};",
+   "notes": [
+    "A plain index loop with an early <code>return</code> is all you need. That is what gives the early exit.",
+    "Reading <code>arr[i]</code> for a hole gives <code>undefined</code>, which is exactly what <code>find</code> should see.",
+    "The length is read once, so items pushed during the loop are not visited.",
+    "<code>callback.call(thisArg, item, i, arr)</code> supplies the three arguments and the <code>this</code> value.",
+    "<code>arr.length &gt;&gt;&gt; 0</code> turns the length into an unsigned whole number, the same trick the spec uses."
+   ],
+   "next": [
+    "Implement <code>findIndex</code>, <code>findLast</code> and <code>findLastIndex</code>.",
+    "Write <code>some</code> and <code>every</code> and decide whether they should skip holes (check the spec).",
+    "Implement <code>myFind</code> for array-like objects with <code>Array.prototype.myFind.call(obj, fn)</code>."
+   ]
+  },
+  {
+   "id": "array-includes",
+   "diff": "Medium",
+   "fn": "Array.prototype.myIncludes",
+   "signature": "arr.myIncludes(searchElement, fromIndex?)",
+   "learn": {
+    "what": [
+     "<code>includes</code> answers a yes/no question: \"is this value somewhere in the array?\". It returns <code>true</code> or <code>false</code>, never an index.",
+     "Its comparison rule is called <b>SameValueZero</b>. It is almost the same as <code>===</code>, with one big difference: <code>NaN</code> is considered equal to <code>NaN</code>. And <code>+0</code> and <code>-0</code> are equal, as with <code>===</code>. That is why <code>[NaN].includes(NaN)</code> is <code>true</code> while <code>[NaN].indexOf(NaN)</code> is <code>-1</code>.",
+     "The optional <code>fromIndex</code> says where to start. A negative number counts from the end, and a number below <code>-length</code> simply starts at the beginning.",
+     "Think of checking a guest list for a name. You can start at the top, or you can start from a line near the end. Two \"Unknown\" guests count as the same person, even though normally \"not a number\" never equals itself."
+    ],
+    "how": {
+     "steps": [
+      "If the array is empty, return <code>false</code> right away.",
+      "Turn <code>fromIndex</code> into a whole number. A missing or invalid value means 0.",
+      "If it is negative, add the array length, and use 0 if that is still negative. If it is at or past the end, nothing is left to search.",
+      "Walk from that index to the end and compare each item with SameValueZero.",
+      "Return <code>true</code> on the first match, or <code>false</code> after the loop."
+     ],
+     "diagram": "[1, 2, NaN, 4].includes(NaN)        -> true   (NaN equals NaN here)\n[1, 2, 3].includes(3, -1)           -> true   start = 3 + -1 = 2\n[1, 2, 3].includes(1, -2)           -> false  start = 1, skips the 1\n[1, 2, 3].includes(1, -99)          -> true   start clamped to 0\n[1, 2, 3].includes(3, 5)            -> false  nothing left to search\n\nSameValueZero(a, b):  a === b  OR  (a is NaN AND b is NaN)"
+    },
+    "where": [
+     [
+      "Allow-lists",
+      "<code>[\"admin\", \"editor\"].includes(role)</code> is the common way to check permissions or allowed values."
+     ],
+     [
+      "Feature checks",
+      "Check whether a list of selected ids already contains an id before adding it."
+     ],
+     [
+      "Validation",
+      "Check numbers that might be <code>NaN</code>, where <code>indexOf</code> would fail."
+     ],
+     [
+      "Watch out",
+      "Objects are compared by reference, so <code>[{ a: 1 }].includes({ a: 1 })</code> is <code>false</code>."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log([NaN].indexOf(NaN), [NaN].includes(NaN))</code></pre>",
+     "opts": [
+      "<code>0 true</code>",
+      "<code>-1 false</code>",
+      "<code>-1 true</code>",
+      "<code>0 false</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "<code>indexOf</code> uses strict equality, and <code>NaN === NaN</code> is false, so it never finds <code>NaN</code>. <code>includes</code> uses SameValueZero, which treats two <code>NaN</code> values as equal.",
+      "So <code>this.indexOf(x) !== -1</code> is not a correct way to write <code>includes</code>."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log([0].includes(-0), Object.is(0, -0))</code></pre>",
+     "opts": [
+      "<code>false false</code>",
+      "<code>false true</code>",
+      "<code>true true</code>",
+      "<code>true false</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "SameValueZero treats <code>+0</code> and <code>-0</code> as equal, so <code>includes</code> finds it. <code>Object.is</code> distinguishes them.",
+      "So you cannot use <code>Object.is</code> as the comparison. You need <code>===</code> plus a special case for <code>NaN</code>."
+     ]
+    },
+    {
+     "tag": "Edge case",
+     "q": "<pre><code>console.log([1, 2, 3].includes(1, -2))</code></pre>",
+     "opts": [
+      "<code>true</code>",
+      "<code>false</code>",
+      "It throws a RangeError",
+      "<code>-2</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "A negative <code>fromIndex</code> counts from the end: <code>3 + (-2) = 1</code>. The search starts at index 1, so the <code>1</code> at index 0 is skipped.",
+      "The trap is reading <code>-2</code> as \"the last two items are skipped\" or as \"ignore it\"."
+     ]
+    },
+    {
+     "tag": "Edge case",
+     "q": "<pre><code>console.log([1, , 3].includes(undefined), [1, , 3].indexOf(undefined))</code></pre>",
+     "opts": [
+      "<code>true -1</code>",
+      "<code>false -1</code>",
+      "<code>true 1</code>",
+      "<code>false 1</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "<code>includes</code> reads every index, and an empty slot reads as <code>undefined</code>, so it finds it. <code>indexOf</code> skips empty slots and returns <code>-1</code>.",
+      "So your loop should not check <code>i in arr</code>."
+     ]
+    },
+    {
+     "tag": "Spot the bug",
+     "q": "A version only handles a negative index like this: <code>if (from &lt; 0) from = len + from</code>. What goes wrong for <code>[1, 2, 3].includes(undefined, -100)</code>?",
+     "opts": [
+      "Nothing. Both return <code>false</code>.",
+      "It throws a RangeError",
+      "The start becomes <code>-97</code>. Reading <code>arr[-97]</code> gives <code>undefined</code>, which matches, so it wrongly returns <code>true</code>",
+      "It always returns <code>false</code> for negative numbers"
+     ],
+     "ans": 2,
+     "why": [
+      "After adding the length, the start is still negative, so the loop begins at <code>-97</code> and reads <code>arr[-97]</code>, <code>arr[-96]</code> and so on. These positions do not exist and read as <code>undefined</code>, so a search for <code>undefined</code> matches by mistake.",
+      "Clamp with <code>Math.max(0, len + from)</code>. The correct answer is <code>false</code>, because no item in the array is <code>undefined</code>."
+     ]
+    }
+   ],
+   "pseudo": "arr.myIncludes(search, fromIndex)\n  if the array is null or undefined, throw a TypeError\n  read the length\n  if the length is 0, return false\n  turn fromIndex into a whole number (missing or invalid means 0)\n  if the number is not negative\n    start = that number\n  otherwise\n    start = length + that number, but never below 0\n  for each position from start up to length - 1\n    read the item (a hole reads as undefined)\n    if item equals search by strict equality\n      return true\n    if both item and search are NaN\n      return true\n  return false",
+   "watch": [
+    "How can you recognise <code>NaN</code>, if <code>NaN === NaN</code> is false?",
+    "What start index do you use for <code>-1</code>, for <code>-100</code>, and for a number larger than the length?",
+    "Should empty slots be skipped, or compared as <code>undefined</code>?"
+   ],
+   "build": {
+    "minutes": 20,
+    "problem": "Implement <b>Array.prototype.myIncludes(searchElement, fromIndex)</b> using SameValueZero, without using <code>includes</code> or <code>indexOf</code>.",
+    "reqs": [
+     "Return <code>true</code> if the value is found, otherwise <code>false</code>.",
+     "Compare with SameValueZero: <code>NaN</code> equals <code>NaN</code>, and <code>0</code> equals <code>-0</code>.",
+     "A negative <code>fromIndex</code> counts from the end, and the start never goes below 0.",
+     "A <code>fromIndex</code> at or past the length returns <code>false</code>.",
+     "Treat empty slots as <code>undefined</code>, and never change the array."
+    ],
+    "checks": [
+     {
+      "t": "Finds and does not find values with strict equality",
+      "test": "const o = { a: 1 };\nconsole.log([1, 2, 3].myIncludes(2), [1, 2, 3].myIncludes('2'), [o].myIncludes(o), [{ a: 1 }].myIncludes({ a: 1 }));\n// expected: true false true false",
+      "verify": "const o = { a: 1 };\nassert([1, 2, 3].myIncludes(2) === true, 'number found'); assert([1, 2, 3].myIncludes('2') === false, 'no type coercion');\nassert([o].myIncludes(o) === true && [{ a: 1 }].myIncludes({ a: 1 }) === false, 'objects by reference')",
+      "gap": "Use <code>===</code> for the comparison. Do not use <code>==</code>, and do not compare object contents."
+     },
+     {
+      "t": "NaN is found",
+      "test": "console.log([1, NaN].myIncludes(NaN), [1, 2].myIncludes(NaN)); // expected: true false",
+      "verify": "assert([1, NaN].myIncludes(NaN) === true, 'NaN must be found'); assert([1, 2].myIncludes(NaN) === false, 'NaN must not be found when absent')",
+      "gap": "NaN is the only value not equal to itself. Add a second test: <code>item !== item &amp;&amp; search !== search</code> (or <code>Number.isNaN</code> for both)."
+     },
+     {
+      "t": "0 and -0 are equal",
+      "test": "console.log([0].myIncludes(-0), [-0].myIncludes(0)); // expected: true true",
+      "verify": "assert([0].myIncludes(-0) === true && [-0].myIncludes(0) === true, '+0 and -0 must be equal')",
+      "gap": "Do not use <code>Object.is</code>, which separates <code>+0</code> and <code>-0</code>. Plain <code>===</code> already treats them as equal."
+     },
+     {
+      "t": "A positive fromIndex skips earlier items",
+      "test": "console.log([1, 2, 3].myIncludes(1, 1), [1, 2, 3].myIncludes(3, 2), [1, 2, 3].myIncludes(3, 3)); // expected: false true false",
+      "verify": "assert([1, 2, 3].myIncludes(1, 1) === false, 'item before fromIndex must be skipped'); assert([1, 2, 3].myIncludes(3, 2) === true, 'item at fromIndex counts');\nassert([1, 2, 3].myIncludes(3, 3) === false && [1, 2, 3].myIncludes(3, 99) === false, 'start at or past the end finds nothing')",
+      "gap": "Start the loop at <code>fromIndex</code>. If it is not less than the length the loop does not run, so the answer is <code>false</code>."
+     },
+     {
+      "t": "A negative fromIndex counts from the end and is clamped at 0",
+      "test": "console.log([1, 2, 3].myIncludes(1, -2), [1, 2, 3].myIncludes(3, -1), [1, 2, 3].myIncludes(1, -99)); // expected: false true true",
+      "verify": "assert([1, 2, 3].myIncludes(1, -2) === false, '-2 starts at index 1'); assert([1, 2, 3].myIncludes(3, -1) === true, '-1 starts at index 2');\nassert([1, 2, 3].myIncludes(1, -99) === true, 'too negative starts at 0')",
+      "gap": "Compute <code>Math.max(0, length + fromIndex)</code> for a negative <code>fromIndex</code>."
+     },
+     {
+      "t": "Empty slots are seen as undefined",
+      "test": "console.log([1, , 3].myIncludes(undefined), [1, 2].myIncludes(undefined)); // expected: true false",
+      "verify": "assert([1, , 3].myIncludes(undefined) === true, 'hole counts as undefined'); assert([1, 2].myIncludes(undefined) === false, 'absent undefined')",
+      "gap": "Loop over every index and read <code>arr[i]</code>. Do not skip a position with an <code>i in arr</code> check."
+     },
+     {
+      "t": "Missing or invalid fromIndex means 0; empty array is false",
+      "test": "console.log([1, 2].myIncludes(1, undefined), [1, 2].myIncludes(1, 'x'), [].myIncludes(undefined)); // expected: true true false",
+      "verify": "assert([1, 2].myIncludes(1, undefined) === true && [1, 2].myIncludes(1, 'x') === true, 'invalid fromIndex must act like 0'); assert([].myIncludes(undefined) === false, 'empty array is false')",
+      "gap": "Convert with <code>Math.trunc(Number(fromIndex)) || 0</code>. That makes <code>undefined</code> and <code>NaN</code> become 0."
+     }
+    ]
+   },
+   "solution": "Array.prototype.myIncludes = function (searchElement, fromIndex) {\n  if (this == null) {\n    throw new TypeError('Array.prototype.myIncludes called on null or undefined');\n  }\n  const arr = Object(this);\n  const len = arr.length >>> 0;\n  if (len === 0) return false;\n  const n = Math.trunc(Number(fromIndex)) || 0;\n  let i = n >= 0 ? n : Math.max(len + n, 0);\n  for (; i < len; i++) {\n    const item = arr[i];\n    if (item === searchElement) return true;\n    if (item !== item && searchElement !== searchElement) return true;\n  }\n  return false;\n};",
+   "notes": [
+    "SameValueZero is <code>===</code> plus \"both are NaN\". The check <code>x !== x</code> is only true for <code>NaN</code>.",
+    "<code>+0 === -0</code> is already true, so no special case is needed for zero.",
+    "Normalise <code>fromIndex</code> once: whole number, default 0, negative counted from the end and clamped at 0.",
+    "Reading <code>arr[i]</code> for a hole gives <code>undefined</code>, which matches the behaviour of <code>includes</code>.",
+    "A start index at or after the length makes the loop skip, so the function falls through to <code>false</code>."
+   ],
+   "next": [
+    "Implement <code>indexOf</code> and <code>lastIndexOf</code> and explain why they cannot find <code>NaN</code>.",
+    "Write <code>includesDeep(arr, value)</code> that compares objects by content.",
+    "Make a <code>Set</code>-based version that checks membership in constant time, and discuss when to use it."
+   ]
+  },
+  {
+   "id": "string-methods",
+   "diff": "Medium",
+   "fn": "String.prototype.myStartsWith",
+   "signature": "str.myStartsWith(search, position?) · str.myEndsWith(search, endPosition?) · str.myIncludes(search, position?)",
+   "learn": {
+    "what": [
+     "<code>startsWith</code>, <code>endsWith</code> and <code>includes</code> answer simple yes/no questions about a piece of text: does it begin with this, end with this, or contain this somewhere?",
+     "They are case-sensitive and have two details that people often miss. The search value is <b>converted to a string</b> first, so <code>\"null is odd\".startsWith(null)</code> is <code>true</code>. And a <b>regular expression</b> is rejected with a <code>TypeError</code>, because it is probably a mistake (you want <code>test</code> or <code>match</code> for patterns).",
+     "The optional position moves the window: <code>position</code> (for <code>startsWith</code> and <code>includes</code>) says where to start, and <code>endPosition</code> (for <code>endsWith</code>) says where the text should be treated as if it ended. Numbers outside the text are clamped, never an error.",
+     "Think of reading a sentence through a small window. You check the first words in the window, the last words, or any words inside."
+    ],
+    "how": {
+     "steps": [
+      "Convert the text (<code>this</code>) and the search value to strings. If the search value is a RegExp, throw a <code>TypeError</code>.",
+      "Turn the position into a whole number and <b>clamp</b> it between 0 and the text length. A missing position means 0 (or the text length for <code>endsWith</code>).",
+      "<b>startsWith:</b> take the piece of text that starts at the position and is as long as the search value. Compare it to the search value.",
+      "<b>endsWith:</b> find the start by subtracting the search length from the end. If the start is below 0, return <code>false</code>. Otherwise compare that piece.",
+      "<b>includes:</b> look for the search value starting from the position."
+     ],
+     "diagram": "text = \"hello world\"      (length 11)\n\nstartsWith(\"world\", 6)   piece [6, 11) = \"world\"      -> true\nendsWith(\"hello\", 5)     piece [0, 5)  = \"hello\"      -> true\nincludes(\"o w\")          found at index 4             -> true\n\nstartsWith(\"\", 99)       position clamped to 11, \"\" = \"\"  -> true\nendsWith(\"hello world!\") start = 11 - 12 < 0             -> false"
+    },
+    "where": [
+     [
+      "URLs and paths",
+      "<code>url.startsWith(\"https://\")</code> or <code>file.endsWith(\".png\")</code>."
+     ],
+     [
+      "Search and filters",
+      "<code>name.toLowerCase().includes(query)</code> for a simple search box."
+     ],
+     [
+      "Parsing",
+      "Check a prefix such as <code>\"Bearer \"</code> before cutting it off."
+     ],
+     [
+      "Not a fit",
+      "Pattern matching (digits, optional parts, case-insensitive). Use a regular expression with <code>test</code> instead."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log(\"abc\".startsWith(\"\"), \"abc\".includes(\"\", 99), \"abc\".endsWith(\"\"))</code></pre>",
+     "opts": [
+      "<code>true true true</code>",
+      "<code>false false false</code>",
+      "<code>true false true</code>",
+      "<code>true true false</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "An empty string is found at every position, including the very end, so all three are <code>true</code>. The position 99 is clamped to the text length, which is still a valid place to find an empty string.",
+      "Do not return <code>false</code> just because the search value is empty or the position is large."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log(\"undefined is a word\".startsWith())</code></pre>",
+     "opts": [
+      "<code>false</code>",
+      "It throws a TypeError, because nothing was passed",
+      "<code>true</code>",
+      "<code>undefined</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "A missing argument is <code>undefined</code>, and the search value is converted to the string <code>\"undefined\"</code>. The text starts with those letters, so the result is <code>true</code>.",
+      "Only regular expressions are rejected. Everything else is converted with <code>String(...)</code>."
+     ]
+    },
+    {
+     "tag": "Why does this exist?",
+     "q": "Why does <code>\"a.b\".includes(/./)</code> throw a TypeError instead of searching with the pattern?",
+     "opts": [
+      "Regular expressions are not objects",
+      "The language wants to avoid a silent mistake: people may think a pattern is used, while a plain text search is done on the text of the pattern",
+      "Because <code>includes</code> only works on arrays",
+      "Because <code>/./</code> has no flags"
+     ],
+     "ans": 1,
+     "why": [
+      "Without the guard, the pattern would be converted to the string <code>\"/./\"</code> and searched as plain text. That would quietly give the wrong answer.",
+      "The explicit error tells the developer to use <code>regex.test(text)</code> instead."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log(\"hello world\".endsWith(\"hello\", 5))</code></pre>",
+     "opts": [
+      "<code>false</code>, because the text does not end with \"hello\"",
+      "<code>false</code>, because 5 is not the length",
+      "It throws a RangeError",
+      "<code>true</code>, because the text is treated as if it ended at position 5"
+     ],
+     "ans": 3,
+     "why": [
+      "For <code>endsWith</code> the second argument is the <b>end position</b>. The text is read as <code>\"hello\"</code> (the first 5 characters), and that ends with \"hello\".",
+      "This differs from <code>startsWith</code>, where the second argument is the start."
+     ]
+    },
+    {
+     "tag": "Spot the bug",
+     "q": "A version of <code>startsWith</code> does <code>this.slice(pos, pos + search.length) === search</code> but never clamps <code>pos</code>. What happens for <code>\"abc\".startsWith(\"a\", -1)</code>?",
+     "opts": [
+      "It returns <code>false</code>, because <code>slice(-1, 0)</code> counts from the end and gives an empty string. The built-in clamps to 0 and returns <code>true</code>",
+      "It returns <code>true</code>, like the built-in",
+      "It throws a RangeError",
+      "It returns <code>undefined</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Negative numbers mean \"from the end\" for <code>slice</code>, but for these string methods a negative position simply means 0.",
+      "Clamp first: <code>Math.min(Math.max(pos, 0), length)</code>, then slice."
+     ]
+    }
+   ],
+   "pseudo": "helper: prepare(text, search)\n  if text is null or undefined, throw a TypeError\n  if search is a regular expression, throw a TypeError\n  convert both to strings\n\nclamp(number, length)\n  turn the number into a whole number (invalid means 0)\n  keep it between 0 and length\n\nstartsWith(search, position)\n  start = clamp(position, text length)\n  take the piece of text from start, as long as the search string\n  return whether that piece equals the search string\n\nendsWith(search, endPosition)\n  end = text length if endPosition was not given, otherwise clamp(endPosition)\n  start = end - length of search string\n  if start is below 0, return false\n  return whether the piece from start to end equals the search string\n\nincludes(search, position)\n  start = clamp(position, text length)\n  look for the search string from start\n  return whether it was found",
+   "watch": [
+    "What should happen when the position is negative, or bigger than the text?",
+    "In <code>endsWith</code>, is the second argument a start or an end, and what is its default?",
+    "Which kinds of values must be converted to a string, and which must throw?"
+   ],
+   "build": {
+    "minutes": 20,
+    "problem": "Implement <b>String.prototype.myStartsWith</b>, <b>myEndsWith</b> and <b>myIncludes</b> without using the built-in <code>startsWith</code>, <code>endsWith</code> or <code>includes</code>.",
+    "reqs": [
+     "<code>myStartsWith(search, position = 0)</code> checks the text from <code>position</code>.",
+     "<code>myEndsWith(search, endPosition = length)</code> treats the text as ending at <code>endPosition</code>.",
+     "<code>myIncludes(search, position = 0)</code> looks for the search value from <code>position</code>.",
+     "Convert the search value to a string, and throw a <code>TypeError</code> if it is a regular expression.",
+     "Clamp positions into the text. Out-of-range positions never throw. Comparison is case-sensitive."
+    ],
+    "checks": [
+     {
+      "t": "myStartsWith works with and without a position",
+      "test": "console.log('hello world'.myStartsWith('hello'), 'hello world'.myStartsWith('world', 6), 'hello'.myStartsWith('Hello'), 'hello'.myStartsWith('lo', 1));\n// expected: true true false false",
+      "verify": "assert('hello world'.myStartsWith('hello') === true, 'prefix'); assert('hello world'.myStartsWith('world', 6) === true, 'with position');\nassert('hello'.myStartsWith('Hello') === false, 'case-sensitive'); assert('hello'.myStartsWith('lo', 1) === false, 'must match at the position')",
+      "gap": "Compare the slice <code>text.slice(pos, pos + search.length)</code> with the search string. Do not use a case-insensitive comparison."
+     },
+     {
+      "t": "myEndsWith uses the end position",
+      "test": "console.log('hello world'.myEndsWith('world'), 'hello world'.myEndsWith('hello', 5), 'hello'.myEndsWith('hello!'));\n// expected: true true false",
+      "verify": "assert('hello world'.myEndsWith('world') === true, 'suffix'); assert('hello world'.myEndsWith('hello', 5) === true, 'end position');\nassert('hello'.myEndsWith('hello!') === false, 'longer search value must be false')",
+      "gap": "Compute <code>end</code> (default: length) and <code>start = end - search.length</code>. If <code>start &lt; 0</code> return <code>false</code>. Compare <code>slice(start, end)</code>."
+     },
+     {
+      "t": "myIncludes finds text at or after the position",
+      "test": "console.log('hello'.myIncludes('ell'), 'hello'.myIncludes('ell', 2), 'hello'.myIncludes('xyz'));\n// expected: true false false",
+      "verify": "assert('hello'.myIncludes('ell') === true, 'found'); assert('hello'.myIncludes('ell', 2) === false, 'before the position'); assert('hello'.myIncludes('xyz') === false, 'absent')",
+      "gap": "Start looking at <code>position</code>. A simple way is a loop that checks each start index, or <code>indexOf(search, position) !== -1</code>."
+     },
+     {
+      "t": "An empty search string is always found",
+      "test": "console.log(''.myStartsWith(''), 'abc'.myEndsWith(''), 'abc'.myIncludes('', 99), 'abc'.myStartsWith('', 99));\n// expected: true true true true",
+      "verify": "assert(''.myStartsWith('') === true && 'abc'.myEndsWith('') === true, 'empty prefix/suffix');\nassert('abc'.myIncludes('', 99) === true && 'abc'.myStartsWith('', 99) === true, 'empty search with a big position')",
+      "gap": "After clamping, the position is at most the text length, and an empty piece equals an empty search. Do not special-case \"position too large\" into <code>false</code>."
+     },
+     {
+      "t": "Positions are clamped, never an error",
+      "test": "console.log('abc'.myStartsWith('a', -5), 'abc'.myEndsWith('c', 99), 'abc'.myEndsWith('a', -1), 'abc'.myIncludes('c', 99));\n// expected: true true false false",
+      "verify": "assert('abc'.myStartsWith('a', -5) === true, 'negative position acts like 0'); assert('abc'.myEndsWith('c', 99) === true, 'big end position acts like length');\nassert('abc'.myEndsWith('a', -1) === false, 'negative end position acts like 0'); assert('abc'.myIncludes('c', 99) === false, 'start past the end finds nothing')",
+      "gap": "Clamp every position with <code>Math.min(Math.max(n, 0), length)</code> before slicing. Negative values must not be passed to <code>slice</code>."
+     },
+     {
+      "t": "The search value is converted to a string",
+      "test": "console.log('null is odd'.myStartsWith(null), '1234'.myIncludes(23), 'undefined!'.myStartsWith());\n// expected: true true true",
+      "verify": "assert('null is odd'.myStartsWith(null) === true, 'null becomes \"null\"'); assert('1234'.myIncludes(23) === true, 'number becomes string');\nassert('undefined!'.myStartsWith() === true, 'missing argument becomes \"undefined\"')",
+      "gap": "Use <code>String(search)</code> once at the start of every method."
+     },
+     {
+      "t": "A RegExp search value throws a TypeError",
+      "test": "for (const m of ['myStartsWith', 'myEndsWith', 'myIncludes']) {\n  try { 'abc'[m](/a/) } catch (e) { console.log(e instanceof TypeError) }\n}\n// expected: true, true, true",
+      "verify": "for (const m of ['myStartsWith', 'myEndsWith', 'myIncludes']) {\n  let ok = false; try { 'abc'[m](/a/) } catch (e) { ok = e instanceof TypeError } assert(ok, m + ' must throw TypeError for a RegExp')\n}",
+      "gap": "Before converting to a string, check <code>search instanceof RegExp</code> and throw <code>new TypeError(...)</code>."
+     }
+    ]
+   },
+   "solution": "function prepare(text, search) {\n  if (text == null) {\n    throw new TypeError('String method called on null or undefined');\n  }\n  if (search instanceof RegExp) {\n    throw new TypeError('First argument must not be a regular expression');\n  }\n  return [String(text), String(search)];\n}\n\nfunction clamp(n, len) {\n  const x = Math.trunc(Number(n)) || 0;\n  return Math.min(Math.max(x, 0), len);\n}\n\nString.prototype.myStartsWith = function (search, position) {\n  const [text, str] = prepare(this, search);\n  const start = clamp(position, text.length);\n  return text.slice(start, start + str.length) === str;\n};\n\nString.prototype.myEndsWith = function (search, endPosition) {\n  const [text, str] = prepare(this, search);\n  const end = endPosition === undefined ? text.length : clamp(endPosition, text.length);\n  const start = end - str.length;\n  if (start < 0) return false;\n  return text.slice(start, end) === str;\n};\n\nString.prototype.myIncludes = function (search, position) {\n  const [text, str] = prepare(this, search);\n  const start = clamp(position, text.length);\n  for (let i = start; i + str.length <= text.length; i++) {\n    if (text.slice(i, i + str.length) === str) return true;\n  }\n  return false;\n};",
+   "notes": [
+    "One shared <code>prepare</code> step converts to strings and rejects regular expressions, so all three methods behave the same.",
+    "Clamp before slicing. Negative numbers passed to <code>slice</code> count from the end, which is not what we want.",
+    "<code>endsWith</code> has a different default and meaning for its second argument: it is the end of the window, not the start.",
+    "An empty search string matches at every valid position, including the end of the text.",
+    "The loop for <code>includes</code> stops when the remaining text is shorter than the search string."
+   ],
+   "next": [
+    "Add <code>myPadStart</code> and <code>myPadEnd</code>.",
+    "Make <code>myIncludes</code> faster with an <code>indexOf</code>-style first-character check, or implement the KMP algorithm.",
+    "Support case-insensitive versions with an options argument, and explain why <code>toLowerCase</code> can fail for some languages."
+   ]
+  },
+  {
+   "id": "object-create",
+   "diff": "Medium",
+   "fn": "objectCreate",
+   "signature": "objectCreate(proto, propertiesObject?)",
+   "learn": {
+    "what": [
+     "<code>Object.create(proto)</code> makes a new, empty object whose <b>prototype</b> is <code>proto</code>. The new object has no properties of its own, but it can use everything its prototype has. Reading <code>obj.greet</code> walks up the chain: first the object itself, then <code>proto</code>, then its prototype, and so on.",
+     "You can pass <code>null</code> as the prototype to get an object with <b>no inherited properties at all</b>. It has no <code>toString</code> and no <code>hasOwnProperty</code>, which makes it a clean dictionary. The prototype must be an object or <code>null</code>, otherwise it throws a <code>TypeError</code>.",
+     "The optional second argument is a map of <b>property descriptors</b>, the same format as <code>Object.defineProperties</code>. Properties added this way are <b>not</b> writable, enumerable or configurable unless you say so.",
+     "Think of a new employee who has no personal toolbox, but is allowed to borrow everything from their team's shared toolbox (the prototype)."
+    ],
+    "how": {
+     "steps": [
+      "Check <code>proto</code>. It must be an object, a function, or <code>null</code>. Anything else (a number, a string, <code>undefined</code>) throws a <code>TypeError</code>.",
+      "Create a new empty object.",
+      "Set its prototype to <code>proto</code>. For <code>null</code> this removes the default <code>Object.prototype</code>.",
+      "If a properties object was given, define each property on the new object with its descriptor.",
+      "Return the new object."
+     ],
+     "diagram": "const animal = { speak() { return 'sound' } }\nconst dog = Object.create(animal)\n\ndog ----------> animal ----------> Object.prototype -> null\n(no own keys)   speak()\n\ndog.speak()   found on animal -> 'sound'\n'speak' in dog              -> true\ndog.hasOwnProperty('speak') -> false"
+    },
+    "where": [
+     [
+      "Classical inheritance",
+      "<code>Child.prototype = Object.create(Parent.prototype)</code> was the standard way to inherit before <code>class</code>."
+     ],
+     [
+      "Clean dictionaries",
+      "<code>Object.create(null)</code> avoids clashes with keys like <code>\"constructor\"</code> or <code>\"toString\"</code>."
+     ],
+     [
+      "Object composition",
+      "Create an object that borrows behaviour from a shared template object."
+     ],
+     [
+      "Watch out",
+      "Changing the prototype later is slow and can confuse engines. Set it once when you create the object."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const base = { greet() { return \"hi\" } }\nconst o = Object.create(base)\nconsole.log(o.hasOwnProperty(\"greet\"), \"greet\" in o)</code></pre>",
+     "opts": [
+      "<code>true true</code>",
+      "<code>false true</code>",
+      "<code>false false</code>",
+      "<code>true false</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "<code>hasOwnProperty</code> only looks at the object itself. The <code>in</code> operator walks the whole prototype chain, so it finds <code>greet</code> on <code>base</code>.",
+      "Objects created with <code>Object.create(proto)</code> start with no own properties."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const d = Object.create(null)\nd.a = 1\nconsole.log(\"\" + d)</code></pre>",
+     "opts": [
+      "<code>\"[object Object]\"</code>",
+      "<code>\"1\"</code>",
+      "<code>\"\"</code>",
+      "It throws a TypeError"
+     ],
+     "ans": 3,
+     "why": [
+      "Turning an object into text calls its <code>toString</code> or <code>valueOf</code>, but a null-prototype object has neither, so JavaScript cannot convert it and throws \"Cannot convert object to primitive value\".",
+      "This is the price of having a truly empty object. Use <code>JSON.stringify</code> or <code>Object.keys</code> when you need to print one."
+     ]
+    },
+    {
+     "tag": "Surprise",
+     "q": "<pre><code>const o = Object.create({}, { x: { value: 1 } })\no.x = 2\nconsole.log(o.x, Object.keys(o))</code></pre>",
+     "opts": [
+      "<code>1 []</code>",
+      "<code>2 [\"x\"]</code>",
+      "<code>1 [\"x\"]</code>",
+      "<code>2 []</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "A descriptor that does not set <code>writable</code>, <code>enumerable</code> and <code>configurable</code> uses <code>false</code> for all of them. So the assignment is ignored (silently in sloppy mode), and <code>Object.keys</code> does not list the property.",
+      "This differs from creating a property by assignment, which makes all three <code>true</code>."
+     ]
+    },
+    {
+     "tag": "Spot the bug",
+     "q": "<pre><code>function Parent() {}\nfunction Child() {}\nChild.prototype = Parent.prototype\nChild.prototype.extra = function () { return 1 }\nconsole.log(typeof new Parent().extra)</code></pre>",
+     "opts": [
+      "<code>\"undefined\"</code>",
+      "<code>\"object\"</code>",
+      "<code>\"function\"</code>",
+      "It throws a TypeError"
+     ],
+     "ans": 2,
+     "why": [
+      "Assigning <code>Parent.prototype</code> directly makes both constructors share <b>one</b> prototype object. Adding a method for <code>Child</code> also adds it to <code>Parent</code>.",
+      "<code>Child.prototype = Object.create(Parent.prototype)</code> creates a new object that only <i>inherits</i> from it."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function Parent() {}\nfunction Child() {}\nChild.prototype = Object.create(Parent.prototype)\nconsole.log(new Child().constructor === Child)</code></pre>",
+     "opts": [
+      "<code>true</code>",
+      "<code>false</code>, it is <code>Parent</code>",
+      "<code>false</code>, it is <code>Object</code>",
+      "<code>undefined</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "The new prototype object is empty, so it has no <code>constructor</code> property of its own. The lookup continues to <code>Parent.prototype</code>, which says <code>Parent</code>.",
+      "After using <code>Object.create</code> this way, restore it: <code>Child.prototype.constructor = Child</code>."
+     ]
+    }
+   ],
+   "pseudo": "objectCreate(proto, propertiesObject)\n  if proto is not null, and is not an object or a function\n    throw a TypeError\n  make a new empty object\n  set the new object's prototype to proto\n    (null gives an object with no inherited properties)\n  if propertiesObject was given\n    define every property from it on the new object\n      using its descriptors\n  return the new object\n  // alternative: use a temporary constructor function,\n  // point its prototype at proto, and create an instance\n  // (this does not work for null)",
+   "watch": [
+    "Which values are allowed as the prototype, and which should throw?",
+    "How do you create an object with <b>no</b> prototype at all?",
+    "What happens to <code>writable</code>, <code>enumerable</code> and <code>configurable</code> when a descriptor does not mention them?"
+   ],
+   "build": {
+    "minutes": 20,
+    "problem": "Implement <b>objectCreate(proto, propertiesObject)</b> that behaves like <code>Object.create</code>, without calling it.",
+    "reqs": [
+     "Return a new object whose prototype is <code>proto</code>.",
+     "Allow <code>null</code> as the prototype (an object with no prototype chain).",
+     "Throw a <code>TypeError</code> if <code>proto</code> is not an object, a function or <code>null</code>.",
+     "If <code>propertiesObject</code> is given, define its properties with descriptors, like <code>Object.defineProperties</code>.",
+     "The result must work for <code>Child.prototype = objectCreate(Parent.prototype)</code>."
+    ],
+    "checks": [
+     {
+      "t": "The prototype is set and nothing is copied onto the object",
+      "test": "const proto = { hi() { return 'hi' } };\nconst o = objectCreate(proto);\nconsole.log(Object.getPrototypeOf(o) === proto, o.hi(), Object.keys(o).length); // expected: true hi 0",
+      "verify": "const proto = { hi() { return 'hi' } }; const o = objectCreate(proto);\nassert(Object.getPrototypeOf(o) === proto, 'prototype must be proto'); assert(o.hi() === 'hi', 'inherited method must work'); assert(Object.keys(o).length === 0 && !Object.prototype.hasOwnProperty.call(o, 'hi'), 'no own properties')",
+      "gap": "Create an empty object and set its prototype to <code>proto</code> (for example with <code>Object.setPrototypeOf</code>). Do not copy the properties of <code>proto</code>."
+     },
+     {
+      "t": "null gives an object with no prototype",
+      "test": "const o = objectCreate(null);\nconsole.log(Object.getPrototypeOf(o), 'toString' in o); // expected: null false",
+      "verify": "const o = objectCreate(null); assert(Object.getPrototypeOf(o) === null, 'prototype must be null'); assert(!('toString' in o), 'must not inherit from Object.prototype')",
+      "gap": "A plain <code>{}</code> inherits from <code>Object.prototype</code>. For <code>null</code> you must remove it with <code>Object.setPrototypeOf(obj, null)</code>. A temporary constructor does not work for <code>null</code>."
+     },
+     {
+      "t": "Invalid prototypes throw a TypeError",
+      "test": "for (const bad of [1, 'str', undefined, true]) {\n  try { objectCreate(bad) } catch (e) { console.log(e instanceof TypeError) }\n}\n// expected: true four times",
+      "verify": "for (const bad of [1, 'str', undefined, true]) {\n  let ok = false; try { objectCreate(bad) } catch (e) { ok = e instanceof TypeError } assert(ok, 'must throw TypeError for ' + String(bad))\n}",
+      "gap": "Allow only <code>null</code>, objects and functions: <code>proto !== null &amp;&amp; typeof proto !== \"object\" &amp;&amp; typeof proto !== \"function\"</code> means throw. Note that <code>undefined</code> must also throw."
+     },
+     {
+      "t": "propertiesObject defines properties with descriptors",
+      "test": "const o = objectCreate({}, { x: { value: 1 }, y: { value: 2, enumerable: true, writable: true } });\ntry { o.x = 5 } catch {} // strict mode (modules) throws here; x stays 1\no.y = 6;\nconsole.log(o.x, o.y, Object.keys(o)); // expected: 1 6 ['y']",
+      "verify": "const o = objectCreate({}, { x: { value: 1 }, y: { value: 2, enumerable: true, writable: true } }); try { o.x = 5 } catch {} o.y = 6;\nassert(o.x === 1, 'x is not writable by default'); assert(o.y === 6, 'y is writable'); assert(Object.keys(o).join() === 'y', 'only enumerable keys are listed')",
+      "gap": "Pass the descriptors to <code>Object.defineProperties(obj, propertiesObject)</code>. Do not assign the values with <code>obj[key] = ...</code>, which makes everything writable and enumerable."
+     },
+     {
+      "t": "Getters in descriptors work and are own properties",
+      "test": "const o = objectCreate({ a: 1 }, { double: { get() { return this.a * 2 }, enumerable: true } });\nconsole.log(o.double, Object.keys(o)); // expected: 2 ['double']",
+      "verify": "const o = objectCreate({ a: 1 }, { double: { get() { return this.a * 2 }, enumerable: true } });\nassert(o.double === 2, 'getter must use the inherited value'); assert(Object.keys(o).join() === 'double', 'defined property is own')",
+      "gap": "Keep the descriptor as it is (<code>get</code>/<code>set</code>) and let <code>Object.defineProperties</code> handle it."
+     },
+     {
+      "t": "Works for the classic inheritance pattern",
+      "test": "function A() {} A.prototype.hi = function () { return 'hi' };\nfunction B() {} B.prototype = objectCreate(A.prototype);\nconst b = new B();\nconsole.log(b instanceof A, b.hi(), A.prototype.isPrototypeOf(b)); // expected: true hi true",
+      "verify": "function A() {} A.prototype.hi = function () { return 'hi' }; function B() {} B.prototype = objectCreate(A.prototype);\nB.prototype.own = function () { return 1 }; const b = new B();\nassert(b instanceof A && b.hi() === 'hi', 'B instances must inherit from A'); assert(typeof new A().own === 'undefined', 'adding to B.prototype must not change A.prototype')",
+      "gap": "The returned object must be a <b>new</b> object whose prototype is <code>A.prototype</code>, not <code>A.prototype</code> itself."
+     },
+     {
+      "t": "A null properties object throws; undefined is ignored",
+      "test": "console.log(Object.getPrototypeOf(objectCreate({}, undefined)) !== null);\ntry { objectCreate({}, null) } catch (e) { console.log(e instanceof TypeError) } // expected: true, true",
+      "verify": "assert(Object.getPrototypeOf(objectCreate({}, undefined)) !== null, 'undefined properties are ignored');\nlet ok = false; try { objectCreate({}, null) } catch (e) { ok = e instanceof TypeError } assert(ok, 'null properties must throw TypeError')",
+      "gap": "Only skip the second step when <code>propertiesObject === undefined</code>. For <code>null</code>, let <code>Object.defineProperties</code> throw its <code>TypeError</code>."
+     }
+    ]
+   },
+   "solution": "function objectCreate(proto, propertiesObject) {\n  if (proto !== null && typeof proto !== 'object' && typeof proto !== 'function') {\n    throw new TypeError('Object prototype may only be an Object or null: ' + String(proto));\n  }\n  const obj = {};\n  Object.setPrototypeOf(obj, proto);\n  if (propertiesObject !== undefined) {\n    Object.defineProperties(obj, propertiesObject);\n  }\n  return obj;\n}",
+   "notes": [
+    "Validate first: the prototype is an object, a function or <code>null</code>. Anything else, including <code>undefined</code>, is an error.",
+    "<code>Object.setPrototypeOf(obj, null)</code> is what produces a truly prototype-free object.",
+    "The older trick uses a temporary constructor (<code>function F() {}; F.prototype = proto; return new F()</code>). It works for every case except <code>null</code>.",
+    "<code>Object.defineProperties</code> keeps descriptors intact, so missing flags default to <code>false</code>.",
+    "The new object has no own properties until the second argument adds some."
+   ],
+   "next": [
+    "Write <code>inherit(Child, Parent)</code> that sets the prototype chain and restores <code>Child.prototype.constructor</code>.",
+    "Implement <code>Object.getPrototypeOf</code> and <code>isPrototypeOf</code> logic by walking the chain manually.",
+    "Re-write a small <code>class Dog extends Animal</code> example using only constructor functions and <code>objectCreate</code>."
+   ]
+  }
+ ]
+}

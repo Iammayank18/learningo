@@ -1,0 +1,1072 @@
+{
+  "items": [
+    {
+      "id": "backtracking",
+      "prereqs": [
+        "recursion",
+        "dfs"
+      ],
+      "dryRun": {
+        "title": "All subsets of [1, 2]: choose, explore, undo",
+        "columns": [
+          "step",
+          "path",
+          "what happens",
+          "results so far"
+        ],
+        "rows": [
+          [
+            "start",
+            "[ ]",
+            "record the empty subset",
+            "[ ]"
+          ],
+          [
+            "add 1",
+            "[1]",
+            "record",
+            "[ ], [1]"
+          ],
+          [
+            "add 2",
+            "[1, 2]",
+            "record",
+            "[ ], [1], [1, 2]"
+          ],
+          [
+            "undo 2",
+            "[1]",
+            "nothing left to add, go back",
+            "same"
+          ],
+          [
+            "undo 1",
+            "[ ]",
+            "go back, try the next item",
+            "same"
+          ],
+          [
+            "add 2",
+            "[2]",
+            "record",
+            "[ ], [1], [1, 2], [2]"
+          ]
+        ],
+        "hit": 3,
+        "note": "Backtracking is DFS on a tree of choices. The key move is <b>undo</b>: after exploring a choice, remove it (<code>path.pop()</code>) so the next choice starts from a clean path."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const nums = [1, 2, 3]\nconst res = [], path = []\nfunction go(start) {\n  res.push([...path])\n  for (let i = start; i &lt; nums.length; i++) {\n    path.push(nums[i])\n    go(i + 1)\n    path.pop()\n  }\n}\ngo(0)\nconsole.log(res.length, JSON.stringify(res[3]))</code></pre>",
+          "opts": [
+            "<code>8 [1,2,3]</code>",
+            "<code>6 [1,2,3]</code>",
+            "<code>8 [3]</code>",
+            "<code>7 [1,3]</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "Three items give 2³ = 8 subsets. They come out in this order: [], [1], [1,2], [1,2,3], [1,3], [2], [2,3], [3]. Index 3 is <code>[1,2,3]</code>.",
+            "<code>go(i + 1)</code> moves forward only, so the same set is never built in two orders."
+          ],
+          "exec": "const nums = [1, 2, 3]\nconst res = [], path = []\nfunction go(start) {\n  res.push([...path])\n  for (let i = start; i < nums.length; i++) {\n    path.push(nums[i])\n    go(i + 1)\n    path.pop()\n  }\n}\ngo(0)\nconsole.log(res.length, JSON.stringify(res[3]))"
+        },
+        {
+          "tag": "Spot the bug",
+          "q": "<pre><code>const nums = [1, 2]\nconst res = [], path = []\nfunction go(start) {\n  res.push(path)\n  for (let i = start; i &lt; nums.length; i++) {\n    path.push(nums[i])\n    go(i + 1)\n    path.pop()\n  }\n}\ngo(0)\nconsole.log(JSON.stringify(res))</code></pre>",
+          "opts": [
+            "<code>[[],[1],[1,2],[2]]</code>",
+            "<code>[[],[],[],[]]</code>",
+            "<code>[[1,2],[1,2],[1,2],[1,2]]</code>",
+            "<code>[]</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "<code>res.push(path)</code> stores the <b>same array</b> four times. When the search ends, <code>path</code> is empty again, so every entry looks empty.",
+            "Always store a copy: <code>res.push([...path])</code>."
+          ],
+          "exec": "const nums = [1, 2]\nconst res = [], path = []\nfunction go(start) {\n  res.push(path)\n  for (let i = start; i < nums.length; i++) {\n    path.push(nums[i])\n    go(i + 1)\n    path.pop()\n  }\n}\ngo(0)\nconsole.log(JSON.stringify(res))"
+        },
+        {
+          "tag": "Count the answers",
+          "q": "<pre><code>const nums = [1, 2, 3, 4]\nconst used = Array(nums.length).fill(false)\nlet count = 0\nfunction go(len) {\n  if (len === nums.length) { count++; return }\n  for (let i = 0; i &lt; nums.length; i++) {\n    if (used[i]) continue\n    used[i] = true\n    go(len + 1)\n    used[i] = false\n  }\n}\ngo(0)\nconsole.log(count)</code></pre>",
+          "opts": [
+            "<code>16</code>",
+            "<code>24</code>",
+            "<code>12</code>",
+            "<code>64</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "This builds every ordering (permutation) of 4 items: 4 × 3 × 2 × 1 = 24.",
+            "<code>used[i] = false</code> is the undo step. Without it each item could be used only once in the whole run."
+          ],
+          "exec": "const nums = [1, 2, 3, 4]\nconst used = Array(nums.length).fill(false)\nlet count = 0\nfunction go(len) {\n  if (len === nums.length) { count++; return }\n  for (let i = 0; i < nums.length; i++) {\n    if (used[i]) continue\n    used[i] = true\n    go(len + 1)\n    used[i] = false\n  }\n}\ngo(0)\nconsole.log(count)"
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>What is the time to list all subsets of n items?</p>",
+          "opts": [
+            "<code>O(n)</code>",
+            "<code>O(n²)</code>",
+            "<code>O(2ⁿ · n)</code>",
+            "<code>O(n!)</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "There are 2ⁿ subsets, and copying each one costs up to n. Permutations are worse: n! of them.",
+            "Backtracking is exponential by nature. Pruning is how we make it fast enough."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Pruning",
+          "q": "<p>You are looking for combinations that add up to 7, and the running sum is already 9. What should the search do?</p>",
+          "opts": [
+            "Keep going, it may come back down",
+            "Stop this path now and go back (prune)",
+            "Restart from the beginning",
+            "Record it anyway"
+          ],
+          "ans": 1,
+          "why": [
+            "With positive numbers the sum can only grow, so no extension of this path can work. Cutting it off saves the whole branch below.",
+            "Pruning = stop early when a path cannot lead to a valid answer."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>subsets(nums)</code>. <code>nums</code> has <b>unique</b> numbers. Return all subsets (the empty one too) as an array of arrays, in any order. Do not change <code>nums</code>.</p>",
+        "examples": [
+          "subsets([1, 2, 3])  // [[], [1], [2], [3], [1, 2], [1, 3], [2, 3], [1, 2, 3]] (any order)",
+          "subsets([0])  // [[], [0]]"
+        ],
+        "hint": "<p>Use a <code>path</code> array and a function <code>go(start)</code>. At each call, push a <b>copy</b> of <code>path</code> to the results. Then for each <code>i &gt;= start</code>: push <code>nums[i]</code>, call <code>go(i + 1)</code>, pop.</p>",
+        "fn": "subsets",
+        "starter": "function subsets(nums) {\n  // your code\n}",
+        "solution": "function subsets(nums) {\n  const res = []\n  const path = []\n  const go = (start) => {\n    res.push([...path])\n    for (let i = start; i < nums.length; i++) {\n      path.push(nums[i])\n      go(i + 1)\n      path.pop()\n    }\n  }\n  go(0)\n  return res\n}",
+        "checks": [
+          {
+            "t": "three items",
+            "verify": "const norm = (r) => JSON.stringify(r.map((a) => [...a].sort((x, y) => x - y)).sort((a, b) => (JSON.stringify(a) < JSON.stringify(b) ? -1 : 1))); assert(norm(subsets([1, 2, 3])) === '[[1,2,3],[1,2],[1,3],[1],[2,3],[2],[3],[]]', \"wrong subsets for [1,2,3]\")"
+          },
+          {
+            "t": "one item",
+            "verify": "const norm = (r) => JSON.stringify(r.map((a) => [...a].sort((x, y) => x - y)).sort((a, b) => (JSON.stringify(a) < JSON.stringify(b) ? -1 : 1))); assert(norm(subsets([0])) === '[[0],[]]', \"expected [[],[0]]\")"
+          },
+          {
+            "t": "empty input has one subset",
+            "verify": "assert(JSON.stringify(subsets([])) === \"[[]]\", \"expected [[]]\")"
+          },
+          {
+            "t": "10 items give 1024 different subsets",
+            "verify": "const r = subsets([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]); const keys = new Set(r.map((a) => JSON.stringify([...a].sort((x, y) => x - y)))); assert(r.length === 1024 && keys.size === 1024, \"expected 1024 different subsets, got \" + r.length + \" and \" + keys.size)"
+          },
+          {
+            "t": "does not change the input",
+            "verify": "const x = [3, 1, 2]; subsets(x); assert(JSON.stringify(x) === \"[3,1,2]\", \"the input was changed\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Backtracking = <b>choose, explore, undo</b>. It is DFS on a tree of choices. Store a <b>copy</b> of the path, and prune any branch that cannot win. Subsets are 2ⁿ, permutations n!.",
+        "mistakes": [
+          "Pushing the path itself instead of a copy.",
+          "Forgetting the undo step (<code>pop</code> or <code>used[i] = false</code>).",
+          "Starting the loop at 0 instead of <code>start</code>, which repeats sets in other orders.",
+          "Not pruning when the problem allows it."
+        ]
+      }
+    },
+    {
+      "id": "trie-structure",
+      "prereqs": [
+        "hashmaps",
+        "binary-tree"
+      ],
+      "dryRun": {
+        "title": "Insert \"car\" and then \"cat\" into an empty trie",
+        "columns": [
+          "word",
+          "letter",
+          "node already there?",
+          "action"
+        ],
+        "rows": [
+          [
+            "car",
+            "c",
+            "no",
+            "create c under the root"
+          ],
+          [
+            "car",
+            "a",
+            "no",
+            "create a under c"
+          ],
+          [
+            "car",
+            "r",
+            "no",
+            "create r under a, mark: a word ends here"
+          ],
+          [
+            "cat",
+            "c",
+            "yes",
+            "reuse it"
+          ],
+          [
+            "cat",
+            "a",
+            "yes",
+            "reuse it"
+          ],
+          [
+            "cat",
+            "t",
+            "no",
+            "create t under a, mark: a word ends here"
+          ]
+        ],
+        "hit": 3,
+        "note": "Words that share a start <b>share nodes</b>. Four letter-nodes (c, a, r, t) store two words. Each node stands for a prefix, and a flag marks where a whole word ends."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const root = {}\nlet nodes = 0\nfor (const w of ['car', 'cat', 'cart']) {\n  let n = root\n  for (const ch of w) {\n    if (!n[ch]) { n[ch] = {}; nodes++ }\n    n = n[ch]\n  }\n  n.$ = true\n}\nconsole.log(nodes)</code></pre>",
+          "opts": [
+            "<code>10</code>",
+            "<code>5</code>",
+            "<code>4</code>",
+            "<code>6</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "The nodes are c, a, r, the t under a (from \"cat\"), and the t under r (from \"cart\"). That is 5 nodes, not the 10 letters typed in.",
+            "The shared prefix \"ca\" is stored once. That saving is the point of a trie."
+          ],
+          "exec": "const root = {}\nlet nodes = 0\nfor (const w of ['car', 'cat', 'cart']) {\n  let n = root\n  for (const ch of w) {\n    if (!n[ch]) { n[ch] = {}; nodes++ }\n    n = n[ch]\n  }\n  n.$ = true\n}\nconsole.log(nodes)"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const root = {}\nfor (const w of ['car', 'cat']) {\n  let n = root\n  for (const ch of w) n = n[ch] ??= {}\n  n.$ = true\n}\nfunction has(w) {\n  let n = root\n  for (const ch of w) {\n    if (!n[ch]) return false\n    n = n[ch]\n  }\n  return n.$ === true\n}\nconsole.log(has('car'), has('ca'))</code></pre>",
+          "opts": [
+            "<code>true true</code>",
+            "<code>true false</code>",
+            "<code>false false</code>",
+            "<code>false true</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "The path c-a exists, but no word <b>ends</b> there, so the end flag is missing and <code>has(\"ca\")</code> is false.",
+            "The flag separates \"this is a stored word\" from \"this is only the start of a word\"."
+          ],
+          "exec": "const root = {}\nfor (const w of ['car', 'cat']) {\n  let n = root\n  for (const ch of w) n = n[ch] ??= {}\n  n.$ = true\n}\nfunction has(w) {\n  let n = root\n  for (const ch of w) {\n    if (!n[ch]) return false\n    n = n[ch]\n  }\n  return n.$ === true\n}\nconsole.log(has('car'), has('ca'))"
+        },
+        {
+          "tag": "Why a trie?",
+          "q": "<p>You have 100,000 words and must answer \"does any word start with this prefix?\" many times. Why is a trie better than a Set of words?</p>",
+          "opts": [
+            "A Set cannot store strings",
+            "A trie answers in O(length of the prefix); a Set would need to check every word",
+            "A trie uses less memory in every case",
+            "A trie keeps words sorted by length"
+          ],
+          "ans": 1,
+          "why": [
+            "A Set answers \"is this exact word here?\" in O(1), but has no idea about prefixes. A trie just walks the prefix letter by letter.",
+            "The cost depends on the prefix length L, not on how many words there are."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>What is the time to insert a word of length L into a trie?</p>",
+          "opts": [
+            "<code>O(1)</code>",
+            "<code>O(L)</code>",
+            "<code>O(L · number of words)</code>",
+            "<code>O(log L)</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "One step per letter: look up the child, create it if missing, move down.",
+            "Search and prefix check are O(L) too."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Design choice",
+          "q": "<p>Each trie node keeps its children. What is the trade-off between an array of 26 slots and a Map (or object)?</p>",
+          "opts": [
+            "An array is faster to index but wastes space when few letters are used; a Map uses space only for letters that exist",
+            "A Map is always faster",
+            "An array can hold any character",
+            "There is no difference"
+          ],
+          "ans": 0,
+          "why": [
+            "26 slots per node is fine for lowercase a-z words, but most slots stay empty. A Map handles any character and stays small.",
+            "In JavaScript an object or Map is the common choice in interviews."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>trieSize(words)</code>. Imagine inserting all the words into a trie. Return the number of letter-nodes in it (the empty root does not count). Shared prefixes are stored once.</p>",
+        "examples": [
+          "trieSize(['car', 'cat', 'cart'])  // 5",
+          "trieSize(['abc', 'abd', 'xyz'])  // 7"
+        ],
+        "hint": "<p>Build a nested object. For each word, walk it letter by letter and create a child when it is missing, adding 1 to a counter each time.</p>",
+        "fn": "trieSize",
+        "starter": "function trieSize(words) {\n  // your code\n}",
+        "solution": "function trieSize(words) {\n  const root = {}\n  let nodes = 0\n  for (const w of words) {\n    let n = root\n    for (const ch of w) {\n      if (!n[ch]) {\n        n[ch] = {}\n        nodes++\n      }\n      n = n[ch]\n    }\n  }\n  return nodes\n}",
+        "checks": [
+          {
+            "t": "words that share a start",
+            "verify": "assert(trieSize([\"car\", \"cat\", \"cart\"]) === 5, \"expected 5\")"
+          },
+          {
+            "t": "words that share nothing in common except the start",
+            "verify": "assert(trieSize([\"abc\", \"abd\", \"xyz\"]) === 7, \"expected 7\")"
+          },
+          {
+            "t": "duplicate words add nothing",
+            "verify": "assert(trieSize([\"a\", \"a\", \"a\"]) === 1, \"expected 1\")"
+          },
+          {
+            "t": "empty list and empty word",
+            "verify": "assert(trieSize([]) === 0 && trieSize([\"\"]) === 0, \"expected 0\")"
+          },
+          {
+            "t": "a word that is the start of another",
+            "verify": "assert(trieSize([\"app\", \"apple\"]) === 5, \"expected 5\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "A trie stores words letter by letter in a tree where <b>shared prefixes share nodes</b>. A flag marks where a word ends. Insert, search and prefix check are all <b>O(L)</b>.",
+        "mistakes": [
+          "Forgetting the end-of-word flag, so \"ca\" looks like a stored word.",
+          "Counting letters typed instead of nodes created.",
+          "Using a Set of words and scanning it for every prefix question.",
+          "Mixing a letter key with the flag key in the same object."
+        ]
+      }
+    },
+    {
+      "id": "trie-ops",
+      "prereqs": [
+        "trie-structure"
+      ],
+      "dryRun": {
+        "title": "A trie holding \"apple\" and \"app\": three questions",
+        "columns": [
+          "call",
+          "path followed",
+          "word ends here?",
+          "answer"
+        ],
+        "rows": [
+          [
+            "insert \"apple\"",
+            "a, p, p, l, e",
+            "mark the last e",
+            "-"
+          ],
+          [
+            "insert \"app\"",
+            "a, p, p (all exist)",
+            "mark the second p",
+            "-"
+          ],
+          [
+            "search \"app\"",
+            "a, p, p",
+            "yes",
+            "true"
+          ],
+          [
+            "search \"appl\"",
+            "a, p, p, l",
+            "no",
+            "false"
+          ],
+          [
+            "startsWith \"appl\"",
+            "a, p, p, l",
+            "not needed",
+            "true"
+          ],
+          [
+            "search \"apx\"",
+            "a, p, then x is missing",
+            "-",
+            "false"
+          ]
+        ],
+        "hit": 3,
+        "note": "<code>search</code> and <code>startsWith</code> follow the same path. The only difference is the last step: <code>search</code> also needs the <b>word-end flag</b>."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>class Trie {\n  constructor() { this.root = {} }\n  insert(w) {\n    let n = this.root\n    for (const ch of w) n = n[ch] ??= {}\n    n.$ = true\n  }\n  walk(s) {\n    let n = this.root\n    for (const ch of s) {\n      if (!n[ch]) return null\n      n = n[ch]\n    }\n    return n\n  }\n  search(w) { const n = this.walk(w); return !!n &amp;&amp; n.$ === true }\n  startsWith(p) { return this.walk(p) !== null }\n}\nconst t = new Trie()\nt.insert('apple')\nconsole.log(t.search('app'), t.startsWith('app'), t.search('apple'))</code></pre>",
+          "opts": [
+            "<code>true true true</code>",
+            "<code>false true true</code>",
+            "<code>false false true</code>",
+            "<code>true false true</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "\"app\" is only a prefix of \"apple\", so <code>search(\"app\")</code> is false but <code>startsWith(\"app\")</code> is true.",
+            "Both use the same <code>walk</code> helper. This avoids writing the loop twice."
+          ],
+          "exec": "class Trie {\n  constructor() { this.root = {} }\n  insert(w) {\n    let n = this.root\n    for (const ch of w) n = n[ch] ??= {}\n    n.$ = true\n  }\n  walk(s) {\n    let n = this.root\n    for (const ch of s) {\n      if (!n[ch]) return null\n      n = n[ch]\n    }\n    return n\n  }\n  search(w) { const n = this.walk(w); return !!n && n.$ === true }\n  startsWith(p) { return this.walk(p) !== null }\n}\nconst t = new Trie()\nt.insert('apple')\nconsole.log(t.search('app'), t.startsWith('app'), t.search('apple'))"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const root = {}\nconst add = (w) =&gt; { let n = root; for (const ch of w) n = n[ch] ??= {}; n.$ = true }\n;['to', 'tea', 'ten', 'to'].forEach(add)\nconst words = []\nfunction collect(n, path) {\n  if (n.$) words.push(path)\n  for (const ch of Object.keys(n)) if (ch !== '$') collect(n[ch], path + ch)\n}\ncollect(root.t, 't')\nconsole.log(words.join(','))</code></pre>",
+          "opts": [
+            "<code>to,tea,ten</code>",
+            "<code>to,to,tea,ten</code>",
+            "<code>tea,ten,to</code>",
+            "<code>t</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "This is the autocomplete idea: walk to the prefix node (<code>root.t</code>), then DFS below it and collect every node with the end flag.",
+            "Inserting \"to\" twice changes nothing, so it appears once. The order follows the order the letters were first added."
+          ],
+          "exec": "const root = {}\nconst add = (w) => { let n = root; for (const ch of w) n = n[ch] ??= {}; n.$ = true }\n;['to', 'tea', 'ten', 'to'].forEach(add)\nconst words = []\nfunction collect(n, path) {\n  if (n.$) words.push(path)\n  for (const ch of Object.keys(n)) if (ch !== '$') collect(n[ch], path + ch)\n}\ncollect(root.t, 't')\nconsole.log(words.join(','))"
+        },
+        {
+          "tag": "search vs startsWith",
+          "q": "<p>What is the only real difference between <code>search(w)</code> and <code>startsWith(p)</code>?</p>",
+          "opts": [
+            "search is faster",
+            "search also requires the end-of-word flag on the last node",
+            "startsWith needs a sorted trie",
+            "search can use recursion, startsWith cannot"
+          ],
+          "ans": 1,
+          "why": [
+            "Both follow the letters. Only <code>search</code> asks \"does a stored word end exactly here?\".",
+            "Return the flag for search, and just \"the path exists\" for startsWith."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>A trie holds N words. A prefix check for a prefix of length L costs:</p>",
+          "opts": [
+            "<code>O(N)</code>",
+            "<code>O(L)</code>",
+            "<code>O(N · L)</code>",
+            "<code>O(log N)</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "You walk L nodes and stop. The number of stored words does not matter.",
+            "Scanning a list of N words with <code>startsWith</code> would cost O(N · L)."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Where is it used?",
+          "q": "<p>Which feature is the classic use of a trie?</p>",
+          "opts": [
+            "Sorting numbers",
+            "Autocomplete and spell-check suggestions",
+            "Finding the shortest path",
+            "Counting islands"
+          ],
+          "ans": 1,
+          "why": [
+            "Autocomplete is \"walk to the prefix, then list what is below\". Word-search puzzles also use a trie to prune paths early.",
+            "Whenever the question says \"words with this prefix\", think trie."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>createTrie()</code>. It returns an object with three methods: <code>insert(word)</code>, <code>search(word)</code> (true only if exactly this word was inserted) and <code>startsWith(prefix)</code> (true if some inserted word starts with it).</p>",
+        "examples": [
+          "const t = createTrie(); t.insert('apple')",
+          "t.search('app')  // false",
+          "t.startsWith('app')  // true"
+        ],
+        "hint": "<p>Keep a <code>root = {}</code>. <code>insert</code> walks and creates children, then sets <code>node.$ = true</code>. A helper <code>walk(s)</code> returns the node for <code>s</code> or <code>null</code>.</p>",
+        "fn": "createTrie",
+        "starter": "function createTrie() {\n  // your code\n}",
+        "solution": "function createTrie() {\n  const root = {}\n  const walk = (s) => {\n    let n = root\n    for (const ch of s) {\n      if (!n[ch]) return null\n      n = n[ch]\n    }\n    return n\n  }\n  return {\n    insert(word) {\n      let n = root\n      for (const ch of word) {\n        if (!n[ch]) n[ch] = {}\n        n = n[ch]\n      }\n      n.$ = true\n    },\n    search(word) {\n      const n = walk(word)\n      return n !== null && n.$ === true\n    },\n    startsWith(prefix) {\n      return walk(prefix) !== null\n    },\n  }\n}",
+        "checks": [
+          {
+            "t": "search and startsWith differ",
+            "verify": "const t = createTrie(); t.insert(\"apple\"); assert(t.search(\"apple\") === true && t.search(\"app\") === false && t.startsWith(\"app\") === true, \"search/startsWith\")"
+          },
+          {
+            "t": "words that are prefixes of each other",
+            "verify": "const t = createTrie(); t.insert(\"app\"); t.insert(\"apple\"); assert(t.search(\"app\") === true && t.search(\"apple\") === true && t.search(\"appl\") === false, \"app/apple\")"
+          },
+          {
+            "t": "a missing word",
+            "verify": "const t = createTrie(); t.insert(\"cat\"); assert(t.search(\"car\") === false && t.startsWith(\"d\") === false && t.startsWith(\"ca\") === true, \"missing words\")"
+          },
+          {
+            "t": "insert the same word twice",
+            "verify": "const t = createTrie(); t.insert(\"a\"); t.insert(\"a\"); assert(t.search(\"a\") === true, \"duplicate insert\")"
+          },
+          {
+            "t": "20,000 words stay fast",
+            "verify": "const t = createTrie(); const t0 = Date.now(); for (let i = 0; i < 20000; i++) t.insert(\"word\" + i); let ok = true; for (let i = 0; i < 20000; i += 97) if (!t.search(\"word\" + i) || !t.startsWith(\"word\" + i)) ok = false; assert(ok && !t.search(\"word\") && t.startsWith(\"word\") && Date.now() - t0 < 500, \"wrong or too slow\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Every trie operation is one walk down the letters: <b>insert</b> creates missing nodes, <b>search</b> needs the end flag, <b>startsWith</b> only needs the path. All O(L). Autocomplete = walk to the prefix, then DFS below.",
+        "mistakes": [
+          "Returning true for <code>search</code> when only the path exists.",
+          "Crashing on a missing child instead of returning false.",
+          "Forgetting to set the end flag in <code>insert</code>.",
+          "Rebuilding the trie for every query."
+        ]
+      }
+    },
+    {
+      "id": "heap",
+      "prereqs": [
+        "arrays",
+        "binary-tree"
+      ],
+      "dryRun": {
+        "title": "Min-heap [3, 5, 8]: push 2, then pop the smallest",
+        "columns": [
+          "step",
+          "array",
+          "we look at",
+          "action"
+        ],
+        "rows": [
+          [
+            "push 2",
+            "[3, 5, 8, 2]",
+            "2 at index 3; parent is 5",
+            "2 < 5, swap up"
+          ],
+          [
+            "",
+            "[3, 2, 8, 5]",
+            "2 at index 1; parent is 3",
+            "2 < 3, swap up"
+          ],
+          [
+            "",
+            "[2, 3, 8, 5]",
+            "2 at the root",
+            "stop"
+          ],
+          [
+            "pop",
+            "[5, 3, 8]",
+            "returned 2; last item 5 moved to the root; its smaller child is 3",
+            "5 > 3, swap down"
+          ],
+          [
+            "",
+            "[3, 5, 8]",
+            "5 at index 1; no children",
+            "stop"
+          ]
+        ],
+        "hit": 3,
+        "note": "A heap is a <b>tree stored in an array</b>. Push adds at the end and <b>bubbles up</b>. Pop takes the root, moves the last item to the top and <b>sinks it down</b>. Both take O(log n)."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const i = 4\nconsole.log(Math.floor((i - 1) / 2), 2 * 1 + 1, 2 * 1 + 2)</code></pre>",
+          "opts": [
+            "<code>1 3 4</code>",
+            "<code>2 3 4</code>",
+            "<code>1 2 3</code>",
+            "<code>2 4 5</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "The parent of index i is <code>floor((i - 1) / 2)</code>. For i = 4 that is 1. The children of index 1 are <code>2*1+1 = 3</code> and <code>2*1+2 = 4</code>.",
+            "No pointers are needed. The index maths is the whole tree."
+          ],
+          "exec": "const i = 4\nconsole.log(Math.floor((i - 1) / 2), 2 * 1 + 1, 2 * 1 + 2)"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const h = []\nfunction push(x) {\n  h.push(x)\n  let i = h.length - 1\n  while (i &gt; 0) {\n    const p = Math.floor((i - 1) / 2)\n    if (h[p] &lt;= h[i]) break\n    ;[h[p], h[i]] = [h[i], h[p]]\n    i = p\n  }\n}\n;[5, 3, 8, 1].forEach(push)\nconsole.log(h.join(\",\"))</code></pre>",
+          "opts": [
+            "<code>1,3,8,5</code>",
+            "<code>1,3,5,8</code>",
+            "<code>5,3,8,1</code>",
+            "<code>1,5,8,3</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "The 1 is added at index 3. It swaps with its parent 5 (index 1), then with its new parent 3 (the root). The result array is <code>[1, 3, 8, 5]</code>.",
+            "A heap is only partly ordered: the root is the smallest, and every parent is smaller than its children. The array is not sorted."
+          ],
+          "exec": "const h = []\nfunction push(x) {\n  h.push(x)\n  let i = h.length - 1\n  while (i > 0) {\n    const p = Math.floor((i - 1) / 2)\n    if (h[p] <= h[i]) break\n    ;[h[p], h[i]] = [h[i], h[p]]\n    i = p\n  }\n}\n;[5, 3, 8, 1].forEach(push)\nconsole.log(h.join(\",\"))"
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>For a heap with n items, what are the costs of <code>peek</code> (look at the smallest), <code>push</code> and <code>pop</code>?</p>",
+          "opts": [
+            "O(1), O(log n), O(log n)",
+            "O(1), O(1), O(1)",
+            "O(log n), O(log n), O(log n)",
+            "O(1), O(n), O(n)"
+          ],
+          "ans": 0,
+          "why": [
+            "The smallest is always at index 0. Push and pop move one item along one path of the tree, and the tree has about log₂(n) levels.",
+            "Compare with a sorted array: peek is O(1) but each insert is O(n)."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "JavaScript",
+          "q": "<p>JavaScript has no built-in heap or priority queue. What do you do in an interview?</p>",
+          "opts": [
+            "Use Array.sort after every push",
+            "Write a small heap class (push, pop, peek) yourself, or say you would use a library",
+            "Use a Set",
+            "Say it is impossible"
+          ],
+          "ans": 1,
+          "why": [
+            "Sorting after every push costs O(n log n) each time. A small class with bubble-up and sink-down is about twenty lines.",
+            "Keep one ready to write from memory, because it shows up often."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Top-K",
+          "q": "<p>You read a stream of numbers and must keep the <b>3 largest</b>. Which heap do you use?</p>",
+          "opts": [
+            "A max-heap of everything",
+            "A min-heap that never holds more than 3 items",
+            "A sorted array of everything",
+            "Two stacks"
+          ],
+          "ans": 1,
+          "why": [
+            "The root of a min-heap is the <b>smallest of the 3 kept</b>, which is exactly the one to throw out if a bigger number arrives.",
+            "Memory stays at k items and each number costs O(log k)."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>createMinHeap()</code>. It returns an object with <code>push(x)</code>, <code>pop()</code> (removes and returns the smallest, or <code>undefined</code> if empty), <code>peek()</code> (the smallest without removing it, or <code>undefined</code>) and <code>size()</code>. Store the heap in an array.</p>",
+        "examples": [
+          "const h = createMinHeap(); h.push(5); h.push(2); h.push(8)",
+          "h.peek()  // 2",
+          "h.pop()  // 2, then h.pop() gives 5"
+        ],
+        "hint": "<p><code>push</code>: add at the end, then swap with the parent while smaller. <code>pop</code>: save the root, move the last item to index 0, then swap with the smaller child while bigger.</p>",
+        "fn": "createMinHeap",
+        "starter": "function createMinHeap() {\n  // your code\n}",
+        "solution": "function createMinHeap() {\n  const h = []\n  const swap = (a, b) => {\n    ;[h[a], h[b]] = [h[b], h[a]]\n  }\n  return {\n    push(x) {\n      h.push(x)\n      let i = h.length - 1\n      while (i > 0) {\n        const p = Math.floor((i - 1) / 2)\n        if (h[p] <= h[i]) break\n        swap(p, i)\n        i = p\n      }\n    },\n    pop() {\n      if (h.length === 0) return undefined\n      const top = h[0]\n      const last = h.pop()\n      if (h.length > 0) {\n        h[0] = last\n        let i = 0\n        while (true) {\n          let s = i\n          const l = 2 * i + 1\n          const r = 2 * i + 2\n          if (l < h.length && h[l] < h[s]) s = l\n          if (r < h.length && h[r] < h[s]) s = r\n          if (s === i) break\n          swap(i, s)\n          i = s\n        }\n      }\n      return top\n    },\n    peek() {\n      return h[0]\n    },\n    size() {\n      return h.length\n    },\n  }\n}",
+        "checks": [
+          {
+            "t": "pop gives items in increasing order",
+            "verify": "const h = createMinHeap(); [5, 2, 8, 1, 9, 3].forEach((x) => h.push(x)); const out = []; while (h.size()) out.push(h.pop()); assert(JSON.stringify(out) === \"[1,2,3,5,8,9]\", \"got \" + JSON.stringify(out))"
+          },
+          {
+            "t": "peek does not remove",
+            "verify": "const h = createMinHeap(); h.push(4); h.push(2); assert(h.peek() === 2 && h.size() === 2, \"peek must not remove the item\")"
+          },
+          {
+            "t": "empty heap",
+            "verify": "const h = createMinHeap(); assert(h.pop() === undefined && h.peek() === undefined && h.size() === 0, \"empty heap\")"
+          },
+          {
+            "t": "duplicates and negatives",
+            "verify": "const h = createMinHeap(); [3, -1, 3, -1, 0].forEach((x) => h.push(x)); const out = []; while (h.size()) out.push(h.pop()); assert(JSON.stringify(out) === \"[-1,-1,0,3,3]\", \"got \" + JSON.stringify(out))"
+          },
+          {
+            "t": "50,000 items stay fast",
+            "verify": "const h = createMinHeap(); const t0 = Date.now(); for (let i = 0; i < 50000; i++) h.push((i * 7919) % 50021); let prev = -1, ok = true; while (h.size()) { const x = h.pop(); if (x < prev) ok = false; prev = x } assert(ok && Date.now() - t0 < 800, \"wrong order or too slow, push and pop must be O(log n)\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "A heap keeps the smallest (or largest) item at the top of an array-tree. <b>peek O(1)</b>, <b>push and pop O(log n)</b>. For the K largest, keep a <b>min-heap of size K</b>.",
+        "mistakes": [
+          "Expecting the array to be sorted (only the root is guaranteed).",
+          "Wrong child or parent formulas (use <code>2i+1</code>, <code>2i+2</code>, <code>(i-1)/2</code>).",
+          "Sinking down towards the larger child in a min-heap.",
+          "Using sort after each push."
+        ]
+      }
+    },
+    {
+      "id": "heapify",
+      "prereqs": [
+        "heap"
+      ],
+      "dryRun": {
+        "title": "Build a min-heap from [9, 4, 7, 1, 6, 2] by sinking from the last parent upwards",
+        "columns": [
+          "index",
+          "value",
+          "smaller child",
+          "action",
+          "array after"
+        ],
+        "rows": [
+          [
+            "2",
+            "7",
+            "2 (index 5)",
+            "swap",
+            "9 4 2 1 6 7"
+          ],
+          [
+            "1",
+            "4",
+            "1 (index 3)",
+            "swap",
+            "9 1 2 4 6 7"
+          ],
+          [
+            "0",
+            "9",
+            "1 (index 1)",
+            "swap",
+            "1 9 2 4 6 7"
+          ],
+          [
+            "1 again",
+            "9",
+            "4 (index 3)",
+            "swap",
+            "1 4 2 9 6 7"
+          ]
+        ],
+        "hit": 3,
+        "note": "Start at the <b>last parent</b>, <code>floor(n / 2) - 1</code>, and sink each node, moving towards index 0. Everything below is already a heap, so one sink per node is enough. Total work: <b>O(n)</b>."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const a = [9, 4, 7, 1, 6, 2]\nfunction down(i, n) {\n  while (true) {\n    let s = i\n    const l = 2 * i + 1, r = 2 * i + 2\n    if (l &lt; n &amp;&amp; a[l] &lt; a[s]) s = l\n    if (r &lt; n &amp;&amp; a[r] &lt; a[s]) s = r\n    if (s === i) return\n    ;[a[i], a[s]] = [a[s], a[i]]\n    i = s\n  }\n}\nfor (let i = Math.floor(a.length / 2) - 1; i &gt;= 0; i--) down(i, a.length)\nconsole.log(a.join(\",\"))</code></pre>",
+          "opts": [
+            "<code>1,4,2,9,6,7</code>",
+            "<code>1,2,4,6,7,9</code>",
+            "<code>9,7,6,4,2,1</code>",
+            "<code>1,9,2,4,6,7</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "The loop sinks index 2, then 1, then 0. After that the root is the smallest (1), and every parent is smaller than its children.",
+            "The array is a valid heap, but not sorted."
+          ],
+          "exec": "const a = [9, 4, 7, 1, 6, 2]\nfunction down(i, n) {\n  while (true) {\n    let s = i\n    const l = 2 * i + 1, r = 2 * i + 2\n    if (l < n && a[l] < a[s]) s = l\n    if (r < n && a[r] < a[s]) s = r\n    if (s === i) return\n    ;[a[i], a[s]] = [a[s], a[i]]\n    i = s\n  }\n}\nfor (let i = Math.floor(a.length / 2) - 1; i >= 0; i--) down(i, a.length)\nconsole.log(a.join(\",\"))"
+        },
+        {
+          "tag": "Where to start",
+          "q": "<pre><code>console.log(Math.floor(6 / 2) - 1, Math.floor(7 / 2) - 1)</code></pre><p>With 6 items and with 7 items, which index is the last parent?</p>",
+          "opts": [
+            "<code>2 2</code>",
+            "<code>3 3</code>",
+            "<code>2 3</code>",
+            "<code>3 2</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "Index 2 is the last item that has a child (index 5 for n = 6, indexes 5 and 6 for n = 7). Everything after it is a leaf.",
+            "Leaves are already one-item heaps, so we skip them."
+          ],
+          "exec": "console.log(Math.floor(6 / 2) - 1, Math.floor(7 / 2) - 1)"
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>Why is building a heap this way O(n) and not O(n log n)?</p>",
+          "opts": [
+            "Because sinking is O(1)",
+            "Because half of the nodes are leaves that do no work, a quarter sink one level at most, and so on: the sum is about 2n",
+            "Because the array is sorted first",
+            "It really is O(n log n)"
+          ],
+          "ans": 1,
+          "why": [
+            "Most nodes sit near the bottom, where there is little distance to sink. Only the root sinks log n levels.",
+            "Pushing n items one by one is O(n log n), because each push can bubble all the way up."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Why bottom-up?",
+          "q": "<p>Why do we sink from the last parent <b>towards the root</b>, and not the other way round?</p>",
+          "opts": [
+            "It looks nicer",
+            "When we sink a node, both of its subtrees are already heaps, so one sink fixes it",
+            "Because arrays are read right to left",
+            "To keep the array sorted"
+          ],
+          "ans": 1,
+          "why": [
+            "The sink step only works if the two subtrees below are already heaps. Going from bottom to top guarantees it.",
+            "Going top-down would break the rule for nodes that still have unprocessed children."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Heap sort",
+          "q": "<p>Heap sort heapifies the array, then pops the smallest n times. What is its total time?</p>",
+          "opts": [
+            "<code>O(n)</code>",
+            "<code>O(n log n)</code>",
+            "<code>O(n²)</code>",
+            "<code>O(log n)</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "O(n) to build, then n pops at O(log n) each. The pops dominate, so the total is O(n log n).",
+            "It sorts in place with O(1) extra space, but it is not stable."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>heapify(arr)</code>. Rearrange <code>arr</code> <b>in place</b> into a valid <b>min-heap</b> in O(n), and return the same array.</p>",
+        "examples": [
+          "heapify([9, 4, 7, 1, 6, 2])  // a valid min-heap, for example [1, 4, 2, 9, 6, 7]",
+          "heapify([])  // []"
+        ],
+        "hint": "<p>Write a <code>sink(i)</code> that swaps with the smaller child while the value is bigger. Then loop <code>i</code> from <code>Math.floor(n / 2) - 1</code> down to 0 and call it.</p>",
+        "fn": "heapify",
+        "starter": "function heapify(arr) {\n  // your code\n}",
+        "solution": "function heapify(arr) {\n  const n = arr.length\n  const sink = (i) => {\n    while (true) {\n      let s = i\n      const l = 2 * i + 1\n      const r = 2 * i + 2\n      if (l < n && arr[l] < arr[s]) s = l\n      if (r < n && arr[r] < arr[s]) s = r\n      if (s === i) return\n      ;[arr[i], arr[s]] = [arr[s], arr[i]]\n      i = s\n    }\n  }\n  for (let i = Math.floor(n / 2) - 1; i >= 0; i--) sink(i)\n  return arr\n}",
+        "checks": [
+          {
+            "t": "the root is the smallest",
+            "verify": "const a = [9, 4, 7, 1, 6, 2]; heapify(a); assert(a[0] === 1, \"root should be 1, got \" + a[0])"
+          },
+          {
+            "t": "every parent is at most its children",
+            "verify": "const a = [9, 4, 7, 1, 6, 2, 8, 3, 5, 0]; heapify(a); for (let i = 1; i < a.length; i++) assert(a[Math.floor((i - 1) / 2)] <= a[i], \"heap rule broken at index \" + i)"
+          },
+          {
+            "t": "same items, same array",
+            "verify": "const a = [5, 3, 5, 1]; const r = heapify(a); assert(r === a && JSON.stringify([...a].sort((x, y) => x - y)) === \"[1,3,5,5]\", \"must change the same array and keep all items\")"
+          },
+          {
+            "t": "empty array and one item",
+            "verify": "assert(JSON.stringify(heapify([])) === \"[]\" && JSON.stringify(heapify([4])) === \"[4]\", \"edge cases\")"
+          },
+          {
+            "t": "200,000 items stay fast",
+            "verify": "const a = Array.from({ length: 200000 }, (_, i) => (i * 7919) % 200003); const t0 = Date.now(); heapify(a); let ok = true; for (let i = 1; i < a.length; i++) if (a[Math.floor((i - 1) / 2)] > a[i]) ok = false; assert(ok && Date.now() - t0 < 500, \"broken heap or too slow\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "To build a heap from an array, <b>sink every parent from the last one up to the root</b>: O(n), better than n pushes at O(n log n). Leaves are skipped.",
+        "mistakes": [
+          "Starting at index 0 and going down.",
+          "Starting the loop at <code>n</code> instead of <code>floor(n / 2) - 1</code>.",
+          "Forgetting to keep sinking after a swap.",
+          "Saying heapify is O(n log n)."
+        ]
+      }
+    },
+    {
+      "id": "heap-variations",
+      "prereqs": [
+        "heap",
+        "heapify"
+      ],
+      "dryRun": {
+        "title": "The 3 largest of [5, 1, 9, 3, 7] with a min-heap of size 3",
+        "columns": [
+          "x",
+          "heap before",
+          "action",
+          "heap after"
+        ],
+        "rows": [
+          [
+            "5",
+            "[ ]",
+            "room left: push",
+            "[5]"
+          ],
+          [
+            "1",
+            "[5]",
+            "room left: push",
+            "[1, 5]"
+          ],
+          [
+            "9",
+            "[1, 5]",
+            "room left: push",
+            "[1, 5, 9]"
+          ],
+          [
+            "3",
+            "[1, 5, 9]",
+            "full; 3 is bigger than the root 1, so pop 1 and push 3",
+            "[3, 5, 9]"
+          ],
+          [
+            "7",
+            "[3, 5, 9]",
+            "full; 7 is bigger than the root 3, so pop 3 and push 7",
+            "[5, 7, 9]"
+          ]
+        ],
+        "hit": 4,
+        "note": "The heap never holds more than k items, so each number costs <b>O(log k)</b> and the total is O(n log k). The 3 largest are 5, 7 and 9."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>console.log([3, 1, 2].map((x) =&gt; -x).sort((a, b) =&gt; a - b).map((x) =&gt; -x).join(\",\"))</code></pre>",
+          "opts": [
+            "<code>1,2,3</code>",
+            "<code>3,2,1</code>",
+            "<code>3,1,2</code>",
+            "<code>-1,-2,-3</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "A min-heap gives the smallest first. Store <b>negated</b> numbers and the smallest negative is the biggest original number. This is the quick way to get a max-heap.",
+            "The sort here only imitates the order the heap would pop them."
+          ],
+          "exec": "console.log([3, 1, 2].map((x) => -x).sort((a, b) => a - b).map((x) => -x).join(\",\"))"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const pairs = [['a', 3], ['b', 1], ['c', 2]]\npairs.sort((x, y) =&gt; y[1] - x[1])\nconsole.log(pairs.map((p) =&gt; p[0]).join(''))</code></pre>",
+          "opts": [
+            "<code>abc</code>",
+            "<code>acb</code>",
+            "<code>bca</code>",
+            "<code>cba</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "The compare function decides what \"first\" means: here the bigger count goes first, so the order is a (3), c (2), b (1).",
+            "A heap of objects works the same way: you give it a comparator, for example \"by count\" or \"by distance\"."
+          ],
+          "exec": "const pairs = [['a', 3], ['b', 1], ['c', 2]]\npairs.sort((x, y) => y[1] - x[1])\nconsole.log(pairs.map((p) => p[0]).join(''))"
+        },
+        {
+          "tag": "Which heap?",
+          "q": "<p>You want the <b>k largest</b> items from n numbers. Which structure gives O(n log k)?</p>",
+          "opts": [
+            "A max-heap holding all n numbers",
+            "A min-heap of size k",
+            "A sorted copy of the array",
+            "A Set"
+          ],
+          "ans": 1,
+          "why": [
+            "The min-heap root is the weakest of the current top k. A new number is kept only if it beats that root.",
+            "Sorting everything costs O(n log n), which is worse when k is small."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Pattern",
+          "q": "<p>Which wording points to the \"heap with a counter or comparator\" pattern?</p>",
+          "opts": [
+            "\"Top k frequent words\", \"k closest points\", \"merge k sorted lists\"",
+            "\"Is this string a palindrome?\"",
+            "\"Find the cycle in a list\"",
+            "\"Reverse a linked list\""
+          ],
+          "ans": 0,
+          "why": [
+            "All three keep only the best k candidates, or the next smallest head among k lists.",
+            "For merging k sorted lists, a heap of the k current heads gives O(N log k) for N items in total."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>Top k of n numbers with a size-k min-heap. What are the time and the extra space?</p>",
+          "opts": [
+            "<code>O(n log k) time, O(k) space</code>",
+            "<code>O(n log n) time, O(1) space</code>",
+            "<code>O(k log n) time, O(n) space</code>",
+            "<code>O(n) time, O(n) space</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "Each of the n numbers costs at most one push and one pop on a heap of k items: O(log k). The heap holds k items.",
+            "If k is close to n, plain sorting is just as good."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>topK(nums, k)</code>. Return the <code>k</code> largest numbers in <b>descending</b> order. Use a min-heap of size <code>k</code> that you write yourself. Do not use <code>sort</code> on the whole input. If <code>k</code> is bigger than the array, return all the numbers, sorted from largest.</p>",
+        "examples": [
+          "topK([5, 1, 9, 3, 7], 3)  // [9, 7, 5]",
+          "topK([4, 4, 2], 2)  // [4, 4]"
+        ],
+        "hint": "<p>Keep a small min-heap. For each number: push it, and if the heap has more than k items, pop the smallest. At the end, pop everything to get the k items from smallest to largest, then reverse.</p>",
+        "fn": "topK",
+        "starter": "function topK(nums, k) {\n  // your code\n}",
+        "solution": "function topK(nums, k) {\n  const h = []\n  const swap = (a, b) => {\n    ;[h[a], h[b]] = [h[b], h[a]]\n  }\n  const push = (x) => {\n    h.push(x)\n    let i = h.length - 1\n    while (i > 0) {\n      const p = Math.floor((i - 1) / 2)\n      if (h[p] <= h[i]) break\n      swap(p, i)\n      i = p\n    }\n  }\n  const pop = () => {\n    const top = h[0]\n    const last = h.pop()\n    if (h.length > 0) {\n      h[0] = last\n      let i = 0\n      while (true) {\n        let s = i\n        const l = 2 * i + 1\n        const r = 2 * i + 2\n        if (l < h.length && h[l] < h[s]) s = l\n        if (r < h.length && h[r] < h[s]) s = r\n        if (s === i) break\n        swap(i, s)\n        i = s\n      }\n    }\n    return top\n  }\n  for (const x of nums) {\n    push(x)\n    if (h.length > k) pop()\n  }\n  const out = []\n  while (h.length) out.push(pop())\n  return out.reverse()\n}",
+        "checks": [
+          {
+            "t": "the lesson example",
+            "verify": "assert(JSON.stringify(topK([5, 1, 9, 3, 7], 3)) === \"[9,7,5]\", \"expected [9,7,5]\")"
+          },
+          {
+            "t": "duplicates count separately",
+            "verify": "assert(JSON.stringify(topK([4, 4, 2], 2)) === \"[4,4]\", \"expected [4,4]\")"
+          },
+          {
+            "t": "k larger than the array",
+            "verify": "assert(JSON.stringify(topK([2, 8, 5], 10)) === \"[8,5,2]\", \"expected [8,5,2]\")"
+          },
+          {
+            "t": "negative numbers and k = 1",
+            "verify": "assert(JSON.stringify(topK([-5, -1, -3], 1)) === \"[-1]\", \"expected [-1]\")"
+          },
+          {
+            "t": "a big input, without sort() on the whole input",
+            "verify": "const orig = Array.prototype.sort; Array.prototype.sort = function () { throw new Error(\"do not use sort\") }; try { const big = Array.from({ length: 200000 }, (_, i) => (i * 7919) % 200003); const t0 = Date.now(); const r = topK(big, 5); assert(JSON.stringify(r) === '[200002,200001,200000,199999,199998]' && Date.now() - t0 < 1500, \"wrong answer or too slow\") } finally { Array.prototype.sort = orig }"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "For the <b>k largest</b>, use a <b>min-heap of size k</b>: O(n log k) time, O(k) space. For a max-heap, negate the numbers or flip the comparator. Heaps also merge k sorted lists and find top-k frequent items.",
+        "mistakes": [
+          "Using a max-heap of everything for top-k (O(n log n) and more memory).",
+          "Forgetting to pop when the heap grows past k.",
+          "Mixing up \"k largest\" (min-heap) and \"k smallest\" (max-heap).",
+          "Returning the heap array and calling it sorted."
+        ]
+      }
+    }
+  ],
+  "flags": [
+    "backtracking: subsets try-it expected strings are produced by the generator with the same norm() used in the checks.",
+    "heap-variations: the 200,000 item check compares the exact top 5, computed by the generator with a normal sort.",
+    "topK / createMinHeap each contain a small copy of the heap code in their reference solutions.",
+    "trie-structure: node keys use \"$\" for the end flag, which cannot collide with a letter.",
+    "The dry-run tables are traced by hand (concept dry runs are not machine-run)."
+  ]
+}

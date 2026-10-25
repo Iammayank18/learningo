@@ -1,0 +1,876 @@
+{
+  "items": [
+    {
+      "id": "space-complexity",
+      "prereqs": [
+        "big-o"
+      ],
+      "dryRun": {
+        "title": "What counts as extra space?",
+        "columns": [
+          "function",
+          "extra memory it creates",
+          "call stack depth",
+          "space"
+        ],
+        "rows": [
+          [
+            "sum(arr) with one loop",
+            "one number",
+            "1",
+            "O(1)"
+          ],
+          [
+            "double(arr) returns a new array",
+            "n new numbers",
+            "1",
+            "O(n)"
+          ],
+          [
+            "countDown(n) calls itself, no arrays",
+            "nothing",
+            "n",
+            "O(n)"
+          ],
+          [
+            "unique(arr) with a Set",
+            "a Set of up to n values",
+            "1",
+            "O(n)"
+          ]
+        ],
+        "hit": 2,
+        "note": "The third function creates <b>no array at all</b>, but it still costs O(n), because each waiting call sits on the call stack."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>let depth = 0, max = 0\nfunction down(n) {\n  depth++\n  max = Math.max(max, depth)\n  if (n &gt; 0) down(n - 1)\n  depth--\n}\ndown(5)\nconsole.log(max)</code></pre>",
+          "opts": [
+            "<code>1</code>",
+            "<code>5</code>",
+            "<code>6</code>",
+            "<code>0</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "The calls are <code>down(5)</code>, <code>down(4)</code>, ... <code>down(0)</code>. That is 6 calls waiting at the same time, so the stack is 6 frames deep.",
+            "The depth grows with n, so the space is O(n) even though no array is created."
+          ],
+          "exec": "let depth = 0, max = 0\nfunction down(n) {\n  depth++\n  max = Math.max(max, depth)\n  if (n > 0) down(n - 1)\n  depth--\n}\ndown(5)\nconsole.log(max)"
+        },
+        {
+          "tag": "Does it copy?",
+          "q": "<pre><code>const a = [1, 2, 3]\nconst b = a\nconst c = [...a]\nb.push(4)\nconsole.log(a.length, c.length)</code></pre>",
+          "opts": [
+            "<code>4 3</code>",
+            "<code>3 3</code>",
+            "<code>4 4</code>",
+            "<code>3 4</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "<code>const b = a</code> copies nothing: <code>a</code> and <code>b</code> are the same array, so the push shows in both. That costs O(1) space.",
+            "<code>[...a]</code> really copies all n items, which costs O(n) space. That is why <code>c</code> stays at 3."
+          ],
+          "exec": "const a = [1, 2, 3]\nconst b = a\nconst c = [...a]\nb.push(4)\nconsole.log(a.length, c.length)"
+        },
+        {
+          "tag": "Pick the right answer",
+          "q": "<p>A function reverses an array <b>in place</b>, using only two index variables. What is its extra space?</p>",
+          "opts": [
+            "<code>O(n)</code>",
+            "<code>O(1)</code>",
+            "<code>O(log n)</code>",
+            "<code>O(n²)</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "Two integers are enough, however long the array is. The input array is not counted.",
+            "Trap: counting the input itself. Only memory the function <b>creates</b> counts."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Pick the right answer",
+          "q": "<p>A function returns <code>arr.map(x =&gt; x * 2)</code>. What is its extra space?</p>",
+          "opts": [
+            "<code>O(1)</code>",
+            "<code>O(log n)</code>",
+            "<code>O(n²)</code>",
+            "<code>O(n)</code>"
+          ],
+          "ans": 3,
+          "why": [
+            "<code>map</code> builds a brand-new array with n items. That new array is memory the function created, so the space is O(n).",
+            "Trap: thinking a one-line function must be O(1)."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Trade-off",
+          "q": "<p>Two Sum can be solved with two nested loops, or with a hash map. Which statement is true?</p>",
+          "opts": [
+            "Both use O(n) space",
+            "The hash map is better in time and in space",
+            "Nested loops: O(n²) time and O(1) space. Hash map: O(n) time and O(n) space",
+            "Nested loops use more space"
+          ],
+          "ans": 2,
+          "why": [
+            "The hash map <b>spends memory to save time</b>. This trade is the most common one in algorithms.",
+            "Always state time and space together, because improving one often costs the other."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>reverseInPlace(arr)</code>. Reverse the array <b>in place</b> with O(1) extra space and return the same array. Do not create a second array.</p>",
+        "examples": [
+          "const a = [1, 2, 3]; reverseInPlace(a)  // a is now [3, 2, 1]",
+          "reverseInPlace([])  // []"
+        ],
+        "hint": "<p>Use two indexes, one at each end. Swap the two items, then move both inward until they meet.</p>",
+        "fn": "reverseInPlace",
+        "starter": "function reverseInPlace(arr) {\n  // your code\n}",
+        "solution": "function reverseInPlace(arr) {\n  let l = 0, r = arr.length - 1\n  while (l < r) {\n    const tmp = arr[l]\n    arr[l] = arr[r]\n    arr[r] = tmp\n    l++\n    r--\n  }\n  return arr\n}",
+        "checks": [
+          {
+            "t": "reverses an even-length array",
+            "verify": "assert(JSON.stringify(reverseInPlace([1, 2, 3, 4])) === \"[4,3,2,1]\", \"expected [4,3,2,1]\")"
+          },
+          {
+            "t": "reverses an odd-length array",
+            "verify": "assert(JSON.stringify(reverseInPlace([1, 2, 3])) === \"[3,2,1]\", \"expected [3,2,1]\")"
+          },
+          {
+            "t": "returns the same array, not a copy",
+            "verify": "const a = [1, 2]; assert(reverseInPlace(a) === a, \"must return the same array\")"
+          },
+          {
+            "t": "empty array",
+            "verify": "assert(JSON.stringify(reverseInPlace([])) === \"[]\", \"expected []\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Space complexity counts only the <b>extra</b> memory you create, and that includes the call stack. The input does not count.",
+        "mistakes": [
+          "Counting the input array as part of your space.",
+          "Forgetting the call stack: a recursion n levels deep costs O(n).",
+          "Thinking <code>b = a</code> makes a copy. It only shares the same array.",
+          "Reporting time and forgetting to say what the speed-up costs in memory."
+        ]
+      }
+    },
+    {
+      "id": "5-step",
+      "prereqs": [
+        "big-o",
+        "space-complexity"
+      ],
+      "dryRun": {
+        "title": "The five steps on \"does this array contain a duplicate?\"",
+        "columns": [
+          "step",
+          "what you do",
+          "result"
+        ],
+        "rows": [
+          [
+            "1. Understand",
+            "Restate the task. Ask about empty arrays and about the values.",
+            "Return true if any value appears twice. An empty array gives false."
+          ],
+          [
+            "2. Examples",
+            "Write small cases, including the edges.",
+            "[1,2,3,1] → true, [1,2,3] → false, [] → false"
+          ],
+          [
+            "3. Brute force",
+            "Say the simplest way that is surely correct.",
+            "Compare every pair: O(n²) time, O(1) space"
+          ],
+          [
+            "4. Optimize",
+            "Find the repeated work. The question is \"have I seen this before?\"",
+            "A Set remembers values: O(n) time, O(n) space"
+          ],
+          [
+            "5. Code and test",
+            "Write it, then run your examples through it.",
+            "All three examples give the expected answer"
+          ]
+        ],
+        "hit": 3,
+        "note": "Step 3 is the base line and step 4 improves it. You can only say what you <b>improved</b> if you first said what the slow version costs."
+      },
+      "think": [
+        {
+          "tag": "Why this order?",
+          "q": "<p>Why do you write small examples <b>before</b> writing any code?</p>",
+          "opts": [
+            "To make the answer longer",
+            "Because code cannot be tested",
+            "To prove the problem is easy",
+            "To find out early whether you understood the task, and to have tests ready"
+          ],
+          "ans": 3,
+          "why": [
+            "Examples turn a vague statement into something you can check. A wrong idea shows up in seconds, not after twenty lines of code.",
+            "They also become your tests in step 5."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Catch the bug with an example",
+          "q": "<p>Your example says <code>[1, 2, 3]</code> must give <code>false</code>. What does this code print?</p><pre><code>function hasDup(a) {\n  const s = new Set()\n  for (const x of a) {\n    s.add(x)\n    if (s.has(x)) return true\n  }\n  return false\n}\nconsole.log(hasDup([1, 2, 3]))</code></pre>",
+          "opts": [
+            "<code>false</code>",
+            "<code>true</code>",
+            "<code>undefined</code>",
+            "<code>TypeError</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "The code adds the value <b>before</b> checking, so every value finds itself and the function returns <code>true</code> at once.",
+            "A tiny example such as <code>[1, 2, 3]</code> exposes this in step 5. Without it the bug can hide."
+          ],
+          "exec": "function hasDup(a) {\n  const s = new Set()\n  for (const x of a) {\n    s.add(x)\n    if (s.has(x)) return true\n  }\n  return false\n}\nconsole.log(hasDup([1, 2, 3]))"
+        },
+        {
+          "tag": "What next?",
+          "q": "<p>You have described a brute-force solution and its cost, O(n²). What is the best next move?</p>",
+          "opts": [
+            "Code it right away and stop",
+            "Ask the interviewer to give the answer",
+            "Memorise a famous trick for this problem",
+            "Ask what work is repeated and what you know but are not using yet"
+          ],
+          "ans": 3,
+          "why": [
+            "Optimizing means finding <b>repeated work</b> or <b>unused information</b>: sorted input, a value you keep searching for, a result you keep recomputing.",
+            "The brute force gives you a correct answer to compare against."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Which step?",
+          "q": "<p>Which question belongs to step 1, <b>Understand</b>?</p>",
+          "opts": [
+            "Can the array be empty, and can values repeat?",
+            "What is the time complexity?",
+            "Which data structure should I use?",
+            "Does my code pass the tests?"
+          ],
+          "ans": 0,
+          "why": [
+            "Step 1 is about the <b>problem</b>: its input, output and rules.",
+            "The other questions belong to later steps: complexity (3 and 4), data structure (4) and testing (5)."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Pick a good example",
+          "q": "<p>You already have <code>[1, 2, 3, 1]</code> (true) and <code>[1, 2, 3]</code> (false). Which example adds the most?</p>",
+          "opts": [
+            "Another array of different positive numbers",
+            "The same array in reverse order",
+            "An empty array",
+            "A longer array of distinct numbers"
+          ],
+          "ans": 2,
+          "why": [
+            "The empty array is a <b>boundary</b>. Many bugs live at the edges: empty input, one item, all equal.",
+            "The other options are more of the same kind of case."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Use the five steps on <b>anagrams</b>. On paper, do steps 1 to 4 first: what is the input, which examples (including empty strings), what is the brute force, what is the better way. Then write <code>isAnagram(a, b)</code>: it returns <code>true</code> when both strings use exactly the same letters the same number of times.</p>",
+        "examples": [
+          "isAnagram(\"listen\", \"silent\")  // true",
+          "isAnagram(\"aab\", \"abb\")  // false"
+        ],
+        "hint": "<p>Brute force: sort both strings and compare. Better: count the letters of the first string in a Map, then subtract for the second string. Different lengths can never match.</p>",
+        "fn": "isAnagram",
+        "starter": "function isAnagram(a, b) {\n  // your code\n}",
+        "solution": "function isAnagram(a, b) {\n  if (a.length !== b.length) return false\n  const count = new Map()\n  for (const ch of a) count.set(ch, (count.get(ch) || 0) + 1)\n  for (const ch of b) {\n    if (!count.get(ch)) return false\n    count.set(ch, count.get(ch) - 1)\n  }\n  return true\n}",
+        "checks": [
+          {
+            "t": "listen and silent",
+            "verify": "assert(isAnagram(\"listen\", \"silent\") === true, \"expected true\")"
+          },
+          {
+            "t": "same length, different counts",
+            "verify": "assert(isAnagram(\"aab\", \"abb\") === false, \"expected false\")"
+          },
+          {
+            "t": "different lengths",
+            "verify": "assert(isAnagram(\"abc\", \"ab\") === false, \"expected false\")"
+          },
+          {
+            "t": "two empty strings",
+            "verify": "assert(isAnagram(\"\", \"\") === true, \"expected true\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Do not code first: <b>understand, write examples, state the brute force, improve it, then code and test</b>.",
+        "mistakes": [
+          "Starting to code before the task is clear.",
+          "Skipping edge-case examples such as empty input or one item.",
+          "Jumping to a clever trick without a brute-force baseline to compare with.",
+          "Finishing the code without running the examples through it."
+        ]
+      }
+    },
+    {
+      "id": "arrays-2",
+      "prereqs": [
+        "arrays"
+      ],
+      "dryRun": {
+        "title": "a starts as [3, 1, 2]",
+        "columns": [
+          "step",
+          "code",
+          "a afterwards",
+          "returned value"
+        ],
+        "rows": [
+          [
+            "1",
+            "a.slice(0, 2)",
+            "[3, 1, 2]",
+            "a new array [3, 1]"
+          ],
+          [
+            "2",
+            "a.map(x => x * 2)",
+            "[3, 1, 2]",
+            "a new array [6, 2, 4]"
+          ],
+          [
+            "3",
+            "a.sort()",
+            "[1, 2, 3]",
+            "the same array a"
+          ],
+          [
+            "4",
+            "a.push(9)",
+            "[1, 2, 3, 9]",
+            "4, the new length"
+          ]
+        ],
+        "hit": 2,
+        "note": "Only <code>sort</code> and <code>push</code> changed <code>a</code>. <code>slice</code> and <code>map</code> left it alone and returned a new array."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const a = [1, 2, 3]\nconst b = a.reverse()\nconsole.log(a[0], b[0])</code></pre>",
+          "opts": [
+            "<code>1 3</code>",
+            "<code>3 3</code>",
+            "<code>1 1</code>",
+            "<code>3 1</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "<code>reverse</code> changes the original array and returns that <b>same</b> array. So <code>a[0]</code> and <code>b[0]</code> both read 3.",
+            "Trap: thinking <code>b</code> is a reversed copy."
+          ],
+          "exec": "const a = [1, 2, 3]\nconst b = a.reverse()\nconsole.log(a[0], b[0])"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const a = [1, 2, 3]\nconsole.log(a.push(4), a.length)</code></pre>",
+          "opts": [
+            "<code>3 4</code>",
+            "<code>4 3</code>",
+            "<code>undefined 4</code>",
+            "<code>4 4</code>"
+          ],
+          "ans": 3,
+          "why": [
+            "<code>push</code> returns the <b>new length</b>, which is 4. It does not return the array.",
+            "Trap: writing <code>const next = a.push(4)</code> and expecting an array."
+          ],
+          "exec": "const a = [1, 2, 3]\nconsole.log(a.push(4), a.length)"
+        },
+        {
+          "tag": "Shallow copy",
+          "q": "<pre><code>const a = [[1], [2]]\nconst b = [...a]\nb[0].push(9)\nconsole.log(a[0].length)</code></pre>",
+          "opts": [
+            "<code>2</code>",
+            "<code>1</code>",
+            "<code>0</code>",
+            "<code>undefined</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "Spread makes a <b>shallow</b> copy: the outer array is new, but the inner arrays are still shared. Pushing into <code>b[0]</code> also changes <code>a[0]</code>.",
+            "For nested data, copy each level you change."
+          ],
+          "exec": "const a = [[1], [2]]\nconst b = [...a]\nb[0].push(9)\nconsole.log(a[0].length)"
+        },
+        {
+          "tag": "Pick the right method",
+          "q": "<p>Which call gives you a new array and leaves <code>a</code> unchanged?</p>",
+          "opts": [
+            "<code>a.reverse()</code>",
+            "<code>a.push(4)</code>",
+            "<code>a.concat([4])</code>",
+            "<code>a.splice(0, 1)</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "<code>concat</code> builds a new array. The others change <code>a</code>: <code>reverse</code> flips it, <code>push</code> adds to it, <code>splice</code> removes from it.",
+            "In React state, use the methods that return a new array."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>console.log([10, 9, 1].sort().join(','))</code></pre>",
+          "opts": [
+            "<code>1,9,10</code>",
+            "<code>1,10,9</code>",
+            "<code>10,9,1</code>",
+            "<code>9,10,1</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "Without a compare function, <code>sort</code> turns items into <b>strings</b> and sorts them as text. As text, \"1\" comes before \"10\", and \"10\" before \"9\".",
+            "Fix: <code>sort((a, b) =&gt; a - b)</code> for numbers."
+          ],
+          "exec": "console.log([10, 9, 1].sort().join(','))"
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>uniqueSorted(nums)</code>. Return a <b>new</b> array with the distinct numbers in ascending order. The input array must stay unchanged.</p>",
+        "examples": [
+          "uniqueSorted([3, 1, 2, 3, 1])  // [1, 2, 3]",
+          "uniqueSorted([10, 9, 1])  // [1, 9, 10]"
+        ],
+        "hint": "<p><code>new Set(nums)</code> removes duplicates and <code>[...set]</code> makes an array. Then sort a <b>copy</b> with a number compare function.</p>",
+        "fn": "uniqueSorted",
+        "starter": "function uniqueSorted(nums) {\n  // your code\n}",
+        "solution": "function uniqueSorted(nums) {\n  return [...new Set(nums)].sort((a, b) => a - b)\n}",
+        "checks": [
+          {
+            "t": "removes duplicates and sorts",
+            "verify": "assert(JSON.stringify(uniqueSorted([3, 1, 2, 3, 1])) === \"[1,2,3]\", \"expected [1,2,3]\")"
+          },
+          {
+            "t": "sorts as numbers, not as text",
+            "verify": "assert(JSON.stringify(uniqueSorted([10, 9, 1])) === \"[1,9,10]\", \"expected [1,9,10]\")"
+          },
+          {
+            "t": "does not change the input",
+            "verify": "const a = [3, 1, 3]; uniqueSorted(a); assert(JSON.stringify(a) === \"[3,1,3]\", \"input was changed\")"
+          },
+          {
+            "t": "empty array",
+            "verify": "assert(JSON.stringify(uniqueSorted([])) === \"[]\", \"expected []\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Know which methods <b>change</b> the array (<code>push</code>, <code>sort</code>, <code>splice</code>, <code>reverse</code>) and which <b>return a new one</b> (<code>map</code>, <code>filter</code>, <code>slice</code>, <code>concat</code>).",
+        "mistakes": [
+          "Calling <code>sort()</code> on numbers without a compare function.",
+          "Expecting spread or <code>slice</code> to copy nested arrays too.",
+          "Changing React state arrays in place.",
+          "Assuming <code>push</code> returns the array. It returns the new length."
+        ]
+      }
+    },
+    {
+      "id": "strings",
+      "prereqs": [
+        "arrays",
+        "big-o"
+      ],
+      "dryRun": {
+        "title": "Build \"abcde\" with s += c (counting the copying)",
+        "columns": [
+          "step",
+          "s before",
+          "append",
+          "chars in the new string",
+          "total copied so far"
+        ],
+        "rows": [
+          [
+            "1",
+            "\"\"",
+            "a",
+            "1",
+            "1"
+          ],
+          [
+            "2",
+            "\"a\"",
+            "b",
+            "2",
+            "3"
+          ],
+          [
+            "3",
+            "\"ab\"",
+            "c",
+            "3",
+            "6"
+          ],
+          [
+            "4",
+            "\"abc\"",
+            "d",
+            "4",
+            "10"
+          ],
+          [
+            "5",
+            "\"abcd\"",
+            "e",
+            "5",
+            "15"
+          ]
+        ],
+        "hit": 4,
+        "note": "Each step writes a <b>whole new string</b>, so the total is 1 + 2 + ... + n. For n = 5 that is already 15. Real engines often optimise this, but your analysis should assume the copy."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>let s = 'abc'\ns.toUpperCase()\nconsole.log(s)</code></pre>",
+          "opts": [
+            "<code>ABC</code>",
+            "<code>abc</code>",
+            "<code>Abc</code>",
+            "<code>undefined</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "Strings are <b>immutable</b>. <code>toUpperCase</code> returns a new string and leaves <code>s</code> alone. The result was thrown away.",
+            "Fix: <code>s = s.toUpperCase()</code>."
+          ],
+          "exec": "let s = 'abc'\ns.toUpperCase()\nconsole.log(s)"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>console.log('banana'.indexOf('an'), 'banana'.lastIndexOf('an'))</code></pre>",
+          "opts": [
+            "<code>1 1</code>",
+            "<code>3 1</code>",
+            "<code>1 3</code>",
+            "<code>2 3</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "\"banana\" is b-a-n-a-n-a. The text \"an\" first starts at index 1 and last starts at index 3.",
+            "Both methods return the <b>start index</b> of the match."
+          ],
+          "exec": "console.log('banana'.indexOf('an'), 'banana'.lastIndexOf('an'))"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>console.log('hello'.split('').sort().join(''))</code></pre>",
+          "opts": [
+            "<code>olleh</code>",
+            "<code>hello</code>",
+            "<code>ellho</code>",
+            "<code>ehllo</code>"
+          ],
+          "ans": 3,
+          "why": [
+            "<code>split(\"\")</code> makes an array of letters, <code>sort</code> orders them as text, and <code>join(\"\")</code> glues them back: \"ehllo\".",
+            "This sorted string is a handy key: all anagrams of a word give the same one."
+          ],
+          "exec": "console.log('hello'.split('').sort().join(''))"
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>You build a string of n characters with <code>s += c</code> in a loop. Analysed as \"every append copies the whole string\", the total work is:</p>",
+          "opts": [
+            "<code>O(n²)</code>",
+            "<code>O(n)</code>",
+            "<code>O(log n)</code>",
+            "<code>O(1)</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "The copies are 1 + 2 + ... + n, which is about n²/2. That is O(n²).",
+            "Fix: push the pieces into an array and call <code>join(\"\")</code> once at the end: O(n)."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Edge case",
+          "q": "<pre><code>console.log('😀'.length)</code></pre>",
+          "opts": [
+            "<code>1</code>",
+            "<code>2</code>",
+            "<code>4</code>",
+            "<code>0</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "JavaScript counts UTF-16 code units, and an emoji takes <b>two</b> of them. So <code>length</code> is 2, not 1.",
+            "Be careful when a problem has emoji or rare symbols: use <code>[...str]</code> to walk real characters."
+          ],
+          "exec": "console.log('😀'.length)"
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>reverseWords(str)</code>. Return the words in reverse order, separated by a single space. Ignore extra spaces at the start, at the end and between words.</p>",
+        "examples": [
+          "reverseWords(\"the sky is blue\")  // \"blue is sky the\"",
+          "reverseWords(\"  hello   world \")  // \"world hello\""
+        ],
+        "hint": "<p><code>trim()</code> removes the outer spaces. <code>split(/\\s+/)</code> splits on any run of spaces. Then <code>reverse()</code> and <code>join(\" \")</code>. For an empty string, return an empty string.</p>",
+        "fn": "reverseWords",
+        "starter": "function reverseWords(str) {\n  // your code\n}",
+        "solution": "function reverseWords(str) {\n  const t = str.trim()\n  if (t === '') return ''\n  return t.split(/\\s+/).reverse().join(' ')\n}",
+        "checks": [
+          {
+            "t": "simple sentence",
+            "verify": "assert(reverseWords(\"the sky is blue\") === \"blue is sky the\", \"wrong result\")"
+          },
+          {
+            "t": "extra spaces",
+            "verify": "assert(reverseWords(\"  hello   world \") === \"world hello\", \"extra spaces must go\")"
+          },
+          {
+            "t": "one word",
+            "verify": "assert(reverseWords(\"hello\") === \"hello\", \"expected hello\")"
+          },
+          {
+            "t": "empty string",
+            "verify": "assert(reverseWords(\"\") === \"\", \"expected an empty string\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Strings are <b>immutable</b>: every change makes a new string, so build the pieces in an array and <code>join</code> once.",
+        "mistakes": [
+          "Building a big string with <code>+=</code> in a loop.",
+          "Expecting <code>s[0] = \"x\"</code> to change the string.",
+          "Calling a string method and ignoring the returned new string.",
+          "Trusting <code>length</code> for emoji and rare symbols."
+        ]
+      }
+    },
+    {
+      "id": "static-dynamic-arrays",
+      "prereqs": [
+        "arrays",
+        "big-o"
+      ],
+      "dryRun": {
+        "title": "Pushing 8 items into an array that doubles when full (simplified model)",
+        "columns": [
+          "push #",
+          "items before",
+          "capacity before",
+          "items copied",
+          "capacity after"
+        ],
+        "rows": [
+          [
+            "1",
+            "0",
+            "1",
+            "0",
+            "1"
+          ],
+          [
+            "2",
+            "1",
+            "1",
+            "1",
+            "2"
+          ],
+          [
+            "3",
+            "2",
+            "2",
+            "2",
+            "4"
+          ],
+          [
+            "4",
+            "3",
+            "4",
+            "0",
+            "4"
+          ],
+          [
+            "5",
+            "4",
+            "4",
+            "4",
+            "8"
+          ],
+          [
+            "6",
+            "5",
+            "8",
+            "0",
+            "8"
+          ],
+          [
+            "7",
+            "6",
+            "8",
+            "0",
+            "8"
+          ],
+          [
+            "8",
+            "7",
+            "8",
+            "0",
+            "8"
+          ]
+        ],
+        "hit": 4,
+        "note": "Push 5 copies 4 items, but most pushes copy nothing. For all 8 pushes the copies add up to 7, fewer than 2 per push. That is why push is <b>amortized O(1)</b>. This is a simplified model: real engines choose their own growth."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const a = []\na[5] = 1\nconsole.log(a.length)</code></pre>",
+          "opts": [
+            "<code>1</code>",
+            "<code>5</code>",
+            "<code>6</code>",
+            "<code>0</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "<code>length</code> is always the highest index plus one. Writing at index 5 makes it 6, and indexes 0 to 4 become empty holes.",
+            "This shows that a JS array is not a fixed block: it grows when you write past its end."
+          ],
+          "exec": "const a = []\na[5] = 1\nconsole.log(a.length)"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const a = [1, 2, 3]\na.length = 0\nconsole.log(a[0] === undefined, a.length)</code></pre>",
+          "opts": [
+            "<code>false 0</code>",
+            "<code>true 0</code>",
+            "<code>true 3</code>",
+            "<code>false 3</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "Setting <code>length = 0</code> empties the array. Reading any index now gives <code>undefined</code>.",
+            "It is a quick way to clear an array in place."
+          ],
+          "exec": "const a = [1, 2, 3]\na.length = 0\nconsole.log(a[0] === undefined, a.length)"
+        },
+        {
+          "tag": "Reasoning",
+          "q": "<p>A resize copies every item, so why do we still call <code>push</code> amortized O(1)?</p>",
+          "opts": [
+            "Because copying costs nothing",
+            "Because resizing never happens",
+            "Because the array grows by one slot at a time",
+            "Because resizes are rare: the capacity doubles, so n pushes copy only about 2n items in total"
+          ],
+          "ans": 3,
+          "why": [
+            "After a resize there is a lot of free room, so many pushes cost nothing extra. Spread over all pushes, the copying adds only a small constant per push.",
+            "Amortized means the <b>average cost over many operations</b>, with a guarantee, not luck."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "What if?",
+          "q": "<p>Suppose the array grew by just <b>one slot</b> each time it was full. What would n pushes cost in total?</p>",
+          "opts": [
+            "<code>O(n)</code>",
+            "<code>O(n²)</code>",
+            "<code>O(n log n)</code>",
+            "<code>O(1)</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "Every push would copy everything: 1 + 2 + ... + n, which is about n²/2. That is O(n²).",
+            "Doubling is what makes the total linear."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Worst case",
+          "q": "<p>Which single call can cost O(n) in the worst case?</p>",
+          "opts": [
+            "<code>arr[i]</code>",
+            "<code>arr.length</code>",
+            "<code>arr.push(x), when the array is full</code>",
+            "<code>arr.pop()</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "A push into a full array triggers a resize that copies all n items. Index access, <code>length</code> and <code>pop</code> never copy.",
+            "That is the difference between worst case (one call) and amortized (many calls)."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>countCopies(n)</code>. Simulate pushing <code>n</code> items into an array whose capacity starts at 1 and <b>doubles</b> when it is full. Return the total number of items copied during all the resizes.</p>",
+        "examples": [
+          "countCopies(8)  // 7",
+          "countCopies(1)  // 0"
+        ],
+        "hint": "<p>Keep <code>cap</code>, <code>size</code> and <code>copies</code>. Before each push, if <code>size === cap</code>, add <code>size</code> to <code>copies</code> and double <code>cap</code>. Then increase <code>size</code>.</p>",
+        "fn": "countCopies",
+        "starter": "function countCopies(n) {\n  // your code\n}",
+        "solution": "function countCopies(n) {\n  let cap = 1, size = 0, copies = 0\n  for (let i = 0; i < n; i++) {\n    if (size === cap) {\n      copies += size\n      cap *= 2\n    }\n    size++\n  }\n  return copies\n}",
+        "checks": [
+          {
+            "t": "8 pushes copy 7 items",
+            "verify": "assert(countCopies(8) === 7, \"expected 7\")"
+          },
+          {
+            "t": "one push copies nothing",
+            "verify": "assert(countCopies(1) === 0, \"expected 0\")"
+          },
+          {
+            "t": "zero pushes",
+            "verify": "assert(countCopies(0) === 0, \"expected 0\")"
+          },
+          {
+            "t": "4 pushes copy 3",
+            "verify": "assert(countCopies(4) === 3, \"expected 3\")"
+          },
+          {
+            "t": "9 pushes copy 15",
+            "verify": "assert(countCopies(9) === 15, \"expected 15\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "A dynamic array grows by <b>doubling</b>, so one push can cost O(n), but pushes are O(1) <b>amortized</b>.",
+        "mistakes": [
+          "Calling <code>push</code> O(n) because of the occasional resize.",
+          "Imagining growth by a fixed amount: that would make n pushes O(n²).",
+          "Mixing up amortized cost with average-case luck.",
+          "Forgetting that inserting in the middle is still O(n)."
+        ]
+      }
+    }
+  ],
+  "flags": [
+    "5-step: the old text says \"the interviewer is scoring you\". I did not rewrite it, but the lesson rules say learning material should not use that framing.",
+    "strings: the += copying cost is a conceptual model. V8 often optimises it with ropes, so a benchmark may not show O(n²). The dry-run note says so.",
+    "static-dynamic-arrays: the doubling model is simplified. Real engines use their own growth factors, and the note says so."
+  ]
+}

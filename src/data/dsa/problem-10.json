@@ -1,0 +1,595 @@
+{
+  "items": [
+    {
+      "id": "valid-path-in-graph",
+      "pattern": {
+        "name": "Build an adjacency list, then explore",
+        "question": "You get a plain list of edges. What would you like to be able to ask quickly about a node while searching?",
+        "idea": [
+          "A list of edges is slow to use because to find the neighbours of one node you would scan every edge. Build an <b>adjacency list</b> once: for each node, an array of its neighbours. For an undirected edge, add both directions.",
+          "Then explore from the source with a stack or a queue, and keep a <b>visited</b> array so each node is handled once. The destination can be reached exactly when the search finds it."
+        ],
+        "spotWhen": [
+          "The input is a list of edges or pairs, and the question is about connection or reachability.",
+          "You need to know \"which nodes can I reach from here?\".",
+          "The graph can be large, so scanning all edges for each step is too slow."
+        ],
+        "prereqs": [
+          "graph-repr",
+          "dfs-graphs"
+        ]
+      },
+      "dryRun": {
+        "title": "n = 6, edges = [[0,1],[0,2],[3,5],[5,4],[4,3]], source = 0, destination = 5",
+        "columns": [
+          "step",
+          "node popped",
+          "its neighbours",
+          "action",
+          "visited"
+        ],
+        "rows": [
+          [
+            "1",
+            "0",
+            "1, 2",
+            "not the destination: push 1 and 2",
+            "{0, 1, 2}"
+          ],
+          [
+            "2",
+            "2",
+            "0",
+            "0 is already visited: nothing to push",
+            "{0, 1, 2}"
+          ],
+          [
+            "3",
+            "1",
+            "0",
+            "0 is already visited: nothing to push",
+            "{0, 1, 2}"
+          ],
+          [
+            "4",
+            "stack empty",
+            "-",
+            "node 5 was never reached: return false",
+            "{0, 1, 2}"
+          ]
+        ],
+        "hit": 3,
+        "note": "Nodes 3, 4 and 5 form a <b>separate part</b>. The search can never leave {0, 1, 2}, so the answer is false.",
+        "args": [
+          6,
+          [
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              2
+            ],
+            [
+              3,
+              5
+            ],
+            [
+              5,
+              4
+            ],
+            [
+              4,
+              3
+            ]
+          ],
+          0,
+          5
+        ],
+        "result": false
+      },
+      "constraints": [
+        "Nodes are numbered 0 to n - 1",
+        "Edges are undirected and there is at most one edge between two nodes",
+        "source and destination can be the same node; then the answer is true",
+        "Target: O(V + E) time"
+      ],
+      "minutes": 15,
+      "review": {
+        "approaches": [
+          {
+            "name": "Scan the edge list again and again",
+            "time": "O(V \u00d7 E)",
+            "space": "O(V)",
+            "idea": "Keep a set of reached nodes and add new ones while any edge connects a reached and an unreached node.",
+            "best": false
+          },
+          {
+            "name": "Union-Find over the edges",
+            "time": "O(E \u00d7 \u03b1(V))",
+            "space": "O(V)",
+            "idea": "Join the two ends of every edge into one group and check if source and destination share a group.",
+            "best": false
+          },
+          {
+            "name": "Adjacency list and DFS",
+            "time": "O(V + E)",
+            "space": "O(V + E)",
+            "idea": "Build the neighbour lists once and walk from the source with a visited array.",
+            "best": true
+          }
+        ],
+        "why": [
+          "The search moves only along edges and never visits a node twice, and it keeps going until nothing new is reachable. So it visits exactly the nodes connected to the source. The destination is in that set exactly when a path exists.",
+          "Building the list reads each edge once (O(E)). The search handles each node once and looks at each edge twice (O(V + E)). The list and the visited array take O(V + E) space."
+        ],
+        "mistakes": [
+          "Adding an edge in only one direction. The graph is undirected.",
+          "Forgetting the visited array, which loops forever on a cycle.",
+          "Recursing on a long chain of 100,000 nodes, which overflows the call stack.",
+          "Marking a node visited only when it is popped. The same node can then be pushed many times."
+        ],
+        "variations": [
+          "Return the <b>length</b> of the shortest path (use BFS).",
+          "Return how many separate parts the graph has.",
+          "The edges are directed. Does the answer change?"
+        ]
+      }
+    },
+    {
+      "id": "find-town-judge",
+      "pattern": {
+        "name": "In-degree minus out-degree",
+        "question": "In a graph of arrows, what does the judge look like when you count the arrows going into and out of each person?",
+        "idea": [
+          "Draw \"a trusts b\" as an arrow from a to b. The judge is a node with <b>n - 1 arrows in and none out</b>. Counting arrows per node is much cheaper than building the whole graph.",
+          "Combine the two counts into one number: score = (arrows in) - (arrows out). Only the judge can have a score of n - 1: any other person who trusts someone loses a point, so they cannot reach it."
+        ],
+        "spotWhen": [
+          "The statement describes a special node by how many edges <b>enter and leave</b> it.",
+          "You do not need paths, only counts per node.",
+          "A direct graph is given as pairs."
+        ],
+        "prereqs": [
+          "graph-repr"
+        ]
+      },
+      "dryRun": {
+        "title": "n = 3, trust = [[1, 3], [2, 3]]",
+        "columns": [
+          "step",
+          "event",
+          "scores (person 1, 2, 3)"
+        ],
+        "rows": [
+          [
+            "start",
+            "-",
+            "0, 0, 0"
+          ],
+          [
+            "[1, 3]",
+            "1 trusts 3: score[1]--, score[3]++",
+            "-1, 0, 1"
+          ],
+          [
+            "[2, 3]",
+            "2 trusts 3: score[2]--, score[3]++",
+            "-1, -1, 2"
+          ],
+          [
+            "check",
+            "the judge needs a score of n - 1 = 2",
+            "person 3 has 2: return 3"
+          ]
+        ],
+        "hit": 2,
+        "note": "Persons 1 and 2 both trust someone, so their score is <b>negative</b>. Only person 3 can reach n - 1.",
+        "args": [
+          3,
+          [
+            [
+              1,
+              3
+            ],
+            [
+              2,
+              3
+            ]
+          ]
+        ],
+        "result": 3
+      },
+      "constraints": [
+        "People are labelled 1 to n",
+        "A person does not trust themselves",
+        "trust has no repeated pairs",
+        "Target: O(n + trust.length) time"
+      ],
+      "minutes": 15,
+      "review": {
+        "approaches": [
+          {
+            "name": "For each person scan the whole trust list",
+            "time": "O(n \u00d7 t)",
+            "space": "O(1)",
+            "idea": "Count the arrows in and out of every person by scanning all pairs each time.",
+            "best": false
+          },
+          {
+            "name": "One score per person",
+            "time": "O(n + t)",
+            "space": "O(n)",
+            "idea": "Add 1 for every arrow in and subtract 1 for every arrow out, then look for n - 1.",
+            "best": true
+          }
+        ],
+        "why": [
+          "A person with score n - 1 must have n - 1 arrows in and 0 out, because at most n - 1 people can trust them and every arrow out would reduce the score. That is exactly the definition of the judge.",
+          "The trust list is read once (O(t)) and the scores are scanned once (O(n)). One array of n + 1 numbers is stored."
+        ],
+        "mistakes": [
+          "Only counting arrows <b>in</b>. A person trusted by everyone who also trusts somebody is not the judge.",
+          "Using indexes from 0. People are labelled from 1.",
+          "Returning the score instead of the label.",
+          "Forgetting the case n = 1, where the only person is the judge with an empty trust list."
+        ],
+        "variations": [
+          "The judge may trust people, but everyone else must still trust the judge. What changes?",
+          "Find a <b>celebrity</b> when you can only ask \"does a know b?\" for pairs.",
+          "Return all nodes that have no outgoing edges."
+        ]
+      }
+    },
+    {
+      "id": "rotting-oranges",
+      "pattern": {
+        "name": "Multi-source BFS: one round is one minute",
+        "question": "Many oranges rot at the same time and spread together. How can one queue represent \"all sources spread at once\"?",
+        "idea": [
+          "A normal BFS starts from one node. Here you start with <b>all rotten oranges in the queue together</b>. Each round of the queue handles everything that rots in the same minute, so the number of rounds is the number of minutes.",
+          "Count the fresh oranges first. Each time one rots, subtract one. When the queue is done, any fresh orange left is unreachable, and the answer is -1."
+        ],
+        "spotWhen": [
+          "Something <b>spreads from several starting points at the same time</b>, step by step.",
+          "The question asks for the time or number of steps until everything is reached.",
+          "A grid or graph where each step moves to the neighbours."
+        ],
+        "prereqs": [
+          "bfs-graphs",
+          "grid-problems"
+        ]
+      },
+      "dryRun": {
+        "title": "grid = [[2,1,1],[1,1,0],[0,1,1]]",
+        "columns": [
+          "minute",
+          "newly rotten",
+          "fresh left"
+        ],
+        "rows": [
+          [
+            "0",
+            "(0,0) is rotten at the start",
+            "6"
+          ],
+          [
+            "1",
+            "(0,1), (1,0)",
+            "4"
+          ],
+          [
+            "2",
+            "(0,2), (1,1)",
+            "2"
+          ],
+          [
+            "3",
+            "(2,1)",
+            "1"
+          ],
+          [
+            "4",
+            "(2,2)",
+            "0"
+          ]
+        ],
+        "hit": 4,
+        "note": "The rounds are the minutes. When the fresh count reaches <b>0</b> after round 4, the answer is 4.",
+        "args": [
+          [
+            [
+              2,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              0
+            ],
+            [
+              0,
+              1,
+              1
+            ]
+          ]
+        ],
+        "result": 4
+      },
+      "constraints": [
+        "Cells are 0, 1 or 2",
+        "Rotting spreads up, down, left and right only",
+        "Return -1 if a fresh orange can never rot",
+        "If there is no fresh orange at the start, the answer is 0"
+      ],
+      "minutes": 25,
+      "review": {
+        "approaches": [
+          {
+            "name": "Simulate each minute by scanning the whole grid",
+            "time": "O((rows \u00d7 cols)\u00b2)",
+            "space": "O(rows \u00d7 cols)",
+            "idea": "Repeat: find every fresh orange next to a rotten one and rot them, until nothing changes.",
+            "best": false
+          },
+          {
+            "name": "Multi-source BFS",
+            "time": "O(rows \u00d7 cols)",
+            "space": "O(rows \u00d7 cols)",
+            "idea": "Start with all rotten oranges in a queue and process one round per minute.",
+            "best": true
+          }
+        ],
+        "why": [
+          "BFS explores cells in order of distance from the nearest rotten orange, and a fresh orange rots at exactly that distance. The last orange to rot defines the total time, which is the number of rounds.",
+          "Each cell enters the queue at most once and its four neighbours are checked, so the time is O(rows \u00d7 cols). The queue can hold many cells, so the space is O(rows \u00d7 cols)."
+        ],
+        "mistakes": [
+          "Counting a minute for the final round that rots nothing, which gives an answer one too high.",
+          "Starting a separate BFS from each rotten orange, which is slow and gives wrong times.",
+          "Forgetting to return -1 when some fresh orange is unreachable.",
+          "Checking neighbours without bounds checks."
+        ],
+        "variations": [
+          "Return the distance from each cell to the nearest 0 (01 Matrix).",
+          "Oranges can also spread diagonally.",
+          "Return the position of the orange that rots last."
+        ]
+      }
+    },
+    {
+      "id": "number-of-provinces",
+      "pattern": {
+        "name": "Count connected components",
+        "question": "After you have visited every city of one province, how can you tell that the next unvisited city starts a new one?",
+        "idea": [
+          "A province is a <b>connected component</b>: all cities you can reach from one city by following connections. A search from one city visits exactly its component.",
+          "Loop over all cities. Whenever you find one that is <b>not visited yet</b>, it does not belong to any province found so far, so count a new province and run a search from it to mark its whole group."
+        ],
+        "spotWhen": [
+          "The statement asks how many <b>groups</b> or <b>islands</b> of connected things exist.",
+          "The graph is given as a matrix or an edge list.",
+          "Direct or indirect connection counts as one group."
+        ],
+        "prereqs": [
+          "dfs-graphs",
+          "graph-repr"
+        ]
+      },
+      "dryRun": {
+        "title": "isConnected = [[1,1,0],[1,1,0],[0,0,1]]",
+        "columns": [
+          "city",
+          "visited?",
+          "action"
+        ],
+        "rows": [
+          [
+            "0",
+            "no",
+            "new province, count = 1; visit 0, and from it city 1"
+          ],
+          [
+            "1",
+            "yes",
+            "already part of province 1: skip"
+          ],
+          [
+            "2",
+            "no",
+            "new province, count = 2; no other city is connected"
+          ]
+        ],
+        "hit": 2,
+        "note": "City 1 is <b>skipped</b> because the search from city 0 already reached it. Only unvisited cities start a new province.",
+        "args": [
+          [
+            [
+              1,
+              1,
+              0
+            ],
+            [
+              1,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              1
+            ]
+          ]
+        ],
+        "result": 2
+      },
+      "constraints": [
+        "isConnected is an n \u00d7 n matrix of 0s and 1s",
+        "isConnected[i][i] = 1 and the matrix is symmetric",
+        "Connections can be indirect",
+        "Target: O(n\u00b2) time"
+      ],
+      "minutes": 25,
+      "review": {
+        "approaches": [
+          {
+            "name": "Union-Find over all pairs",
+            "time": "O(n\u00b2 \u00d7 \u03b1(n))",
+            "space": "O(n)",
+            "idea": "Join cities i and j for every 1 in the matrix and count the groups left.",
+            "best": false
+          },
+          {
+            "name": "DFS from each unvisited city",
+            "time": "O(n\u00b2)",
+            "space": "O(n)",
+            "idea": "Count one province per search that starts from an unvisited city.",
+            "best": true
+          }
+        ],
+        "why": [
+          "A search from a city reaches exactly the cities connected to it, directly or not. All of them are marked visited, so none of them can start another search. Each province therefore causes exactly one search.",
+          "Every city is pushed once and for each city its row of n cells is read, so the time is O(n\u00b2). The visited array and the stack take O(n)."
+        ],
+        "mistakes": [
+          "Counting the number of 1s or edges instead of the number of groups.",
+          "Marking cities as visited only when popped, so the same city is pushed many times.",
+          "Treating this like a grid problem and moving in four directions. The matrix is a graph.",
+          "Starting a new search for every city instead of only unvisited ones."
+        ],
+        "variations": [
+          "The graph is given as an <b>edge list</b>, not a matrix.",
+          "Return the size of the largest province.",
+          "Return the minimum number of connections needed to join all provinces."
+        ]
+      }
+    },
+    {
+      "id": "all-paths-source-target",
+      "pattern": {
+        "name": "DFS with backtracking on a DAG",
+        "question": "You follow an edge, explore, and come back. What do you have to undo so that the next edge starts from a clean path?",
+        "idea": [
+          "Keep one shared list <code>path</code> of the nodes on the current route. Go to a neighbour by pushing it, explore from there, and <b>pop it when you return</b>. This is the same choose, explore, undo pattern as in Subsets.",
+          "When the current node is the target, save a <b>copy</b> of the path. In a graph with no cycles you never revisit a node on the same route, so you do not need a visited array: every different route is a different path."
+        ],
+        "spotWhen": [
+          "The statement asks for <b>all paths</b> between two nodes, not only whether one exists.",
+          "The graph is directed and has no cycles.",
+          "The answer is built by extending a route one step at a time."
+        ],
+        "prereqs": [
+          "dfs-graphs",
+          "backtracking"
+        ]
+      },
+      "dryRun": {
+        "title": "graph = [[1,2],[3],[3],[]]",
+        "columns": [
+          "call",
+          "path",
+          "action"
+        ],
+        "rows": [
+          [
+            "go(0)",
+            "[0]",
+            "not the target: try neighbours 1, then 2"
+          ],
+          [
+            "go(1)",
+            "[0, 1]",
+            "try neighbour 3"
+          ],
+          [
+            "go(3)",
+            "[0, 1, 3]",
+            "target reached: record, then undo 3 and 1"
+          ],
+          [
+            "go(2)",
+            "[0, 2]",
+            "try neighbour 3"
+          ],
+          [
+            "go(3)",
+            "[0, 2, 3]",
+            "target reached: record"
+          ]
+        ],
+        "hit": 2,
+        "note": "Node 3 is reached <b>twice</b>, by two different routes. Both are recorded, because they are different paths.",
+        "args": [
+          [
+            [
+              1,
+              2
+            ],
+            [
+              3
+            ],
+            [
+              3
+            ],
+            []
+          ]
+        ],
+        "result": [
+          [
+            0,
+            1,
+            3
+          ],
+          [
+            0,
+            2,
+            3
+          ]
+        ]
+      },
+      "constraints": [
+        "The graph is directed and has no cycles",
+        "The target is the last node, n - 1",
+        "The number of paths can be exponential, so n is small",
+        "The order of the paths does not matter"
+      ],
+      "minutes": 25,
+      "review": {
+        "approaches": [
+          {
+            "name": "BFS with the whole path in the queue",
+            "time": "O(2\u207f \u00d7 n)",
+            "space": "O(2\u207f \u00d7 n)",
+            "idea": "Keep each partial path in a queue and extend it with every neighbour.",
+            "best": false
+          },
+          {
+            "name": "DFS with backtracking",
+            "time": "O(2\u207f \u00d7 n)",
+            "space": "O(n)",
+            "idea": "Push a node, explore its neighbours, pop it when returning. Record a copy at the target.",
+            "best": true
+          }
+        ],
+        "why": [
+          "Every route from 0 to the target is a list of nodes where each node is a neighbour of the previous one. The DFS follows every neighbour at every step, so it generates all such lists. Without cycles the lists are finite.",
+          "In the worst case the number of paths is exponential, and each costs O(n) to copy, so the time is O(2\u207f \u00d7 n). The only memory besides the answer is the shared path and the recursion stack: O(n)."
+        ],
+        "mistakes": [
+          "Recording <code>path</code> instead of a copy <code>[...path]</code>.",
+          "Forgetting <code>path.pop()</code>, so the path keeps growing.",
+          "Adding a visited set. It would stop the second route through the same node and lose valid paths.",
+          "Checking the target only after the loop, so paths that end at the target are missed."
+        ],
+        "variations": [
+          "The graph may have <b>cycles</b>. How do you avoid going in circles?",
+          "Return only the number of paths (use memoization).",
+          "Return the shortest path only."
+        ]
+      }
+    }
+  ],
+  "flags": []
+}

@@ -1,0 +1,858 @@
+{
+  "items": [
+    {
+      "id": "linked-lists",
+      "prereqs": [
+        "arrays",
+        "big-o"
+      ],
+      "dryRun": {
+        "title": "Remove the value 3 from 1 → 2 → 3 → 4",
+        "columns": [
+          "step",
+          "prev",
+          "curr",
+          "check",
+          "action"
+        ],
+        "rows": [
+          [
+            "1",
+            "null",
+            "1",
+            "1 is not 3",
+            "move on: prev = 1, curr = 2"
+          ],
+          [
+            "2",
+            "1",
+            "2",
+            "2 is not 3",
+            "move on: prev = 2, curr = 3"
+          ],
+          [
+            "3",
+            "2",
+            "3",
+            "3 is the target",
+            "prev.next = curr.next, so 2 now points to 4"
+          ],
+          [
+            "4",
+            "2",
+            "4",
+            "done",
+            "list is 1 → 2 → 4"
+          ]
+        ],
+        "hit": 2,
+        "note": "To cut a node out you must change the node <b>before</b> it. That is why we carry <code>prev</code> while walking. No element had to move."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const a = { val: 1, next: null }\nconst b = { val: 2, next: null }\na.next = b\nb.val = 9\nconsole.log(a.next.val)</code></pre>",
+          "opts": [
+            "<code>1</code>",
+            "<code>2</code>",
+            "<code>9</code>",
+            "<code>null</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "<code>a.next</code> does not copy <code>b</code>. It holds a <b>reference</b> to the same object, so a change to <code>b</code> is visible through <code>a.next</code>.",
+            "Trap: thinking the link stores a copy of the value at the time you linked."
+          ],
+          "exec": "const a = { val: 1, next: null }\nconst b = { val: 2, next: null }\na.next = b\nb.val = 9\nconsole.log(a.next.val)"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const c = { val: 3, next: null }\nconst b = { val: 2, next: c }\nconst a = { val: 1, next: b }\nlet n = 0, cur = a\nwhile (cur) {\n  n++\n  cur = cur.next\n}\nconsole.log(n)</code></pre>",
+          "opts": [
+            "<code>2</code>",
+            "<code>4</code>",
+            "<code>null</code>",
+            "<code>3</code>"
+          ],
+          "ans": 3,
+          "why": [
+            "The loop visits <code>a</code>, then <code>b</code>, then <code>c</code>. After <code>c</code>, <code>cur</code> becomes <code>null</code> and the loop stops. That is 3 nodes.",
+            "The loop condition <code>while (cur)</code> is the standard way to walk to the end of a list."
+          ],
+          "exec": "const c = { val: 3, next: null }\nconst b = { val: 2, next: c }\nconst a = { val: 1, next: b }\nlet n = 0, cur = a\nwhile (cur) {\n  n++\n  cur = cur.next\n}\nconsole.log(n)"
+        },
+        {
+          "tag": "Spot the bug",
+          "q": "<p>You hold node <code>a</code> in the middle of a list and want to insert <code>x</code> right after it. Which pair of lines, <b>in this order</b>, keeps the rest of the list?</p>",
+          "opts": [
+            "<pre><code>a.next = x\nx.next = a.next</code></pre>",
+            "<pre><code>x.next = a.next\na.next = x</code></pre>",
+            "<pre><code>x.next = a\na.next = x</code></pre>",
+            "<pre><code>a.next = x.next\nx.next = a.next</code></pre>"
+          ],
+          "ans": 1,
+          "why": [
+            "First point <code>x</code> at the rest of the list (<code>a.next</code>), then point <code>a</code> at <code>x</code>.",
+            "In the first option, <code>a.next</code> is already <code>x</code> when the second line runs, so <code>x</code> points to itself and the rest of the list is lost."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Cost",
+          "q": "<p>You only hold the head of a singly linked list with n nodes. How long does it take to reach the 50th node?</p>",
+          "opts": [
+            "<code>O(1)</code>",
+            "<code>O(log n)</code>",
+            "<code>O(n)</code>",
+            "<code>O(n²)</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "There is no index. You must follow <code>next</code> 49 times, and in the worst case n times. That is O(n).",
+            "Trap: remembering that arrays reach any index in O(1). A linked list trades that for cheap inserts and removes."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Edge case",
+          "q": "<p>You delete a node with <code>prev.next = curr.next</code>. The node to delete is the <b>head</b>, so <code>prev</code> is <code>null</code>. What prints?</p><pre><code>const head = { val: 1, next: { val: 2, next: null } }\nlet prev = null\ntry { prev.next = head.next } catch (e) { console.log(e.name) }</code></pre>",
+          "opts": [
+            "<code>TypeError</code>",
+            "<code>RangeError</code>",
+            "<code>undefined</code>",
+            "<code>null</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "There is no node before the head, so <code>prev.next</code> reads a property of <code>null</code> and throws a <code>TypeError</code>.",
+            "Fix: use a <b>dummy node</b> in front of the head, or handle the head case first."
+          ],
+          "exec": "const head = { val: 1, next: { val: 2, next: null } }\nlet prev = null\ntry { prev.next = head.next } catch (e) { console.log(e.name) }"
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>removeValue(head, val)</code>. Remove <b>every</b> node whose value equals <code>val</code> and return the new head. Nodes look like <code>{ val, next }</code>.</p>",
+        "examples": [
+          "removeValue(list(1, 2, 3, 2), 2)  // 1 → 3",
+          "removeValue(list(7), 7)  // null"
+        ],
+        "hint": "<p>Put a dummy node before the head: <code>{ val: 0, next: head }</code>. Then you never need a special case for removing the head. Return <code>dummy.next</code>.</p>",
+        "fn": "removeValue",
+        "starter": "function list(...v) {\n  return v.reduceRight((next, val) => ({ val, next }), null)\n}\n\nfunction removeValue(head, val) {\n  // your code\n}",
+        "solution": "function removeValue(head, val) {\n  const dummy = { val: 0, next: head }\n  let prev = dummy\n  while (prev.next) {\n    if (prev.next.val === val) prev.next = prev.next.next\n    else prev = prev.next\n  }\n  return dummy.next\n}",
+        "checks": [
+          {
+            "t": "remove from the middle and end",
+            "verify": "{ const mk = (a) => a.reduceRight((n, v) => ({ val: v, next: n }), null); const arr = (h) => { const o = []; while (h) { o.push(h.val); h = h.next } return o }; assert(JSON.stringify(arr(removeValue(mk([1, 2, 3, 2]), 2))) === \"[1,3]\", \"expected [1,3]\") }"
+          },
+          {
+            "t": "remove the head (repeated)",
+            "verify": "{ const mk = (a) => a.reduceRight((n, v) => ({ val: v, next: n }), null); const arr = (h) => { const o = []; while (h) { o.push(h.val); h = h.next } return o }; assert(JSON.stringify(arr(removeValue(mk([2, 2, 1]), 2))) === \"[1]\", \"expected [1]\") }"
+          },
+          {
+            "t": "remove everything",
+            "verify": "{ const mk = (a) => a.reduceRight((n, v) => ({ val: v, next: n }), null); assert(removeValue(mk([5, 5]), 5) === null, \"expected null\") }"
+          },
+          {
+            "t": "value not present",
+            "verify": "{ const mk = (a) => a.reduceRight((n, v) => ({ val: v, next: n }), null); const arr = (h) => { const o = []; while (h) { o.push(h.val); h = h.next } return o }; assert(JSON.stringify(arr(removeValue(mk([1, 2]), 9))) === \"[1,2]\", \"list should not change\") }"
+          },
+          {
+            "t": "empty list",
+            "verify": "assert(removeValue(null, 1) === null, \"expected null\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "A linked list has no index: you reach a node by following <code>next</code>, but once you hold a node you can insert or remove without moving anything.",
+        "mistakes": [
+          "Overwriting <code>next</code> before saving it, which loses the rest of the list.",
+          "Forgetting the head: there is no <code>prev</code> for it. A dummy node fixes this.",
+          "Reading <code>cur.next</code> when <code>cur</code> is <code>null</code>.",
+          "Expecting O(1) access by position."
+        ]
+      }
+    },
+    {
+      "id": "stacks",
+      "prereqs": [
+        "arrays"
+      ],
+      "dryRun": {
+        "title": "Is \"([)]\" balanced?",
+        "columns": [
+          "step",
+          "char",
+          "stack after",
+          "action"
+        ],
+        "rows": [
+          [
+            "1",
+            "(",
+            "(",
+            "opening: push"
+          ],
+          [
+            "2",
+            "[",
+            "( [",
+            "opening: push"
+          ],
+          [
+            "3",
+            ")",
+            "( [",
+            "closing: top is [, but ) needs (. Not balanced"
+          ]
+        ],
+        "hit": 2,
+        "note": "A closing bracket must match the <b>most recent</b> opening one, which is the top of the stack. Here the top is <code>[</code>, so the string is invalid."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const s = []\ns.push(1)\ns.push(2)\ns.push(3)\ns.pop()\nconsole.log(s.pop())</code></pre>",
+          "opts": [
+            "<code>3</code>",
+            "<code>2</code>",
+            "<code>1</code>",
+            "<code>undefined</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "The first <code>pop</code> removes 3 and throws it away. The second <code>pop</code> returns the next top, which is 2.",
+            "Trap: reading the second pop as the first one. Last in, first out."
+          ],
+          "exec": "const s = []\ns.push(1)\ns.push(2)\ns.push(3)\ns.pop()\nconsole.log(s.pop())"
+        },
+        {
+          "tag": "Edge case",
+          "q": "<pre><code>const s = [5, 6]\ns.pop()\ns.pop()\ns.pop()\nconsole.log(s.length, String(s.pop()))</code></pre>",
+          "opts": [
+            "<code>-1 undefined</code>",
+            "<code>0 null</code>",
+            "<code>TypeError</code>",
+            "<code>0 undefined</code>"
+          ],
+          "ans": 3,
+          "why": [
+            "The third <code>pop</code> works on an empty array. It does not throw: it returns <code>undefined</code> and the length stays 0.",
+            "This is why a bracket checker must test <code>stack.length</code> before it pops."
+          ],
+          "exec": "const s = [5, 6]\ns.pop()\ns.pop()\ns.pop()\nconsole.log(s.length, String(s.pop()))"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const st = []\nfor (const ch of 'abc') st.push(ch)\nlet out = ''\nwhile (st.length) out += st.pop()\nconsole.log(out)</code></pre>",
+          "opts": [
+            "<code>abc</code>",
+            "<code>cba</code>",
+            "<code>bca</code>",
+            "<code>acb</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "Everything pushed comes out in <b>reverse</b> order. That is the core behaviour of a stack.",
+            "Reversing a string or a list with a stack is a good first test of LIFO."
+          ],
+          "exec": "const st = []\nfor (const ch of 'abc') st.push(ch)\nlet out = ''\nwhile (st.length) out += st.pop()\nconsole.log(out)"
+        },
+        {
+          "tag": "Pick the right tool",
+          "q": "<p>Which task is the most natural fit for a stack?</p>",
+          "opts": [
+            "Undo the last edit in an editor",
+            "Serve customers in the order they arrived",
+            "Find the shortest path level by level",
+            "Look up a user by id"
+          ],
+          "ans": 0,
+          "why": [
+            "Undo always reverses the <b>most recent</b> action first. That is last in, first out.",
+            "Serving in arrival order and level-by-level search are first in, first out, which is a queue."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Spot the bug",
+          "q": "<p>This checker only handles <code>(</code> and <code>)</code>:</p><pre><code>function ok(s) {\n  const st = []\n  for (const ch of s) {\n    if (ch === '(') st.push(ch)\n    else st.pop()\n  }\n  return st.length === 0\n}</code></pre><p>It returns <code>true</code> for <code>')()'</code>, which is not balanced. Why?</p>",
+          "opts": [
+            "A pop on an empty stack does nothing, so an extra <code>)</code> is silently forgotten",
+            "push is O(n)",
+            "The loop skips the first character",
+            "<code>st.length</code> is always 0"
+          ],
+          "ans": 0,
+          "why": [
+            "The first <code>)</code> pops an empty stack, which is ignored. Then <code>()</code> balances itself and the stack ends empty.",
+            "Fix: if the stack is empty when a closing bracket arrives, return <code>false</code> right away."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>evalRPN(tokens)</code>. It evaluates an expression in reverse Polish notation: numbers come first, then the operator. Tokens are strings. Supported: <code>+ - * /</code>. Division truncates toward zero.</p>",
+        "examples": [
+          "evalRPN([\"2\", \"1\", \"+\", \"3\", \"*\"])  // (2 + 1) * 3 = 9",
+          "evalRPN([\"10\", \"3\", \"-\"])  // 7"
+        ],
+        "hint": "<p>Push numbers. On an operator, pop <code>b</code> first and then <code>a</code>, compute <code>a op b</code>, and push the result. The order matters for <code>-</code> and <code>/</code>. The answer is the last item on the stack.</p>",
+        "fn": "evalRPN",
+        "starter": "function evalRPN(tokens) {\n  // your code\n}",
+        "solution": "function evalRPN(tokens) {\n  const st = []\n  for (const tk of tokens) {\n    if (tk === '+' || tk === '-' || tk === '*' || tk === '/') {\n      const b = st.pop()\n      const a = st.pop()\n      if (tk === '+') st.push(a + b)\n      else if (tk === '-') st.push(a - b)\n      else if (tk === '*') st.push(a * b)\n      else st.push(Math.trunc(a / b))\n    } else st.push(Number(tk))\n  }\n  return st.pop()\n}",
+        "checks": [
+          {
+            "t": "(2 + 1) * 3",
+            "verify": "assert(evalRPN([\"2\", \"1\", \"+\", \"3\", \"*\"]) === 9, \"expected 9\")"
+          },
+          {
+            "t": "operand order for minus",
+            "verify": "assert(evalRPN([\"10\", \"3\", \"-\"]) === 7, \"expected 7\")"
+          },
+          {
+            "t": "division truncates",
+            "verify": "assert(evalRPN([\"4\", \"13\", \"5\", \"/\", \"+\"]) === 6, \"expected 6\")"
+          },
+          {
+            "t": "a single number",
+            "verify": "assert(evalRPN([\"7\"]) === 7, \"expected 7\")"
+          },
+          {
+            "t": "a longer expression",
+            "verify": "assert(evalRPN([\"5\", \"1\", \"2\", \"+\", \"4\", \"*\", \"+\", \"3\", \"-\"]) === 14, \"expected 14\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "A stack hands back the <b>most recent</b> unfinished item first: push and pop at the same end, both O(1).",
+        "mistakes": [
+          "Popping an empty stack without checking.",
+          "Using <code>shift</code> or <code>unshift</code> as stack operations, which move every element.",
+          "Forgetting to check that the stack is empty at the end.",
+          "Mixing up the operand order when popping two values."
+        ]
+      }
+    },
+    {
+      "id": "queue",
+      "prereqs": [
+        "arrays",
+        "stacks"
+      ],
+      "dryRun": {
+        "title": "Operations on an empty queue",
+        "columns": [
+          "step",
+          "operation",
+          "queue (front → back)",
+          "returns"
+        ],
+        "rows": [
+          [
+            "1",
+            "enqueue A",
+            "A",
+            "-"
+          ],
+          [
+            "2",
+            "enqueue B",
+            "A B",
+            "-"
+          ],
+          [
+            "3",
+            "dequeue",
+            "B",
+            "A"
+          ],
+          [
+            "4",
+            "enqueue C",
+            "B C",
+            "-"
+          ],
+          [
+            "5",
+            "dequeue",
+            "C",
+            "B"
+          ]
+        ],
+        "hit": 2,
+        "note": "A went in first, so A comes out first. New items join at the back and never jump ahead."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const q = []\nq.push('a')\nq.push('b')\nq.push('c')\nconsole.log(q.shift(), q.length)</code></pre>",
+          "opts": [
+            "<code>c 2</code>",
+            "<code>a 2</code>",
+            "<code>a 3</code>",
+            "<code>b 2</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "<code>push</code> adds at the back and <code>shift</code> removes from the front. The first item in is <code>a</code>, so it comes out. Two items remain.",
+            "Trap: using <code>pop</code> thinking, which would return <code>c</code>."
+          ],
+          "exec": "const q = []\nq.push('a')\nq.push('b')\nq.push('c')\nconsole.log(q.shift(), q.length)"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const q = [1]\nlet out = ''\nwhile (q.length) {\n  const x = q.shift()\n  out += x\n  if (x &lt; 3) q.push(x + 1, x + 1)\n}\nconsole.log(out)</code></pre>",
+          "opts": [
+            "<code>1233233</code>",
+            "<code>1223333</code>",
+            "<code>1122333</code>",
+            "<code>1233332</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "A queue finishes a whole level before the next one: first 1, then the two 2s, then the four 3s. That is \"1\" + \"22\" + \"3333\".",
+            "The option <code>1233233</code> is what a <b>stack</b> would give (go deep first)."
+          ],
+          "exec": "const q = [1]\nlet out = ''\nwhile (q.length) {\n  const x = q.shift()\n  out += x\n  if (x < 3) q.push(x + 1, x + 1)\n}\nconsole.log(out)"
+        },
+        {
+          "tag": "Cost",
+          "q": "<p>You use <code>array.shift()</code> as the dequeue of a queue that holds a million items. Why can this be a problem?</p>",
+          "opts": [
+            "It can cost O(n) per call, because the remaining items are moved",
+            "It returns the last item instead of the first",
+            "It does not remove the item",
+            "It only works on numbers"
+          ],
+          "ans": 0,
+          "why": [
+            "Removing from the front can force every other item to shift one place. A loop of such calls can become O(n²).",
+            "For big queues, keep a head index and move it forward, or use a linked list."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Pick the right tool",
+          "q": "<p>You must visit the nodes of a tree level by level: all nodes at depth 1 before any node at depth 2. Which structure drives this?</p>",
+          "opts": [
+            "A stack",
+            "A Set",
+            "A Map",
+            "A queue"
+          ],
+          "ans": 3,
+          "why": [
+            "Children are added at the back and nodes are taken from the front, so a whole level is finished before the next one starts. This is BFS.",
+            "A stack would go deep first instead."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Edge case",
+          "q": "<pre><code>const q = []\nconsole.log(String(q.shift()))</code></pre>",
+          "opts": [
+            "<code>undefined</code>",
+            "<code>null</code>",
+            "<code>TypeError</code>",
+            "<code>0</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "<code>shift</code> on an empty array returns <code>undefined</code> and does not throw.",
+            "So a loop like <code>while (q.length)</code> is the safe way to drain a queue."
+          ],
+          "exec": "const q = []\nconsole.log(String(q.shift()))"
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>binaryNumbers(n)</code>. Return the first <code>n</code> binary numbers as strings, starting at <code>\"1\"</code>: <code>\"1\", \"10\", \"11\", \"100\", ...</code>. Use a queue.</p>",
+        "examples": [
+          "binaryNumbers(5)  // [\"1\", \"10\", \"11\", \"100\", \"101\"]",
+          "binaryNumbers(0)  // []"
+        ],
+        "hint": "<p>Start with <code>[\"1\"]</code> in the queue. Take the front item <code>s</code>, add it to the answer, then enqueue <code>s + \"0\"</code> and <code>s + \"1\"</code>.</p>",
+        "fn": "binaryNumbers",
+        "starter": "function binaryNumbers(n) {\n  // your code\n}",
+        "solution": "function binaryNumbers(n) {\n  const out = []\n  const q = ['1']\n  while (out.length < n) {\n    const s = q.shift()\n    out.push(s)\n    q.push(s + '0', s + '1')\n  }\n  return out\n}",
+        "checks": [
+          {
+            "t": "first five",
+            "verify": "assert(JSON.stringify(binaryNumbers(5)) === '[\"1\",\"10\",\"11\",\"100\",\"101\"]', \"wrong sequence\")"
+          },
+          {
+            "t": "n = 1",
+            "verify": "assert(JSON.stringify(binaryNumbers(1)) === '[\"1\"]', \"expected one item\")"
+          },
+          {
+            "t": "n = 0",
+            "verify": "assert(binaryNumbers(0).length === 0, \"expected an empty array\")"
+          },
+          {
+            "t": "tenth number",
+            "verify": "assert(binaryNumbers(10)[9] === \"1010\", \"the 10th should be 1010\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "A queue serves the <b>oldest</b> item first: add at the back, remove from the front. It is the engine of BFS.",
+        "mistakes": [
+          "Using a stack when the order of arrival matters.",
+          "Relying on <code>shift()</code> in a huge loop, which can be O(n) per call.",
+          "Dequeuing from an empty queue and not handling <code>undefined</code>.",
+          "Mixing up the front and the back."
+        ]
+      }
+    },
+    {
+      "id": "two-pointers",
+      "prereqs": [
+        "arrays",
+        "big-o"
+      ],
+      "dryRun": {
+        "title": "Find two numbers that add up to 9 in [1, 2, 4, 7, 11]",
+        "columns": [
+          "step",
+          "left",
+          "right",
+          "sum",
+          "action"
+        ],
+        "rows": [
+          [
+            "1",
+            "0 (value 1)",
+            "4 (value 11)",
+            "12",
+            "too big: right moves in"
+          ],
+          [
+            "2",
+            "0 (value 1)",
+            "3 (value 7)",
+            "8",
+            "too small: left moves forward"
+          ],
+          [
+            "3",
+            "1 (value 2)",
+            "3 (value 7)",
+            "9",
+            "found it"
+          ]
+        ],
+        "hit": 2,
+        "note": "Each step throws away one value for good. Because the array is <b>sorted</b>, we never need to check that value again."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>function pair(a, t) {\n  let l = 0, r = a.length - 1\n  while (l &lt; r) {\n    const s = a[l] + a[r]\n    if (s === t) return [l, r]\n    if (s &lt; t) l++\n    else r--\n  }\n  return null\n}\nconsole.log(pair([1, 3, 4, 6, 9], 10).join(\",\"))</code></pre>",
+          "opts": [
+            "<code>0,4</code>",
+            "<code>1,3</code>",
+            "<code>2,3</code>",
+            "<code>null</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "The pointers start at the two ends. <code>1 + 9</code> is already 10, so it returns <code>[0, 4]</code> at once.",
+            "Another pair exists (4 + 6), but the function returns the first one it meets."
+          ],
+          "exec": "function pair(a, t) {\n  let l = 0, r = a.length - 1\n  while (l < r) {\n    const s = a[l] + a[r]\n    if (s === t) return [l, r]\n    if (s < t) l++\n    else r--\n  }\n  return null\n}\nconsole.log(pair([1, 3, 4, 6, 9], 10).join(\",\"))"
+        },
+        {
+          "tag": "Why does this fail?",
+          "q": "<pre><code>function pair(a, t) {\n  let l = 0, r = a.length - 1\n  while (l &lt; r) {\n    const s = a[l] + a[r]\n    if (s === t) return [l, r]\n    if (s &lt; t) l++\n    else r--\n  }\n  return null\n}\nconsole.log(String(pair([1, 5, 3, 2], 8)))</code></pre>",
+          "opts": [
+            "<code>1,2</code>",
+            "<code>null</code>",
+            "<code>0,3</code>",
+            "<code>TypeError</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "The array is <b>not sorted</b>. 5 + 3 = 8 is a real pair, but the pointers throw values away on a wrong assumption and never see it.",
+            "Two pointers that move by \"too big / too small\" need sorted input."
+          ],
+          "exec": "function pair(a, t) {\n  let l = 0, r = a.length - 1\n  while (l < r) {\n    const s = a[l] + a[r]\n    if (s === t) return [l, r]\n    if (s < t) l++\n    else r--\n  }\n  return null\n}\nconsole.log(String(pair([1, 5, 3, 2], 8)))"
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>Two pointers find a pair with a given sum in a sorted array of n numbers. What are the time and extra space?</p>",
+          "opts": [
+            "<code>O(n) time, O(n) space</code>",
+            "<code>O(n²) time, O(1) space</code>",
+            "<code>O(n) time, O(1) space</code>",
+            "<code>O(log n) time, O(1) space</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "Each step moves one pointer inward, so there are at most n steps. Only two index variables are used, so extra space is O(1).",
+            "Trap: the hash-map solution is also O(n) time, but it costs O(n) space."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Pick the right tool",
+          "q": "<p>Which task fits two pointers moving from the two ends?</p>",
+          "opts": [
+            "Count word frequencies in a text",
+            "Check that a string reads the same backwards, without making a copy",
+            "Find the shortest path in a grid",
+            "Merge two hash maps"
+          ],
+          "ans": 1,
+          "why": [
+            "Compare the first and last character, then move both pointers inward. No copy and one pass.",
+            "The other tasks need counting, searching a graph or merging maps."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Reasoning",
+          "q": "<p>In a sorted array the sum at <code>left = 0</code>, <code>right = 4</code> is too big. Why can <code>a[4]</code> be thrown away for good?</p>",
+          "opts": [
+            "Even with the smallest remaining partner, <code>a[4]</code> is already too big, so it cannot be in any answer",
+            "It is the last element",
+            "Pointers are never allowed to move back",
+            "It was already used once"
+          ],
+          "ans": 0,
+          "why": [
+            "Every other partner is at least as large as <code>a[0]</code>. If <code>a[0] + a[4]</code> is already too big, any other pair with <code>a[4]</code> is too big too.",
+            "This argument is what makes the algorithm correct, not just fast."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>sortedSquares(nums)</code>. The array is sorted and may contain negative numbers. Return the squares of the numbers, also sorted. Aim for O(n) with two pointers (no sorting at the end).</p>",
+        "examples": [
+          "sortedSquares([-4, -1, 0, 3, 10])  // [0, 1, 9, 16, 100]",
+          "sortedSquares([])  // []"
+        ],
+        "hint": "<p>The biggest square is at one of the two ends. Compare <code>Math.abs(nums[l])</code> with <code>Math.abs(nums[r])</code>, put the bigger square at the <b>end</b> of the result, and fill the result from the back.</p>",
+        "fn": "sortedSquares",
+        "starter": "function sortedSquares(nums) {\n  // your code\n}",
+        "solution": "function sortedSquares(nums) {\n  const out = new Array(nums.length)\n  let l = 0, r = nums.length - 1\n  for (let i = nums.length - 1; i >= 0; i--) {\n    if (Math.abs(nums[l]) > Math.abs(nums[r])) {\n      out[i] = nums[l] * nums[l]\n      l++\n    } else {\n      out[i] = nums[r] * nums[r]\n      r--\n    }\n  }\n  return out\n}",
+        "checks": [
+          {
+            "t": "mixed signs",
+            "verify": "assert(JSON.stringify(sortedSquares([-4, -1, 0, 3, 10])) === \"[0,1,9,16,100]\", \"expected [0,1,9,16,100]\")"
+          },
+          {
+            "t": "all negative",
+            "verify": "assert(JSON.stringify(sortedSquares([-7, -3, -1])) === \"[1,9,49]\", \"expected [1,9,49]\")"
+          },
+          {
+            "t": "all positive",
+            "verify": "assert(JSON.stringify(sortedSquares([1, 2, 3])) === \"[1,4,9]\", \"expected [1,4,9]\")"
+          },
+          {
+            "t": "empty array",
+            "verify": "assert(JSON.stringify(sortedSquares([])) === \"[]\", \"expected []\")"
+          },
+          {
+            "t": "one item",
+            "verify": "assert(JSON.stringify(sortedSquares([-2])) === \"[4]\", \"expected [4]\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "On <b>sorted</b> data, two pointers use the order to discard one candidate per step, so O(n²) becomes O(n).",
+        "mistakes": [
+          "Using it on unsorted data without sorting first.",
+          "Moving the wrong pointer after a \"too big\" or \"too small\" result.",
+          "Using <code>l &lt;= r</code> when the same element must not be used twice.",
+          "Forgetting that sorting first costs O(n log n)."
+        ]
+      }
+    },
+    {
+      "id": "sliding-window",
+      "prereqs": [
+        "arrays",
+        "hashmaps",
+        "two-pointers"
+      ],
+      "dryRun": {
+        "title": "Biggest sum of 3 neighbours in [2, 1, 5, 1, 3, 2]",
+        "columns": [
+          "step",
+          "window",
+          "add",
+          "remove",
+          "sum",
+          "best"
+        ],
+        "rows": [
+          [
+            "1",
+            "[2, 1, 5]",
+            "-",
+            "-",
+            "8",
+            "8"
+          ],
+          [
+            "2",
+            "[1, 5, 1]",
+            "+1",
+            "-2",
+            "7",
+            "8"
+          ],
+          [
+            "3",
+            "[5, 1, 3]",
+            "+3",
+            "-1",
+            "9",
+            "9"
+          ],
+          [
+            "4",
+            "[1, 3, 2]",
+            "+2",
+            "-5",
+            "6",
+            "9"
+          ]
+        ],
+        "hit": 2,
+        "note": "We never add the three numbers again. We only add the one that <b>enters</b> and remove the one that <b>leaves</b>."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const a = [2, 1, 5, 1, 3, 2]\nlet sum = a[0] + a[1] + a[2], best = sum\nfor (let i = 3; i &lt; a.length; i++) {\n  sum += a[i] - a[i - 3]\n  best = Math.max(best, sum)\n}\nconsole.log(best)</code></pre>",
+          "opts": [
+            "<code>8</code>",
+            "<code>9</code>",
+            "<code>12</code>",
+            "<code>6</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "The window sums are 8, 7, 9 and 6. The best is 9, from <code>[5, 1, 3]</code>.",
+            "Each step uses <code>a[i - 3]</code> because the window holds exactly 3 items: the one that leaves is 3 places behind the new one."
+          ],
+          "exec": "const a = [2, 1, 5, 1, 3, 2]\nlet sum = a[0] + a[1] + a[2], best = sum\nfor (let i = 3; i < a.length; i++) {\n  sum += a[i] - a[i - 3]\n  best = Math.max(best, sum)\n}\nconsole.log(best)"
+        },
+        {
+          "tag": "Spot the bug",
+          "q": "<pre><code>const a = [2, 1, 5, 1, 3, 2]\nlet sum = a[0] + a[1] + a[2], best = sum\nfor (let i = 3; i &lt; a.length; i++) {\n  sum += a[i] - a[i - 2]\n  best = Math.max(best, sum)\n}\nconsole.log(best)</code></pre>",
+          "opts": [
+            "<code>9</code>",
+            "<code>8</code>",
+            "<code>7</code>",
+            "<code>6</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "The removed index is off by one: <code>a[i - 2]</code> is still inside the window. The sum drifts and the best stays at the first value, 8, instead of 9.",
+            "Off-by-one on the leaving item is the most common sliding window bug."
+          ],
+          "exec": "const a = [2, 1, 5, 1, 3, 2]\nlet sum = a[0] + a[1] + a[2], best = sum\nfor (let i = 3; i < a.length; i++) {\n  sum += a[i] - a[i - 2]\n  best = Math.max(best, sum)\n}\nconsole.log(best)"
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>Find the biggest sum of <code>k</code> neighbouring numbers in an array of n numbers using the sliding trick. Time?</p>",
+          "opts": [
+            "<code>O(n * k)</code>",
+            "<code>O(k)</code>",
+            "<code>O(n log n)</code>",
+            "<code>O(n)</code>"
+          ],
+          "ans": 3,
+          "why": [
+            "Each number enters the window once and leaves once. That is O(n) work, no matter how big <code>k</code> is.",
+            "Recomputing each window from scratch is O(n * k)."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Pick the right tool",
+          "q": "<p>Which problem is a sliding window problem?</p>",
+          "opts": [
+            "Longest run of characters with at most 2 different letters",
+            "Check if a tree is balanced",
+            "Count the islands in a grid",
+            "Find the k-th smallest value in a BST"
+          ],
+          "ans": 0,
+          "why": [
+            "It asks for the best <b>contiguous</b> segment under a rule. You can grow and shrink a window to keep the rule true.",
+            "The other problems are about trees and grids."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Reasoning",
+          "q": "<p>In a variable-size window, when do you move the <b>left</b> edge?</p>",
+          "opts": [
+            "After every step",
+            "Only when the array ends",
+            "When the window breaks the rule, until it is valid again",
+            "Never: only the right edge moves"
+          ],
+          "ans": 2,
+          "why": [
+            "The right edge grows the window. When the window becomes invalid, the left edge shrinks it until the rule holds again.",
+            "Use a <code>while</code> loop for this, not an <code>if</code>: one step may not be enough."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>longestSubarray(nums, limit)</code>. All numbers are positive. Return the length of the longest run of neighbouring numbers whose <b>sum is at most</b> <code>limit</code>. Return 0 if none fits.</p>",
+        "examples": [
+          "longestSubarray([3, 1, 2, 1, 1], 5)  // 4  (1 + 2 + 1 + 1)",
+          "longestSubarray([5, 5, 5], 4)  // 0"
+        ],
+        "hint": "<p>Move the right edge, adding each number. While the sum is bigger than <code>limit</code>, subtract the left number and move the left edge. After that, the window is valid: update the best length.</p>",
+        "fn": "longestSubarray",
+        "starter": "function longestSubarray(nums, limit) {\n  // your code\n}",
+        "solution": "function longestSubarray(nums, limit) {\n  let left = 0, sum = 0, best = 0\n  for (let right = 0; right < nums.length; right++) {\n    sum += nums[right]\n    while (sum > limit) {\n      sum -= nums[left]\n      left++\n    }\n    best = Math.max(best, right - left + 1)\n  }\n  return best\n}",
+        "checks": [
+          {
+            "t": "example from the task",
+            "verify": "assert(longestSubarray([3, 1, 2, 1, 1], 5) === 4, \"expected 4\")"
+          },
+          {
+            "t": "nothing fits",
+            "verify": "assert(longestSubarray([5, 5, 5], 4) === 0, \"expected 0\")"
+          },
+          {
+            "t": "everything fits",
+            "verify": "assert(longestSubarray([1, 1, 1], 10) === 3, \"expected 3\")"
+          },
+          {
+            "t": "empty array",
+            "verify": "assert(longestSubarray([], 5) === 0, \"expected 0\")"
+          },
+          {
+            "t": "a window in the middle",
+            "verify": "assert(longestSubarray([2, 3, 1, 1, 2, 1], 5) === 4, \"expected 4\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Do not redo the whole window: <b>add</b> the item that enters and <b>remove</b> the item that leaves.",
+        "mistakes": [
+          "Recomputing the whole window each time, which brings back O(n²).",
+          "An off-by-one in the index of the item that leaves.",
+          "Using <code>if</code> instead of <code>while</code> when shrinking the window.",
+          "Updating the best answer before the window is valid again."
+        ]
+      }
+    }
+  ],
+  "flags": [
+    "The existing lesson texts mention what an interviewer asks. I did not rewrite them.",
+    "two-pointers: I used only arrays and big-o as prerequisites. The old text compares with a nested loop, so it does not need hash maps.",
+    "The stacks lesson relies on recursion for its call-stack analogy, but recursion comes later in the new order (Unit 4). I did not list it as a prerequisite; the analogy still works without it."
+  ]
+}

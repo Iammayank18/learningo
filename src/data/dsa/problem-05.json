@@ -1,0 +1,580 @@
+{
+  "items": [
+    {
+      "id": "intersection-of-two-arrays",
+      "pattern": {
+        "name": "Membership check with a Set",
+        "question": "For each value in the second array, what do you need to know about the first array, and which structure answers it in one step?",
+        "idea": [
+          "The task repeats one question: \"does this value also exist in the other array?\". Scanning the other array for each value costs O(n \u00d7 m).",
+          "Store one array in a <b>Set</b>. Then every question is a constant-time lookup, and a second Set stops duplicates from entering the answer."
+        ],
+        "spotWhen": [
+          "The statement asks for values that exist in <b>both</b> collections (or in one but not the other).",
+          "Each value should be reported once.",
+          "Order of the result does not matter."
+        ],
+        "prereqs": [
+          "hashset",
+          "arrays"
+        ]
+      },
+      "dryRun": {
+        "title": "nums1 = [4, 9, 5], nums2 = [9, 4, 9, 8, 4]",
+        "columns": [
+          "x (from nums2)",
+          "in the Set of nums1?",
+          "common after"
+        ],
+        "rows": [
+          [
+            "9",
+            "yes",
+            "{9}"
+          ],
+          [
+            "4",
+            "yes",
+            "{9, 4}"
+          ],
+          [
+            "9",
+            "yes",
+            "{9, 4} (already there)"
+          ],
+          [
+            "8",
+            "no",
+            "{9, 4}"
+          ],
+          [
+            "4",
+            "yes",
+            "{9, 4} (already there)"
+          ]
+        ],
+        "hit": 2,
+        "note": "The value 9 is found twice, but the answer Set holds it <b>only once</b>.",
+        "args": [
+          [
+            4,
+            9,
+            5
+          ],
+          [
+            9,
+            4,
+            9,
+            8,
+            4
+          ]
+        ],
+        "result": [
+          9,
+          4
+        ]
+      },
+      "constraints": [
+        "Arrays can be empty",
+        "Values can repeat inside one array",
+        "Each value appears once in the result, in any order",
+        "Target: better than O(n \u00d7 m) time"
+      ],
+      "minutes": 15,
+      "review": {
+        "approaches": [
+          {
+            "name": "Check every pair",
+            "time": "O(n \u00d7 m)",
+            "space": "O(min(n, m))",
+            "idea": "For each value of nums2 scan nums1. Remove repeated results at the end.",
+            "best": false
+          },
+          {
+            "name": "Sort both, then two pointers",
+            "time": "O(n log n + m log m)",
+            "space": "O(1) extra",
+            "idea": "After sorting, walk both arrays and match equal values.",
+            "best": false
+          },
+          {
+            "name": "Two Sets",
+            "time": "O(n + m)",
+            "space": "O(n + m)",
+            "idea": "Put nums1 in a Set, scan nums2, and collect matches in a second Set.",
+            "best": true
+          }
+        ],
+        "why": [
+          "A value is common exactly when it is in nums1 and also shows up in nums2. The first Set answers the first part in constant time while the scan covers the second.",
+          "Building the Set and scanning the other array each take one pass, so the time is O(n + m). The Sets hold at most n and m values."
+        ],
+        "mistakes": [
+          "Pushing matches into an array directly, so a value that appears twice in nums2 is returned twice.",
+          "Checking <code>nums1.includes(x)</code> inside the loop. It is O(n) each time.",
+          "Comparing the two Sets with <code>===</code>. Sets are compared by reference, not by content.",
+          "Forgetting to convert the final Set to an array."
+        ],
+        "variations": [
+          "Keep duplicates: return each common value as many times as it appears in both (the smaller count).",
+          "Return the values that are in nums1 but <b>not</b> in nums2.",
+          "Find the intersection of k arrays."
+        ]
+      }
+    },
+    {
+      "id": "ransom-note",
+      "pattern": {
+        "name": "Count what you have, spend what you need",
+        "question": "To build the note you take letters from the magazine. What single piece of information about the magazine decides if a letter is still available?",
+        "idea": [
+          "The positions of the letters do not matter. Only <b>how many copies</b> of each letter the magazine has. A Map from letter to count holds exactly that.",
+          "Then read the note letter by letter and spend one copy each time. If a letter is missing or its count is zero, the note is impossible; if you reach the end, it is possible."
+        ],
+        "spotWhen": [
+          "The statement asks if one collection can be built from another, using each item once.",
+          "Only the <b>count of each item</b> matters, not the order.",
+          "You need fast \"how many of this are left?\" updates."
+        ],
+        "prereqs": [
+          "objects-map-set",
+          "hashmaps"
+        ]
+      },
+      "dryRun": {
+        "title": "ransomNote = \"aa\", magazine = \"ab\"",
+        "columns": [
+          "step",
+          "letter",
+          "copies left",
+          "action"
+        ],
+        "rows": [
+          [
+            "0",
+            "-",
+            "a: 1, b: 1",
+            "count the magazine"
+          ],
+          [
+            "1",
+            "a (note)",
+            "a: 1",
+            "use one copy, a: 0"
+          ],
+          [
+            "2",
+            "a (note)",
+            "a: 0",
+            "none left: return false"
+          ]
+        ],
+        "hit": 2,
+        "note": "The magazine contains an <b>a</b>, but only one. The second <b>a</b> in the note cannot be built.",
+        "args": [
+          "aa",
+          "ab"
+        ],
+        "result": false
+      },
+      "constraints": [
+        "Both strings can be empty",
+        "Letters are case sensitive",
+        "Each magazine letter is used at most once",
+        "Target: O(n + m) time"
+      ],
+      "minutes": 15,
+      "review": {
+        "approaches": [
+          {
+            "name": "Remove used letters from the magazine string",
+            "time": "O(n \u00d7 m)",
+            "space": "O(m)",
+            "idea": "For each note letter find it in the magazine and cut it out.",
+            "best": false
+          },
+          {
+            "name": "Letter-count Map",
+            "time": "O(n + m)",
+            "space": "O(k)",
+            "idea": "Count the magazine letters in a Map and spend them while reading the note. k is the number of different letters.",
+            "best": true
+          }
+        ],
+        "why": [
+          "A note can be built exactly when for every letter, the magazine has at least as many copies as the note needs. Spending one copy per note letter and failing when a count hits zero checks exactly that.",
+          "Counting reads the magazine once and spending reads the note once, so the time is O(n + m). The Map holds one entry per different letter."
+        ],
+        "mistakes": [
+          "Only checking that each note letter <b>exists</b> in the magazine, not how many copies.",
+          "Forgetting to reduce the count, so a letter can be used over and over.",
+          "Treating a missing Map key as a number. <code>undefined - 1</code> is <code>NaN</code>, so use <code>?? 0</code>.",
+          "Counting the note instead of the magazine and then comparing in the wrong direction."
+        ],
+        "variations": [
+          "Letters in the magazine can be used twice.",
+          "Check whether two strings are <b>anagrams</b> of each other.",
+          "Return the number of extra letters left over in the magazine."
+        ]
+      }
+    },
+    {
+      "id": "time-needed-to-buy-tickets",
+      "pattern": {
+        "name": "Count turns instead of simulating the queue",
+        "question": "Person k needs t tickets. How many tickets can any other person buy before k is finished?",
+        "idea": [
+          "Simulating the line with a queue is correct, but it needs one step for every ticket sold. The total time is the number of tickets sold before k finishes, so you can just <b>count them per person</b>.",
+          "Person i never buys more than they want, and never more than <code>tickets[k]</code> turns, since k leaves after that many rounds. People behind k miss the last round, so their limit is one lower."
+        ],
+        "spotWhen": [
+          "A queue where people repeat a fixed action and rejoin is used only to count <b>time or turns</b>.",
+          "Everyone has the same speed (one action per turn).",
+          "You can say how many turns each element gets before the target is done."
+        ],
+        "prereqs": [
+          "queue"
+        ]
+      },
+      "dryRun": {
+        "title": "tickets = [3, 1, 2, 4], k = 2",
+        "columns": [
+          "person i",
+          "tickets[i]",
+          "limit",
+          "seconds added",
+          "total"
+        ],
+        "rows": [
+          [
+            "0",
+            "3",
+            "2 (i <= k)",
+            "min(3, 2) = 2",
+            "2"
+          ],
+          [
+            "1",
+            "1",
+            "2 (i <= k)",
+            "min(1, 2) = 1",
+            "3"
+          ],
+          [
+            "2 (k)",
+            "2",
+            "2 (i <= k)",
+            "min(2, 2) = 2",
+            "5"
+          ],
+          [
+            "3",
+            "4",
+            "1 (i > k)",
+            "min(4, 1) = 1",
+            "6"
+          ]
+        ],
+        "hit": 3,
+        "note": "Person 3 stands behind k. They only get <b>one</b> turn before k buys the last ticket, so their limit is tickets[k] - 1 = 1.",
+        "args": [
+          [
+            3,
+            1,
+            2,
+            4
+          ],
+          2
+        ],
+        "result": 6
+      },
+      "constraints": [
+        "0 <= k < tickets.length",
+        "Every person wants at least 1 ticket",
+        "One ticket takes exactly 1 second",
+        "Target: O(n) time"
+      ],
+      "minutes": 15,
+      "review": {
+        "approaches": [
+          {
+            "name": "Simulate the line with a queue",
+            "time": "O(n \u00d7 max(tickets))",
+            "space": "O(n)",
+            "idea": "Take the front person, subtract one ticket, and put them at the back if they still want more.",
+            "best": false
+          },
+          {
+            "name": "Add up the turns per person",
+            "time": "O(n)",
+            "space": "O(1)",
+            "idea": "Add min(tickets[i], limit) for every person, with limit one lower after k.",
+            "best": true
+          }
+        ],
+        "why": [
+          "The seconds that pass are exactly the tickets bought by everyone until k is done. Person i buys one per round, and there are tickets[k] rounds; in the last round only the people at or before k still buy.",
+          "The loop visits each person once and no queue is stored, so the time is O(n) and the space is O(1)."
+        ],
+        "mistakes": [
+          "Using <code>tickets[k]</code> as the limit for people behind k. They miss the last round, so it is one too many.",
+          "Adding <code>tickets[i]</code> without the min, which counts tickets bought after k has already left.",
+          "Using <code>Array.shift()</code> for the simulation on large input. It is O(n) each time, so the simulation becomes very slow.",
+          "Counting person k twice."
+        ],
+        "variations": [
+          "Return the time at which <b>every</b> person is done.",
+          "Each person takes <code>d[i]</code> seconds per ticket, not 1.",
+          "Return the order in which people leave the line."
+        ]
+      }
+    },
+    {
+      "id": "students-unable-to-eat-lunch",
+      "pattern": {
+        "name": "Replace the queue with counts",
+        "question": "A student who does not want the top sandwich walks to the back and comes round again. Does their position in the queue still matter?",
+        "idea": [
+          "In a circular queue where a skipped person comes back, <b>order stops mattering</b>: every student gets to the front again. The line only gets stuck when nobody remaining wants the top sandwich.",
+          "So count how many students like each type. Serve the sandwiches from the top and use one count each time. The first time a count is 0, everyone still waiting is stuck."
+        ],
+        "spotWhen": [
+          "A queue where members that fail go to the back and try again.",
+          "A process that ends when <b>no one</b> can act any more.",
+          "Only the counts of each type matter, not their order."
+        ],
+        "prereqs": [
+          "queue",
+          "stacks"
+        ]
+      },
+      "dryRun": {
+        "title": "students = [1, 1, 1, 0, 0, 1], sandwiches = [1, 0, 0, 0, 1, 1]",
+        "columns": [
+          "step",
+          "top sandwich",
+          "students who want it",
+          "left",
+          "action"
+        ],
+        "rows": [
+          [
+            "0",
+            "-",
+            "0: 2, 1: 4",
+            "6",
+            "count the preferences"
+          ],
+          [
+            "1",
+            "1",
+            "4",
+            "5",
+            "one student takes it, 1: 3"
+          ],
+          [
+            "2",
+            "0",
+            "2",
+            "4",
+            "one student takes it, 0: 1"
+          ],
+          [
+            "3",
+            "0",
+            "1",
+            "3",
+            "one student takes it, 0: 0"
+          ],
+          [
+            "4",
+            "0",
+            "0",
+            "3",
+            "nobody wants a 0: return 3"
+          ]
+        ],
+        "hit": 4,
+        "note": "The queue is stuck at the fourth sandwich: no student who likes <b>0</b> is left, so the <b>3</b> students still waiting cannot eat.",
+        "args": [
+          [
+            1,
+            1,
+            1,
+            0,
+            0,
+            1
+          ],
+          [
+            1,
+            0,
+            0,
+            0,
+            1,
+            1
+          ]
+        ],
+        "result": 3
+      },
+      "constraints": [
+        "students and sandwiches have the same length",
+        "Values are only 0 or 1",
+        "A student who cannot eat the top sandwich goes to the back of the queue",
+        "Target: O(n) time"
+      ],
+      "minutes": 15,
+      "review": {
+        "approaches": [
+          {
+            "name": "Simulate with a queue and a stack",
+            "time": "O(n\u00b2)",
+            "space": "O(n)",
+            "idea": "Rotate the queue until the front student takes the top sandwich. Stop after a full unsuccessful rotation.",
+            "best": false
+          },
+          {
+            "name": "Count preferences",
+            "time": "O(n)",
+            "space": "O(1)",
+            "idea": "Count each type and walk down the sandwich stack until a type has no students left.",
+            "best": true
+          }
+        ],
+        "why": [
+          "A sandwich can be served as long as at least one waiting student wants it, because that student will eventually reach the front. Serving it just removes one student of that type.",
+          "The loop stops at the first sandwich with count 0, and nobody behind it can ever be served, since the stack must be used in order. One pass over the sandwiches gives O(n) time and two counters give O(1) space."
+        ],
+        "mistakes": [
+          "Simulating forever with no stopping rule when nobody wants the top sandwich.",
+          "Returning the number of unserved sandwiches, which is the same number but is easy to compute from the wrong index.",
+          "Using <code>students.shift()</code> on large input inside the loop (O(n) each).",
+          "Thinking that the order of the students decides who eats."
+        ],
+        "variations": [
+          "Return the index of the first sandwich that nobody can eat.",
+          "There are three types of sandwiches.",
+          "The students form a stack instead of a queue. How does the answer change?"
+        ]
+      }
+    },
+    {
+      "id": "missing-number",
+      "pattern": {
+        "name": "Expected total minus actual total",
+        "question": "If every number from 0 to n were present, what would their total be, and what does a gap in the total tell you?",
+        "idea": [
+          "A full set 0..n has a known total: <code>n \u00d7 (n + 1) / 2</code>. The array has the same numbers minus one, so its total is smaller by exactly the <b>missing number</b>.",
+          "This replaces searching for each number from 0 to n in the array (slow) or storing them in a Set (extra memory) with one subtraction."
+        ],
+        "spotWhen": [
+          "The numbers come from a <b>known complete range</b> and exactly one is missing (or repeated).",
+          "Extra memory should be O(1).",
+          "A formula for the full set exists (a sum, a product, or an XOR)."
+        ],
+        "prereqs": [
+          "linear-search",
+          "arrays"
+        ]
+      },
+      "dryRun": {
+        "title": "nums = [3, 0, 1]",
+        "columns": [
+          "step",
+          "num",
+          "total left",
+          "note"
+        ],
+        "rows": [
+          [
+            "start",
+            "-",
+            "6",
+            "n = 3: 0 + 1 + 2 + 3 = 6"
+          ],
+          [
+            "0",
+            "3",
+            "3",
+            "6 - 3"
+          ],
+          [
+            "1",
+            "0",
+            "3",
+            "3 - 0"
+          ],
+          [
+            "2",
+            "1",
+            "2",
+            "3 - 1"
+          ],
+          [
+            "end",
+            "-",
+            "2",
+            "return 2"
+          ]
+        ],
+        "hit": 4,
+        "note": "What is left in <code>total</code> after taking away every number is the <b>missing one</b>: 2.",
+        "args": [
+          [
+            3,
+            0,
+            1
+          ]
+        ],
+        "result": 2
+      },
+      "constraints": [
+        "nums has n different numbers from 0..n",
+        "Exactly one number of the range is missing",
+        "nums can be empty (then 0 is missing)",
+        "Target: O(n) time and O(1) extra space"
+      ],
+      "minutes": 15,
+      "review": {
+        "approaches": [
+          {
+            "name": "Search for each number",
+            "time": "O(n\u00b2)",
+            "space": "O(1)",
+            "idea": "For every value from 0 to n check if the array contains it.",
+            "best": false
+          },
+          {
+            "name": "Set of the array",
+            "time": "O(n)",
+            "space": "O(n)",
+            "idea": "Put all numbers in a Set and look for the value from 0 to n that is not there.",
+            "best": false
+          },
+          {
+            "name": "Expected sum minus actual sum",
+            "time": "O(n)",
+            "space": "O(1)",
+            "idea": "Subtract every number from n(n+1)/2.",
+            "best": true
+          }
+        ],
+        "why": [
+          "The full range adds up to n(n+1)/2. The array holds the full range with one number removed, so its sum is exactly that total minus the missing number. Subtracting gives the missing number.",
+          "The loop visits each number once and keeps one running total, so the time is O(n) and the space is O(1)."
+        ],
+        "mistakes": [
+          "Using <code>n = nums.length - 1</code> as the top of the range. The range is 0 to <code>nums.length</code>.",
+          "Forgetting that the range includes <code>n</code> itself. The array has n numbers, but the range has n + 1 values.",
+          "Starting the running total at 0 and adding the numbers, then comparing it to the wrong target.",
+          "Sorting the array first when it is not needed."
+        ],
+        "variations": [
+          "Solve it with XOR instead of a sum (no overflow).",
+          "One number is <b>repeated</b> and one is missing. Find both.",
+          "The array is sorted. Find the missing number in O(log n)."
+        ]
+      }
+    }
+  ],
+  "flags": []
+}

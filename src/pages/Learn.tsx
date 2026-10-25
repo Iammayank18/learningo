@@ -152,6 +152,7 @@ export function Learn({ courseId }: { courseId: string }) {
                             (isLocked ? 'border-(--ring) bg-(--card)' : 'border-transparent bg-(--hue) text-white shadow-[0_8px_24px_rgba(0,0,0,.22)]')}>
                           <span aria-hidden className={'absolute -top-[9px] left-1/2 size-4 -translate-x-1/2 rotate-45 rounded-tl-[3px] border-t-2 border-l-2 ' + (isLocked ? 'border-(--ring) bg-(--card)' : 'border-transparent bg-(--hue)')} />
                           <h4 className={'m-0! text-[18px] leading-tight ' + (isLocked ? 'text-(--lock-ic)!' : 'text-white!')}>{l.name}</h4>
+                          {l.tier && <span className="tier-pill">{t(`tier.${l.tier}`)}</span>}
                           <p className={'mt-2! mb-4! text-[15px] leading-snug ' + (isLocked ? 'text-(--lock-ic)' : 'text-white/90')}>
                             {isLocked ? t('learn.lockedHint', { n: blocker[l.id].name }) : isPlaced ? t('learn.placedHint') : isDone && card ? (isDue ? t('learn.revisionDue') : t('learn.nextRevision', { when: fmtIn(card.due - now) })) : l.desc ? l.desc.slice(0, 110) + '…' : t('learn.startLesson')}
                           </p>

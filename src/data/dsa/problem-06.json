@@ -1,0 +1,592 @@
+{
+  "items": [
+    {
+      "id": "two-sum-ii",
+      "pattern": {
+        "name": "Two pointers closing in on a sorted array",
+        "question": "You add the smallest and the largest number and the sum is too big. Which of the two can never be part of the answer?",
+        "idea": [
+          "In a <b>sorted</b> array the sum of the two ends tells you which end to move. If it is too big, the largest number is too large for every possible partner, so drop it. If it is too small, drop the smallest.",
+          "Each step throws away one number for good, so after at most n steps the pointers meet. No hash map is needed, which keeps the extra space at O(1)."
+        ],
+        "spotWhen": [
+          "The array is <b>sorted</b> and you look for a pair with a given sum or difference.",
+          "Extra memory must be O(1), so a hash map is not allowed.",
+          "Comparing the two ends tells you how to move."
+        ],
+        "prereqs": [
+          "two-pointers",
+          "binary-search"
+        ]
+      },
+      "dryRun": {
+        "title": "numbers = [1, 3, 4, 8, 11], target = 11",
+        "columns": [
+          "left",
+          "right",
+          "numbers[left] + numbers[right]",
+          "compare to 11",
+          "action"
+        ],
+        "rows": [
+          [
+            "0",
+            "4",
+            "1 + 11 = 12",
+            "too big",
+            "right = 3"
+          ],
+          [
+            "0",
+            "3",
+            "1 + 8 = 9",
+            "too small",
+            "left = 1"
+          ],
+          [
+            "1",
+            "3",
+            "3 + 8 = 11",
+            "equal",
+            "return [2, 4]"
+          ]
+        ],
+        "hit": 2,
+        "note": "The answer is given in <b>1-based</b> positions, so indexes 1 and 3 are returned as [2, 4].",
+        "args": [
+          [
+            1,
+            3,
+            4,
+            8,
+            11
+          ],
+          11
+        ],
+        "result": [
+          2,
+          4
+        ]
+      },
+      "constraints": [
+        "numbers is sorted in ascending order",
+        "Exactly one pair adds up to target",
+        "Positions are 1-based and the first position is smaller than the second",
+        "Target: O(n) time and O(1) extra space"
+      ],
+      "minutes": 25,
+      "review": {
+        "approaches": [
+          {
+            "name": "Check every pair",
+            "time": "O(n\u00b2)",
+            "space": "O(1)",
+            "idea": "Two loops try all pairs.",
+            "best": false
+          },
+          {
+            "name": "Hash map of seen numbers",
+            "time": "O(n)",
+            "space": "O(n)",
+            "idea": "Store each number and look for target - number. It ignores that the array is sorted.",
+            "best": false
+          },
+          {
+            "name": "Two pointers",
+            "time": "O(n)",
+            "space": "O(1)",
+            "idea": "Move the left or the right pointer depending on whether the sum is too small or too big.",
+            "best": true
+          }
+        ],
+        "why": [
+          "Suppose the true answer is at positions a and b. As long as the pointers have not passed them, the sum of the current ends is bigger than target if the right pointer is past b, and smaller if the left pointer is before a. So the pointer that moves never skips the answer.",
+          "Every iteration moves one pointer by one step and they can move at most n steps in total. That is O(n) time with two integer variables."
+        ],
+        "mistakes": [
+          "Returning 0-based positions. The problem asks for 1-based ones.",
+          "Using <code>left &lt;= right</code>, which can pair a number with itself.",
+          "Moving both pointers on every step, which can skip the answer.",
+          "Sorting or building a hash map even though the array is already sorted."
+        ],
+        "variations": [
+          "The array is <b>not</b> sorted. What is the best you can do?",
+          "Return all pairs that add up to the target (no repeats).",
+          "Find the pair whose sum is <b>closest</b> to the target."
+        ]
+      }
+    },
+    {
+      "id": "three-sum",
+      "pattern": {
+        "name": "Fix one number, then two pointers",
+        "question": "If you already chose the first number of a triplet, what smaller problem is left, and which technique solves it fast?",
+        "idea": [
+          "After you fix the first number <code>a</code>, you need two other numbers that add up to <code>-a</code>. That is exactly Two Sum on a sorted array, which two pointers solve in O(n).",
+          "Doing that for every first number gives O(n\u00b2). <b>Sorting</b> also puts equal values next to each other, so repeats can be skipped cheaply and every triplet appears once."
+        ],
+        "spotWhen": [
+          "You look for a group of three (or more) values with a given sum.",
+          "The answer must contain <b>unique</b> combinations, no repeats.",
+          "Order inside the group does not matter, so you can sort first."
+        ],
+        "prereqs": [
+          "two-pointers",
+          "insertion-sort"
+        ]
+      },
+      "dryRun": {
+        "title": "nums = [-1, 0, 1, 2, -1, -4] (sorted: [-4, -1, -1, 0, 1, 2])",
+        "columns": [
+          "i",
+          "nums[i]",
+          "left, right",
+          "sum",
+          "action"
+        ],
+        "rows": [
+          [
+            "0",
+            "-4",
+            "1, 5",
+            "-4 - 1 + 2 = -3",
+            "negative: left keeps moving right and the pointers meet with no triplet"
+          ],
+          [
+            "1",
+            "-1",
+            "2, 5",
+            "-1 - 1 + 2 = 0",
+            "found [-1, -1, 2]; left = 3, right = 4"
+          ],
+          [
+            "1",
+            "-1",
+            "3, 4",
+            "-1 + 0 + 1 = 0",
+            "found [-1, 0, 1]; pointers cross, stop"
+          ],
+          [
+            "2",
+            "-1",
+            "-",
+            "-",
+            "same as the previous first number: skip"
+          ],
+          [
+            "3",
+            "0",
+            "4, 5",
+            "0 + 1 + 2 = 3",
+            "too big: right = 4, pointers meet"
+          ]
+        ],
+        "hit": 1,
+        "note": "The first number -1 appears twice. Index 2 is <b>skipped</b>, so the triplet [-1, 0, 1] is not reported a second time.",
+        "args": [
+          [
+            -1,
+            0,
+            1,
+            2,
+            -1,
+            -4
+          ]
+        ],
+        "result": [
+          [
+            -1,
+            -1,
+            2
+          ],
+          [
+            -1,
+            0,
+            1
+          ]
+        ]
+      },
+      "constraints": [
+        "The array can have fewer than 3 numbers; then the answer is empty",
+        "The result has no duplicate triplets",
+        "Numbers can repeat and can be negative",
+        "Target: O(n\u00b2) time"
+      ],
+      "minutes": 25,
+      "review": {
+        "approaches": [
+          {
+            "name": "Check every triplet",
+            "time": "O(n\u00b3)",
+            "space": "O(n)",
+            "idea": "Three loops, with a Set of sorted triplets to remove repeats.",
+            "best": false
+          },
+          {
+            "name": "Fix one number and use a hash set for the rest",
+            "time": "O(n\u00b2)",
+            "space": "O(n)",
+            "idea": "For each first number, solve Two Sum with a Set. Removing repeats is awkward.",
+            "best": false
+          },
+          {
+            "name": "Sort, then fix one and use two pointers",
+            "time": "O(n\u00b2)",
+            "space": "O(n)",
+            "idea": "Sorted order makes skipping repeats easy and needs no hash set. The space comes from the sorted copy.",
+            "best": true
+          }
+        ],
+        "why": [
+          "After sorting, for a fixed first number the sum of the two pointers is monotonic: moving left right makes it bigger, moving right left makes it smaller. So the pair search is complete, like in Two Sum II.",
+          "Skipping equal first numbers and equal pointer values means each triplet value-combination is found once. The outer loop is n iterations and each pair search is O(n), so the time is O(n\u00b2). Sorting adds O(n log n) which is smaller."
+        ],
+        "mistakes": [
+          "Not skipping equal first numbers, so the same triplet is returned many times.",
+          "After finding a triplet, moving only one pointer. That finds the same triplet again.",
+          "Forgetting the bound check <code>left &lt; right</code> while skipping duplicates.",
+          "Sorting with the default <code>sort()</code>. It compares as text, so negative numbers and 10 versus 9 come out in the wrong order."
+        ],
+        "variations": [
+          "Find the triplet whose sum is <b>closest</b> to a target.",
+          "Return the <b>count</b> of triplets with sum less than a target.",
+          "Solve 4Sum with the same idea."
+        ]
+      }
+    },
+    {
+      "id": "container-with-most-water",
+      "pattern": {
+        "name": "Move the limiting side",
+        "question": "The water level is set by the shorter line. If you move the taller line inward, can the area ever get bigger?",
+        "idea": [
+          "A container starts as wide as possible. Its water height is the <b>shorter</b> of the two lines. If you move the taller line inward, the width gets smaller and the shorter line is still the limit, so the area cannot grow.",
+          "Only moving the shorter line has a chance to find a taller limit. So at each step you move the shorter side and never lose a better container, which gives a single O(n) pass."
+        ],
+        "spotWhen": [
+          "You choose two positions and the value depends on <b>distance times a minimum</b>.",
+          "Starting with the widest pair and shrinking is natural.",
+          "One of the two sides is clearly the one that limits the answer."
+        ],
+        "prereqs": [
+          "two-pointers"
+        ]
+      },
+      "dryRun": {
+        "title": "height = [3, 9, 4, 8, 2]",
+        "columns": [
+          "left",
+          "right",
+          "width",
+          "shorter height",
+          "area (best)",
+          "move"
+        ],
+        "rows": [
+          [
+            "0",
+            "4",
+            "4",
+            "min(3, 2) = 2",
+            "8 (8)",
+            "right is shorter: right = 3"
+          ],
+          [
+            "0",
+            "3",
+            "3",
+            "min(3, 8) = 3",
+            "9 (9)",
+            "left is shorter: left = 1"
+          ],
+          [
+            "1",
+            "3",
+            "2",
+            "min(9, 8) = 8",
+            "16 (16)",
+            "right is shorter: right = 2"
+          ],
+          [
+            "1",
+            "2",
+            "1",
+            "min(9, 4) = 4",
+            "4 (16)",
+            "right is shorter: right = 1, pointers meet"
+          ]
+        ],
+        "hit": 2,
+        "note": "The best container uses lines 1 and 3: <b>width 2 \u00d7 height 8 = 16</b>. Moving the shorter side each time still finds it.",
+        "args": [
+          [
+            3,
+            9,
+            4,
+            8,
+            2
+          ]
+        ],
+        "result": 16
+      },
+      "constraints": [
+        "height has at least 2 lines",
+        "Heights are non-negative integers",
+        "Lines cannot be tilted; the container is the area between two lines",
+        "Target: O(n) time"
+      ],
+      "minutes": 25,
+      "review": {
+        "approaches": [
+          {
+            "name": "Try every pair of lines",
+            "time": "O(n\u00b2)",
+            "space": "O(1)",
+            "idea": "Two loops compute the area of each pair.",
+            "best": false
+          },
+          {
+            "name": "Two pointers, move the shorter line",
+            "time": "O(n)",
+            "space": "O(1)",
+            "idea": "Start at the widest pair and always move the pointer at the shorter line.",
+            "best": true
+          }
+        ],
+        "why": [
+          "Suppose the shorter line is on the left. Every container that uses this left line with a right line further inside is narrower and still limited by the same left line, so it is no better than the one we just measured. So the left line can be dropped safely.",
+          "Each step drops one line, so the loop runs at most n - 1 times: O(n) time and O(1) space."
+        ],
+        "mistakes": [
+          "Using the taller line for the height instead of the shorter one.",
+          "Computing the width as <code>right - left + 1</code>. The width is the distance, <code>right - left</code>.",
+          "Moving the taller pointer, which can skip the best answer.",
+          "Returning the last area instead of the best one."
+        ],
+        "variations": [
+          "Trapping Rain Water: how much water stays on top of the bars?",
+          "Return the indexes of the two lines, not the area.",
+          "Lines can have different widths."
+        ]
+      }
+    },
+    {
+      "id": "pow-x-n",
+      "pattern": {
+        "name": "Halve the exponent (fast power)",
+        "question": "You know x^5. How can you get x^10 with one multiplication instead of five?",
+        "idea": [
+          "A power can be built from a half power: <code>x^10 = x^5 \u00d7 x^5</code>. So you only need to solve a problem <b>half the size</b>, then square the result. An odd exponent needs one extra <code>\u00d7 x</code>.",
+          "Each call halves n, so a chain of about log\u2082(n) calls reaches the base case <code>x^0 = 1</code>. For a negative exponent, compute the positive power and take its reciprocal."
+        ],
+        "spotWhen": [
+          "The answer for size n can be built from the answer for size <b>n / 2</b>.",
+          "A direct loop takes O(n) steps and n can be huge.",
+          "The half result can be reused, not recomputed."
+        ],
+        "prereqs": [
+          "recursion",
+          "fibonacci"
+        ]
+      },
+      "dryRun": {
+        "title": "x = 2, n = 10",
+        "columns": [
+          "call",
+          "n",
+          "half power",
+          "returns"
+        ],
+        "rows": [
+          [
+            "myPow(2, 0)",
+            "0",
+            "-",
+            "1 (base case)"
+          ],
+          [
+            "myPow(2, 1)",
+            "1",
+            "1",
+            "1 \u00d7 1 \u00d7 2 = 2 (odd)"
+          ],
+          [
+            "myPow(2, 2)",
+            "2",
+            "2",
+            "2 \u00d7 2 = 4"
+          ],
+          [
+            "myPow(2, 5)",
+            "5",
+            "4",
+            "4 \u00d7 4 \u00d7 2 = 32 (odd)"
+          ],
+          [
+            "myPow(2, 10)",
+            "10",
+            "32",
+            "32 \u00d7 32 = 1024"
+          ]
+        ],
+        "hit": 3,
+        "note": "The calls finish from the deepest one upward. For the <b>odd</b> exponent 5 the square of the half is multiplied by one more x.",
+        "args": [
+          2,
+          10
+        ],
+        "result": 1024
+      },
+      "constraints": [
+        "n is an integer between -2\u00b3\u00b9 and 2\u00b3\u00b9 - 1",
+        "If n is negative, x is not 0",
+        "Do not use Math.pow or **",
+        "Target: O(log n) time"
+      ],
+      "minutes": 25,
+      "review": {
+        "approaches": [
+          {
+            "name": "Multiply n times",
+            "time": "O(n)",
+            "space": "O(1)",
+            "idea": "A loop multiplies x by itself n times. Far too slow for n near 2 billion.",
+            "best": false
+          },
+          {
+            "name": "Recursion that halves the exponent",
+            "time": "O(log n)",
+            "space": "O(log n)",
+            "idea": "Compute x^(n/2) once, square it, and multiply by x if n is odd.",
+            "best": true
+          }
+        ],
+        "why": [
+          "Mathematically x^n = (x^(n/2))\u00b2 for even n and (x^(n/2))\u00b2 \u00d7 x for odd n, so a correct answer for n/2 gives a correct answer for n. The base case x^0 = 1 stops the recursion.",
+          "The exponent halves at each call, so there are about log\u2082(n) calls, each doing a constant amount of work. The call stack holds that many frames at once, which is O(log n) space."
+        ],
+        "mistakes": [
+          "Writing <code>myPow(x, n / 2) * myPow(x, n / 2)</code>. That calls the recursion twice and the time is O(n) again.",
+          "Using <code>n / 2</code> for odd n without <code>Math.floor</code>, so n becomes a fraction and the recursion never reaches 0.",
+          "Forgetting the extra <code>\u00d7 x</code> when n is odd.",
+          "Negating a very negative n after the recursion started, or computing <code>1 / x</code> first when x can be 0."
+        ],
+        "variations": [
+          "Write it with a loop and O(1) extra space (binary exponentiation).",
+          "Compute x^n modulo 1,000,000,007 for integer x.",
+          "Check whether a number is a power of two."
+        ]
+      }
+    },
+    {
+      "id": "reverse-string",
+      "pattern": {
+        "name": "Swap the ends, shrink the range",
+        "question": "After you swap the first and the last character, what is left to reverse?",
+        "idea": [
+          "Swapping the first and last characters puts both in their final place. What remains is the <b>same problem</b> on the part between them, which is shorter by two characters.",
+          "That is a recursion in disguise: \"reverse(range) = swap the ends, then reverse(inner range)\". Writing it as a loop with two indexes gives the same result without using the call stack."
+        ],
+        "spotWhen": [
+          "You must reverse or mirror a sequence <b>in place</b>.",
+          "The problem looks the same after the two ends are handled, just smaller.",
+          "Extra memory should be O(1)."
+        ],
+        "prereqs": [
+          "recursion",
+          "two-pointers"
+        ]
+      },
+      "dryRun": {
+        "title": "s = [\"a\", \"b\", \"c\", \"d\"]",
+        "columns": [
+          "step",
+          "left",
+          "right",
+          "array",
+          "action"
+        ],
+        "rows": [
+          [
+            "1",
+            "0",
+            "3",
+            "[\"a\", \"b\", \"c\", \"d\"]",
+            "swap a and d"
+          ],
+          [
+            "2",
+            "1",
+            "2",
+            "[\"d\", \"b\", \"c\", \"a\"]",
+            "swap b and c"
+          ],
+          [
+            "3",
+            "2",
+            "1",
+            "[\"d\", \"c\", \"b\", \"a\"]",
+            "left >= right: stop"
+          ]
+        ],
+        "hit": 1,
+        "note": "Only <b>n / 2</b> swaps are needed. The two pointers cross, so the middle never gets swapped with itself.",
+        "args": [
+          [
+            "a",
+            "b",
+            "c",
+            "d"
+          ]
+        ],
+        "result": [
+          "d",
+          "c",
+          "b",
+          "a"
+        ]
+      },
+      "constraints": [
+        "s is an array of single characters, and it can be empty",
+        "Reverse in place; return the same array",
+        "No second array",
+        "Target: O(n) time and O(1) extra space"
+      ],
+      "minutes": 15,
+      "review": {
+        "approaches": [
+          {
+            "name": "Recursion on the inner range",
+            "time": "O(n)",
+            "space": "O(n)",
+            "idea": "Swap the ends, then call the function for left + 1 and right - 1. The call stack grows with n.",
+            "best": false
+          },
+          {
+            "name": "Two-pointer loop",
+            "time": "O(n)",
+            "space": "O(1)",
+            "idea": "Swap the ends in a loop and move both indexes inward.",
+            "best": true
+          }
+        ],
+        "why": [
+          "After each swap the two outer positions hold their final values, and the unswapped part is the same problem on a shorter range. The loop ends when the range has one or zero characters, which are already in the right place.",
+          "There are about n / 2 swaps, so the time is O(n). Only two indexes are used, so the space is O(1). A recursive version needs a stack frame per swap and can overflow for 100,000 characters."
+        ],
+        "mistakes": [
+          "Looping to <code>s.length</code> instead of the middle. Every pair is swapped twice and the array ends up unchanged.",
+          "Using <code>left &lt;= right</code>. The middle element is swapped with itself, which is harmless, but with a recursion it can cause an extra call.",
+          "Building a new array with <code>[...s].reverse()</code> and not changing <code>s</code>.",
+          "Recursing without a base case, or on a very long array, which overflows the call stack."
+        ],
+        "variations": [
+          "Reverse the words of a sentence, but not the letters inside each word.",
+          "Reverse only the vowels of a string.",
+          "Check whether a string is a palindrome using the same two pointers."
+        ]
+      }
+    }
+  ],
+  "flags": []
+}

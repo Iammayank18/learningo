@@ -1,10 +1,12 @@
 import type { Problem } from './types'
+import { DSA_MORE } from './dsa-more'
 
 const range = (n: number, f: (i: number) => number) => Array.from({ length: n }, (_, i) => f(i))
 
-export const DSA_PROBLEMS: Problem[] = [
+const BASE_PROBLEMS: Problem[] = [
   {
     id: 'valid-palindrome',
+    lc: { n: 125, slug: 'valid-palindrome' },
     lesson: 'strings',
     title: 'Valid Palindrome',
     diff: 'easy',
@@ -55,6 +57,7 @@ export const DSA_PROBLEMS: Problem[] = [
   },
   {
     id: 'two-sum',
+    lc: { n: 1, slug: 'two-sum' },
     lesson: 'hashmaps',
     title: 'Two Sum',
     diff: 'easy',
@@ -104,6 +107,7 @@ export const DSA_PROBLEMS: Problem[] = [
   },
   {
     id: 'group-anagrams',
+    lc: { n: 49, slug: 'group-anagrams' },
     lesson: 'hashmaps',
     title: 'Group Anagrams',
     diff: 'medium',
@@ -149,6 +153,7 @@ export const DSA_PROBLEMS: Problem[] = [
   },
   {
     id: 'valid-parentheses',
+    lc: { n: 20, slug: 'valid-parentheses' },
     lesson: 'stacks',
     title: 'Valid Parentheses',
     diff: 'easy',
@@ -199,6 +204,7 @@ export const DSA_PROBLEMS: Problem[] = [
   },
   {
     id: 'daily-temperatures',
+    lc: { n: 739, slug: 'daily-temperatures' },
     lesson: 'monotonic-stack',
     title: 'Daily Temperatures',
     diff: 'medium',
@@ -247,6 +253,7 @@ export const DSA_PROBLEMS: Problem[] = [
   },
   {
     id: 'binary-search',
+    lc: { n: 704, slug: 'binary-search' },
     lesson: 'binary-search',
     title: 'Binary Search',
     diff: 'easy',
@@ -294,6 +301,7 @@ export const DSA_PROBLEMS: Problem[] = [
   },
   {
     id: 'max-subarray',
+    lc: { n: 53, slug: 'maximum-subarray' },
     lesson: 'kadanes',
     title: 'Maximum Subarray',
     diff: 'medium',
@@ -338,6 +346,7 @@ export const DSA_PROBLEMS: Problem[] = [
   },
   {
     id: 'longest-substring',
+    lc: { n: 3, slug: 'longest-substring-without-repeating-characters' },
     lesson: 'sliding-window',
     title: 'Longest Substring Without Repeating Characters',
     diff: 'medium',
@@ -391,6 +400,7 @@ export const DSA_PROBLEMS: Problem[] = [
   },
   {
     id: 'subarray-sum-k',
+    lc: { n: 560, slug: 'subarray-sum-equals-k' },
     lesson: 'prefix-sum',
     title: 'Subarray Sum Equals K',
     diff: 'medium',
@@ -439,6 +449,7 @@ export const DSA_PROBLEMS: Problem[] = [
   },
   {
     id: 'fibonacci-memo',
+    lc: { n: 509, slug: 'fibonacci-number' },
     lesson: 'fibonacci',
     title: 'Fibonacci Number',
     diff: 'easy',
@@ -483,6 +494,7 @@ export const DSA_PROBLEMS: Problem[] = [
   },
   {
     id: 'merge-intervals',
+    lc: { n: 56, slug: 'merge-intervals' },
     lesson: 'intervals',
     title: 'Merge Intervals',
     diff: 'medium',
@@ -529,6 +541,7 @@ export const DSA_PROBLEMS: Problem[] = [
   },
   {
     id: 'reverse-linked-list',
+    lc: { n: 206, slug: 'reverse-linked-list' },
     lesson: 'linked-lists',
     title: 'Reverse Linked List',
     diff: 'easy',
@@ -576,6 +589,7 @@ function reverseList(head) {
   },
   {
     id: 'max-depth-tree',
+    lc: { n: 104, slug: 'maximum-depth-of-binary-tree' },
     lesson: 'tree-measurements',
     title: 'Maximum Depth of Binary Tree',
     diff: 'easy',
@@ -616,6 +630,7 @@ function maxDepth(root) {
   },
   {
     id: 'number-of-islands',
+    lc: { n: 200, slug: 'number-of-islands' },
     lesson: 'grid-problems',
     title: 'Number of Islands',
     diff: 'medium',
@@ -675,6 +690,7 @@ function maxDepth(root) {
   },
   {
     id: 'coin-change',
+    lc: { n: 322, slug: 'coin-change' },
     lesson: 'dp-1d',
     title: 'Coin Change',
     diff: 'medium',
@@ -720,6 +736,8 @@ function maxDepth(root) {
     space: 'O(amount)',
   },
 ]
+
+export const DSA_PROBLEMS: Problem[] = [...BASE_PROBLEMS, ...DSA_MORE]
 
 export const problemsForLesson = (lessonId: string) => DSA_PROBLEMS.filter((p) => p.lesson === lessonId)
 export const problemById = (id: string) => DSA_PROBLEMS.find((p) => p.id === id)

@@ -1,0 +1,628 @@
+{
+  "items": [
+    {
+      "id": "level-order-traversal",
+      "pattern": {
+        "name": "BFS with a level size snapshot",
+        "question": "The queue holds a mix of nodes you just added and nodes still waiting. How can you tell where one level ends?",
+        "idea": [
+          "Breadth first search visits nodes closest to the root first, using a <b>queue</b>. The children of a node go to the back, so the whole current level is always in front of the whole next level.",
+          "To split the output into levels, read the queue length <b>before</b> processing a round. That number is exactly the size of the current level. Process that many nodes, and everything added during the round belongs to the next level."
+        ],
+        "spotWhen": [
+          "The statement asks for results <b>level by level</b>, or for the depth or distance from the root.",
+          "You need the shortest number of steps in a tree or graph.",
+          "Nodes closer to the start must be handled first."
+        ],
+        "prereqs": [
+          "bfs",
+          "queue"
+        ]
+      },
+      "dryRun": {
+        "title": "root = [3, 9, 20, null, null, 15, 7]",
+        "columns": [
+          "round",
+          "queue at the start",
+          "size",
+          "values taken",
+          "level added"
+        ],
+        "rows": [
+          [
+            "1",
+            "[3]",
+            "1",
+            "3",
+            "[3]"
+          ],
+          [
+            "2",
+            "[9, 20]",
+            "2",
+            "9, 20",
+            "[9, 20]"
+          ],
+          [
+            "3",
+            "[15, 7]",
+            "2",
+            "15, 7",
+            "[15, 7]"
+          ]
+        ],
+        "hit": 1,
+        "note": "In round 2 the size is read as <b>2</b> before the children of 9 and 20 are added. That is what keeps 15 and 7 for the next round.",
+        "args": [
+          {
+            "val": 3,
+            "left": {
+              "val": 9,
+              "left": null,
+              "right": null
+            },
+            "right": {
+              "val": 20,
+              "left": {
+                "val": 15,
+                "left": null,
+                "right": null
+              },
+              "right": {
+                "val": 7,
+                "left": null,
+                "right": null
+              }
+            }
+          }
+        ],
+        "result": [
+          [
+            3
+          ],
+          [
+            9,
+            20
+          ],
+          [
+            15,
+            7
+          ]
+        ]
+      },
+      "constraints": [
+        "The tree can be empty; then return an empty array",
+        "Each level is listed from left to right",
+        "The result has one inner array per level",
+        "Target: O(n) time"
+      ],
+      "minutes": 25,
+      "review": {
+        "approaches": [
+          {
+            "name": "DFS that carries the depth",
+            "time": "O(n)",
+            "space": "O(n)",
+            "idea": "Walk the tree recursively and push each value into the array of its depth.",
+            "best": false
+          },
+          {
+            "name": "BFS with a queue and a size snapshot",
+            "time": "O(n)",
+            "space": "O(n)",
+            "idea": "Process the queue one level per round.",
+            "best": true
+          }
+        ],
+        "why": [
+          "The queue is first in, first out, so a node is dequeued only after every node at a smaller depth. When a round starts, the queue holds exactly one level, so taking its size worth of nodes yields one complete level.",
+          "Every node enters and leaves the queue once, so the time is O(n). The queue can hold a whole level, and the result holds all values, so the space is O(n)."
+        ],
+        "mistakes": [
+          "Reading <code>queue.length</code> inside the loop condition of the inner loop, so the size changes while you add children.",
+          "Forgetting the empty-tree case, which puts <code>null</code> in the queue.",
+          "Using <code>queue.shift()</code> on a large tree. It is O(n) each time and makes the loop quadratic.",
+          "Adding null children to the queue and then reading <code>null.val</code>."
+        ],
+        "variations": [
+          "Return the levels from the <b>bottom up</b>.",
+          "Return the levels in a zigzag order (left to right, then right to left).",
+          "Return the average value of each level."
+        ]
+      }
+    },
+    {
+      "id": "right-side-view",
+      "pattern": {
+        "name": "Level order, keep the last of each level",
+        "question": "Looking from the right, which single node of each level can you see?",
+        "idea": [
+          "From the right side you see exactly <b>one node per level</b>: the one furthest to the right. So this is a level order traversal where you keep only the last node of each round.",
+          "Do not follow only <code>root.right</code>. If the right branch is shorter than the left one, nodes of the left branch become visible below it. Looking at whole levels handles that."
+        ],
+        "spotWhen": [
+          "The statement asks for what is visible from one side of a tree.",
+          "The answer has one value per level.",
+          "You need to know the first or last node of each level."
+        ],
+        "prereqs": [
+          "bfs",
+          "queue"
+        ]
+      },
+      "dryRun": {
+        "title": "root = [1, 2, 3, null, 5, null, 4]",
+        "columns": [
+          "round",
+          "queue at the start",
+          "size",
+          "last node taken",
+          "view"
+        ],
+        "rows": [
+          [
+            "1",
+            "[1]",
+            "1",
+            "1",
+            "[1]"
+          ],
+          [
+            "2",
+            "[2, 3]",
+            "2",
+            "3",
+            "[1, 3]"
+          ],
+          [
+            "3",
+            "[5, 4]",
+            "2",
+            "4",
+            "[1, 3, 4]"
+          ]
+        ],
+        "hit": 2,
+        "note": "In round 2 node 3 is the last one, so it is visible. In round 3 node 4 hides node 5 even though 5 is at the same depth.",
+        "args": [
+          {
+            "val": 1,
+            "left": {
+              "val": 2,
+              "left": null,
+              "right": {
+                "val": 5,
+                "left": null,
+                "right": null
+              }
+            },
+            "right": {
+              "val": 3,
+              "left": null,
+              "right": {
+                "val": 4,
+                "left": null,
+                "right": null
+              }
+            }
+          }
+        ],
+        "result": [
+          1,
+          3,
+          4
+        ]
+      },
+      "constraints": [
+        "The tree can be empty; then return an empty array",
+        "Return one value per level, from top to bottom",
+        "A node on the left side is visible if no node is to its right on its level",
+        "Target: O(n) time"
+      ],
+      "minutes": 25,
+      "review": {
+        "approaches": [
+          {
+            "name": "DFS, right child first",
+            "time": "O(n)",
+            "space": "O(h)",
+            "idea": "Visit the right child before the left one and record the first node you meet at each depth.",
+            "best": false
+          },
+          {
+            "name": "BFS, keep the last node of each level",
+            "time": "O(n)",
+            "space": "O(w)",
+            "idea": "Process one level per round and record the last node. w is the widest level.",
+            "best": true
+          }
+        ],
+        "why": [
+          "The nodes of a level are taken in left to right order, so the last one taken is the rightmost node of that level, which is the one visible from the right.",
+          "Every node is enqueued and dequeued once, so the time is O(n). The queue holds at most one level plus the next, so the extra space is O(w)."
+        ],
+        "mistakes": [
+          "Following only <code>root.right</code> down the tree and missing the nodes that become visible on the left.",
+          "Pushing every node of the level instead of only the last one.",
+          "Using <code>queue.length - 1</code> as the index after the queue has grown during the round.",
+          "Forgetting the empty-tree case."
+        ],
+        "variations": [
+          "Return the left side view.",
+          "Return the top view: the nodes visible from above.",
+          "Return the largest value on each level."
+        ]
+      }
+    },
+    {
+      "id": "validate-bst",
+      "pattern": {
+        "name": "Pass an allowed range down the tree",
+        "question": "A node deep in the right subtree of 5 must obey which limit that its own parent does not know about?",
+        "idea": [
+          "The BST rule is about <b>all</b> nodes in a subtree, not just the direct children. So a node needs the limits of every ancestor, not only its parent. Those limits can be summed up as one range (low, high).",
+          "Start with (-Infinity, Infinity). When you go left, the current value becomes the new upper limit. When you go right, it becomes the new lower limit. If any node falls outside its range, the tree is not a BST."
+        ],
+        "spotWhen": [
+          "The statement asks if a tree satisfies a rule that involves <b>all</b> nodes below a given node.",
+          "A local check of parent and child is not enough.",
+          "Information from the ancestors must reach the nodes below."
+        ],
+        "prereqs": [
+          "bst",
+          "dfs"
+        ]
+      },
+      "dryRun": {
+        "title": "root = [5, 4, 6, null, null, 3, 7]",
+        "columns": [
+          "call",
+          "allowed range",
+          "node",
+          "result"
+        ],
+        "rows": [
+          [
+            "ok(5)",
+            "(-\u221e, \u221e)",
+            "5",
+            "fits: the left gets max 5, the right gets min 5"
+          ],
+          [
+            "ok(4)",
+            "(-\u221e, 5)",
+            "4",
+            "fits; no children: true"
+          ],
+          [
+            "ok(6)",
+            "(5, \u221e)",
+            "6",
+            "fits: its left child gets the range (5, 6)"
+          ],
+          [
+            "ok(3)",
+            "(5, 6)",
+            "3",
+            "3 is not above 5: return false"
+          ]
+        ],
+        "hit": 3,
+        "note": "Node 3 is smaller than its parent 6, which looks fine locally. The range <b>(5, 6)</b> remembers that it is in the right subtree of 5.",
+        "args": [
+          {
+            "val": 5,
+            "left": {
+              "val": 4,
+              "left": null,
+              "right": null
+            },
+            "right": {
+              "val": 6,
+              "left": {
+                "val": 3,
+                "left": null,
+                "right": null
+              },
+              "right": {
+                "val": 7,
+                "left": null,
+                "right": null
+              }
+            }
+          }
+        ],
+        "result": false
+      },
+      "constraints": [
+        "The tree can be empty; an empty tree is valid",
+        "Duplicate values are not allowed in this definition",
+        "Values can be as low as -2\u00b3\u00b9, so do not use a number inside the range as a starting limit",
+        "Target: O(n) time"
+      ],
+      "minutes": 25,
+      "review": {
+        "approaches": [
+          {
+            "name": "Inorder traversal into an array, then check it is increasing",
+            "time": "O(n)",
+            "space": "O(n)",
+            "idea": "The inorder of a BST is strictly increasing. Collect it and check.",
+            "best": false
+          },
+          {
+            "name": "Pass a (low, high) range down",
+            "time": "O(n)",
+            "space": "O(h)",
+            "idea": "Check each node against the range given by its ancestors.",
+            "best": true
+          }
+        ],
+        "why": [
+          "In a valid BST every node is bigger than all nodes in its left subtree and smaller than all in its right one. The range for a node is the tightest limit set by the ancestors where the path turned right (low) and left (high), so staying inside it for every node is the same as satisfying the rule.",
+          "Each node is checked once with constant work, so the time is O(n). The recursion depth is the tree height, so the extra space is O(h)."
+        ],
+        "mistakes": [
+          "Comparing a node only with its direct children. The tree [5, 4, 6, null, null, 3, 7] passes that check but is not a BST.",
+          "Using <code>&lt;</code> instead of <code>&lt;=</code> at the limits, which accepts duplicates.",
+          "Starting the range with <code>Number.MIN_SAFE_INTEGER</code> or <code>-2147483648</code>, which fails for a node with that value.",
+          "Updating the wrong limit when going left or right."
+        ],
+        "variations": [
+          "Recover a BST where two nodes were swapped by mistake.",
+          "Check validity with an iterative inorder traversal and O(h) space.",
+          "Count the nodes of the largest subtree that is a valid BST."
+        ]
+      }
+    },
+    {
+      "id": "kth-smallest-bst",
+      "pattern": {
+        "name": "Inorder walk that stops after k nodes",
+        "question": "Which traversal order of a BST lists its values from small to large, and when can you stop?",
+        "idea": [
+          "The inorder walk of a binary search tree is <b>sorted</b>. So the k-th smallest value is simply the k-th node the walk visits.",
+          "You can stop as soon as you have counted k nodes. An iterative walk keeps a stack of the nodes whose left part is being explored, so it can stop in the middle without visiting the rest."
+        ],
+        "spotWhen": [
+          "The tree is a <b>binary search tree</b> and the question is about order (k-th smallest, next larger, rank).",
+          "A full sort would be wasteful because you only need a prefix of the order.",
+          "You need to pause an inorder walk in the middle."
+        ],
+        "prereqs": [
+          "bst",
+          "dfs-iterative"
+        ]
+      },
+      "dryRun": {
+        "title": "root = [5, 3, 6, 2, 4, null, null, 1], k = 3",
+        "columns": [
+          "step",
+          "stack before the pop (top is right)",
+          "popped",
+          "k left"
+        ],
+        "rows": [
+          [
+            "1",
+            "5, 3, 2, 1",
+            "1",
+            "2"
+          ],
+          [
+            "2",
+            "5, 3, 2",
+            "2",
+            "1"
+          ],
+          [
+            "3",
+            "5, 3",
+            "3",
+            "0 \u2192 return 3"
+          ]
+        ],
+        "hit": 2,
+        "note": "The nodes come out in the order 1, 2, 3, so the third popped node is the answer. Nodes 4, 5 and 6 are <b>never visited</b>.",
+        "args": [
+          {
+            "val": 5,
+            "left": {
+              "val": 3,
+              "left": {
+                "val": 2,
+                "left": {
+                  "val": 1,
+                  "left": null,
+                  "right": null
+                },
+                "right": null
+              },
+              "right": {
+                "val": 4,
+                "left": null,
+                "right": null
+              }
+            },
+            "right": {
+              "val": 6,
+              "left": null,
+              "right": null
+            }
+          },
+          3
+        ],
+        "result": 3
+      },
+      "constraints": [
+        "1 <= k <= number of nodes",
+        "The tree is a valid binary search tree",
+        "Values are distinct",
+        "Target: O(h + k) time"
+      ],
+      "minutes": 25,
+      "review": {
+        "approaches": [
+          {
+            "name": "Inorder into a full array, then pick index k - 1",
+            "time": "O(n)",
+            "space": "O(n)",
+            "idea": "Collect all values in order and read the k-th.",
+            "best": false
+          },
+          {
+            "name": "Iterative inorder that stops at k",
+            "time": "O(h + k)",
+            "space": "O(h)",
+            "idea": "Pop nodes in sorted order with a stack and return at the k-th.",
+            "best": true
+          }
+        ],
+        "why": [
+          "The stack always holds the path to the next unvisited smallest node, so each pop gives the next value in increasing order. The k-th pop is the k-th smallest.",
+          "Reaching the first smallest takes O(h) pushes, and each further value costs a small amount of work, so the total is O(h + k). The stack holds at most h nodes."
+        ],
+        "mistakes": [
+          "Pushing the right child before the left one, which visits larger values first.",
+          "Counting k from 0 instead of 1.",
+          "Forgetting to move to <code>cur.right</code> after popping, so the loop stops too early.",
+          "Sorting an array of all the values when the BST property already gives the order."
+        ],
+        "variations": [
+          "The tree changes often and k-th smallest is asked many times. How would you store sizes in the nodes?",
+          "Return the k-th <b>largest</b> value.",
+          "Return the next larger value after a given node."
+        ]
+      }
+    },
+    {
+      "id": "lca-of-bst",
+      "pattern": {
+        "name": "Walk down until the two values split",
+        "question": "You stand at a node and both values are smaller than it. Which subtree can you throw away?",
+        "idea": [
+          "Because of the BST rule, comparing a value with the current node tells you <b>which side</b> that value is on. If p and q are both on the same side, the answer is on that side too, so go there.",
+          "The first node where they are on different sides (or one of them is the node itself) is where their paths split. That node is the lowest common ancestor. You only follow one path from the root."
+        ],
+        "spotWhen": [
+          "The tree is a <b>binary search tree</b> and you need a relation between two values.",
+          "You can decide left or right just by comparing numbers.",
+          "A solution that follows one root-to-leaf path is enough."
+        ],
+        "prereqs": [
+          "bst"
+        ]
+      },
+      "dryRun": {
+        "title": "root = [6, 2, 8, 0, 4, 7, 9, null, null, 3, 5], p = 3, q = 5",
+        "columns": [
+          "cur",
+          "p and q compared with cur",
+          "action"
+        ],
+        "rows": [
+          [
+            "6",
+            "3 < 6 and 5 < 6",
+            "both smaller: go left"
+          ],
+          [
+            "2",
+            "3 > 2 and 5 > 2",
+            "both bigger: go right"
+          ],
+          [
+            "4",
+            "3 < 4 < 5",
+            "they split here: return 4"
+          ]
+        ],
+        "hit": 2,
+        "note": "At node 4 the value 3 is on the left and 5 is on the right. This is the <b>first split</b>, so 4 is the lowest common ancestor.",
+        "args": [
+          {
+            "val": 6,
+            "left": {
+              "val": 2,
+              "left": {
+                "val": 0,
+                "left": null,
+                "right": null
+              },
+              "right": {
+                "val": 4,
+                "left": {
+                  "val": 3,
+                  "left": null,
+                  "right": null
+                },
+                "right": {
+                  "val": 5,
+                  "left": null,
+                  "right": null
+                }
+              }
+            },
+            "right": {
+              "val": 8,
+              "left": {
+                "val": 7,
+                "left": null,
+                "right": null
+              },
+              "right": {
+                "val": 9,
+                "left": null,
+                "right": null
+              }
+            }
+          },
+          3,
+          5
+        ],
+        "result": 4
+      },
+      "constraints": [
+        "The tree is a valid binary search tree with distinct values",
+        "p and q both exist in the tree",
+        "A node is allowed to be its own ancestor",
+        "Target: O(h) time and O(1) extra space"
+      ],
+      "minutes": 25,
+      "review": {
+        "approaches": [
+          {
+            "name": "Store both root paths and compare",
+            "time": "O(h)",
+            "space": "O(h)",
+            "idea": "Find the path to p and the path to q, then take the last node they share.",
+            "best": false
+          },
+          {
+            "name": "Walk down until the paths split",
+            "time": "O(h)",
+            "space": "O(1)",
+            "idea": "Move left or right while p and q are on the same side. The first split is the answer.",
+            "best": true
+          }
+        ],
+        "why": [
+          "While p and q are both smaller than the current node, both of them lie in its left subtree, so every common ancestor below this point is in that subtree. The same holds on the right. At the first node where they are not on the same side, no deeper node can contain both, so this one is the lowest.",
+          "The walk goes down one path of length at most h, so the time is O(h). Only the current node is stored, so the space is O(1)."
+        ],
+        "mistakes": [
+          "Using strict comparisons for the split. When <code>p</code> equals the current value, this node is the answer.",
+          "Searching both subtrees, which is the solution for a general binary tree and wastes the BST property.",
+          "Recursing without a base case when the node is null.",
+          "Returning the node of p or q too early, before checking whether the other one is below it."
+        ],
+        "variations": [
+          "Solve it for a general binary tree that is not a BST.",
+          "Return the distance between p and q in the tree.",
+          "Find the LCA of a whole list of values."
+        ]
+      }
+    }
+  ],
+  "flags": []
+}

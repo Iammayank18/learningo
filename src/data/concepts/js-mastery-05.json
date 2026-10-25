@@ -1,0 +1,1087 @@
+{
+ "course": "js-mastery",
+ "items": [
+  {
+   "id": "callbacks",
+   "prereqs": [
+    "hof",
+    "try-catch"
+   ],
+   "dryRun": {
+    "title": "readFile(\"a\", cb) — the Node callback convention",
+    "columns": [
+     "moment",
+     "what happens"
+    ],
+    "rows": [
+     [
+      "call",
+      "readFile starts the work and returns at once"
+     ],
+     [
+      "meanwhile",
+      "your next lines keep running"
+     ],
+     [
+      "work done, failed",
+      "cb(err) — err is an Error"
+     ],
+     [
+      "work done, ok",
+      "cb(null, data)"
+     ],
+     [
+      "nested steps",
+      "callback inside callback inside callback… (callback hell)"
+     ]
+    ],
+    "hit": 4,
+    "note": "A callback is a function you hand over to be called <b>later</b>. Node style is error-first: <code>cb(err, result)</code>. Nesting many dependent steps creates \"callback hell\": deep indentation and error handling repeated at every level. Promises fix this."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function later(cb) { setTimeout(() =&gt; cb(null, 'done'), 0) }\nlater((err, v) =&gt; console.log(v))\nconsole.log('first')</code></pre>",
+     "opts": [
+      "<code>done first</code>",
+      "<code>first</code>",
+      "<code>first done</code>",
+      "<code>done</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "later returns immediately; the callback runs after the current code has finished."
+     ],
+     "exec": "function later(cb) { setTimeout(() => cb(null, 'done'), 0) }\nlater((err, v) => console.log(v))\nconsole.log('first')"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function bad(cb) { if (Math.random() &lt; 2) return cb('sync'); setTimeout(() =&gt; cb('async')) }\nbad((v) =&gt; console.log(v))\nconsole.log('after')</code></pre>",
+     "opts": [
+      "<code>sync after</code>",
+      "<code>after sync</code>",
+      "<code>after</code>",
+      "<code>sync</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "This function sometimes calls back synchronously and sometimes later (\"releasing Zalgo\"). Callers cannot predict the order. Always call back asynchronously, or always synchronously."
+     ],
+     "exec": "function bad(cb) { if (Math.random() < 2) return cb('sync'); setTimeout(() => cb('async')) }\nbad((v) => console.log(v))\nconsole.log('after')"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let calls = 0\nfunction once(cb) { cb(); cb() }\nonce(() =&gt; calls++)\nconsole.log(calls)</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>0</code>",
+      "<code>undefined</code>",
+      "<code>2</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Nothing stops a buggy API from calling your callback twice. Promises guarantee settle-once."
+     ],
+     "exec": "let calls = 0\nfunction once(cb) { cb(); cb() }\nonce(() => calls++)\nconsole.log(calls)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function step(n, cb) { setTimeout(() =&gt; cb(null, n + 1), 0) }\nstep(1, (e, a) =&gt; step(a, (e, b) =&gt; step(b, (e, c) =&gt; console.log(c))))</code></pre>",
+     "opts": [
+      "<code>3</code>",
+      "<code>4</code>",
+      "<code>2</code>",
+      "<code>undefined</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Three dependent steps already nest three levels deep. That pyramid is callback hell."
+     ],
+     "exec": "function step(n, cb) { setTimeout(() => cb(null, n + 1), 0) }\nstep(1, (e, a) => step(a, (e, b) => step(b, (e, c) => console.log(c))))"
+    },
+    {
+     "tag": "Convention",
+     "q": "In <code>fs.readFile(path, (err, data) =&gt; …)</code>, what must the callback do first?",
+     "opts": [
+      "Use data directly",
+      "Check err and return early if it is set",
+      "Throw err",
+      "Call readFile again"
+     ],
+     "ans": 1,
+     "why": [
+      "Error-first callbacks put the failure first so it cannot be forgotten."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>promisify(fn)</code>: turn an error-first callback function into one that returns a Promise (resolve with result, reject with err).",
+    "examples": [
+     "const wait = promisify((ms, cb) => setTimeout(() => cb(null, ms), ms)); await wait(5)  // 5",
+     "promisify((cb) => cb(new Error(\"x\")))()  // rejects"
+    ],
+    "hint": "Return (...args) =&gt; new Promise((res, rej) =&gt; fn(...args, (err, val) =&gt; err ? rej(err) : res(val))).",
+    "fn": "promisify",
+    "starter": "function promisify(fn) {\n  // your code\n}",
+    "solution": "function promisify(fn) {\n  return (...args) => new Promise((resolve, reject) => {\n    fn(...args, (err, value) => (err ? reject(err) : resolve(value)))\n  })\n}",
+    "checks": [
+     {
+      "t": "resolves with the result",
+      "verify": "const wait = promisify((ms, cb) => setTimeout(() => cb(null, ms), ms)); assert((await wait(5)) === 5, \"resolve\")"
+     },
+     {
+      "t": "rejects with the error",
+      "verify": "let e; try { await promisify((cb) => cb(new Error(\"x\")))() } catch (x) { e = x }; assert(e && e.message === \"x\", \"reject\")"
+     },
+     {
+      "t": "passes all arguments",
+      "verify": "const add = promisify((a, b, cb) => cb(null, a + b)); assert((await add(2, 3)) === 5, \"args\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "A callback runs later; Node uses cb(err, result). Callbacks nest, repeat error handling and can be called twice: promises solve all three.",
+    "mistakes": [
+     "Ignoring err in an error-first callback.",
+     "APIs that call back sometimes sync, sometimes async."
+    ]
+   }
+  },
+  {
+   "id": "event-loop",
+   "prereqs": [
+    "callbacks"
+   ],
+   "dryRun": {
+    "title": "console.log(\"A\"); setTimeout(() => console.log(\"B\")); Promise.resolve().then(() => console.log(\"C\")); console.log(\"D\")",
+    "columns": [
+     "step",
+     "call stack",
+     "microtasks",
+     "macrotasks",
+     "printed"
+    ],
+    "rows": [
+     [
+      "run script",
+      "A, D",
+      "C queued",
+      "B queued",
+      "A D"
+     ],
+     [
+      "script done",
+      "empty",
+      "C",
+      "B",
+      "—"
+     ],
+     [
+      "drain microtasks",
+      "C",
+      "—",
+      "B",
+      "C"
+     ],
+     [
+      "next macrotask",
+      "B",
+      "—",
+      "—",
+      "B"
+     ]
+    ],
+    "hit": 2,
+    "note": "JavaScript runs one thing at a time. When the stack is empty, the event loop first runs <b>all</b> microtasks (promise callbacks), then <b>one</b> macrotask (timer, I/O, event), then microtasks again, and so on. Output: A D C B."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log('A')\nsetTimeout(() =&gt; console.log('B'))\nPromise.resolve().then(() =&gt; console.log('C'))\nconsole.log('D')</code></pre>",
+     "opts": [
+      "<code>A B C D</code>",
+      "<code>A C D B</code>",
+      "<code>A D B C</code>",
+      "<code>A D C B</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Sync code first (A, D), then microtasks (C), then the timer (B)."
+     ],
+     "exec": "console.log('A')\nsetTimeout(() => console.log('B'))\nPromise.resolve().then(() => console.log('C'))\nconsole.log('D')"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>setTimeout(() =&gt; console.log('t1'), 0)\nsetTimeout(() =&gt; console.log('t2'), 0)\nPromise.resolve().then(() =&gt; { console.log('p1'); setTimeout(() =&gt; console.log('t3')) })</code></pre>",
+     "opts": [
+      "<code>p1 t1 t2 t3</code>",
+      "<code>t1 t2 p1 t3</code>",
+      "<code>p1 t3 t1 t2</code>",
+      "<code>t1 p1 t2 t3</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "p1 is a microtask, so it runs first. t3 is queued after t1 and t2."
+     ],
+     "exec": "setTimeout(() => console.log('t1'), 0)\nsetTimeout(() => console.log('t2'), 0)\nPromise.resolve().then(() => { console.log('p1'); setTimeout(() => console.log('t3')) })"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const start = Date.now()\nsetTimeout(() =&gt; console.log(Date.now() - start &gt;= 50), 0)\nwhile (Date.now() - start &lt; 50) {}</code></pre>",
+     "opts": [
+      "<code>false</code>",
+      "<code>undefined</code>",
+      "<code>true</code>",
+      "<code>0</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "A 0 ms timer still waits for the stack to be empty. The busy loop blocks for 50 ms, so the timer fires late."
+     ],
+     "exec": "const start = Date.now()\nsetTimeout(() => console.log(Date.now() - start >= 50), 0)\nwhile (Date.now() - start < 50) {}"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let n = 0\nPromise.resolve().then(() =&gt; n++)\nconsole.log(n)\nqueueMicrotask(() =&gt; console.log(n))</code></pre>",
+     "opts": [
+      "<code>0 0</code>",
+      "<code>1 1</code>",
+      "<code>1 0</code>",
+      "<code>0 1</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "then callbacks never run synchronously. By the time the queued microtask logs, the earlier then has run."
+     ],
+     "exec": "let n = 0\nPromise.resolve().then(() => n++)\nconsole.log(n)\nqueueMicrotask(() => console.log(n))"
+    },
+    {
+     "tag": "Freeze",
+     "q": "Why does a long synchronous loop freeze the page (no clicks, no painting)?",
+     "opts": [
+      "The browser limits loops to 1 second",
+      "The event loop cannot run anything else until the stack is empty",
+      "Timers are cancelled during loops",
+      "Rendering happens only in workers"
+     ],
+     "ans": 1,
+     "why": [
+      "Rendering and events are tasks too. Split long work into chunks or move it to a worker."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>order()</code> that returns a Promise resolving to the array of labels in the order they actually ran, for: sync \"s1\", setTimeout \"t\", Promise.then \"p\", queueMicrotask \"m\", sync \"s2\". Then check it matches <code>[\"s1\", \"s2\", \"p\", \"m\", \"t\"]</code>.",
+    "examples": [
+     "await order()  // [\"s1\", \"s2\", \"p\", \"m\", \"t\"]",
+     "(microtasks run in the order they were queued)"
+    ],
+    "hint": "Push each label into an array from where it runs; resolve the array inside a second setTimeout so everything else has finished.",
+    "fn": "order",
+    "starter": "function order() {\n  // your code\n}",
+    "solution": "function order() {\n  const log = []\n  return new Promise((resolve) => {\n    log.push('s1')\n    setTimeout(() => log.push('t'))\n    Promise.resolve().then(() => log.push('p'))\n    queueMicrotask(() => log.push('m'))\n    log.push('s2')\n    setTimeout(() => resolve(log))\n  })\n}",
+    "checks": [
+     {
+      "t": "returns a promise",
+      "verify": "assert(order() instanceof Promise, \"promise\")"
+     },
+     {
+      "t": "sync labels come first",
+      "verify": "const r = await order(); assert(r[0] === \"s1\" && r[1] === \"s2\", \"sync first\")"
+     },
+     {
+      "t": "microtasks before the timer",
+      "verify": "const r = await order(); assert(r.join() === \"s1,s2,p,m,t\", r.join())"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Stack first, then ALL microtasks, then ONE macrotask, repeat. A 0 ms timer runs after promises and after any blocking code.",
+    "mistakes": [
+     "Expecting setTimeout(fn, 0) to run before promise callbacks.",
+     "Blocking the main thread with long loops."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Timeout Cancellation",
+     "diff": "easy",
+     "lc": "timeout-cancellation"
+    }
+   ]
+  },
+  {
+   "id": "microtask-macrotask",
+   "prereqs": [
+    "event-loop"
+   ],
+   "dryRun": {
+    "title": "Which queue?",
+    "columns": [
+     "source",
+     "queue",
+     "runs"
+    ],
+    "rows": [
+     [
+      "promise .then / await continuation",
+      "microtask",
+      "right after current code, before anything else"
+     ],
+     [
+      "queueMicrotask(fn)",
+      "microtask",
+      "same"
+     ],
+     [
+      "setTimeout / setInterval",
+      "macrotask (timers)",
+      "one per loop turn"
+     ],
+     [
+      "click, network, message events",
+      "macrotask",
+      "one per loop turn"
+     ],
+     [
+      "requestAnimationFrame",
+      "before the next paint",
+      "browser only"
+     ]
+    ],
+    "hit": 0,
+    "note": "Microtasks are drained completely, even ones added while draining. So a microtask that keeps queueing microtasks starves timers and rendering forever."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>setTimeout(() =&gt; console.log('timeout'))\nPromise.resolve().then(() =&gt; { console.log('m1'); Promise.resolve().then(() =&gt; console.log('m2')) })</code></pre>",
+     "opts": [
+      "<code>m1 timeout m2</code>",
+      "<code>timeout m1 m2</code>",
+      "<code>m1 m2 timeout</code>",
+      "<code>m1 m2</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "The microtask queue is drained fully, including m2 added during m1, before the timer."
+     ],
+     "exec": "setTimeout(() => console.log('timeout'))\nPromise.resolve().then(() => { console.log('m1'); Promise.resolve().then(() => console.log('m2')) })"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>(async () =&gt; { console.log('a'); await null; console.log('b') })()\nconsole.log('c')</code></pre>",
+     "opts": [
+      "<code>a c b</code>",
+      "<code>a b c</code>",
+      "<code>c a b</code>",
+      "<code>a c</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "An async function runs synchronously until its first await; the rest is a microtask."
+     ],
+     "exec": "(async () => { console.log('a'); await null; console.log('b') })()\nconsole.log('c')"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const p = new Promise((res) =&gt; { console.log('executor'); res(1) })\np.then(() =&gt; console.log('then'))\nconsole.log('sync')</code></pre>",
+     "opts": [
+      "<code>sync executor then</code>",
+      "<code>executor then sync</code>",
+      "<code>executor sync then</code>",
+      "<code>then executor sync</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "The Promise executor runs synchronously. Only then callbacks are deferred."
+     ],
+     "exec": "const p = new Promise((res) => { console.log('executor'); res(1) })\np.then(() => console.log('then'))\nconsole.log('sync')"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let i = 0\nfunction loop() { if (++i &lt; 1000) queueMicrotask(loop) }\nloop()\nsetTimeout(() =&gt; console.log('timer', i))</code></pre>",
+     "opts": [
+      "<code>timer 1000</code>",
+      "<code>timer 1</code>",
+      "<code>timer 0</code>",
+      "<code>timer 999</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "All 999 queued microtasks finish before the timer gets a turn. With no limit, this would block forever."
+     ],
+     "exec": "let i = 0\nfunction loop() { if (++i < 1000) queueMicrotask(loop) }\nloop()\nsetTimeout(() => console.log('timer', i))"
+    },
+    {
+     "tag": "Why care",
+     "q": "Why does it matter in UI code that promise callbacks run before the next paint?",
+     "opts": [
+      "Promises always run in a worker",
+      "Paints are cancelled",
+      "It makes fetch faster",
+      "State updates in a promise chain are applied together before the browser paints, so you see no half-updated screen"
+     ],
+     "ans": 3,
+     "why": [
+      "Long microtask chains also delay that paint, which makes the UI feel stuck."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>nextTick()</code> (resolves in a microtask), <code>nextMacrotask()</code> (resolves in a timer), and <code>race2()</code> that starts both and returns a Promise of which one finished first (<code>\"micro\"</code> or <code>\"macro\"</code>).",
+    "examples": [
+     "await race2()  // \"micro\"",
+     "await nextMacrotask()  // undefined, but later"
+    ],
+    "hint": "nextTick = () =&gt; Promise.resolve(); nextMacrotask = () =&gt; new Promise((r) =&gt; setTimeout(r)); then Promise.race with labels.",
+    "fn": "race2",
+    "starter": "function nextTick() {}\nfunction nextMacrotask() {}\nfunction race2() {}",
+    "solution": "function nextTick() { return Promise.resolve() }\nfunction nextMacrotask() { return new Promise((r) => setTimeout(r)) }\nfunction race2() {\n  return Promise.race([nextMacrotask().then(() => 'macro'), nextTick().then(() => 'micro')])\n}",
+    "checks": [
+     {
+      "t": "both return promises",
+      "verify": "assert(nextTick() instanceof Promise && nextMacrotask() instanceof Promise, \"promises\")"
+     },
+     {
+      "t": "microtask wins",
+      "verify": "assert((await race2()) === \"micro\", \"order\")"
+     },
+     {
+      "t": "nextMacrotask runs after pending microtasks",
+      "verify": "const log = []; const p = nextMacrotask().then(() => log.push(\"macro\")); nextTick().then(() => log.push(\"micro\")); await p; assert(log.join() === \"micro,macro\", log.join())"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Microtasks (promises, await, queueMicrotask) run before the next macrotask (timers, events) and are drained completely.",
+    "mistakes": [
+     "Endless microtask chains that starve rendering and timers.",
+     "Thinking a Promise executor runs asynchronously."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Interval Cancellation",
+     "diff": "easy",
+     "lc": "interval-cancellation"
+    }
+   ]
+  },
+  {
+   "id": "promises",
+   "prereqs": [
+    "microtask-macrotask"
+   ],
+   "dryRun": {
+    "title": "fetchUser().then(getPosts).then(render).catch(show)",
+    "columns": [
+     "step",
+     "state",
+     "next"
+    ],
+    "rows": [
+     [
+      "fetchUser()",
+      "pending",
+      "wait"
+     ],
+     [
+      "resolves with user",
+      "fulfilled",
+      "getPosts(user) runs"
+     ],
+     [
+      "getPosts returns a promise",
+      "chain waits for it",
+      "render(posts)"
+     ],
+     [
+      "any step throws or rejects",
+      "rejected",
+      "skips to catch(show)"
+     ],
+     [
+      "catch returns a value",
+      "chain continues fulfilled",
+      "—"
+     ]
+    ],
+    "hit": 3,
+    "note": "A Promise is a placeholder for a future value: pending → fulfilled or rejected, exactly once. <code>then</code> returns a <b>new</b> promise, so you chain instead of nesting. Returning a promise from then makes the chain wait for it."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>Promise.resolve(1).then((x) =&gt; x + 1).then((x) =&gt; { throw new Error('e' + x) }).catch((e) =&gt; e.message).then(console.log)</code></pre>",
+     "opts": [
+      "<code>e1</code>",
+      "<code>e2</code>",
+      "<code>2</code>",
+      "<code>undefined</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "1 → 2 → throws \"e2\" → catch turns it back into a value \"e2\" → logged."
+     ],
+     "exec": "Promise.resolve(1).then((x) => x + 1).then((x) => { throw new Error('e' + x) }).catch((e) => e.message).then(console.log)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const p = new Promise((res, rej) =&gt; { res('first'); rej('second'); res('third') })\np.then(console.log, console.log)</code></pre>",
+     "opts": [
+      "<code>second</code>",
+      "<code>first</code>",
+      "<code>first second third</code>",
+      "<code>third</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "A promise settles once. Later resolve/reject calls are ignored."
+     ],
+     "exec": "const p = new Promise((res, rej) => { res('first'); rej('second'); res('third') })\np.then(console.log, console.log)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>Promise.resolve(1).then(2).then((x) =&gt; console.log(x))</code></pre>",
+     "opts": [
+      "<code>2</code>",
+      "<code>undefined</code>",
+      "<code>TypeError</code>",
+      "<code>1</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "then ignores non-function arguments and passes the value through."
+     ],
+     "exec": "Promise.resolve(1).then(2).then((x) => console.log(x))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const p = Promise.resolve(5)\nconsole.log(p === Promise.resolve(p), typeof p.then)</code></pre>",
+     "opts": [
+      "<code>true function</code>",
+      "<code>false function</code>",
+      "<code>true object</code>",
+      "<code>false undefined</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Promise.resolve returns the same promise if you give it one. A thenable is anything with a then method."
+     ],
+     "exec": "const p = Promise.resolve(5)\nconsole.log(p === Promise.resolve(p), typeof p.then)"
+    },
+    {
+     "tag": "Bug",
+     "q": "<code>getUser().then((u) =&gt; { getPosts(u) }).then((posts) =&gt; render(posts))</code> — render gets undefined. Why?",
+     "opts": [
+      "getPosts is too slow",
+      "then cannot be chained twice",
+      "The first callback does not return getPosts(u), so the chain does not wait for it",
+      "render must be async"
+     ],
+     "ans": 2,
+     "why": [
+      "Inside { } you must write return. Forgetting it is the most common promise bug."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Implement <code>delay(ms)</code> and <code>withTimeout(promise, ms)</code>: the second resolves like the given promise, but rejects with <code>Error(\"timeout\")</code> if it takes longer than ms.",
+    "examples": [
+     "await withTimeout(delay(10).then(() => \"ok\"), 50)  // \"ok\"",
+     "await withTimeout(delay(50), 10)  // rejects: timeout"
+    ],
+    "hint": "delay: new Promise(r =&gt; setTimeout(r, ms)). withTimeout: Promise.race with a promise that rejects after ms.",
+    "fn": "withTimeout",
+    "starter": "function delay(ms) {}\nfunction withTimeout(promise, ms) {}",
+    "solution": "function delay(ms) { return new Promise((r) => setTimeout(r, ms)) }\nfunction withTimeout(promise, ms) {\n  let t\n  const timer = new Promise((_, reject) => { t = setTimeout(() => reject(new Error('timeout')), ms) })\n  return Promise.race([promise, timer]).finally(() => clearTimeout(t))\n}",
+    "checks": [
+     {
+      "t": "delay waits",
+      "verify": "const t0 = Date.now(); await delay(20); assert(Date.now() - t0 >= 15, \"sleep\")"
+     },
+     {
+      "t": "fast promises win",
+      "verify": "assert((await withTimeout(sleep(5).then(() => \"ok\"), 100)) === \"ok\", \"fast\")"
+     },
+     {
+      "t": "slow promises time out",
+      "verify": "let e; try { await withTimeout(sleep(100), 10) } catch (x) { e = x }; assert(e && e.message === \"timeout\", \"timeout\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "A promise settles once. then returns a new promise; return values (or promises) flow down the chain; one catch handles any earlier failure.",
+    "mistakes": [
+     "Forgetting return inside a then callback.",
+     "Nesting thens instead of chaining.",
+     "Expecting resolve after resolve to change anything."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Sleep",
+     "diff": "easy",
+     "lc": "sleep"
+    },
+    {
+     "name": "Promise Time Limit",
+     "diff": "medium",
+     "lc": "promise-time-limit"
+    }
+   ]
+  },
+  {
+   "id": "async-await",
+   "prereqs": [
+    "promises"
+   ],
+   "dryRun": {
+    "title": "async function load() { const u = await getUser(); const p = await getPosts(u); return p.length }",
+    "columns": [
+     "line",
+     "what happens"
+    ],
+    "rows": [
+     [
+      "load() called",
+      "runs until the first await, returns a pending promise"
+     ],
+     [
+      "await getUser()",
+      "function pauses; caller keeps running"
+     ],
+     [
+      "getUser resolves",
+      "load resumes (as a microtask), u is set"
+     ],
+     [
+      "await getPosts(u)",
+      "pauses again"
+     ],
+     [
+      "return p.length",
+      "the promise from load() fulfills with it"
+     ]
+    ],
+    "hit": 1,
+    "note": "<code>async</code> functions always return a promise. <code>await</code> pauses only that function until the promise settles, then gives the value or <b>throws</b> the rejection, so normal try/catch works."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>async function f() { return 1 }\nconsole.log(f() instanceof Promise, typeof f())</code></pre>",
+     "opts": [
+      "<code>false number</code>",
+      "<code>true number</code>",
+      "<code>false object</code>",
+      "<code>true object</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "An async function always returns a promise, even for a plain return value."
+     ],
+     "exec": "async function f() { return 1 }\nconsole.log(f() instanceof Promise, typeof f())"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const wait = (ms, v) =&gt; new Promise((r) =&gt; setTimeout(() =&gt; r(v), ms))\nasync function seq() { const t = Date.now(); await wait(30); await wait(30); return Date.now() - t &gt;= 55 }\nasync function par() { const t = Date.now(); await Promise.all([wait(30), wait(30)]); return Date.now() - t &lt; 55 }\nPromise.all([seq(), par()]).then((r) =&gt; console.log(r.join(' ')))</code></pre>",
+     "opts": [
+      "<code>false false</code>",
+      "<code>true true</code>",
+      "<code>true false</code>",
+      "<code>false true</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Two awaits in a row wait one after the other (~60 ms). Promise.all runs them at the same time (~30 ms)."
+     ],
+     "exec": "const wait = (ms, v) => new Promise((r) => setTimeout(() => r(v), ms))\nasync function seq() { const t = Date.now(); await wait(30); await wait(30); return Date.now() - t >= 55 }\nasync function par() { const t = Date.now(); await Promise.all([wait(30), wait(30)]); return Date.now() - t < 55 }\nPromise.all([seq(), par()]).then((r) => console.log(r.join(' ')))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>async function f() { try { await Promise.reject(new Error('no')) } catch (e) { return 'caught ' + e.message } }\nf().then(console.log)</code></pre>",
+     "opts": [
+      "<code>no</code>",
+      "<code>undefined</code>",
+      "<code>caught no</code>",
+      "<code>Error: no</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "await turns a rejection into a throw, so try/catch handles it."
+     ],
+     "exec": "async function f() { try { await Promise.reject(new Error('no')) } catch (e) { return 'caught ' + e.message } }\nf().then(console.log)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const results = []\n;[3, 1, 2].forEach(async (n) =&gt; { await new Promise((r) =&gt; setTimeout(r, n)); results.push(n) })\nconsole.log(results.length)</code></pre>",
+     "opts": [
+      "<code>0</code>",
+      "<code>3</code>",
+      "<code>undefined</code>",
+      "<code>[ 1, 2, 3 ]</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "forEach does not wait for async callbacks; when we log, none has finished. Use for…of with await, or Promise.all with map."
+     ],
+     "exec": "const results = []\n;[3, 1, 2].forEach(async (n) => { await new Promise((r) => setTimeout(r, n)); results.push(n) })\nconsole.log(results.length)"
+    },
+    {
+     "tag": "Top level",
+     "q": "How do you use await outside an async function?",
+     "opts": [
+      "You cannot, ever",
+      "Use await.sync()",
+      "In an ES module (top-level await), or by wrapping code in an async IIFE",
+      "Only inside setTimeout"
+     ],
+     "ans": 2,
+     "why": [
+      "Classic scripts need an async function around the await."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>mapLimit(items, limit, fn)</code>: run async <code>fn(item)</code> for every item with at most <code>limit</code> running at once, and resolve to the results in the original order.",
+    "examples": [
+     "await mapLimit([1, 2, 3], 2, async (x) => x * 2)  // [2, 4, 6]",
+     "// never more than 2 calls in flight"
+    ],
+    "hint": "Start limit workers; each worker loops: take the next index, await fn, store the result at that index.",
+    "fn": "mapLimit",
+    "starter": "async function mapLimit(items, limit, fn) {\n  // your code\n}",
+    "solution": "async function mapLimit(items, limit, fn) {\n  const out = new Array(items.length)\n  let next = 0\n  async function worker() {\n    while (next < items.length) {\n      const i = next++\n      out[i] = await fn(items[i], i)\n    }\n  }\n  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker))\n  return out\n}",
+    "checks": [
+     {
+      "t": "results keep the original order",
+      "verify": "const r = await mapLimit([30, 5, 15], 2, (ms) => sleep(ms).then(() => ms)); assert(JSON.stringify(r) === \"[30,5,15]\", JSON.stringify(r))"
+     },
+     {
+      "t": "never more than limit at once",
+      "verify": "let now = 0, max = 0; await mapLimit([1, 2, 3, 4, 5, 6], 2, async () => { now++; max = Math.max(max, now); await sleep(5); now-- }); assert(max === 2, \"max in flight \" + max)"
+     },
+     {
+      "t": "empty input resolves to an empty array",
+      "verify": "const r = await mapLimit([], 3, async (x) => x); assert(Array.isArray(r) && r.length === 0, \"empty\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "async returns a promise; await pauses the function and throws on rejection. Sequential awaits are slow when the work is independent: use Promise.all.",
+    "mistakes": [
+     "await inside forEach.",
+     "Sequential awaits for independent requests.",
+     "Forgetting that an async function returns a promise, not the value."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Add Two Promises",
+     "diff": "easy",
+     "lc": "add-two-promises"
+    }
+   ]
+  },
+  {
+   "id": "promise-combinators",
+   "prereqs": [
+    "async-await"
+   ],
+   "dryRun": {
+    "title": "Three requests: A ok (30 ms), B fails (10 ms), C ok (20 ms)",
+    "columns": [
+     "combinator",
+     "settles when",
+     "result"
+    ],
+    "rows": [
+     [
+      "Promise.all",
+      "first failure (10 ms)",
+      "rejects with B's error"
+     ],
+     [
+      "Promise.allSettled",
+      "all done (30 ms)",
+      "[fulfilled A, rejected B, fulfilled C]"
+     ],
+     [
+      "Promise.race",
+      "first to settle (10 ms)",
+      "rejects with B's error"
+     ],
+     [
+      "Promise.any",
+      "first success (20 ms)",
+      "C's value"
+     ]
+    ],
+    "hit": 1,
+    "note": "<b>all</b>: everything must succeed. <b>allSettled</b>: wait for all, never rejects. <b>race</b>: first to settle, success or failure. <b>any</b>: first success; rejects with AggregateError only if all fail."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const ok = (v, ms) =&gt; new Promise((r) =&gt; setTimeout(() =&gt; r(v), ms))\nconst no = (e, ms) =&gt; new Promise((_, j) =&gt; setTimeout(() =&gt; j(e), ms))\nPromise.all([ok('A', 30), no('B', 10), ok('C', 20)]).then(console.log, (e) =&gt; console.log('rejected', e))</code></pre>",
+     "opts": [
+      "<code>rejected B</code>",
+      "<code>A B C</code>",
+      "<code>rejected C</code>",
+      "<code>[ 'A', 'C' ]</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "all rejects as soon as one input rejects."
+     ],
+     "exec": "const ok = (v, ms) => new Promise((r) => setTimeout(() => r(v), ms))\nconst no = (e, ms) => new Promise((_, j) => setTimeout(() => j(e), ms))\nPromise.all([ok('A', 30), no('B', 10), ok('C', 20)]).then(console.log, (e) => console.log('rejected', e))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const ok = (v, ms) =&gt; new Promise((r) =&gt; setTimeout(() =&gt; r(v), ms))\nconst no = (e, ms) =&gt; new Promise((_, j) =&gt; setTimeout(() =&gt; j(e), ms))\nPromise.allSettled([ok('A', 30), no('B', 10)]).then((r) =&gt; console.log(r.map((x) =&gt; x.status).join()))</code></pre>",
+     "opts": [
+      "<code>fulfilled</code>",
+      "<code>rejected,fulfilled</code>",
+      "<code>A,B</code>",
+      "<code>fulfilled,rejected</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "allSettled reports every result, in input order."
+     ],
+     "exec": "const ok = (v, ms) => new Promise((r) => setTimeout(() => r(v), ms))\nconst no = (e, ms) => new Promise((_, j) => setTimeout(() => j(e), ms))\nPromise.allSettled([ok('A', 30), no('B', 10)]).then((r) => console.log(r.map((x) => x.status).join()))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const ok = (v, ms) =&gt; new Promise((r) =&gt; setTimeout(() =&gt; r(v), ms))\nconst no = (e, ms) =&gt; new Promise((_, j) =&gt; setTimeout(() =&gt; j(e), ms))\nPromise.any([no('B', 10), ok('C', 20), ok('A', 30)]).then(console.log)</code></pre>",
+     "opts": [
+      "<code>B</code>",
+      "<code>C</code>",
+      "<code>A</code>",
+      "<code>AggregateError</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "any ignores failures and takes the first success."
+     ],
+     "exec": "const ok = (v, ms) => new Promise((r) => setTimeout(() => r(v), ms))\nconst no = (e, ms) => new Promise((_, j) => setTimeout(() => j(e), ms))\nPromise.any([no('B', 10), ok('C', 20), ok('A', 30)]).then(console.log)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>Promise.any([Promise.reject(1), Promise.reject(2)]).catch((e) =&gt; console.log(e.constructor.name, e.errors.join()))</code></pre>",
+     "opts": [
+      "<code>Error 1</code>",
+      "<code>AggregateError 1,2</code>",
+      "<code>AggregateError 2,1</code>",
+      "<code>undefined</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "When all fail, any rejects with an AggregateError holding every reason, in input order."
+     ],
+     "exec": "Promise.any([Promise.reject(1), Promise.reject(2)]).catch((e) => console.log(e.constructor.name, e.errors.join()))"
+    },
+    {
+     "tag": "Pick one",
+     "q": "You load a dashboard from 5 widgets; one broken widget must not hide the other four. Which?",
+     "opts": [
+      "<code>Promise.all</code>",
+      "<code>Promise.race</code>",
+      "<code>Promise.any</code>",
+      "<code>Promise.allSettled</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "allSettled lets you render what succeeded and show an error for the rest."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Implement <code>promiseAll(promises)</code> without using Promise.all: resolve to the values in input order, reject on the first rejection, and resolve to <code>[]</code> for an empty array. Plain (non-promise) values are allowed.",
+    "examples": [
+     "await promiseAll([1, Promise.resolve(2)])  // [1, 2]",
+     "await promiseAll([])  // []"
+    ],
+    "hint": "Count how many have resolved; store each value at its index; wrap each item with Promise.resolve.",
+    "fn": "promiseAll",
+    "starter": "function promiseAll(promises) {\n  // your code\n}",
+    "solution": "function promiseAll(promises) {\n  return new Promise((resolve, reject) => {\n    const out = new Array(promises.length)\n    let done = 0\n    if (promises.length === 0) return resolve(out)\n    promises.forEach((p, i) => {\n      Promise.resolve(p).then((v) => {\n        out[i] = v\n        if (++done === promises.length) resolve(out)\n      }, reject)\n    })\n  })\n}",
+    "checks": [
+     {
+      "t": "keeps input order, not finish order",
+      "verify": "const r = await promiseAll([sleep(20).then(() => \"a\"), \"b\", sleep(5).then(() => \"c\")]); assert(JSON.stringify(r) === '[\"a\",\"b\",\"c\"]', JSON.stringify(r))"
+     },
+     {
+      "t": "rejects on the first failure",
+      "verify": "let e; try { await promiseAll([sleep(30), Promise.reject(new Error(\"x\"))]) } catch (x) { e = x }; assert(e && e.message === \"x\", \"reject\")"
+     },
+     {
+      "t": "empty input",
+      "verify": "const r = await promiseAll([]); assert(Array.isArray(r) && r.length === 0, \"empty\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "all = all must succeed, allSettled = report everything, race = first settled, any = first success.",
+    "mistakes": [
+     "Using all when one failure should not hide the rest.",
+     "Expecting race to ignore failures (that is any)."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Execute Asynchronous Functions in Parallel",
+     "diff": "medium",
+     "lc": "execute-asynchronous-functions-in-parallel"
+    }
+   ]
+  },
+  {
+   "id": "async-errors",
+   "prereqs": [
+    "promise-combinators"
+   ],
+   "dryRun": {
+    "title": "Where does a rejection go?",
+    "columns": [
+     "code",
+     "who handles it"
+    ],
+    "rows": [
+     [
+      "await p inside try/catch",
+      "the catch block"
+     ],
+     [
+      "p.then(ok).catch(bad)",
+      "bad"
+     ],
+     [
+      "p.then(ok, bad) and ok throws",
+      "nobody: bad only covers p"
+     ],
+     [
+      "promise rejects, nobody handles it",
+      "unhandledrejection event (browser) / process crashes (Node 15+)"
+     ],
+     [
+      "async fn called without await",
+      "its rejection is unhandled"
+     ]
+    ],
+    "hit": 2,
+    "note": "Every promise chain needs an end: an await inside try/catch, or a final .catch. A rejection nobody handles fires <code>unhandledrejection</code> in browsers and crashes modern Node."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>async function f() { throw new Error('x') }\nlet p\ntry { p = f(); console.log('no sync throw') } catch { console.log('caught sync') }\np.catch((e) =&gt; console.log('caught async', e.message))</code></pre>",
+     "opts": [
+      "<code>no sync throw caught async x</code>",
+      "<code>caught sync caught async x</code>",
+      "<code>caught sync</code>",
+      "<code>x</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "f() returns a rejected promise; nothing is thrown synchronously, so the try/catch sees nothing. Only .catch (or await) handles it."
+     ],
+     "exec": "async function f() { throw new Error('x') }\nlet p\ntry { p = f(); console.log('no sync throw') } catch { console.log('caught sync') }\np.catch((e) => console.log('caught async', e.message))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>Promise.reject(new Error('a')).then(() =&gt; console.log('ok'), (e) =&gt; console.log('handled', e.message)).then(() =&gt; console.log('continues'))</code></pre>",
+     "opts": [
+      "<code>handled a</code>",
+      "<code>ok continues</code>",
+      "<code>handled a continues</code>",
+      "<code>continues</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "The second then argument handles the rejection, and the chain continues fulfilled."
+     ],
+     "exec": "Promise.reject(new Error('a')).then(() => console.log('ok'), (e) => console.log('handled', e.message)).then(() => console.log('continues'))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>Promise.resolve().then(() =&gt; { throw new Error('in ok') }, () =&gt; console.log('never')).catch((e) =&gt; console.log('later catch', e.message))</code></pre>",
+     "opts": [
+      "<code>never</code>",
+      "<code>in ok</code>",
+      "<code>never later catch in ok</code>",
+      "<code>later catch in ok</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "The second argument of a then only handles the promise before it, not errors thrown by its own first argument. A trailing catch does."
+     ],
+     "exec": "Promise.resolve().then(() => { throw new Error('in ok') }, () => console.log('never')).catch((e) => console.log('later catch', e.message))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>async function a() { await Promise.reject(new Error('deep')) }\nasync function b() { try { await a() } catch (e) { return 'b handled ' + e.message } }\nb().then(console.log)</code></pre>",
+     "opts": [
+      "<code>deep</code>",
+      "<code>b handled deep</code>",
+      "<code>undefined</code>",
+      "<code>Error: deep</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Awaited rejections travel up through async functions like thrown errors."
+     ],
+     "exec": "async function a() { await Promise.reject(new Error('deep')) }\nasync function b() { try { await a() } catch (e) { return 'b handled ' + e.message } }\nb().then(console.log)"
+    },
+    {
+     "tag": "Fire and forget",
+     "q": "<code>saveDraft()</code> is async and you call it without await in an event handler. What should you add?",
+     "opts": [
+      "<code>try { saveDraft() } catch {}</code>",
+      "Nothing, it cannot fail",
+      "<code>saveDraft().catch(reportError)</code>",
+      "<code>await setTimeout(saveDraft)</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "A fire-and-forget promise needs its own .catch, or its failure is unhandled."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>retry(fn, times, delayMs)</code>: call async fn; if it rejects, wait delayMs and try again, up to <code>times</code> attempts in total. Resolve with the first success; if all fail, reject with the last error.",
+    "examples": [
+     "await retry(flaky, 3, 5)  // succeeds on the 3rd try",
+     "await retry(alwaysFails, 2, 5)  // rejects with the 2nd error"
+    ],
+    "hint": "A for loop with try/catch around await fn(); remember the last error; await sleep between attempts.",
+    "fn": "retry",
+    "starter": "async function retry(fn, times, delayMs) {\n  // your code\n}",
+    "solution": "async function retry(fn, times, delayMs) {\n  let last\n  for (let i = 0; i < times; i++) {\n    try { return await fn(i) } catch (e) {\n      last = e\n      if (i < times - 1) await new Promise((r) => setTimeout(r, delayMs))\n    }\n  }\n  throw last\n}",
+    "checks": [
+     {
+      "t": "succeeds after failures",
+      "verify": "let n = 0; const r = await retry(async () => { if (++n < 3) throw new Error(\"f\" + n); return \"ok\" }, 3, 1); assert(r === \"ok\" && n === 3, \"retry\")"
+     },
+     {
+      "t": "rejects with the last error",
+      "verify": "let n = 0, e; try { await retry(async () => { throw new Error(\"f\" + ++n) }, 2, 1) } catch (x) { e = x }; assert(e && e.message === \"f2\" && n === 2, \"last error\")"
+     },
+     {
+      "t": "stops at the first success",
+      "verify": "let n = 0; await retry(async () => ++n, 5, 1); assert(n === 1, \"called \" + n)"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Await inside try/catch or end every chain with .catch. try/catch around a non-awaited async call catches nothing.",
+    "mistakes": [
+     "Calling an async function without await or .catch.",
+     "Using then(ok, bad) and expecting bad to catch errors thrown in ok."
+    ]
+   }
+  }
+ ]
+}

@@ -1,0 +1,678 @@
+{
+  "items": [
+    {
+      "id": "climbing-stairs",
+      "pattern": {
+        "name": "Break into smaller copies of the same problem",
+        "question": "You stand on the top step. What were the only two places you could have come from?",
+        "idea": [
+          "The last move into step n was a 1-step move from n - 1 or a 2-step move from n - 2. So <b>ways(n) = ways(n - 1) + ways(n - 2)</b>. The big problem is built from two smaller copies of itself.",
+          "Written as plain recursion this recomputes the same steps many times. Remember each answer once (memoization), or fill the answers from the bottom up (tabulation). Because only the last two answers are needed, two variables are enough."
+        ],
+        "spotWhen": [
+          "The answer for size n is made of answers for <b>smaller sizes</b>.",
+          "The same small cases show up again and again in the recursion tree.",
+          "Each answer depends on only a few earlier answers."
+        ],
+        "prereqs": [
+          "memo-vs-tab",
+          "fibonacci"
+        ]
+      },
+      "dryRun": {
+        "title": "n = 5",
+        "columns": [
+          "step i",
+          "ways(i - 2)",
+          "ways(i - 1)",
+          "ways(i)"
+        ],
+        "rows": [
+          [
+            "0",
+            "-",
+            "-",
+            "1 (do nothing)"
+          ],
+          [
+            "1",
+            "-",
+            "1",
+            "1"
+          ],
+          [
+            "2",
+            "1",
+            "1",
+            "2"
+          ],
+          [
+            "3",
+            "1",
+            "2",
+            "3"
+          ],
+          [
+            "4",
+            "2",
+            "3",
+            "5"
+          ],
+          [
+            "5",
+            "3",
+            "5",
+            "8"
+          ]
+        ],
+        "hit": 5,
+        "note": "Every row is the sum of the two rows above it. These are the Fibonacci numbers, and the answer for <b>n = 5 is 8</b>.",
+        "args": [
+          5
+        ],
+        "result": 8
+      },
+      "constraints": [
+        "1 <= n <= 45",
+        "A move is exactly 1 or 2 steps",
+        "Different orders of moves count as different ways",
+        "Target: O(n) time, not exponential"
+      ],
+      "minutes": 15,
+      "review": {
+        "approaches": [
+          {
+            "name": "Plain recursion",
+            "time": "O(2\u207f)",
+            "space": "O(n)",
+            "idea": "ways(n) = ways(n - 1) + ways(n - 2), with no memory. The same calls repeat.",
+            "best": false
+          },
+          {
+            "name": "Memoized recursion (top-down)",
+            "time": "O(n)",
+            "space": "O(n)",
+            "idea": "The same recursion, but each answer is stored the first time it is computed.",
+            "best": false
+          },
+          {
+            "name": "Two variables (bottom-up)",
+            "time": "O(n)",
+            "space": "O(1)",
+            "idea": "Move from step 2 to n and keep only the last two answers.",
+            "best": true
+          }
+        ],
+        "why": [
+          "Every way to reach step n ends with a 1-step or a 2-step move, and these two groups do not overlap. So the total is the sum of the ways to reach n - 1 and n - 2.",
+          "The loop runs n - 1 times with constant work, so the time is O(n). Only two numbers are kept, so the space is O(1)."
+        ],
+        "mistakes": [
+          "Using plain recursion for n = 45. It makes billions of calls and never finishes.",
+          "Starting with ways(0) = 0. That makes every answer 0 or wrong. Doing nothing counts as one way.",
+          "Returning <code>a</code> instead of <code>b</code>, which gives the answer for n - 1.",
+          "Off-by-one in the loop, such as starting at 1 or stopping before n."
+        ],
+        "variations": [
+          "You can climb 1, 2 or 3 steps at a time.",
+          "Some steps are broken and cannot be used.",
+          "Return the answer modulo 1,000,000,007 for a much larger n."
+        ]
+      }
+    },
+    {
+      "id": "house-robber",
+      "pattern": {
+        "name": "Take it or leave it: best up to here",
+        "question": "At one house you either rob it or skip it. What do you need to know about the earlier houses to compare the two choices?",
+        "idea": [
+          "Define <b>best(i)</b> as the most money you can get from houses 0 to i. At house i there are two choices. Skip it: you keep best(i - 1). Rob it: you cannot use house i - 1, so you get nums[i] + best(i - 2).",
+          "Take the larger of the two. Each best(i) needs only the two values before it, so you can walk once from left to right and keep two variables."
+        ],
+        "spotWhen": [
+          "You make a <b>take or skip</b> decision for each item in a row.",
+          "Taking an item blocks its neighbours (or some earlier items).",
+          "The best result up to a position can be built from the best results at earlier positions."
+        ],
+        "prereqs": [
+          "memo-vs-tab",
+          "identify-dp"
+        ]
+      },
+      "dryRun": {
+        "title": "nums = [2, 7, 9, 3, 1]",
+        "columns": [
+          "house",
+          "money",
+          "skip: best up to the previous house",
+          "rob: money + best two houses back",
+          "best"
+        ],
+        "rows": [
+          [
+            "0",
+            "2",
+            "0",
+            "0 + 2 = 2",
+            "2"
+          ],
+          [
+            "1",
+            "7",
+            "2",
+            "0 + 7 = 7",
+            "7"
+          ],
+          [
+            "2",
+            "9",
+            "7",
+            "2 + 9 = 11",
+            "11"
+          ],
+          [
+            "3",
+            "3",
+            "11",
+            "7 + 3 = 10",
+            "11"
+          ],
+          [
+            "4",
+            "1",
+            "11",
+            "11 + 1 = 12",
+            "12"
+          ]
+        ],
+        "hit": 3,
+        "note": "At house 3 robbing (10) is <b>worse</b> than skipping (11), so the best stays 11. At house 4, robbing gives 12.",
+        "args": [
+          [
+            2,
+            7,
+            9,
+            3,
+            1
+          ]
+        ],
+        "result": 12
+      },
+      "constraints": [
+        "nums can be empty; then the answer is 0",
+        "Money amounts are non-negative integers",
+        "You cannot rob two neighbouring houses",
+        "Target: O(n) time"
+      ],
+      "minutes": 25,
+      "review": {
+        "approaches": [
+          {
+            "name": "Plain recursion",
+            "time": "O(2\u207f)",
+            "space": "O(n)",
+            "idea": "At each house try robbing it and skipping it. The same sub-problems repeat.",
+            "best": false
+          },
+          {
+            "name": "Table of best totals",
+            "time": "O(n)",
+            "space": "O(n)",
+            "idea": "Store best(i) for every house in an array, from left to right.",
+            "best": false
+          },
+          {
+            "name": "Two variables",
+            "time": "O(n)",
+            "space": "O(1)",
+            "idea": "Keep best(i - 1) and best(i - 2) only.",
+            "best": true
+          }
+        ],
+        "why": [
+          "best(i) considers both possibilities for house i, and in each possibility the rest of the choice is the best answer for a shorter row. So the larger of the two is the true best for houses 0 to i.",
+          "The loop visits each house once with constant work (O(n)) and keeps only two numbers (O(1) space)."
+        ],
+        "mistakes": [
+          "Greedily robbing the biggest houses first. In [2, 1, 1, 2] this misses the best answer of 4.",
+          "Using <code>best(i - 1) + nums[i]</code> for the rob case. That ignores the neighbour rule.",
+          "Overwriting the two variables in the wrong order and losing the old value.",
+          "Forgetting the empty array. The loop simply does not run and returns 0."
+        ],
+        "variations": [
+          "The houses stand in a <b>circle</b>, so the first and last are neighbours.",
+          "The houses form a <b>binary tree</b>, and robbing a node blocks its children and parent.",
+          "You may not rob houses that are closer than k apart."
+        ]
+      }
+    },
+    {
+      "id": "min-cost-climbing-stairs",
+      "pattern": {
+        "name": "Min over the last two arrivals",
+        "question": "To stand on a position, you arrived from one of two earlier positions. How do you choose which one is cheaper?",
+        "idea": [
+          "This is Climbing Stairs, but instead of counting ways you look for the <b>cheapest</b> way. For each position i the cheapest cost to reach it is <code>min(reach(i - 1) + cost[i - 1], reach(i - 2) + cost[i - 2])</code>.",
+          "The signal that this is dynamic programming: a <b>best-value question</b> where the best answer at i is built from the best answers at the two positions before it. The same two-variable trick keeps the memory at O(1)."
+        ],
+        "spotWhen": [
+          "The question asks for a <b>minimum or maximum</b> total over a sequence of choices.",
+          "Each position can be reached from a small fixed number of earlier positions.",
+          "The best way to reach a position does not depend on how you got to the earlier ones."
+        ],
+        "prereqs": [
+          "identify-dp",
+          "memo-vs-tab"
+        ]
+      },
+      "dryRun": {
+        "title": "cost = [10, 15, 20] (the top is position 3)",
+        "columns": [
+          "position i",
+          "from i - 1",
+          "from i - 2",
+          "cheapest to reach i"
+        ],
+        "rows": [
+          [
+            "0",
+            "-",
+            "-",
+            "0 (you may start here)"
+          ],
+          [
+            "1",
+            "-",
+            "-",
+            "0 (you may start here)"
+          ],
+          [
+            "2",
+            "0 + 15 = 15",
+            "0 + 10 = 10",
+            "10"
+          ],
+          [
+            "3 (top)",
+            "10 + 20 = 30",
+            "0 + 15 = 15",
+            "15"
+          ]
+        ],
+        "hit": 3,
+        "note": "At the top, jumping from step 1 (pay 15) beats stepping from step 2 (pay 10 to get there plus 20). The answer is <b>15</b>.",
+        "args": [
+          [
+            10,
+            15,
+            20
+          ]
+        ],
+        "result": 15
+      },
+      "constraints": [
+        "cost has at least 2 steps",
+        "Costs are non-negative integers",
+        "You may start from step 0 or step 1",
+        "The top is the position cost.length"
+      ],
+      "minutes": 15,
+      "review": {
+        "approaches": [
+          {
+            "name": "Plain recursion from the top",
+            "time": "O(2\u207f)",
+            "space": "O(n)",
+            "idea": "minCost(i) = min(minCost(i - 1) + cost[i - 1], minCost(i - 2) + cost[i - 2]) with no memory.",
+            "best": false
+          },
+          {
+            "name": "Table of cheapest costs",
+            "time": "O(n)",
+            "space": "O(n)",
+            "idea": "Store the cheapest cost to reach every position from left to right.",
+            "best": false
+          },
+          {
+            "name": "Two variables",
+            "time": "O(n)",
+            "space": "O(1)",
+            "idea": "Keep the cheapest costs of the last two positions only.",
+            "best": true
+          }
+        ],
+        "why": [
+          "Every path to position i passes through i - 1 or i - 2 just before it, and the cost of the earlier part does not depend on how you continue. So the cheapest total is the cheaper of the two options.",
+          "One pass with constant work per position gives O(n) time. Two numbers are enough, so the space is O(1)."
+        ],
+        "mistakes": [
+          "Returning the cost of the last or second-to-last step instead of the cost to reach the top.",
+          "Adding <code>cost[i]</code> when arriving at i. You pay the cost of the step you <b>leave</b>.",
+          "Starting the base values with <code>cost[0]</code> and <code>cost[1]</code>. You may start for free and pay when you leave.",
+          "Forgetting that the top is one position past the last step."
+        ],
+        "variations": [
+          "You can also climb 3 steps at a time.",
+          "Return the actual list of steps you stand on.",
+          "Some steps are blocked and cannot be used."
+        ]
+      }
+    },
+    {
+      "id": "decode-ways",
+      "pattern": {
+        "name": "Count ways by the last 1 or 2 digits",
+        "question": "Look at the end of the string. In how many different ways can the last piece be cut off, and what is left each time?",
+        "idea": [
+          "The last letter of a decoding uses either the <b>last digit alone</b> or the <b>last two digits</b>. After cutting it off, the rest is the same question on a shorter string. So ways(i) is a sum of at most two earlier answers.",
+          "The digit <b>0</b> is the trap: it cannot stand alone, and a pair is valid only from 10 to 26. Check both conditions before adding each term. As in Climbing Stairs, only the last two answers matter."
+        ],
+        "spotWhen": [
+          "The question asks for the <b>number of ways</b> to split or decode a sequence.",
+          "The last piece has a few possible sizes (here 1 or 2).",
+          "The rest after cutting the last piece is the same problem, shorter."
+        ],
+        "prereqs": [
+          "identify-dp",
+          "memo-vs-tab"
+        ]
+      },
+      "dryRun": {
+        "title": "s = \"226\"",
+        "columns": [
+          "i",
+          "digit",
+          "which cuts are valid",
+          "ways so far"
+        ],
+        "rows": [
+          [
+            "0",
+            "2",
+            "start: \"2\" is one way",
+            "1"
+          ],
+          [
+            "1",
+            "2",
+            "\"2\" alone (+1 way), \"22\" together (+1 way)",
+            "2"
+          ],
+          [
+            "2",
+            "6",
+            "\"6\" alone (+2 ways), \"26\" together (+1 way)",
+            "3"
+          ]
+        ],
+        "hit": 2,
+        "note": "At the last digit both cuts are valid, so the count is the <b>sum</b> 2 + 1 = 3: \"BBF\", \"VF\" and \"BZ\".",
+        "args": [
+          "226"
+        ],
+        "result": 3
+      },
+      "constraints": [
+        "s contains only digits",
+        "A group with a leading zero, like \"06\", is not valid",
+        "A single \"0\" cannot be decoded",
+        "Target: O(n) time"
+      ],
+      "minutes": 25,
+      "review": {
+        "approaches": [
+          {
+            "name": "Plain recursion",
+            "time": "O(2\u207f)",
+            "space": "O(n)",
+            "idea": "Try a 1-digit and a 2-digit group at each position. The same suffixes repeat.",
+            "best": false
+          },
+          {
+            "name": "Table of counts",
+            "time": "O(n)",
+            "space": "O(n)",
+            "idea": "Store ways(i) for every prefix of the string.",
+            "best": false
+          },
+          {
+            "name": "Two variables",
+            "time": "O(n)",
+            "space": "O(1)",
+            "idea": "Keep the counts for the last two prefixes only.",
+            "best": true
+          }
+        ],
+        "why": [
+          "Every decoding of a prefix ends with a 1-digit group or a 2-digit group. These cases do not overlap, and each one leaves a shorter prefix that is decoded in ways(i - 1) or ways(i - 2) ways. So the total is the sum of the valid cases.",
+          "The loop walks the string once with constant work per digit (O(n)) and stores two numbers (O(1))."
+        ],
+        "mistakes": [
+          "Adding the single-digit case when the digit is \"0\". A lone zero is not a letter.",
+          "Accepting two digits like \"06\" or \"30\". Only 10 to 26 are valid pairs.",
+          "Starting <code>twoBack</code> at 0. The empty prefix has exactly one way.",
+          "Returning 1 for a string that starts with \"0\"."
+        ],
+        "variations": [
+          "The string may contain <b>\"*\"</b> that stands for any digit from 1 to 9.",
+          "Return the actual decoded strings, not only the count.",
+          "Letters go up to a value other than 26."
+        ]
+      }
+    },
+    {
+      "id": "unique-paths",
+      "pattern": {
+        "name": "Grid DP: sum of the cell above and the cell to the left",
+        "question": "Which two cells can the robot have come from when it stands on a cell in the middle of the grid?",
+        "idea": [
+          "The robot can only move right or down, so any cell is entered from the cell <b>above</b> or from the cell <b>on the left</b>. Therefore ways(cell) = ways(above) + ways(left).",
+          "The top row and the left column can be reached in only one way. Fill the table row by row, so the two cells you need are always ready. Each row only needs the one before it, so a single array can be reused."
+        ],
+        "spotWhen": [
+          "You move through a <b>grid</b> with a small set of allowed moves (right and down).",
+          "The question asks for a count or an optimum over all routes to the end.",
+          "The result for a cell depends only on its top and left neighbours."
+        ],
+        "prereqs": [
+          "dp-2d-grid",
+          "dp-1d"
+        ]
+      },
+      "dryRun": {
+        "title": "m = 3, n = 3",
+        "columns": [
+          "row",
+          "row array after the row",
+          "note"
+        ],
+        "rows": [
+          [
+            "0",
+            "[1, 1, 1]",
+            "the first row: only one way to every cell"
+          ],
+          [
+            "1",
+            "[1, 2, 3]",
+            "each cell = the same cell from the row above (already in the array) + the cell on its left"
+          ],
+          [
+            "2",
+            "[1, 3, 6]",
+            "the last cell is 3 + 3 = 6"
+          ]
+        ],
+        "hit": 1,
+        "note": "The array holds the row above until a cell is updated. That is why <b>one array</b> is enough. The answer is the last cell: 6.",
+        "args": [
+          3,
+          3
+        ],
+        "result": 6
+      },
+      "constraints": [
+        "m and n are at least 1",
+        "The robot moves only right or down",
+        "The answer fits in a normal JavaScript number (the tests use small grids)",
+        "Target: O(m \u00d7 n) time"
+      ],
+      "minutes": 25,
+      "review": {
+        "approaches": [
+          {
+            "name": "Plain recursion",
+            "time": "O(2^(m + n))",
+            "space": "O(m + n)",
+            "idea": "ways(r, c) = ways(r - 1, c) + ways(r, c - 1) with no memory.",
+            "best": false
+          },
+          {
+            "name": "Full m \u00d7 n table",
+            "time": "O(m \u00d7 n)",
+            "space": "O(m \u00d7 n)",
+            "idea": "Fill a 2D table row by row.",
+            "best": false
+          },
+          {
+            "name": "One row reused",
+            "time": "O(m \u00d7 n)",
+            "space": "O(n)",
+            "idea": "Keep only the previous row and update it in place.",
+            "best": true
+          }
+        ],
+        "why": [
+          "Every path to a cell ends with a move down from the cell above or a move right from the cell on the left, and these two groups do not overlap. So the number of paths is the sum.",
+          "There are m \u00d7 n cells with constant work each, so the time is O(m \u00d7 n). One row of n numbers is stored, so the space is O(n)."
+        ],
+        "mistakes": [
+          "Starting the first row and first column at 0. They should be 1: there is one way along the border.",
+          "Using plain recursion, which grows exponentially.",
+          "Updating <code>row[c]</code> with the cell to the right instead of the left.",
+          "Swapping <code>m</code> and <code>n</code> when creating the array. The array has <code>n</code> (column) entries."
+        ],
+        "variations": [
+          "Some cells are <b>blocked</b> and cannot be entered.",
+          "Compute the answer with a formula: choose which m - 1 of the m + n - 2 moves go down.",
+          "Return the number of paths for diagonal moves as well."
+        ]
+      }
+    },
+    {
+      "id": "min-path-sum",
+      "pattern": {
+        "name": "Grid DP with min instead of sum",
+        "question": "Unique Paths added the two arrivals. What do you do with them when you want the cheapest total?",
+        "idea": [
+          "The structure is the same as Unique Paths: a cell is entered from above or from the left. But now each cell has a cost, and you want the <b>smallest total</b>. So take the <b>min</b> of the two arrivals and add the cell's own number.",
+          "The border needs care: the first row has no cell above, and the first column has no cell on the left. Treat a missing neighbour as Infinity, so it never wins the min."
+        ],
+        "spotWhen": [
+          "You walk through a grid with right and down moves and each cell has a cost or gain.",
+          "The question asks for the <b>smallest or largest</b> total along a path.",
+          "The best path to a cell uses the best path to one of two neighbouring cells."
+        ],
+        "prereqs": [
+          "dp-2d-grid",
+          "dp-1d"
+        ]
+      },
+      "dryRun": {
+        "title": "grid = [[1,3,1],[1,5,1],[4,2,1]]",
+        "columns": [
+          "row",
+          "best array after the row",
+          "note"
+        ],
+        "rows": [
+          [
+            "0",
+            "[1, 4, 5]",
+            "the first row: only arrivals from the left, so the sums just add up"
+          ],
+          [
+            "1",
+            "[2, 7, 6]",
+            "cell (1,1): min(4 from above, 2 from the left) + 5 = 7"
+          ],
+          [
+            "2",
+            "[6, 8, 7]",
+            "cell (2,2): min(6 from above, 8 from the left) + 1 = 7"
+          ]
+        ],
+        "hit": 1,
+        "note": "At cell (1,1) the cheaper arrival is from the <b>left</b> (2 instead of 4). The final answer is <b>7</b>.",
+        "args": [
+          [
+            [
+              1,
+              3,
+              1
+            ],
+            [
+              1,
+              5,
+              1
+            ],
+            [
+              4,
+              2,
+              1
+            ]
+          ]
+        ],
+        "result": 7
+      },
+      "constraints": [
+        "The grid has at least one cell",
+        "All numbers are non-negative",
+        "Moves are only right or down",
+        "Target: O(m \u00d7 n) time"
+      ],
+      "minutes": 25,
+      "review": {
+        "approaches": [
+          {
+            "name": "Plain recursion",
+            "time": "O(2^(m + n))",
+            "space": "O(m + n)",
+            "idea": "best(r, c) = grid[r][c] + min(best(r - 1, c), best(r, c - 1)) with no memory.",
+            "best": false
+          },
+          {
+            "name": "Change the input grid in place",
+            "time": "O(m \u00d7 n)",
+            "space": "O(1)",
+            "idea": "Write the cheapest sums into the grid itself. It saves memory but destroys the input.",
+            "best": false
+          },
+          {
+            "name": "One row reused",
+            "time": "O(m \u00d7 n)",
+            "space": "O(n)",
+            "idea": "Keep the previous row of cheapest sums and update it in place.",
+            "best": true
+          }
+        ],
+        "why": [
+          "The last step of any path into a cell comes from above or from the left. The cheapest total is therefore the cell value plus the smaller of the two cheapest totals for those neighbours.",
+          "Each of the m \u00d7 n cells costs constant work, so the time is O(m \u00d7 n). One row of n numbers is stored, so the space is O(n)."
+        ],
+        "mistakes": [
+          "Using greedy: always stepping to the smaller of the two next cells. A small cell can lead to a bad region.",
+          "Forgetting the border cells, where one neighbour is missing.",
+          "Initialising the row with 0 instead of Infinity, which makes the border look free.",
+          "Modifying the input without noticing that the caller still needs it."
+        ],
+        "variations": [
+          "You may also move left and up. What algorithm do you need then?",
+          "Return the path itself, not only the sum.",
+          "Find the path with the <b>largest</b> sum."
+        ]
+      }
+    }
+  ],
+  "flags": []
+}

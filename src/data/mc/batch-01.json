@@ -1,0 +1,995 @@
+{
+ "problems": [
+  {
+   "id": "debounce",
+   "diff": "Easy",
+   "fn": "debounce",
+   "signature": "debounce(fn, delay, options?)",
+   "learn": {
+    "what": [
+     "<b>Debounce</b> means: run this function, but only after things have gone quiet for a while.",
+     "You give it a function and a delay, and it returns a new function. Every call to the new function restarts the clock. Your original function only runs when <b>delay</b> milliseconds pass <b>without another call</b>.",
+     "Think of an elevator door that keeps re-opening while people walk in. The elevator only leaves when nobody has stepped in for a few seconds."
+    ],
+    "how": {
+     "steps": [
+      "A call comes in: <b>cancel</b> any timer that is already waiting.",
+      "Start a <b>new timer</b> for <code>delay</code> ms.",
+      "If another call arrives before the timer fires, go back to step 1.",
+      "If the timer fires, nobody called during the whole delay, so <b>run the real function</b> with the latest arguments."
+     ],
+     "diagram": "delay = 300ms                    time ->\ncalls:   A     B        C                     D\n         |     |        |                     |\n         0    100      250                   600\ntimer:   restarted, restarted, fires at 550    fires at 900\nOnly the last call of each burst runs."
+    },
+    "where": [
+     [
+      "Search box",
+      "Wait until the user pauses typing, then call the API once instead of once per keystroke."
+     ],
+     [
+      "Autosave",
+      "Save the document 1 second after the last edit, not after every character."
+     ],
+     [
+      "Window resize",
+      "Recalculate a layout only when the user has stopped dragging the window."
+     ],
+     [
+      "Not a fit",
+      "Anything that must update <i>during</i> the burst, like a scroll progress bar. That needs throttle."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "You create <code>const d = debounce(log, 300)</code> and call it like this:<pre><code>t = 0     d(\"A\")\nt = 100   d(\"B\")\nt = 250   d(\"C\")\nt = 600   d(\"D\")</code></pre>What does <code>log</code> print, and when?",
+     "opts": [
+      "A at 300, B at 400, C at 550, D at 900",
+      "C at 550, then D at 900",
+      "C at 300, then D at 900",
+      "A at 300, then D at 900"
+     ],
+     "ans": 1,
+     "why": [
+      "Every call <b>restarts</b> the 300 ms clock. A is cancelled by B, and B is cancelled by C. C is never interrupted, so it runs at 250 + 300 = <b>550</b>.",
+      "D arrives at 600, after C already fired, so it starts a fresh timer and runs at <b>900</b>.",
+      "Trap: option 1 imagines each call gets its own timer, which is exactly the bug of a debounce that forgets to cancel."
+     ]
+    },
+    {
+     "tag": "Slower than the delay",
+     "q": "A search box is debounced with <b>500 ms</b>. A user types \"react\" slowly, with about <b>600 ms</b> between keys. How many API calls are made?",
+     "opts": [
+      "1, because the user typed one word",
+      "5, one per keystroke",
+      "0, because debounce waits for Enter",
+      "2, one at the start and one at the end"
+     ],
+     "ans": 1,
+     "why": [
+      "Debounce only merges calls that arrive <b>closer together than the delay</b>. With 600 ms gaps, every key finds that the previous timer has already fired.",
+      "So debounce is not \"one call per word\". It is \"one call per pause longer than <code>delay</code>\"."
+     ]
+    },
+    {
+     "tag": "Spot the bug",
+     "q": "This debounce looks fine at first glance. What is wrong with it?<pre><code>function debounce(fn, delay) {\n  return (...args) => {\n    setTimeout(() => fn(...args), delay)\n  }\n}</code></pre>",
+     "opts": [
+      "Nothing, it works",
+      "The arguments are lost",
+      "It never cancels earlier timers, so every call still runs, just later",
+      "setTimeout needs to be bound to fn"
+     ],
+     "ans": 2,
+     "why": [
+      "It only <b>delays</b> every call. It never calls <code>clearTimeout</code>, so 10 calls produce 10 delayed runs. That is a delay function, not a debounce.",
+      "The fix is one idea: keep the timer id in a variable <b>outside</b> the returned function and clear it on every call."
+     ]
+    },
+    {
+     "tag": "Pick the right tool",
+     "q": "You need a progress bar that follows how far the user has scrolled, updating smoothly <i>while</i> they scroll. Which one fits?",
+     "opts": [
+      "Debounce, so it does less work",
+      "Either, they behave the same",
+      "Neither, scroll events are already optimized",
+      "Throttle, so it updates at a steady rate during the scroll"
+     ],
+     "ans": 3,
+     "why": [
+      "Debounce waits for the scrolling to <b>stop</b>, so the bar would freeze while scrolling and jump at the end.",
+      "Throttle runs at most once per interval <b>during</b> the burst, which gives steady updates."
+     ]
+    }
+   ],
+   "pseudo": "debounce(fn, delay, options):\n  timer = nothing                  // one variable shared by all calls\n\n  return wrapper(...args):         // a normal function, so `this` works\n    ctx = this                     // remember who called us\n    if a timer is already waiting:\n      cancel it                    // THIS is the reset\n    start a new timer for delay ms:\n      when it fires:\n        timer = nothing\n        call fn with ctx and the LATEST args\n\n  wrapper.cancel():\n    cancel the timer, timer = nothing\n\n  // Bonus: leading edge\n  // if no timer was running when the call came in, call fn right away,\n  // and skip the call when the timer fires",
+   "watch": [
+    "Where does the timer variable live? It must survive between calls.",
+    "Which arguments should fn receive: the first call's or the last call's?",
+    "What do you need so that `this` still works for obj.method = debounce(...)?"
+   ],
+   "build": {
+    "minutes": 10,
+    "problem": "Implement <b>debounce(fn, delay)</b>.",
+    "reqs": [
+     "Calls <code>fn</code> only after <code>delay</code> ms of quiet",
+     "Passes the <b>latest</b> arguments to <code>fn</code>",
+     "Has a <code>.cancel()</code> method",
+     "Preserves <code>this</code>",
+     "Optional: <code>{ leading: true }</code> fires immediately on the first call"
+    ],
+    "checks": [
+     {
+      "t": "Waits for the quiet period and calls fn only once",
+      "test": "const d = debounce(console.log, 300)\nd(1); d(2); d(3)\n// expected: prints once, about 300ms later",
+      "verify": "const calls = []; const d = debounce((x) => calls.push(x), 50); d(1); d(2); d(3); assert(calls.length === 0, 'ran too early'); await sleep(120); assert(calls.length === 1, 'should run once, ran ' + calls.length)",
+      "gap": "Your function fires more than once, or fires immediately. The usual cause is not clearing the previous timer: call clearTimeout on it before starting a new one."
+     },
+     {
+      "t": "Uses the latest arguments",
+      "test": "d(1); d(2); d(3)\n// expected: prints 3, not 1",
+      "verify": "const calls = []; const d = debounce((x) => calls.push(x), 50); d(1); d(2); d(3); await sleep(120); assert(calls[0] === 3, 'expected 3, got ' + calls[0])",
+      "gap": "You are probably keeping the arguments of the first call. Start the new timer inside the wrapper on every call so it closes over the fresh arguments."
+     },
+     {
+      "t": "Each new call restarts the delay",
+      "test": "d(1)\nsetTimeout(() => d(2), 200)\n// expected: prints 2 at about 500ms, not at 300ms",
+      "verify": "const calls = []; const d = debounce(() => calls.push(1), 100); d(); await sleep(60); d(); await sleep(60); assert(calls.length === 0, 'timer was not reset'); await sleep(100); assert(calls.length === 1, 'should have run once')",
+      "gap": "The delay is counted from the first call, so the timer is not being reset. Clear it and start a new one on every call."
+     },
+     {
+      "t": "cancel() stops the pending call",
+      "test": "d(1); d.cancel()\n// expected: prints nothing",
+      "verify": "const calls = []; const d = debounce((x) => calls.push(x), 50); d(1); d.cancel(); await sleep(100); assert(calls.length === 0, 'cancel did not stop the call')",
+      "gap": "cancel must clear the stored timer, from the same closure as the timer variable. Reset it to null too, so the leading-edge logic still works afterwards."
+     },
+     {
+      "t": "this is preserved",
+      "test": "const o = { n: 7, hi: debounce(function () { console.log(this.n) }, 100) }\no.hi()\n// expected: prints 7",
+      "verify": "const calls = []; const o = { n: 7, hi: debounce(function () { calls.push(this.n) }, 30) }; o.hi(); await sleep(80); assert(calls[0] === 7, 'this was lost')",
+      "gap": "An arrow-function wrapper cannot see the caller's this. Use a normal function, save this in a variable, and call fn with apply."
+     },
+     {
+      "t": "{ leading: true } fires immediately on the first call",
+      "test": "const d = debounce(console.log, 300, { leading: true })\nd(1); d(2)\n// expected: prints 1 immediately, and 2 does not fire immediately",
+      "verify": "const calls = []; const d = debounce((x) => calls.push(x), 50, { leading: true }); d(1); assert(calls.length === 1 && calls[0] === 1, 'should fire immediately'); d(2); assert(calls.length === 1, 'second call should not fire immediately')",
+      "gap": "Call fn right away only if no timer is running, then still start the timer so later calls inside the window do not fire."
+     }
+    ]
+   },
+   "solution": "function debounce(fn, delay, { leading = false } = {}) {\n  let timer = null\n\n  function debounced(...args) {\n    const ctx = this\n    const callNow = leading && timer === null\n\n    clearTimeout(timer)\n    timer = setTimeout(() => {\n      timer = null\n      if (!leading) fn.apply(ctx, args)\n    }, delay)\n\n    if (callNow) fn.apply(ctx, args)\n  }\n\n  debounced.cancel = () => {\n    clearTimeout(timer)\n    timer = null\n  }\n  return debounced\n}",
+   "notes": [
+    "<b>One timer in a closure.</b> Every call shares the same timer variable.",
+    "<b>Clear, then restart.</b> That one move is the whole idea of debouncing.",
+    "<b>A normal function wrapper</b> so this and ...args come from the caller.",
+    "<b>Leading edge</b> checks that no timer is running <i>before</i> resetting it, otherwise it would always look busy."
+   ],
+   "next": [
+    "How would you add <code>flush()</code>, which runs the pending call immediately?",
+    "How would you debounce an <b>async</b> search and ignore stale responses?",
+    "Write <code>useDebounce(value, delay)</code> as a React hook."
+   ]
+  },
+  {
+   "id": "throttle",
+   "diff": "Easy",
+   "fn": "throttle",
+   "signature": "throttle(fn, delay)",
+   "learn": {
+    "what": [
+     "<b>Throttle</b> limits how often a function can run. The first call runs immediately, and further calls during the delay window are grouped into at most one trailing call.",
+     "Unlike debounce, throttle does not wait for activity to stop before allowing the first call. It creates fixed windows of time and keeps the latest arguments for one optional trailing execution. The returned function also exposes <code>cancel()</code> to clear pending work.",
+     "Think of a ticket machine that serves one person immediately and allows at most one more person from the waiting line when the current time window ends."
+    ],
+    "how": {
+     "steps": [
+      "Record the time of the last execution and whether a trailing timer exists.",
+      "On the first call, execute the original function immediately and start a time window.",
+      "During that window, save the latest arguments and caller context instead of executing again.",
+      "When the window ends, execute the latest pending call once, if one exists.",
+      "Allow cancel() to remove pending work and reset the throttle state."
+     ],
+     "diagram": "delay = 300 ms\ntime:    0     100   200   300   400   ...   600\ncalls:   A     B     C           D\nruns:    A                 C           D\n         ^now              ^trailing   ^trailing"
+    },
+    "where": [
+     [
+      "Scroll handlers",
+      "Limit expensive calculations while a page scrolls, while still allowing periodic updates."
+     ],
+     [
+      "Mouse movement",
+      "Reduce repeated position calculations during pointer movement."
+     ],
+     [
+      "Button actions",
+      "Limit repeated actions caused by rapid clicks."
+     ],
+     [
+      "Not a fit",
+      "Search boxes that should run only after typing stops usually need debounce instead."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "With a 100 ms throttle, the first call happens at 0 ms, followed by calls at 30 ms and 60 ms. The trailing call is enabled. Which arguments are passed to the trailing execution?",
+     "opts": [
+      "The arguments from the call at 30 ms",
+      "The arguments from the call at 0 ms",
+      "The arguments from the call at 60 ms",
+      "All three sets of arguments"
+     ],
+     "ans": 2,
+     "why": [
+      "Calls during the active window update the pending arguments. At the end of the window, only the latest pending call is executed.",
+      "The trap is assuming that every call receives its own timer or that the first pending arguments are preserved."
+     ]
+    },
+    {
+     "tag": "Spot the bug",
+     "q": "What is wrong with this implementation?\n<pre><code>function throttle(fn, delay) {\n  return (...args) => {\n    setTimeout(() => fn(...args), delay)\n  }\n}</code></pre>",
+     "opts": [
+      "It delays every call independently and never limits the execution rate",
+      "It cannot accept arguments",
+      "It executes every call immediately",
+      "It always keeps only the latest arguments"
+     ],
+     "ans": 0,
+     "why": [
+      "Each invocation creates a separate timer. Ten rapid calls can therefore produce ten executions.",
+      "A throttle needs shared state across calls, such as a last-execution timestamp and one pending timer."
+     ]
+    },
+    {
+     "tag": "Edge case",
+     "q": "The trailing timer is pending when cancel() is called. What should happen next?",
+     "opts": [
+      "The pending call should still execute, but without arguments",
+      "The timer should be cleared and the pending call should not execute",
+      "The original function should execute immediately",
+      "Only the first argument should be discarded"
+     ],
+     "ans": 1,
+     "why": [
+      "Cancel should prevent the pending trailing execution and clear the timer. Resetting the state also allows a subsequent call to behave like a fresh first call.",
+      "Clearing only the stored arguments is insufficient if the timer can still execute."
+     ]
+    },
+    {
+     "tag": "Choose the correct behavior",
+     "q": "A throttled function has a 200 ms delay. Calls arrive at 0 ms, 50 ms, 100 ms, and 150 ms. Assuming a leading call and trailing execution, how many executions occur by the end of the first window?",
+     "opts": [
+      "Four",
+      "Three",
+      "One",
+      "Two"
+     ],
+     "ans": 3,
+     "why": [
+      "The call at 0 ms executes immediately. The other calls are combined into one trailing execution at the end of the window.",
+      "Throttle limits executions within a window; it does not create a separate timer for every call."
+     ]
+    }
+   ],
+   "pseudo": "throttle(fn, delay):\n  lastExecution = no time recorded\n  timer = nothing\n  latestArgs = nothing\n  latestContext = nothing\n\n  return wrapper(...args):\n    save args and caller context\n    if no execution has happened yet:\n      execute fn immediately\n      record execution time\n      return\n    if the delay has already elapsed:\n      cancel any pending timer\n      execute fn with saved args and context\n      record execution time\n    otherwise, if no trailing timer exists:\n      start a timer for the remaining time\n      when timer fires:\n        if a call is pending:\n          execute fn with latest args and context\n          record execution time\n          clear pending state\n\n  wrapper.cancel():\n    cancel the timer\n    clear pending arguments and context\n    reset execution state",
+   "watch": [
+    "Does every invocation share the same timestamp and timer?",
+    "When several calls happen in one window, which arguments should survive?",
+    "Does cancel() prevent the callback and leave the wrapper ready for a fresh call?"
+   ],
+   "build": {
+    "minutes": 15,
+    "problem": "Implement <b>throttle(fn, delay)</b> with immediate leading execution, one trailing execution, and a cancel() method.",
+    "reqs": [
+     "Execute the first call immediately.",
+     "Limit executions to one per delay window, except for the single trailing execution at the window boundary.",
+     "Keep only the latest arguments and preserve the caller's this value.",
+     "Expose cancel() to clear pending trailing work.",
+     "Reset state correctly after a trailing execution or cancellation."
+    ],
+    "checks": [
+     {
+      "t": "The first call executes immediately",
+      "test": "const calls = []; const t = throttle(x => calls.push(x), 100); t(1); console.log(calls); // expected: [1]",
+      "verify": "const calls = []; const t = throttle(x => calls.push(x), 50); t(1); assert(calls.length === 1 && calls[0] === 1, 'first call must run immediately'); t.cancel()",
+      "gap": "The leading call is delayed or skipped. Check the initial state separately from the state used for subsequent calls."
+     },
+     {
+      "t": "Rapid calls produce one trailing execution with the latest arguments",
+      "test": "const calls = []; const t = throttle(x => calls.push(x), 100); t(1); t(2); t(3); setTimeout(() => console.log(calls), 150); // expected: [1, 3]",
+      "verify": "const calls = []; const t = throttle(x => calls.push(x), 40); t(1); t(2); t(3); assert(calls.length === 1, 'leading call should be the only immediate call'); await sleep(90); assert(calls.length === 2 && calls[1] === 3, 'expected one trailing call with latest args'); t.cancel()",
+      "gap": "Multiple trailing executions usually mean each call creates a timer. Store the pending arguments and share one timer."
+     },
+     {
+      "t": "A new window permits another immediate execution",
+      "test": "const calls = []; const t = throttle(x => calls.push(x), 100); t(1); setTimeout(() => t(2), 120); setTimeout(() => console.log(calls), 140); // expected: [1, 2]",
+      "verify": "const calls = []; const t = throttle(x => calls.push(x), 40); t(1); await sleep(60); t(2); assert(calls.length === 2 && calls[1] === 2, 'new window should allow immediate execution'); t.cancel()",
+      "gap": "The throttle may be using an old timestamp or leaving its timer marked as active. Reset the state when a window completes."
+     },
+     {
+      "t": "cancel() prevents a pending trailing execution",
+      "test": "const calls = []; const t = throttle(x => calls.push(x), 100); t(1); t(2); t.cancel(); setTimeout(() => console.log(calls), 150); // expected: [1]",
+      "verify": "const calls = []; const t = throttle(x => calls.push(x), 40); t(1); t(2); t.cancel(); await sleep(80); assert(calls.length === 1, 'cancelled trailing call executed')",
+      "gap": "Clearing arguments alone does not stop an already scheduled callback. Clear the timer and reset the shared pending state."
+     },
+     {
+      "t": "The trailing call preserves this",
+      "test": "const o = { n: 7, run: throttle(function (x) { console.log(this.n + x) }, 100) }; o.run(2); o.run(3); // expected: immediate 9, then trailing 10",
+      "verify": "const calls = []; const o = { n: 7, run: throttle(function (x) { calls.push(this.n + x) }, 40) }; o.run(1); o.run(2); await sleep(80); assert(calls.length === 2 && calls[1] === 9, 'trailing execution lost its caller context or latest args'); o.run.cancel()",
+      "gap": "The delayed callback has its own this value. Capture the wrapper caller's context and apply it when executing the original function."
+     }
+    ]
+   },
+   "solution": "function throttle(fn, delay) {\n  let lastCall = -Infinity\n  let timer = null\n  let args = null\n  let context = null\n\n  function throttled(...nextArgs) {\n    const now = Date.now()\n    args = nextArgs\n    context = this\n    const remaining = delay - (now - lastCall)\n\n    if (remaining <= 0) {\n      clearTimeout(timer)\n      timer = null\n      const callArgs = args\n      const callContext = context\n      args = context = null\n      lastCall = now\n      fn.apply(callContext, callArgs)\n    } else if (timer === null) {\n      timer = setTimeout(() => {\n        timer = null\n        if (args !== null) {\n          const callArgs = args\n          const callContext = context\n          args = context = null\n          lastCall = Date.now()\n          fn.apply(callContext, callArgs)\n        }\n      }, remaining)\n    }\n  }\n\n  throttled.cancel = () => {\n    clearTimeout(timer)\n    timer = null\n    args = context = null\n    lastCall = -Infinity\n  }\n  return throttled\n}",
+   "notes": [
+    "A closure keeps the timestamp, pending arguments, context, and timer shared across calls.",
+    "The leading call executes immediately; calls inside the window update the pending arguments.",
+    "A single timer handles the trailing execution.",
+    "cancel() must clear both the timer and the pending state."
+   ],
+   "next": [
+    "Add a leading option that allows trailing execution to be disabled.",
+    "Build a React hook that throttles a changing value.",
+    "Compare throttle with debounce using a stream of timestamped events."
+   ]
+  },
+  {
+   "id": "curry",
+   "diff": "Easy",
+   "fn": "curry",
+   "signature": "curry(fn)",
+   "learn": {
+    "what": [
+     "<b>Currying</b> transforms a function that accepts several arguments into a sequence of function calls that collect those arguments over time.",
+     "The curried function uses the original function's declared arity, available through <code>fn.length</code>, to decide when enough arguments have arrived. It supports both one-at-a-time calls and partial application with multiple arguments in a single call.",
+     "Think of ordering a meal in stages: you choose the main dish now, the side later, and the drink after that. The order is complete once all required choices have been collected."
+    ],
+    "how": {
+     "steps": [
+      "Read the number of required parameters from the original function's declared arity.",
+      "Return a function that accepts the arguments supplied so far.",
+      "If the collected argument count meets or exceeds the arity, call the original function.",
+      "Otherwise, return another function that collects more arguments.",
+      "Combine old and new arguments in their original order."
+     ],
+     "diagram": "add has arity 3\nadd(1)  -> collect [1]\n   (2)  -> collect [1, 2]\n   (3)  -> collect [1, 2, 3]\n        -> call add(1, 2, 3)"
+    },
+    "where": [
+     [
+      "Reusable configuration",
+      "Fix some parameters now and supply the remaining parameters later."
+     ],
+     [
+      "Functional composition",
+      "Create specialized functions by preselecting arguments."
+     ],
+     [
+      "Data transformation",
+      "Build small functions that can be reused with map, filter, or other utilities."
+     ],
+     [
+      "Watch out",
+      "Default parameters are not fully counted by function.length. Functions with default parameters need an explicit arity if that behavior matters."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Predict the result",
+     "q": "Given <code>const add = (a, b, c) =&gt; a + b + c</code>, what does <code>curry(add)(1, 2)(3)</code> return?",
+     "opts": [
+      "A function waiting for two more arguments",
+      "6",
+      "A function waiting for one more argument",
+      "NaN"
+     ],
+     "ans": 1,
+     "why": [
+      "The first call collects two of the three required arguments. The next call supplies the third, so the original function executes and returns 6.",
+      "Currying does not require every call to contain exactly one argument. Partial application may collect several arguments at once."
+     ]
+    },
+    {
+     "tag": "Spot the bug",
+     "q": "Why does this implementation fail for partial application?\n<pre><code>const curry = fn =&gt; (...args) =&gt; {\n  if (args.length &gt;= fn.length) return fn(...args);\n  return curry(fn.bind(null, ...args));\n};</code></pre>",
+     "opts": [
+      "It cannot collect any arguments",
+      "It always invokes the original function immediately",
+      "Binding collected arguments changes the bound function's length, so later arity checks can finish too early",
+      "Function.bind only works with methods"
+     ],
+     "ans": 2,
+     "why": [
+      "A bound function's length reflects the original declared parameter count minus the arguments already bound. Recursively checking that changing length can cause premature execution.",
+      "Keep the original arity constant and accumulate arguments separately rather than relying on a newly bound function's length."
+     ]
+    },
+    {
+     "tag": "Edge case",
+     "q": "What is <code>fn.length</code> for this function?\n<pre><code>function example(a, b = 10, c) {\n  return a + b + c;\n}</code></pre>",
+     "opts": [
+      "0",
+      "1",
+      "3",
+      "2"
+     ],
+     "ans": 1,
+     "why": [
+      "Function.length counts parameters before the first parameter with a default value. Here only a comes before b's default.",
+      "The trap is assuming length always equals the total number of named parameters. Currying this function using its default arity will consider one argument sufficient."
+     ]
+    },
+    {
+     "tag": "Choose the right behavior",
+     "q": "A curried function has arity 2. You call <code>f(4, 5, 6)</code>. What should the implementation in this lesson do?",
+     "opts": [
+      "Throw because each call must contain exactly one argument",
+      "Return another function because extra arguments are always rejected",
+      "Discard all arguments after the second before calling the original function",
+      "Invoke the original function with all three supplied arguments"
+     ],
+     "ans": 3,
+     "why": [
+      "The completion condition is collected argument count greater than or equal to the arity. The original function receives the accumulated arguments.",
+      "Currying does not inherently require rejecting extra arguments or discarding them."
+     ]
+    }
+   ],
+   "pseudo": "curry(fn):\n  requiredCount = original function's declared arity\n\n  create collect(previousArguments):\n    return a function accepting new arguments\n      combine previous and new arguments in order\n      if combined count is at least requiredCount:\n        call the original function with combined arguments\n      otherwise:\n        return collect(combined arguments)\n\n  return collect(no arguments)",
+   "watch": [
+    "Does the implementation compare against the original arity rather than a changing function length?",
+    "Are earlier and later arguments combined in the correct order?",
+    "What should happen for zero-arity functions and functions with default parameters?"
+   ],
+   "build": {
+    "minutes": 15,
+    "problem": "Implement <b>curry(fn)</b> so that arguments can be collected one at a time or in groups.",
+    "reqs": [
+     "Determine the completion condition using the original function's fn.length.",
+     "Support calls such as add(1)(2)(3).",
+     "Support calls such as add(1, 2)(3).",
+     "Invoke the original function with all accumulated arguments once enough have been collected.",
+     "Handle zero-arity functions and document the limitation of default parameters."
+    ],
+    "checks": [
+     {
+      "t": "Arguments can be supplied one at a time",
+      "test": "const add = curry((a, b, c) => a + b + c); console.log(add(1)(2)(3)); // expected: 6",
+      "verify": "const add = curry((a, b, c) => a + b + c); assert(add(1)(2)(3) === 6, 'one-at-a-time currying failed')",
+      "gap": "Check that an incomplete call returns a function that remembers its collected arguments."
+     },
+     {
+      "t": "Partial application collects multiple arguments",
+      "test": "const add = curry((a, b, c) => a + b + c); console.log(add(1, 2)(3)); // expected: 6",
+      "verify": "const add = curry((a, b, c) => a + b + c); assert(add(1, 2)(3) === 6, 'partial application failed')",
+      "gap": "Do not assume every invocation contributes exactly one argument. Append all arguments from the current call."
+     },
+     {
+      "t": "Arguments retain their order",
+      "test": "const join = curry((a, b, c) => [a, b, c].join('-')); console.log(join('A', 'B')('C')); // expected: A-B-C",
+      "verify": "const join = curry((a, b, c) => [a, b, c].join('-')); assert(join('A', 'B')('C') === 'A-B-C', 'argument order changed')",
+      "gap": "When combining arguments, place previously collected values before the new values."
+     },
+     {
+      "t": "The original function executes only when enough arguments arrive",
+      "test": "let count = 0; const f = curry((a, b) => ++count); const partial = f(1); console.log(count, typeof partial); console.log(partial(2), count); // expected: 0, function; 1, 1",
+      "verify": "let count = 0; const f = curry((a, b) => ++count); const partial = f(1); assert(count === 0 && typeof partial === 'function', 'executed too early'); assert(partial(2) === 1 && count === 1, 'did not execute exactly once')",
+      "gap": "Make the arity check before invoking the original function. Incomplete calls must return another collecting function."
+     },
+     {
+      "t": "Zero-arity functions execute immediately",
+      "test": "let count = 0; const f = curry(() => ++count); console.log(f()); // expected: 1",
+      "verify": "let count = 0; const f = curry(() => ++count); assert(f() === 1 && count === 1, 'zero-arity function should execute immediately')",
+      "gap": "A zero-arity function already has enough arguments before any are collected. Handle that case when creating the initial curried function."
+     }
+    ]
+   },
+   "solution": "function curry(fn) {\n  const arity = fn.length\n\n  function collect(collected) {\n    if (collected.length >= arity) return fn(...collected)\n    return function (...next) {\n      return collect([...collected, ...next])\n    }\n  }\n\n  return arity === 0 ? (...args) => fn(...args) : collect([])\n}",
+   "notes": [
+    "Currying collects arguments across calls using closures.",
+    "Partial application allows multiple arguments in one call.",
+    "The original arity must remain fixed throughout the process.",
+    "Function.length stops counting at the first default parameter and excludes rest parameters."
+   ],
+   "next": [
+    "Add an explicit arity argument to support functions with default parameters.",
+    "Implement a placeholder value that lets callers fill arguments out of order.",
+    "Compare currying with partial application and explain when each is useful."
+   ]
+  },
+  {
+   "id": "memoize",
+   "diff": "Easy",
+   "fn": "memoize",
+   "signature": "memoize(fn, resolver?)",
+   "learn": {
+    "what": [
+     "<b>Memoization</b> stores the result of a function call so that a later call with the same cache key can reuse the result instead of running the function again.",
+     "A memoized wrapper keeps a Map in its closure. By default, it uses JSON serialization of the arguments as the key, but an optional resolver can produce a custom key. The wrapper exposes its Map through <code>.cache</code> and supports clearing it through <code>.clear()</code>.",
+     "Think of a notebook where you record answers to calculations. When the same question appears again, you read the recorded answer instead of calculating it from scratch."
+    ],
+    "how": {
+     "steps": [
+      "Create a Map that survives between calls.",
+      "Build a key from the arguments, using the resolver when one is supplied.",
+      "Check Map.has(key) before running the original function.",
+      "If the key exists, return its cached value, including values such as undefined.",
+      "Otherwise execute the function, store the result, and return it."
+     ],
+     "diagram": "memoize(square)\nsquare(4) -> key [4] -> cache miss -> compute 16\nsquare(4) -> key [4] -> cache hit  -> return 16\nsquare(5) -> key [5] -> cache miss -> compute 25"
+    },
+    "where": [
+     [
+      "Expensive calculations",
+      "Avoid repeating costly computations for identical inputs."
+     ],
+     [
+      "Selectors",
+      "Reuse derived data when the inputs have not changed."
+     ],
+     [
+      "Repeated parsing",
+      "Cache parsed results for repeated strings or stable input values."
+     ],
+     [
+      "Watch out",
+      "JSON.stringify is not a universal key serializer. Circular references fail, some values are omitted or transformed, and distinct inputs can produce unsuitable or colliding keys."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Spot the cache bug",
+     "q": "Why is this cache check incorrect?\n<pre><code>if (cache.get(key)) return cache.get(key);</code></pre>",
+     "opts": [
+      "Map.get cannot return numbers",
+      "Map keys must be strings",
+      "It treats cached falsy values such as 0, false, and undefined as cache misses",
+      "A Map cannot store function results"
+     ],
+     "ans": 2,
+     "why": [
+      "A cached result may legitimately be 0, false, an empty string, or undefined. Testing the result's truthiness cannot distinguish these values from a missing entry.",
+      "Use Map.has(key) to test whether the cache contains the key."
+     ]
+    },
+    {
+     "tag": "Predict the behavior",
+     "q": "A memoized function returns undefined on its first call. What happens when it is called again with the same key?",
+     "opts": [
+      "The original function runs again because undefined cannot be cached",
+      "The cached undefined is returned if the implementation uses Map.has",
+      "The Map automatically removes the key",
+      "The second call must throw a TypeError"
+     ],
+     "ans": 1,
+     "why": [
+      "Map can store undefined as a value. Map.has reports whether the key exists independently of the stored value.",
+      "Using a truthiness check or treating get(key) === undefined as a miss would incorrectly execute the function again."
+     ]
+    },
+    {
+     "tag": "Edge case",
+     "q": "What is the main risk of using JSON.stringify(args) as the default key?",
+     "opts": [
+      "It always creates a unique key for every JavaScript value",
+      "It cannot serialize any arrays",
+      "It prevents functions from returning objects",
+      "Different inputs can serialize identically, and some inputs cannot be serialized"
+     ],
+     "ans": 3,
+     "why": [
+      "Serialization can omit or transform values, and circular references cause an error. Some distinct values can therefore share a serialized key or fail to produce one.",
+      "A custom resolver is useful when the application's notion of input equality differs from JSON serialization."
+     ]
+    },
+    {
+     "tag": "Choose the correct tool",
+     "q": "You want two calls with different object references but the same user ID to reuse a result. Which resolver is most appropriate?",
+     "opts": [
+      "A resolver that returns the user ID",
+      "A resolver that returns Date.now()",
+      "A resolver that returns a new Symbol on every call",
+      "A resolver that returns Math.random()"
+     ],
+     "ans": 0,
+     "why": [
+      "Returning the stable user ID gives both calls the same cache key when they refer to the same logical user.",
+      "Time, random values, or fresh symbols create different keys and defeat cache reuse."
+     ]
+    }
+   ],
+   "pseudo": "memoize(fn, optionalResolver):\n  create an empty Map\n\n  return wrapper(...args):\n    if a resolver exists:\n      key = resolver applied to args\n    otherwise:\n      key = serialized args\n    if the Map contains key:\n      return its stored result\n    result = execute fn with the caller context and args\n    store result under key\n    return result\n\n  wrapper.cache = the Map\n  wrapper.clear():\n    empty the Map",
+   "watch": [
+    "Does the cache distinguish a missing entry from a stored undefined result?",
+    "Can two different inputs generate the same key under the chosen serialization?",
+    "Should the cached function preserve the caller's this value?"
+   ],
+   "build": {
+    "minutes": 15,
+    "problem": "Implement <b>memoize(fn, resolver?)</b> with a Map cache, a custom key resolver, and a clear() method.",
+    "reqs": [
+     "Use JSON.stringify(args) as the default key.",
+     "Use resolver(...args) when a resolver is provided.",
+     "Return cached results without executing the original function again.",
+     "Expose the Map as the returned function's .cache property.",
+     "Implement .clear() and preserve the caller's this value."
+    ],
+    "checks": [
+     {
+      "t": "Repeated arguments reuse the cached result",
+      "test": "let count = 0; const f = memoize(x => { count++; return x * 2 }); console.log(f(3), f(3), count); // expected: 6, 6, 1",
+      "verify": "let count = 0; const f = memoize(x => { count++; return x * 2 }); assert(f(3) === 6 && f(3) === 6 && count === 1, 'result was not reused')",
+      "gap": "Check that the key is saved after computing a result and that subsequent calls look up the same key."
+     },
+     {
+      "t": "Falsy values are cached correctly",
+      "test": "let count = 0; const f = memoize(() => { count++; return 0 }); f(); f(); console.log(count); // expected: 1",
+      "verify": "let count = 0; const f = memoize(() => { count++; return 0 }); f(); f(); assert(count === 1, 'cached zero was treated as a miss')",
+      "gap": "A truthiness check cannot distinguish a stored zero from a missing result. Use Map.has(key)."
+     },
+     {
+      "t": "A custom resolver controls the cache key",
+      "test": "let count = 0; const f = memoize(user => { count++; return user.name }, user => user.id); f({id: 1, name: 'A'}); f({id: 1, name: 'B'}); console.log(count); // expected: 1",
+      "verify": "let count = 0; const f = memoize(user => { count++; return user.name }, user => user.id); assert(f({id: 1, name: 'A'}) === 'A', 'wrong first result'); assert(f({id: 1, name: 'B'}) === 'A' && count === 1, 'resolver key was not used')",
+      "gap": "Ensure the resolver receives the original arguments and that its returned value is used directly as the Map key."
+     },
+     {
+      "t": "clear() removes cached entries",
+      "test": "let count = 0; const f = memoize(x => ++count); f(1); f.clear(); console.log(f(1), count); // expected: 2, 2",
+      "verify": "let count = 0; const f = memoize(x => ++count); f(1); f.clear(); assert(f(1) === 2 && count === 2, 'clear did not remove cached entries')",
+      "gap": "The clear method should empty the same Map that the wrapper uses, not replace an unrelated variable."
+     },
+     {
+      "t": "The cache property exposes the actual Map",
+      "test": "const f = memoize(x => x + 1); f(1); console.log(f.cache instanceof Map, f.cache.size); // expected: true, 1",
+      "verify": "const f = memoize(x => x + 1); f(1); assert(f.cache instanceof Map && f.cache.size === 1, 'cache property is missing or incorrect')",
+      "gap": "Assign the closure's Map to the returned wrapper's cache property so callers can inspect and clear the same entries."
+     }
+    ]
+   },
+   "solution": "function memoize(fn, resolver) {\n  const cache = new Map()\n\n  function memoized(...args) {\n    const key = resolver ? resolver(...args) : JSON.stringify(args)\n    if (cache.has(key)) return cache.get(key)\n    const result = fn.apply(this, args)\n    cache.set(key, result)\n    return result\n  }\n\n  memoized.cache = cache\n  memoized.clear = () => cache.clear()\n  return memoized\n}",
+   "notes": [
+    "The Map lives in a closure so all calls share the same cache.",
+    "Map.has correctly handles cached undefined and other falsy values.",
+    "A resolver lets the caller define logical equality between inputs.",
+    "JSON serialization is convenient but not a universal cache-key strategy."
+   ],
+   "next": [
+    "Add a maximum cache size and evict the least recently used entry.",
+    "Decide how rejected Promises should be cached or removed.",
+    "Build a memoized selector that derives data from application state."
+   ]
+  },
+  {
+   "id": "pipe-compose",
+   "diff": "Easy",
+   "fn": "pipe",
+   "signature": "pipe(...fns), compose(...fns), pipeAsync(...fns)",
+   "learn": {
+    "what": [
+     "<b>Pipe</b> and <b>compose</b> create a function by combining several smaller functions. Pipe runs them from left to right, while compose runs them from right to left.",
+     "The result of each function becomes the input to the next. A single-function pipeline behaves like that function, and an empty pipeline returns an identity function that gives its input back unchanged. An asynchronous pipeline also waits for each step to finish before starting the next.",
+     "Think of an assembly line: pipe follows the order of the stations, while compose starts with the last listed transformation and works backward through the list."
+    ],
+    "how": {
+     "steps": [
+      "Collect the transformation functions into an ordered list.",
+      "Return a new function that accepts an initial value.",
+      "For pipe, pass the value through the functions from first to last.",
+      "For compose, pass the value through the functions from last to first.",
+      "For pipeAsync, await each function's result before passing it to the next function."
+     ],
+     "diagram": "pipe(f, g, h)(x)\nx -> f(x) -> g(result) -> h(result)\n\ncompose(f, g, h)(x)\nx -> h(x) -> g(result) -> f(result)\n\npipeAsync: await each step before the next"
+    },
+    "where": [
+     [
+      "Data transformations",
+      "Combine parsing, normalization, validation, and formatting steps."
+     ],
+     [
+      "UI formatting",
+      "Create reusable pipelines for converting raw values into display-ready values."
+     ],
+     [
+      "Async workflows",
+      "Sequence requests or processing steps that depend on earlier results."
+     ],
+     [
+      "Not a fit",
+      "Functions with unrelated inputs or side effects that must run in parallel are not naturally represented by a simple value pipeline."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "Given <code>const double = x =&gt; x * 2</code> and <code>const add3 = x =&gt; x + 3</code>, what is <code>pipe(double, add3)(4)</code>?",
+     "opts": [
+      "11",
+      "14",
+      "10",
+      "7"
+     ],
+     "ans": 0,
+     "why": [
+      "Pipe runs left to right: double transforms 4 into 8, and add3 transforms 8 into 11.",
+      "The common trap is applying the functions in reverse order, which is compose's behavior."
+     ]
+    },
+    {
+     "tag": "Spot the bug",
+     "q": "What is wrong with this empty pipeline implementation?\n<pre><code>const pipe = (...fns) =&gt; x =&gt; fns.reduce((v, f) =&gt; f(v));</code></pre>",
+     "opts": [
+      "reduce always runs from right to left",
+      "It requires every function to return a Promise",
+      "An empty function list always throws",
+      "It does not provide the initial accumulator value, so an empty list throws instead of returning x"
+     ],
+     "ans": 3,
+     "why": [
+      "Without an initial accumulator, reduce throws on an empty array. Supplying x as the initial accumulator makes the identity case work naturally.",
+      "A pipeline should pass the original value through unchanged when there are no transformation functions."
+     ]
+    },
+    {
+     "tag": "Choose the right order",
+     "q": "Given <code>f(x) = x + 1</code> and <code>g(x) = x * 3</code>, what does <code>compose(f, g)(2)</code> return?",
+     "opts": [
+      "9",
+      "7",
+      "8",
+      "3"
+     ],
+     "ans": 1,
+     "why": [
+      "Compose runs right to left: g(2) is 6, then f(6) is 7.",
+      "The trap is reading compose's list in the same execution order as pipe."
+     ]
+    },
+    {
+     "tag": "Async ordering",
+     "q": "The first function in pipeAsync returns a Promise that resolves to 5. The second function doubles its input. What should the final result be?",
+     "opts": [
+      "A Promise that resolves to 10",
+      "10 immediately before the first Promise resolves",
+      "A Promise that resolves to 5",
+      "A Promise that resolves to NaN because the first value is a Promise"
+     ],
+     "ans": 0,
+     "why": [
+      "An asynchronous pipeline waits for the first Promise to resolve, then passes 5 to the doubling function and resolves to 10.",
+      "Calling the next function with the unresolved Promise itself can produce incorrect results when the next function expects a plain value."
+     ]
+    }
+   ],
+   "pseudo": "pipe(...functions):\n  return a function accepting an initial value\n    for each function from first to last:\n      replace the current value with that function's result\n    return the final value\n\ncompose(...functions):\n  use the same process, but visit functions from last to first\n\npipeAsync(...functions):\n  return an asynchronous function accepting an initial value\n    for each function from first to last:\n      await the current function's result\n      use the resolved value as the next input\n    return the final value\n\n// Bonus: empty pipelines return the original input",
+   "watch": [
+    "Are functions executed in the correct direction for pipe versus compose?",
+    "Does the accumulator start with the caller's input when the function list is empty?",
+    "Does pipeAsync await each result before passing it to the next step?"
+   ],
+   "build": {
+    "minutes": 15,
+    "problem": "Implement <b>pipe</b>, <b>compose</b>, and <b>pipeAsync</b> as function-composition utilities.",
+    "reqs": [
+     "Implement left-to-right pipe execution.",
+     "Implement right-to-left compose execution.",
+     "Support zero functions and a single function.",
+     "Pass each result to the next function.",
+     "Implement pipeAsync so each asynchronous step completes before the next starts."
+    ],
+    "checks": [
+     {
+      "t": "pipe executes left to right",
+      "test": "const f = x => x * 2; const g = x => x + 3; console.log(pipe(f, g)(4)); // expected: 11",
+      "verify": "const f = x => x * 2; const g = x => x + 3; assert(pipe(f, g)(4) === 11, 'pipe order is incorrect')",
+      "gap": "Check the order of the reduction. Pipe must pass each result to the next function in the original list order."
+     },
+     {
+      "t": "compose executes right to left",
+      "test": "const f = x => x + 1; const g = x => x * 3; console.log(compose(f, g)(2)); // expected: 7",
+      "verify": "const f = x => x + 1; const g = x => x * 3; assert(compose(f, g)(2) === 7, 'compose order is incorrect')",
+      "gap": "Compose starts with the last function in the supplied list. Reverse the execution order without changing the argument passed into the combined function."
+     },
+     {
+      "t": "An empty pipeline returns its input",
+      "test": "const value = { n: 4 }; console.log(pipe()(value) === value, compose()(value) === value); // expected: true, true",
+      "verify": "const value = { n: 4 }; assert(pipe()(value) === value, 'empty pipe should return its input'); assert(compose()(value) === value, 'empty compose should return its input')",
+      "gap": "Use the input as the initial accumulator. An empty list must not call reduce without an initial value."
+     },
+     {
+      "t": "A single function behaves unchanged",
+      "test": "const f = x => x * 5; console.log(pipe(f)(3), compose(f)(3)); // expected: 15, 15",
+      "verify": "const f = x => x * 5; assert(pipe(f)(3) === 15 && compose(f)(3) === 15, 'single-function pipeline failed')",
+      "gap": "The combined function should still pass its input through the only supplied transformation."
+     },
+     {
+      "t": "pipeAsync waits for each step",
+      "test": "const p = pipeAsync(async x => x + 2, async x => x * 3); p(4).then(console.log); // expected: 18",
+      "verify": "const p = pipeAsync(async x => x + 2, async x => x * 3); assert(await p(4) === 18, 'async pipeline returned the wrong result')",
+      "gap": "Resolve each step before starting the next. Chaining Promises or awaiting each result prevents the next function from receiving an unresolved Promise."
+     }
+    ]
+   },
+   "solution": "function pipe(...fns) {\n  return value => fns.reduce((current, fn) => fn(current), value)\n}\n\nfunction compose(...fns) {\n  return value => fns.reduceRight((current, fn) => fn(current), value)\n}\n\nfunction pipeAsync(...fns) {\n  return async value => {\n    let current = value\n    for (const fn of fns) current = await fn(current)\n    return current\n  }\n}",
+   "notes": [
+    "Pipe applies transformations from left to right.",
+    "Compose applies transformations from right to left.",
+    "Supplying the initial value makes empty pipelines return the input.",
+    "The asynchronous version awaits every step before proceeding."
+   ],
+   "next": [
+    "Extend pipeAsync with composeAsync.",
+    "Allow the first function to receive multiple initial arguments while later functions receive one result.",
+    "Build a pipeline that validates, transforms, and formats user input."
+   ]
+  },
+  {
+   "id": "flatten",
+   "diff": "Easy",
+   "fn": "flatten",
+   "signature": "flatten(arr, depth = Infinity)",
+   "learn": {
+    "what": [
+     "<b>Flattening</b> converts a nested array into a less deeply nested array by moving elements from inner arrays into their parent array. A depth argument controls how many levels of nesting are removed.",
+     "With depth 1, only the first nested level is removed. With depth 2, two levels are removed. With infinite depth, all nested arrays are flattened. A good implementation creates a new array instead of modifying the original.",
+     "Think of unpacking boxes inside boxes. A depth of 1 opens only the outer box, while infinite depth opens every box until the individual items remain."
+    ],
+    "how": {
+     "steps": [
+      "Create an empty result array.",
+      "Visit each element of the input in order.",
+      "If the element is an array and the remaining depth is positive, visit its elements recursively with one less level of depth.",
+      "Otherwise, append the element to the result as it is.",
+      "Return the result without changing the input array."
+     ],
+     "diagram": "Input:   [1, [2, [3, 4]]]\nDepth 0: [1, [2, [3, 4]]]\nDepth 1: [1, 2, [3, 4]]\nDepth 2: [1, 2, 3, 4]\nDepth ∞: [1, 2, 3, 4]"
+    },
+    "where": [
+     [
+      "API responses",
+      "Convert nested lists into a simpler sequence for processing."
+     ],
+     [
+      "Tree-like data",
+      "Collect nested items into one list when parent-child structure is no longer needed."
+     ],
+     [
+      "UI rendering",
+      "Normalize nested arrays of menu entries, content blocks, or grouped values."
+     ],
+     [
+      "Watch out",
+      "Flattening destroys nesting information. If the parent-child relationships matter, preserve the original structure or use a tree traversal that records those relationships."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "What does <code>flatten([1, [2, [3]]], 1)</code> return?",
+     "opts": [
+      "[1, 2, 3]",
+      "[[1], 2, [3]]",
+      "[1, 2, [3]]",
+      "[1, [2, [3]]]"
+     ],
+     "ans": 2,
+     "why": [
+      "Depth 1 removes only the outermost level of nested arrays. The inner array containing 3 remains nested.",
+      "The trap is treating depth 1 as a request to flatten every level."
+     ]
+    },
+    {
+     "tag": "Spot the bug",
+     "q": "What is wrong with this implementation?\n<pre><code>function flatten(arr) {\n  return arr.reduce((out, item) =&gt; out.concat(item), []);\n}</code></pre>",
+     "opts": [
+      "It flattens only one level and ignores deeper nested arrays",
+      "It changes every number into a string",
+      "It always modifies the original array",
+      "It cannot process arrays containing numbers"
+     ],
+     "ans": 0,
+     "why": [
+      "concat with each item expands an array element by one level but does not recursively process nested arrays.",
+      "A recursive implementation must visit inner arrays again while depth remains, or an iterative stack must track the remaining depth."
+     ]
+    },
+    {
+     "tag": "Edge case",
+     "q": "What should <code>flatten([1, [2]], 0)</code> return?",
+     "opts": [
+      "[1, 2]",
+      "[[1, 2]]",
+      "[2, 1]",
+      "[1, [2]]"
+     ],
+     "ans": 3,
+     "why": [
+      "A depth of zero means no nested levels should be flattened, so the output retains the original structure in a new outer array.",
+      "The trap is recursing into every array regardless of the remaining depth."
+     ]
+    },
+    {
+     "tag": "Reference versus value",
+     "q": "After calling <code>flatten(original, 2)</code>, what should be true about the original array?",
+     "opts": [
+      "Its nested arrays should be replaced with the flattened result",
+      "Its contents should remain unchanged",
+      "It should be emptied after the result is returned",
+      "It should become the same array object as the result"
+     ],
+     "ans": 1,
+     "why": [
+      "The implementation builds and returns a separate result array, leaving the original structure unchanged.",
+      "Mutating the input can cause unexpected side effects when other code still relies on its nested structure."
+     ]
+    }
+   ],
+   "pseudo": "flatten(arr, depth):\n  create an empty result\n  normalize depth to a non-negative integer or infinity\n\n  visit each existing element in order:\n    if the element is an array and depth is positive:\n      recursively flatten it with depth reduced by one\n      append the returned elements to the result\n    otherwise:\n      append the element itself\n\n  return the result\n\n// Bonus: use an explicit stack to avoid deep recursive calls",
+   "watch": [
+    "Does recursion stop when depth reaches zero?",
+    "Are nested elements appended in their original order?",
+    "Does the implementation create a new result without modifying the input?"
+   ],
+   "build": {
+    "minutes": 15,
+    "problem": "Implement <b>flatten(arr, depth = Infinity)</b> to flatten nested arrays up to the requested depth.",
+    "reqs": [
+     "Flatten nested arrays recursively.",
+     "Respect the supplied depth, including zero and negative values.",
+     "Preserve the order of all retained elements.",
+     "Return a new array without modifying the original.",
+     "Handle mixed element types and support infinite depth.",
+     "Bonus: implement an iterative version using an explicit stack."
+    ],
+    "checks": [
+     {
+      "t": "Fully flatten nested arrays by default",
+      "test": "console.log(flatten([1, [2, [3, 4]] ])); // expected: [1, 2, 3, 4]",
+      "verify": "const result = flatten([1, [2, [3, 4]]]); assert(JSON.stringify(result) === '[1,2,3,4]', 'default depth should flatten all levels')",
+      "gap": "The implementation may be removing only one level. Use recursion with an unbounded depth or another approach that continues until no nested arrays remain."
+     },
+     {
+      "t": "Depth one removes exactly one level",
+      "test": "console.log(flatten([1, [2, [3]]], 1)); // expected: [1, 2, [3]]",
+      "verify": "const result = flatten([1, [2, [3]]], 1); assert(JSON.stringify(result) === '[1,2,[3]]', 'depth one should preserve deeper nesting')",
+      "gap": "Decrement the remaining depth each time you enter a nested array. Do not recurse when the depth reaches zero."
+     },
+     {
+      "t": "Depth zero preserves nesting",
+      "test": "console.log(flatten([1, [2, [3]]], 0)); // expected: [1, [2, [3]]]",
+      "verify": "const input = [1, [2, [3]]]; const result = flatten(input, 0); assert(JSON.stringify(result) === '[1,[2,[3]]]', 'depth zero changed the nesting')",
+      "gap": "A zero depth should prevent recursion, not cause nested arrays to be expanded."
+     },
+     {
+      "t": "The original array is unchanged",
+      "test": "const input = [1, [2, [3]]]; flatten(input); console.log(JSON.stringify(input)); // expected: [1,[2,[3]]]",
+      "verify": "const input = [1, [2, [3]]]; const before = JSON.stringify(input); const result = flatten(input); assert(JSON.stringify(input) === before, 'input was mutated'); assert(result !== input, 'result must be a new array')",
+      "gap": "Build a separate result array. Avoid modifying the input with methods that remove or replace its elements."
+     },
+     {
+      "t": "Mixed types and element order are preserved",
+      "test": "console.log(flatten(['a', [2, ['b', true]], null])); // expected: ['a', 2, 'b', true, null]",
+      "verify": "const result = flatten(['a', [2, ['b', true]], null]); assert(JSON.stringify(result) === '[\"a\",2,\"b\",true,null]', 'mixed values or their order changed')",
+      "gap": "Only recurse into actual arrays. Append all other values unchanged and preserve the traversal order."
+     }
+    ]
+   },
+   "solution": "function flatten(arr, depth = Infinity) {\n  const limit = depth === Infinity ? Infinity : Math.max(0, Math.trunc(Number(depth) || 0))\n  const result = []\n\n  function visit(items, remaining) {\n    for (let i = 0; i < items.length; i++) {\n      if (!(i in items)) continue\n      const item = items[i]\n      if (Array.isArray(item) && remaining > 0) {\n        visit(item, remaining === Infinity ? Infinity : remaining - 1)\n      } else {\n        result.push(item)\n      }\n    }\n  }\n\n  visit(arr, limit)\n  return result\n}",
+   "notes": [
+    "Array.isArray distinguishes nested arrays from ordinary values.",
+    "The remaining depth decreases only when entering a nested array.",
+    "A separate result array prevents changes to the original structure.",
+    "Checking whether an index exists preserves Array.prototype.flat behavior for sparse arrays by skipping holes."
+   ],
+   "next": [
+    "Implement an iterative flatten function using a stack and explicit depth tracking.",
+    "Flatten nested objects into dot-separated paths.",
+    "Compare your implementation with Array.prototype.flat for negative depths, sparse arrays, and unusual depth values."
+   ]
+  }
+ ]
+}

@@ -1,0 +1,901 @@
+{
+ "course": "js-mastery",
+ "items": [
+  {
+   "id": "garbage-collection",
+   "prereqs": [
+    "async-errors"
+   ],
+   "dryRun": {
+    "title": "Mark and sweep",
+    "columns": [
+     "step",
+     "what the collector does"
+    ],
+    "rows": [
+     [
+      "1. roots",
+      "start from globals, the current call stack, active closures"
+     ],
+     [
+      "2. mark",
+      "follow every reference, mark each object reached"
+     ],
+     [
+      "3. sweep",
+      "free every object that was not marked"
+     ],
+     [
+      "cycle a ↔ b, unreachable",
+      "neither is marked → both freed"
+     ],
+     [
+      "object still in a Map / listener / timer",
+      "marked → stays alive"
+     ]
+    ],
+    "hit": 4,
+    "note": "JavaScript frees memory automatically: anything <b>unreachable</b> from the roots is garbage, even objects that point at each other. A \"leak\" means something you no longer need is still <b>reachable</b>."
+   },
+   "think": [
+    {
+     "tag": "Cycles",
+     "q": "<code>let a = {}; let b = { a }; a.b = b; a = b = null</code>. Can the two objects be freed?",
+     "opts": [
+      "No: they reference each other",
+      "Only after a page reload",
+      "Yes: mark-and-sweep frees unreachable cycles",
+      "Only if you call delete"
+     ],
+     "ans": 2,
+     "why": [
+      "Reference counting could not free cycles; modern engines use reachability, which can."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let cache = new Map()\nlet user = { name: 'A' }\ncache.set('u', user)\nuser = null\nconsole.log(cache.get('u').name)</code></pre>",
+     "opts": [
+      "<code>A</code>",
+      "<code>undefined</code>",
+      "<code>TypeError</code>",
+      "<code>null</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Setting the variable to null removes one reference, but the Map still holds the object, so it stays reachable (and alive)."
+     ],
+     "exec": "let cache = new Map()\nlet user = { name: 'A' }\ncache.set('u', user)\nuser = null\nconsole.log(cache.get('u').name)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function make() { const big = new Array(3).fill('x'); return () =&gt; big.length }\nconst f = make()\nconsole.log(f())</code></pre>",
+     "opts": [
+      "<code>undefined</code>",
+      "<code>0</code>",
+      "<code>ReferenceError</code>",
+      "<code>3</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "The closure keeps <code>big</code> reachable as long as f exists."
+     ],
+     "exec": "function make() { const big = new Array(3).fill('x'); return () => big.length }\nconst f = make()\nconsole.log(f())"
+    },
+    {
+     "tag": "When",
+     "q": "When does garbage collection run?",
+     "opts": [
+      "Every time a function returns",
+      "When the engine decides, usually under memory pressure; you cannot trigger it from normal code",
+      "Every second, exactly",
+      "Only when you set a variable to null"
+     ],
+     "ans": 1,
+     "why": [
+      "You control reachability, not timing."
+     ]
+    },
+    {
+     "tag": "Tool",
+     "q": "Which tool shows what keeps an object alive in Chrome?",
+     "opts": [
+      "console.log",
+      "A heap snapshot in DevTools → Memory, with its \"retainers\" view",
+      "The Network tab",
+      "Lighthouse"
+     ],
+     "ans": 1,
+     "why": [
+      "Take a snapshot, filter by class name, and read the retainer path back to a root."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>reachable(roots)</code>: given root objects whose references are listed in a <code>refs</code> array property, return a <code>Set</code> of every object reachable from the roots (mark phase). It must handle cycles.",
+    "examples": [
+     "const a = { refs: [] }, b = { refs: [a] }; a.refs.push(b); reachable([a]).size  // 2",
+     "reachable([]).size  // 0"
+    ],
+    "hint": "A stack (or queue) of objects to visit and a Set of seen ones; skip objects already seen.",
+    "fn": "reachable",
+    "starter": "function reachable(roots) {\n  // your code\n}",
+    "solution": "function reachable(roots) {\n  const seen = new Set(), stack = [...roots]\n  while (stack.length) {\n    const o = stack.pop()\n    if (seen.has(o)) continue\n    seen.add(o)\n    for (const r of o.refs ?? []) stack.push(r)\n  }\n  return seen\n}",
+    "checks": [
+     {
+      "t": "follows references",
+      "verify": "const c = { refs: [] }, b = { refs: [c] }, a = { refs: [b] }; const s = reachable([a]); assert(s instanceof Set && s.has(c) && s.size === 3, \"chain\")"
+     },
+     {
+      "t": "handles cycles",
+      "verify": "const a = { refs: [] }, b = { refs: [a] }; a.refs.push(b); assert(reachable([a]).size === 2, \"cycle\")"
+     },
+     {
+      "t": "unreachable objects are not marked",
+      "verify": "const lost = { refs: [] }, a = { refs: [] }; const s = reachable([a]); assert(s.has(a) && !s.has(lost), \"unreachable\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Unreachable = freed, cycles included. A leak is an object you no longer need that is still reachable.",
+    "mistakes": [
+     "Thinking <code>x = null</code> frees an object that is still referenced elsewhere.",
+     "Trying to control when GC runs."
+    ]
+   }
+  },
+  {
+   "id": "weakmap-weakset",
+   "prereqs": [
+    "garbage-collection"
+   ],
+   "dryRun": {
+    "title": "Map vs WeakMap holding data about a DOM node",
+    "columns": [
+     "after node.remove(); node = null",
+     "Map",
+     "WeakMap"
+    ],
+    "rows": [
+     [
+      "is the node reachable?",
+      "yes, as a Map key",
+      "no"
+     ],
+     [
+      "entry",
+      "stays forever",
+      "disappears with the node"
+     ],
+     [
+      "can you list keys?",
+      "yes",
+      "no (not iterable)"
+     ],
+     [
+      "key types",
+      "anything",
+      "objects only"
+     ]
+    ],
+    "hit": 1,
+    "note": "WeakMap/WeakSet hold their keys <b>weakly</b>: the entry does not keep the key alive. Perfect for metadata, caches and private data per object. <b>WeakRef</b> holds a single object weakly, and <code>FinalizationRegistry</code> lets you know (eventually) when it was collected."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const wm = new WeakMap()\ntry { wm.set('key', 1) } catch (e) { console.log(e.name) }</code></pre>",
+     "opts": [
+      "<code>undefined</code>",
+      "<code>RangeError</code>",
+      "<code>SyntaxError</code>",
+      "<code>TypeError</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Weak keys must be objects (or non-registered symbols). Strings can never be collected, so they are not allowed."
+     ],
+     "exec": "const wm = new WeakMap()\ntry { wm.set('key', 1) } catch (e) { console.log(e.name) }"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const ws = new WeakSet()\nconst o = {}\nws.add(o)\nconsole.log(ws.has(o), typeof ws.size, typeof ws[Symbol.iterator])</code></pre>",
+     "opts": [
+      "<code>true undefined undefined</code>",
+      "<code>true number function</code>",
+      "<code>false undefined undefined</code>",
+      "<code>true number undefined</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Weak collections have no size and are not iterable: their contents can change at any time due to GC."
+     ],
+     "exec": "const ws = new WeakSet()\nconst o = {}\nws.add(o)\nconsole.log(ws.has(o), typeof ws.size, typeof ws[Symbol.iterator])"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const ref = new WeakRef({ v: 1 })\nconsole.log(ref.deref()?.v)</code></pre>",
+     "opts": [
+      "<code>undefined</code>",
+      "<code>TypeError</code>",
+      "<code>1</code>",
+      "<code>null</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "deref() returns the object if it has not been collected yet. Right after creation it is still there; later it might be undefined."
+     ],
+     "exec": "const ref = new WeakRef({ v: 1 })\nconsole.log(ref.deref()?.v)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const priv = new WeakMap()\nclass User { constructor(n) { priv.set(this, { n }) } get name() { return priv.get(this).n } }\nconst u = new User('A')\nconsole.log(u.name, Object.keys(u).length)</code></pre>",
+     "opts": [
+      "<code>A 1</code>",
+      "<code>undefined 0</code>",
+      "<code>A undefined</code>",
+      "<code>A 0</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "WeakMap private data: invisible on the instance and freed with it. (Today #private fields do the same more simply.)"
+     ],
+     "exec": "const priv = new WeakMap()\nclass User { constructor(n) { priv.set(this, { n }) } get name() { return priv.get(this).n } }\nconst u = new User('A')\nconsole.log(u.name, Object.keys(u).length)"
+    },
+    {
+     "tag": "Pick one",
+     "q": "You cache the computed layout for each DOM element. Which structure?",
+     "opts": [
+      "<code>Map</code>",
+      "<code>WeakMap</code>",
+      "<code>WeakSet</code>",
+      "A plain object"
+     ],
+     "ans": 1,
+     "why": [
+      "The cache entry should disappear when the element is gone."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>memoizeByObject(fn)</code>: cache fn(obj) per object argument in a WeakMap, so cached results disappear with the object. Return the memoized function.",
+    "examples": [
+     "const f = memoizeByObject((o) => o.x * 2); const o = { x: 2 }; f(o); f(o)  // fn ran once",
+     "f({ x: 2 })  // a new object: runs again"
+    ],
+    "hint": "if (!cache.has(o)) cache.set(o, fn(o)); return cache.get(o)",
+    "fn": "memoizeByObject",
+    "starter": "function memoizeByObject(fn) {\n  // your code\n}",
+    "solution": "function memoizeByObject(fn) {\n  const cache = new WeakMap()\n  return (o) => {\n    if (!cache.has(o)) cache.set(o, fn(o))\n    return cache.get(o)\n  }\n}",
+    "checks": [
+     {
+      "t": "same object hits the cache",
+      "verify": "let n = 0; const f = memoizeByObject((o) => (n++, o.x)); const o = { x: 1 }; f(o); f(o); assert(f(o) === 1 && n === 1, \"cache\")"
+     },
+     {
+      "t": "different objects compute separately",
+      "verify": "let n = 0; const f = memoizeByObject((o) => (n++, o.x)); f({ x: 1 }); f({ x: 1 }); assert(n === 2, \"identity\")"
+     },
+     {
+      "t": "non-object arguments throw (weak keys)",
+      "verify": "const f = memoizeByObject((x) => x); assert(typeof f === \"function\", \"must return a function\"); let t = false; try { f(\"str\") } catch (e) { t = e instanceof TypeError }; assert(t, \"should throw TypeError\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "WeakMap/WeakSet keys do not keep objects alive: use them for per-object metadata and caches. They are not iterable and have no size.",
+    "mistakes": [
+     "Using a Map for per-element data and leaking detached elements.",
+     "Expecting WeakRef.deref() to always return the object."
+    ]
+   }
+  },
+  {
+   "id": "memory-leaks",
+   "prereqs": [
+    "weakmap-weakset"
+   ],
+   "dryRun": {
+    "title": "The usual suspects",
+    "columns": [
+     "leak",
+     "why it stays reachable",
+     "fix"
+    ],
+    "rows": [
+     [
+      "event listener never removed",
+      "the element/window holds the handler, which holds its closure",
+      "removeEventListener or AbortController"
+     ],
+     [
+      "setInterval never cleared",
+      "the timer list holds the callback",
+      "clearInterval on unmount"
+     ],
+     [
+      "growing cache / array",
+      "a global Map keeps every entry",
+      "limit size or use WeakMap"
+     ],
+     [
+      "detached DOM node in a variable",
+      "your variable still points at it",
+      "drop the reference"
+     ],
+     [
+      "closure capturing big data",
+      "the closure is long-lived",
+      "capture only what you need"
+     ]
+    ],
+    "hit": 1,
+    "note": "A leak is memory that grows because things you no longer need stay reachable. In UIs the classic cases are listeners and timers that outlive the component that created them."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const handlers = []\nfunction mount() { const big = new Array(1000).fill(0); handlers.push(() =&gt; big.length) }\nfor (let i = 0; i &lt; 3; i++) mount()\nconsole.log(handlers.length)</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>0</code>",
+      "<code>3</code>",
+      "<code>1000</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Each mount adds a handler that captures its own big array, and nothing ever removes them."
+     ],
+     "exec": "const handlers = []\nfunction mount() { const big = new Array(1000).fill(0); handlers.push(() => big.length) }\nfor (let i = 0; i < 3; i++) mount()\nconsole.log(handlers.length)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const ac = new AbortController()\nconst target = new EventTarget()\nlet n = 0\ntarget.addEventListener('ping', () =&gt; n++, { signal: ac.signal })\ntarget.dispatchEvent(new Event('ping'))\nac.abort()\ntarget.dispatchEvent(new Event('ping'))\nconsole.log(n)</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>2</code>",
+      "<code>0</code>",
+      "<code>undefined</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Aborting the signal removes every listener registered with it. One abort cleans up many listeners."
+     ],
+     "exec": "const ac = new AbortController()\nconst target = new EventTarget()\nlet n = 0\ntarget.addEventListener('ping', () => n++, { signal: ac.signal })\ntarget.dispatchEvent(new Event('ping'))\nac.abort()\ntarget.dispatchEvent(new Event('ping'))\nconsole.log(n)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let ticks = 0\nconst id = setInterval(() =&gt; { ticks++; if (ticks === 3) clearInterval(id) }, 1)\nsetTimeout(() =&gt; console.log(ticks), 50)</code></pre>",
+     "opts": [
+      "<code>50</code>",
+      "<code>0</code>",
+      "<code>3</code>",
+      "<code>infinite</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "clearInterval stops the timer and releases its callback. Without it the callback runs (and stays alive) forever."
+     ],
+     "exec": "let ticks = 0\nconst id = setInterval(() => { ticks++; if (ticks === 3) clearInterval(id) }, 1)\nsetTimeout(() => console.log(ticks), 50)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const cache = new Map()\nfunction get(k) { if (!cache.has(k)) cache.set(k, k * 2); return cache.get(k) }\nfor (let i = 0; i &lt; 10000; i++) get(i)\nconsole.log(cache.size)</code></pre>",
+     "opts": [
+      "<code>10000</code>",
+      "<code>100</code>",
+      "<code>0</code>",
+      "<code>1</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "An unbounded cache keyed by ever-new values grows without limit. Cap it (LRU) or key it weakly."
+     ],
+     "exec": "const cache = new Map()\nfunction get(k) { if (!cache.has(k)) cache.set(k, k * 2); return cache.get(k) }\nfor (let i = 0; i < 10000; i++) get(i)\nconsole.log(cache.size)"
+    },
+    {
+     "tag": "Find it",
+     "q": "How do you confirm a leak in a page?",
+     "opts": [
+      "Check the Network tab",
+      "Look for errors in the console",
+      "Measure page load time",
+      "Repeat the action (open/close the dialog) several times and compare heap snapshots: memory keeps growing"
+     ],
+     "ans": 3,
+     "why": [
+      "A leak shows as growth that never comes back after GC."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>lruCache(limit)</code> returning <code>{ get(k), set(k, v), size }</code> that keeps at most <code>limit</code> entries, evicting the least recently used. <code>get</code> counts as a use. (size is a getter.)",
+    "examples": [
+     "const c = lruCache(2); c.set(\"a\", 1); c.set(\"b\", 2); c.get(\"a\"); c.set(\"c\", 3)  // \"b\" is evicted",
+     "c.size  // 2"
+    ],
+    "hint": "A Map keeps insertion order: on get, delete and re-set the key; on set over the limit, delete <code>map.keys().next().value</code>.",
+    "fn": "lruCache",
+    "starter": "function lruCache(limit) {\n  // your code\n}",
+    "solution": "function lruCache(limit) {\n  const m = new Map()\n  return {\n    get(k) {\n      if (!m.has(k)) return undefined\n      const v = m.get(k); m.delete(k); m.set(k, v)\n      return v\n    },\n    set(k, v) {\n      m.delete(k); m.set(k, v)\n      if (m.size > limit) m.delete(m.keys().next().value)\n    },\n    get size() { return m.size },\n  }\n}",
+    "checks": [
+     {
+      "t": "never grows past the limit",
+      "verify": "const c = lruCache(2); for (let i = 0; i < 100; i++) c.set(i, i); assert(c.size === 2 && c.get(99) === 99 && c.get(0) === undefined, \"limit\")"
+     },
+     {
+      "t": "get refreshes an entry",
+      "verify": "const c = lruCache(2); c.set(\"a\", 1); c.set(\"b\", 2); c.get(\"a\"); c.set(\"c\", 3); assert(c.get(\"a\") === 1 && c.get(\"b\") === undefined && c.get(\"c\") === 3, \"lru\")"
+     },
+     {
+      "t": "setting an existing key updates it",
+      "verify": "const c = lruCache(2); c.set(\"a\", 1); c.set(\"a\", 5); assert(c.get(\"a\") === 5 && c.size === 1, \"update\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Leaks are things that stay reachable: listeners, timers, caches, detached nodes, big closures. Clean up on unmount; bound your caches.",
+    "mistakes": [
+     "Adding listeners or intervals in a component without removing them.",
+     "Unbounded Maps used as caches."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Cache With Time Limit",
+     "diff": "medium",
+     "lc": "cache-with-time-limit"
+    }
+   ]
+  },
+  {
+   "id": "lazy-evaluation",
+   "prereqs": [
+    "memory-leaks"
+   ],
+   "dryRun": {
+    "title": "Eager vs lazy: first 2 even squares of 1…1,000,000",
+    "columns": [
+     "approach",
+     "work done",
+     "memory"
+    ],
+    "rows": [
+     [
+      "arr.map(sq).filter(even).slice(0, 2)",
+      "1,000,000 squares + 1,000,000 checks",
+      "two big arrays"
+     ],
+     [
+      "generator pipeline + take(2)",
+      "4 squares, 4 checks",
+      "a few values"
+     ],
+     [
+      "getter with cache",
+      "computed on first read only",
+      "one value"
+     ]
+    ],
+    "hit": 1,
+    "note": "<b>Lazy</b> evaluation computes a value only when it is needed. Generators make lazy pipelines; getters and memoized functions make lazy properties. It pays off for big or infinite sequences and expensive values that may never be used."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let work = 0\nfunction* nums() { for (let i = 1; ; i++) { work++; yield i } }\nfunction* map(it, f) { for (const x of it) yield f(x) }\nfunction* take(it, n) { if (n &lt;= 0) return; for (const x of it) { yield x; if (--n === 0) return } }\nconsole.log([...take(map(nums(), (x) =&gt; x * x), 3)].join(), work)</code></pre>",
+     "opts": [
+      "<code>1,4,9 infinite</code>",
+      "<code>1,4,9 3</code>",
+      "<code>1,4,9 1000000</code>",
+      "<code>1,4,9 0</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Only 3 values are pulled through the pipeline, so only 3 are produced, even from an infinite source."
+     ],
+     "exec": "let work = 0\nfunction* nums() { for (let i = 1; ; i++) { work++; yield i } }\nfunction* map(it, f) { for (const x of it) yield f(x) }\nfunction* take(it, n) { if (n <= 0) return; for (const x of it) { yield x; if (--n === 0) return } }\nconsole.log([...take(map(nums(), (x) => x * x), 3)].join(), work)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let calls = 0\nconst cfg = { get heavy() { calls++; return 42 } }\nconsole.log(calls, cfg.heavy, cfg.heavy, calls)</code></pre>",
+     "opts": [
+      "<code>1 42 42 1</code>",
+      "<code>0 42 42 2</code>",
+      "<code>0 42 42 0</code>",
+      "<code>1 42 42 2</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "A getter is lazy but recomputes on every read. Cache it if it is expensive."
+     ],
+     "exec": "let calls = 0\nconst cfg = { get heavy() { calls++; return 42 } }\nconsole.log(calls, cfg.heavy, cfg.heavy, calls)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let calls = 0\nconst cfg = { get heavy() { calls++; Object.defineProperty(this, 'heavy', { value: 42 }); return 42 } }\ncfg.heavy; cfg.heavy\nconsole.log(calls)</code></pre>",
+     "opts": [
+      "<code>2</code>",
+      "<code>0</code>",
+      "<code>42</code>",
+      "<code>1</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "The getter replaces itself with a plain value on first read: lazy and computed once."
+     ],
+     "exec": "let calls = 0\nconst cfg = { get heavy() { calls++; Object.defineProperty(this, 'heavy', { value: 42 }); return 42 } }\ncfg.heavy; cfg.heavy\nconsole.log(calls)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const a = [1, 2, 3, 4]\nlet checks = 0\nconst hit = a.find((x) =&gt; (checks++, x &gt; 1))\nconsole.log(hit, checks)</code></pre>",
+     "opts": [
+      "<code>2 2</code>",
+      "<code>2 4</code>",
+      "<code>4 4</code>",
+      "<code>undefined 0</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "find, some and every stop early, so they do not check the rest."
+     ],
+     "exec": "const a = [1, 2, 3, 4]\nlet checks = 0\nconst hit = a.find((x) => (checks++, x > 1))\nconsole.log(hit, checks)"
+    },
+    {
+     "tag": "When not",
+     "q": "When is lazy evaluation a bad idea?",
+     "opts": [
+      "Never",
+      "Always for arrays",
+      "When the value is needed anyway and computing it later happens at a worse moment (e.g. during a click)",
+      "When using generators"
+     ],
+     "ans": 2,
+     "why": [
+      "Laziness moves the cost; it does not remove it."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write a lazy helper <code>lazy(iterable)</code> returning an object with chainable <code>map(f)</code>, <code>filter(f)</code>, <code>take(n)</code> and a final <code>toArray()</code>. Nothing may be computed before toArray, and it must work on an infinite generator.",
+    "examples": [
+     "lazy([1, 2, 3, 4]).map((x) => x * 2).filter((x) => x > 2).toArray()  // [4, 6, 8]",
+     "lazy(naturals()).map((x) => x * x).take(3).toArray()  // [1, 4, 9]"
+    ],
+    "hint": "Store a generator-producing function; each method wraps it in a new generator and returns lazy(newIterable).",
+    "fn": "lazy",
+    "starter": "function lazy(iterable) {\n  // your code\n}",
+    "solution": "function lazy(iterable) {\n  return {\n    map: (f) => lazy((function* () { for (const x of iterable) yield f(x) })()),\n    filter: (f) => lazy((function* () { for (const x of iterable) if (f(x)) yield x })()),\n    take: (n) => lazy((function* () { if (n <= 0) return; for (const x of iterable) { yield x; if (--n === 0) return } })()),\n    toArray: () => [...iterable],\n  }\n}",
+    "checks": [
+     {
+      "t": "works on arrays",
+      "verify": "assert(JSON.stringify(lazy([1, 2, 3, 4]).map((x) => x * 2).filter((x) => x > 2).toArray()) === \"[4,6,8]\", \"array\")"
+     },
+     {
+      "t": "works on an infinite generator",
+      "verify": "function* nat() { for (let i = 1; ; i++) yield i } assert(JSON.stringify(lazy(nat()).map((x) => x * x).take(3).toArray()) === \"[1,4,9]\", \"infinite\")"
+     },
+     {
+      "t": "nothing runs before toArray",
+      "verify": "let n = 0; const chain = lazy([1, 2, 3]).map((x) => (n++, x)); assert(n === 0 && chain.toArray().length === 3 && n === 3, \"eager\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Compute only what is used: generator pipelines for sequences, self-replacing getters or memoization for expensive values.",
+    "mistakes": [
+     "Building huge intermediate arrays to use two items.",
+     "Lazy getters that recompute an expensive value on every read."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Chunk Array",
+     "diff": "easy",
+     "lc": "chunk-array"
+    }
+   ]
+  },
+  {
+   "id": "debounce-throttle",
+   "prereqs": [
+    "lazy-evaluation"
+   ],
+   "dryRun": {
+    "title": "Events at 0, 50, 100, 150, 400 ms, wait = 200",
+    "columns": [
+     "strategy",
+     "calls fn at",
+     "why"
+    ],
+    "rows": [
+     [
+      "no limit",
+      "0, 50, 100, 150, 400",
+      "every event"
+     ],
+     [
+      "debounce(200)",
+      "350, 600",
+      "after 200 ms of quiet"
+     ],
+     [
+      "throttle(200), leading",
+      "0, 200, 400",
+      "at most once per 200 ms"
+     ]
+    ],
+    "hit": 1,
+    "note": "<b>Debounce</b>: run once after things go quiet (search box, resize end, autosave). <b>Throttle</b>: run at most once per interval while things keep happening (scroll position, mousemove, rate-limited buttons)."
+   },
+   "think": [
+    {
+     "tag": "Pick one",
+     "q": "Live search: call the API when the user pauses typing. Which?",
+     "opts": [
+      "<code>throttle</code>",
+      "<code>setInterval</code>",
+      "Neither",
+      "<code>debounce</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "You want one call after the burst, not a steady stream during it."
+     ]
+    },
+    {
+     "tag": "Pick one",
+     "q": "Update a \"scrolled %\" bar smoothly while the user scrolls. Which?",
+     "opts": [
+      "<code>debounce</code>",
+      "<code>throttle</code>",
+      "<code>setTimeout(fn, 0)</code>",
+      "Neither"
+     ],
+     "ans": 1,
+     "why": [
+      "Debounce would freeze the bar until scrolling stops."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function debounce(fn, ms) { let t; return (...a) =&gt; { clearTimeout(t); t = setTimeout(() =&gt; fn(...a), ms) } }\nconst log = []\nconst d = debounce((x) =&gt; log.push(x), 20)\nd(1); d(2); d(3)\nsetTimeout(() =&gt; console.log(log.join()), 60)</code></pre>",
+     "opts": [
+      "<code>1,2,3</code>",
+      "<code>1</code>",
+      "<code>3</code>",
+      "<code>undefined</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Each call cancels the previous timer; only the last call runs, with its arguments."
+     ],
+     "exec": "function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms) } }\nconst log = []\nconst d = debounce((x) => log.push(x), 20)\nd(1); d(2); d(3)\nsetTimeout(() => console.log(log.join()), 60)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function throttle(fn, ms) { let last = -Infinity; return (...a) =&gt; { const now = Date.now(); if (now - last &gt;= ms) { last = now; fn(...a) } } }\nconst log = []\nconst t = throttle((x) =&gt; log.push(x), 1000)\nt(1); t(2); t(3)\nconsole.log(log.join())</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>1,2,3</code>",
+      "<code>3</code>",
+      "<code>2</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "The first call runs; the rest within 1000 ms are dropped. (A trailing throttle would also run the last one later.)"
+     ],
+     "exec": "function throttle(fn, ms) { let last = -Infinity; return (...a) => { const now = Date.now(); if (now - last >= ms) { last = now; fn(...a) } } }\nconst log = []\nconst t = throttle((x) => log.push(x), 1000)\nt(1); t(2); t(3)\nconsole.log(log.join())"
+    },
+    {
+     "tag": "Bug",
+     "q": "In a React component, <code>const onChange = debounce(save, 300)</code> is written in the body. Typing saves on every key. Why?",
+     "opts": [
+      "debounce does not work in React",
+      "300 ms is too short",
+      "A new debounced function (with a new timer) is created on every render",
+      "save is async"
+     ],
+     "ans": 2,
+     "why": [
+      "Create it once (useMemo/useRef) so all calls share one timer."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Implement <code>debounce(fn, ms)</code> with a <code>.cancel()</code> method and <code>throttle(fn, ms)</code> (leading edge: the first call runs immediately, then at most once per ms). Both pass the latest arguments.",
+    "examples": [
+     "const d = debounce(save, 300); d(\"a\"); d(\"b\")  // save(\"b\") once, 300 ms later",
+     "const t = throttle(track, 100); t(); t(); t()  // track runs once"
+    ],
+    "hint": "debounce: clearTimeout + setTimeout in a closure. throttle: remember the last run time.",
+    "fn": "debounce",
+    "starter": "function debounce(fn, ms) {\n  // your code\n}\nfunction throttle(fn, ms) {\n  // your code\n}",
+    "solution": "function debounce(fn, ms) {\n  let t\n  const d = (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms) }\n  d.cancel = () => clearTimeout(t)\n  return d\n}\nfunction throttle(fn, ms) {\n  let last = -Infinity\n  return (...a) => {\n    const now = Date.now()\n    if (now - last >= ms) { last = now; fn(...a) }\n  }\n}",
+    "checks": [
+     {
+      "t": "debounce runs once with the last arguments",
+      "verify": "const got = []; const d = debounce((x) => got.push(x), 20); d(1); d(2); d(3); await sleep(50); assert(got.join() === \"3\", got.join())"
+     },
+     {
+      "t": "cancel stops a pending call",
+      "verify": "const got = []; const d = debounce((x) => got.push(x), 20); d(1); d.cancel(); await sleep(40); assert(got.length === 0, \"cancel\")"
+     },
+     {
+      "t": "throttle runs the first call and drops the burst",
+      "verify": "const got = []; const t = throttle((x) => got.push(x), 50); t(1); t(2); t(3); await sleep(60); t(4); assert(got.join() === \"1,4\", got.join())"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Debounce = once after the burst; throttle = at most once per interval during it. Create them once, not on every render.",
+    "mistakes": [
+     "Using debounce for things that must update during the activity.",
+     "Re-creating the debounced function each render."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Debounce",
+     "diff": "medium",
+     "lc": "debounce"
+    },
+    {
+     "name": "debounce(fn, delay)",
+     "diff": "easy",
+     "mc": "debounce"
+    }
+   ]
+  },
+  {
+   "id": "web-workers",
+   "prereqs": [
+    "debounce-throttle"
+   ],
+   "dryRun": {
+    "title": "Main thread vs worker",
+    "columns": [
+     "",
+     "main thread",
+     "worker"
+    ],
+    "rows": [
+     [
+      "runs",
+      "your UI code, events, rendering",
+      "a separate script on another thread"
+     ],
+     [
+      "DOM access",
+      "yes",
+      "no"
+     ],
+     [
+      "talks via",
+      "worker.postMessage / onmessage",
+      "self.postMessage / onmessage"
+     ],
+     [
+      "data sent",
+      "copied (structured clone) or transferred",
+      "same"
+     ],
+     [
+      "good for",
+      "UI",
+      "heavy CPU work: parsing, image processing, crypto"
+     ]
+    ],
+    "hit": 4,
+    "note": "A Web Worker runs JavaScript on another thread so heavy work does not freeze the page. There is no shared memory by default: messages are <b>copied</b> with the structured clone algorithm (or ArrayBuffers are <b>transferred</b>, leaving the sender with an empty buffer)."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const original = { d: new Date(0), m: new Map([[1, 2]]), nested: { a: [1] } }\nconst copy = structuredClone(original)\ncopy.nested.a.push(2)\nconsole.log(original.nested.a.length, copy.m.get(1), copy.d instanceof Date)</code></pre>",
+     "opts": [
+      "<code>1 2 true</code>",
+      "<code>2 2 true</code>",
+      "<code>1 undefined false</code>",
+      "<code>1 2 false</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "postMessage uses structured clone: a deep copy that keeps Dates and Maps. Changes on one side do not affect the other."
+     ],
+     "exec": "const original = { d: new Date(0), m: new Map([[1, 2]]), nested: { a: [1] } }\nconst copy = structuredClone(original)\ncopy.nested.a.push(2)\nconsole.log(original.nested.a.length, copy.m.get(1), copy.d instanceof Date)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>try { structuredClone({ f() {} }) } catch (e) { console.log(e.name) }</code></pre>",
+     "opts": [
+      "<code>TypeError</code>",
+      "<code>undefined</code>",
+      "<code>SyntaxError</code>",
+      "<code>DataCloneError</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Functions cannot be cloned, so you cannot send them to a worker. Send data, not behaviour."
+     ],
+     "exec": "try { structuredClone({ f() {} }) } catch (e) { console.log(e.name) }"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const buf = new ArrayBuffer(8)\nconst moved = structuredClone(buf, { transfer: [buf] })\nconsole.log(buf.byteLength, moved.byteLength)</code></pre>",
+     "opts": [
+      "<code>8 8</code>",
+      "<code>0 8</code>",
+      "<code>0 0</code>",
+      "<code>8 0</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Transferring moves the buffer instead of copying: fast for big data, and the sender can no longer use it."
+     ],
+     "exec": "const buf = new ArrayBuffer(8)\nconst moved = structuredClone(buf, { transfer: [buf] })\nconsole.log(buf.byteLength, moved.byteLength)"
+    },
+    {
+     "tag": "Pick one",
+     "q": "Which task is the best fit for a Web Worker?",
+     "opts": [
+      "Updating a button label",
+      "Parsing a 50 MB CSV file",
+      "Reading localStorage once",
+      "Adding a click listener"
+     ],
+     "ans": 1,
+     "why": [
+      "Workers help with long CPU work. They have no DOM, and messaging has a cost."
+     ]
+    },
+    {
+     "tag": "Limits",
+     "q": "Inside a worker, which is NOT available?",
+     "opts": [
+      "<code>fetch</code>",
+      "<code>setTimeout</code>",
+      "<code>postMessage</code>",
+      "<code>document</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Workers have no DOM. They do have timers, fetch and messaging."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Without a worker, keep the page responsive: write <code>processInChunks(items, chunkSize, fn)</code> that calls fn on each item, but yields to the event loop (with <code>setTimeout</code>) after every chunk. Resolve with the array of results.",
+    "examples": [
+     "await processInChunks([1, 2, 3], 2, (x) => x * 2)  // [2, 4, 6]",
+     "// a timer scheduled before it can run between chunks"
+    ],
+    "hint": "Loop over slices; after each slice await new Promise(r =&gt; setTimeout(r)).",
+    "fn": "processInChunks",
+    "starter": "async function processInChunks(items, chunkSize, fn) {\n  // your code\n}",
+    "solution": "async function processInChunks(items, chunkSize, fn) {\n  const out = []\n  for (let i = 0; i < items.length; i += chunkSize) {\n    for (const x of items.slice(i, i + chunkSize)) out.push(fn(x))\n    await new Promise((r) => setTimeout(r))\n  }\n  return out\n}",
+    "checks": [
+     {
+      "t": "returns all results in order",
+      "verify": "const r = await processInChunks([1, 2, 3, 4, 5], 2, (x) => x * 2); assert(JSON.stringify(r) === \"[2,4,6,8,10]\", JSON.stringify(r))"
+     },
+     {
+      "t": "other tasks run between chunks",
+      "verify": "let ran = false, seenAt = -1, i = 0; setTimeout(() => { ran = true; seenAt = i }); await processInChunks([1, 2, 3, 4], 1, () => i++); assert(ran && seenAt > 0 && seenAt < 4, \"did not yield: \" + seenAt)"
+     },
+     {
+      "t": "empty input",
+      "verify": "const r = await processInChunks([], 3, (x) => x); assert(Array.isArray(r) && r.length === 0, \"empty\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Workers move heavy CPU work off the main thread; messages are deep-copied (structured clone) or transferred. No DOM inside.",
+    "mistakes": [
+     "Sending functions or DOM nodes to a worker.",
+     "Using a worker for tiny tasks where messaging costs more than the work."
+    ]
+   }
+  }
+ ]
+}

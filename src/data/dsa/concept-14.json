@@ -1,0 +1,876 @@
+{
+  "items": [
+    {
+      "id": "knapsack",
+      "prereqs": [
+        "dp-unbounded",
+        "dp-1d"
+      ],
+      "dryRun": {
+        "title": "0-1 knapsack, capacity 4. Items (weight, value): A (1, 15), B (3, 20), C (4, 30). dp[w] = best value with capacity w",
+        "columns": [
+          "after item",
+          "dp[0..4]",
+          "what changed"
+        ],
+        "rows": [
+          [
+            "(start)",
+            "0 0 0 0 0",
+            "no items yet"
+          ],
+          [
+            "A (1, 15)",
+            "0 15 15 15 15",
+            "A fits anywhere from capacity 1"
+          ],
+          [
+            "B (3, 20)",
+            "0 15 15 20 35",
+            "dp[4] = max(15, dp[1] + 20) = 35 (A and B together)"
+          ],
+          [
+            "C (4, 30)",
+            "0 15 15 20 35",
+            "dp[4] = max(35, dp[0] + 30) = 35, so C is not worth it"
+          ]
+        ],
+        "hit": 2,
+        "note": "Each item is used <b>at most once</b>, so the capacity loop goes <b>downwards</b>: <code>dp[w] = max(dp[w], dp[w - weight] + value)</code> reads the values from before this item was added."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const weights = [1, 3, 4], values = [15, 20, 30], W = 4\nconst dp = new Array(W + 1).fill(0)\nfor (let i = 0; i &lt; weights.length; i++) {\n  for (let w = W; w &gt;= weights[i]; w--) {\n    dp[w] = Math.max(dp[w], dp[w - weights[i]] + values[i])\n  }\n}\nconsole.log(dp[W])</code></pre>",
+          "opts": [
+            "<code>30</code>",
+            "<code>35</code>",
+            "<code>65</code>",
+            "<code>45</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "Items A and B together weigh 4 and are worth 15 + 20 = 35. Item C alone weighs 4 and is worth only 30.",
+            "Taking the item with the best value first (greedy) would pick C and miss the better pair."
+          ],
+          "exec": "const weights = [1, 3, 4], values = [15, 20, 30], W = 4\nconst dp = new Array(W + 1).fill(0)\nfor (let i = 0; i < weights.length; i++) {\n  for (let w = W; w >= weights[i]; w--) {\n    dp[w] = Math.max(dp[w], dp[w - weights[i]] + values[i])\n  }\n}\nconsole.log(dp[W])"
+        },
+        {
+          "tag": "Spot the bug",
+          "q": "<pre><code>const weights = [1], values = [15], W = 3\nconst dp = new Array(W + 1).fill(0)\nfor (let i = 0; i &lt; weights.length; i++) {\n  for (let w = weights[i]; w &lt;= W; w++) {\n    dp[w] = Math.max(dp[w], dp[w - weights[i]] + values[i])\n  }\n}\nconsole.log(dp[W])</code></pre><p>There is one item, so the correct answer is 15. What does this print?</p>",
+          "opts": [
+            "<code>15</code>",
+            "<code>30</code>",
+            "<code>45</code>",
+            "<code>0</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "Going <b>upwards</b>, <code>dp[w - weight]</code> already contains this item, so the same item is added again and again: 15 × 3 = 45.",
+            "That is the unbounded knapsack. For 0-1, loop the capacity downwards."
+          ],
+          "exec": "const weights = [1], values = [15], W = 3\nconst dp = new Array(W + 1).fill(0)\nfor (let i = 0; i < weights.length; i++) {\n  for (let w = weights[i]; w <= W; w++) {\n    dp[w] = Math.max(dp[w], dp[w - weights[i]] + values[i])\n  }\n}\nconsole.log(dp[W])"
+        },
+        {
+          "tag": "Why downwards?",
+          "q": "<p>Why does the capacity loop go from high to low for 0-1 knapsack?</p>",
+          "opts": [
+            "To make the loop shorter",
+            "So that each update reads values from before the current item was added, and the item is counted only once",
+            "Because arrays are faster backwards",
+            "To avoid negative numbers"
+          ],
+          "ans": 1,
+          "why": [
+            "When we update a high capacity first, the lower cells it reads have not been changed by this item yet.",
+            "The two loops (coins upwards, knapsack downwards) look almost the same and are a favourite interview trap."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>n items and capacity W. What is the time, and why is it called \"pseudo-polynomial\"?</p>",
+          "opts": [
+            "<code>O(n * W); W is a number, so the cost grows with its value and not with the number of digits</code>",
+            "<code>O(n log W)</code>",
+            "<code>O(2^n); it is exponential</code>",
+            "<code>O(W²)</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "The table has n × W cells. If W is a huge number (like 10⁹), the table is too big even though W is \"just one number\".",
+            "With only a 1D array the space is O(W)."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Variation",
+          "q": "<p>\"Can some of these numbers add up exactly to a target?\" (subset sum). How does it relate to knapsack?</p>",
+          "opts": [
+            "It is not related",
+            "It is a 0-1 knapsack where the table holds true / false: dp[s] = dp[s] OR dp[s - num]",
+            "It needs a graph",
+            "It is solved with a heap"
+          ],
+          "ans": 1,
+          "why": [
+            "Each number is used at most once, so the sum loop goes downwards, but the cell stores \"can I make this sum?\" instead of a value.",
+            "Partition equal subset sum, and target sum, are the same idea."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>knapsack(weights, values, capacity)</code>. Each item can be taken <b>at most once</b>. Return the largest total value whose total weight is at most <code>capacity</code>.</p>",
+        "examples": [
+          "knapsack([1, 3, 4], [15, 20, 30], 4)  // 35",
+          "knapsack([10, 20, 30], [60, 100, 120], 50)  // 220"
+        ],
+        "hint": "<p>Use a 1D array <code>dp</code> of length <code>capacity + 1</code> filled with 0. For each item, loop the capacity from <code>capacity</code> <b>down</b> to the item weight.</p>",
+        "fn": "knapsack",
+        "starter": "function knapsack(weights, values, capacity) {\n  // your code\n}",
+        "solution": "function knapsack(weights, values, capacity) {\n  const dp = new Array(capacity + 1).fill(0)\n  for (let i = 0; i < weights.length; i++) {\n    for (let w = capacity; w >= weights[i]; w--) {\n      dp[w] = Math.max(dp[w], dp[w - weights[i]] + values[i])\n    }\n  }\n  return dp[capacity]\n}",
+        "checks": [
+          {
+            "t": "the lesson example",
+            "verify": "assert(knapsack([1, 3, 4], [15, 20, 30], 4) === 35, \"expected 35\")"
+          },
+          {
+            "t": "the classic example",
+            "verify": "assert(knapsack([10, 20, 30], [60, 100, 120], 50) === 220, \"expected 220\")"
+          },
+          {
+            "t": "each item only once",
+            "verify": "assert(knapsack([1], [15], 3) === 15, \"expected 15, an item can be used once\")"
+          },
+          {
+            "t": "zero capacity and an item that is too heavy",
+            "verify": "assert(knapsack([2, 3], [5, 6], 0) === 0 && knapsack([10], [99], 5) === 0, \"expected 0\")"
+          },
+          {
+            "t": "a bigger case stays fast",
+            "verify": "const w = Array.from({ length: 100 }, (_, i) => (i % 17) + 3), v = Array.from({ length: 100 }, (_, i) => (i * 7) % 23 + 1); const t0 = Date.now(); const r = knapsack(w, v, 10000); assert(r === v.reduce((a, b) => a + b, 0) && Date.now() - t0 < 500, \"wrong or too slow (capacity is large enough for every item)\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "0-1 knapsack: <code>dp[w] = max(dp[w], dp[w - weight] + value)</code>, with the capacity loop <b>downwards</b> so every item is used once. O(n × W) time, O(W) space. Subset sum is the same with true / false.",
+        "mistakes": [
+          "Looping the capacity upwards (that allows repeats).",
+          "Picking items by best value or ratio (greedy fails for 0-1).",
+          "Reading <code>dp[w - weight]</code> when the weight is bigger than w.",
+          "Using a table that is too big for a huge capacity."
+        ]
+      }
+    },
+    {
+      "id": "dp-state-machine",
+      "prereqs": [
+        "identify-dp",
+        "dp-1d"
+      ],
+      "dryRun": {
+        "title": "Stock prices [1, 3, 2, 8, 4, 9], fee 2 per sale. Two states: cash (holding nothing) and hold (holding one share)",
+        "columns": [
+          "day",
+          "price",
+          "cash",
+          "hold"
+        ],
+        "rows": [
+          [
+            "0",
+            "1",
+            "0",
+            "-1  (bought at 1)"
+          ],
+          [
+            "1",
+            "3",
+            "0",
+            "-1"
+          ],
+          [
+            "2",
+            "2",
+            "0",
+            "-1"
+          ],
+          [
+            "3",
+            "8",
+            "5  (sell: -1 + 8 - 2)",
+            "-1"
+          ],
+          [
+            "4",
+            "4",
+            "5",
+            "1  (buy with the 5: 5 - 4)"
+          ],
+          [
+            "5",
+            "9",
+            "8  (sell: 1 + 9 - 2)",
+            "1"
+          ]
+        ],
+        "hit": 5,
+        "note": "Instead of a table indexed by position only, we keep one value per <b>state</b>. Each day the states move by the allowed actions: <code>cash = max(cash, hold + price - fee)</code> and <code>hold = max(hold, cash - price)</code>. The answer is the last <code>cash</code>."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const prices = [1, 3, 2, 8, 4, 9], fee = 2\nlet cash = 0, hold = -prices[0]\nfor (let i = 1; i &lt; prices.length; i++) {\n  const p = prices[i]\n  const nc = Math.max(cash, hold + p - fee)\n  const nh = Math.max(hold, cash - p)\n  cash = nc\n  hold = nh\n}\nconsole.log(cash)</code></pre>",
+          "opts": [
+            "<code>7</code>",
+            "<code>8</code>",
+            "<code>9</code>",
+            "<code>5</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "Buy at 1 and sell at 8 earns 7 - 2 = 5. Buy at 4 and sell at 9 earns 5 - 2 = 3. The total is 8.",
+            "Both new values are computed from the <b>old</b> ones (<code>nc</code> and <code>nh</code>), then assigned together."
+          ],
+          "exec": "const prices = [1, 3, 2, 8, 4, 9], fee = 2\nlet cash = 0, hold = -prices[0]\nfor (let i = 1; i < prices.length; i++) {\n  const p = prices[i]\n  const nc = Math.max(cash, hold + p - fee)\n  const nh = Math.max(hold, cash - p)\n  cash = nc\n  hold = nh\n}\nconsole.log(cash)"
+        },
+        {
+          "tag": "No fee",
+          "q": "<pre><code>const prices = [7, 1, 5, 3, 6, 4], fee = 0\nlet cash = 0, hold = -prices[0]\nfor (let i = 1; i &lt; prices.length; i++) {\n  const p = prices[i]\n  const nc = Math.max(cash, hold + p - fee)\n  const nh = Math.max(hold, cash - p)\n  cash = nc\n  hold = nh\n}\nconsole.log(cash)</code></pre>",
+          "opts": [
+            "<code>5</code>",
+            "<code>6</code>",
+            "<code>7</code>",
+            "<code>8</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "With no fee you can trade as often as you like: buy at 1, sell at 5 (profit 4), buy at 3, sell at 6 (profit 3). Total 7.",
+            "The same two states solve the whole family: just change the transitions."
+          ],
+          "exec": "const prices = [7, 1, 5, 3, 6, 4], fee = 0\nlet cash = 0, hold = -prices[0]\nfor (let i = 1; i < prices.length; i++) {\n  const p = prices[i]\n  const nc = Math.max(cash, hold + p - fee)\n  const nh = Math.max(hold, cash - p)\n  cash = nc\n  hold = nh\n}\nconsole.log(cash)"
+        },
+        {
+          "tag": "Why states?",
+          "q": "<p>Why is knowing only \"the day\" not enough for stock problems?</p>",
+          "opts": [
+            "The days are not sorted",
+            "The best next move depends on whether you currently hold a share, so that fact must be part of the state",
+            "Prices change",
+            "The fee is random"
+          ],
+          "ans": 1,
+          "why": [
+            "On the same day, \"holding\" and \"not holding\" lead to different choices and different future profits.",
+            "Whenever the right move depends on a small piece of history (holding, cooldown, how many transactions are left), add it to the state."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Extend it",
+          "q": "<p>The problem adds a <b>cooldown</b>: after selling, you cannot buy the next day. What do you change?</p>",
+          "opts": [
+            "Nothing",
+            "Add a third state, \"just sold / cooling down\", with its own transitions",
+            "Sort the prices",
+            "Remove the hold state"
+          ],
+          "ans": 1,
+          "why": [
+            "The cooldown is more history to remember, so it becomes a state. A state machine drawing (boxes and arrows between states) makes the transitions easy to read off.",
+            "Each new rule adds a state or an arrow, not a whole new algorithm."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>What are the time and extra space of the two-variable solution for n days?</p>",
+          "opts": [
+            "<code>O(n) time, O(1) space</code>",
+            "<code>O(n²) time, O(n) space</code>",
+            "<code>O(n log n) time, O(1) space</code>",
+            "<code>O(2^n) time, O(1) space</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "One pass, and only the previous values of the two states are kept.",
+            "Writing the full table first and then rolling it down to variables is a good way to get there."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>maxProfitWithFee(prices, fee)</code>. You may buy and sell as many times as you like, but you can hold at most one share at a time, and you pay <code>fee</code> every time you sell. Return the largest total profit. An empty list gives 0.</p>",
+        "examples": [
+          "maxProfitWithFee([1, 3, 2, 8, 4, 9], 2)  // 8",
+          "maxProfitWithFee([1, 3, 7, 5, 10, 3], 3)  // 6"
+        ],
+        "hint": "<p>Keep <code>cash = 0</code> and <code>hold = -prices[0]</code>. For each later price: <code>newCash = max(cash, hold + price - fee)</code>, <code>newHold = max(hold, cash - price)</code>. Return <code>cash</code>.</p>",
+        "fn": "maxProfitWithFee",
+        "starter": "function maxProfitWithFee(prices, fee) {\n  // your code\n}",
+        "solution": "function maxProfitWithFee(prices, fee) {\n  if (prices.length === 0) return 0\n  let cash = 0\n  let hold = -prices[0]\n  for (let i = 1; i < prices.length; i++) {\n    const p = prices[i]\n    const nc = Math.max(cash, hold + p - fee)\n    const nh = Math.max(hold, cash - p)\n    cash = nc\n    hold = nh\n  }\n  return cash\n}",
+        "checks": [
+          {
+            "t": "the lesson example",
+            "verify": "assert(maxProfitWithFee([1, 3, 2, 8, 4, 9], 2) === 8, \"expected 8\")"
+          },
+          {
+            "t": "another case",
+            "verify": "assert(maxProfitWithFee([1, 3, 7, 5, 10, 3], 3) === 6, \"expected 6\")"
+          },
+          {
+            "t": "prices only go down",
+            "verify": "assert(maxProfitWithFee([5, 4, 3, 2], 1) === 0, \"expected 0\")"
+          },
+          {
+            "t": "one price and an empty list",
+            "verify": "assert(maxProfitWithFee([7], 2) === 0 && maxProfitWithFee([], 2) === 0, \"expected 0\")"
+          },
+          {
+            "t": "a big input stays fast",
+            "verify": "const p = Array.from({ length: 200000 }, (_, i) => (i % 2 === 0 ? 1 : 10)); const t0 = Date.now(); const r = maxProfitWithFee(p, 2); assert(r === 100000 * 7 && Date.now() - t0 < 200, \"wrong or too slow\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "When the best move depends on a small piece of history, keep one value <b>per state</b> (for example cash and hold) and update them together each step. O(n) time, O(1) space.",
+        "mistakes": [
+          "Updating one state and then using the new value to update the other.",
+          "Forgetting the starting value of the hold state (<code>-prices[0]</code>).",
+          "Charging the fee on both buy and sell.",
+          "Returning <code>hold</code> instead of <code>cash</code>."
+        ]
+      }
+    },
+    {
+      "id": "dp-interval",
+      "prereqs": [
+        "dp-2d-seq"
+      ],
+      "dryRun": {
+        "title": "Longest palindromic subsequence of \"bbbab\". dp[i][j] is the answer for the piece from i to j. Shorter pieces are solved first",
+        "columns": [
+          "piece (i..j)",
+          "ends equal?",
+          "rule",
+          "dp[i][j]"
+        ],
+        "rows": [
+          [
+            "bb (0..1)",
+            "yes",
+            "2 + dp of the inside (empty = 0)",
+            "2"
+          ],
+          [
+            "bbb (0..2)",
+            "yes",
+            "2 + dp[1][1] = 2 + 1",
+            "3"
+          ],
+          [
+            "bba (1..3)",
+            "no",
+            "max(dp[2][3], dp[1][2]) = max(1, 2)",
+            "2"
+          ],
+          [
+            "bbba (0..3)",
+            "no",
+            "max(dp[1][3], dp[0][2]) = max(2, 3)",
+            "3"
+          ],
+          [
+            "bbab (1..4)",
+            "yes",
+            "2 + dp[2][3] = 2 + 1",
+            "3"
+          ],
+          [
+            "bbbab (0..4)",
+            "yes",
+            "2 + dp[1][3] = 2 + 2",
+            "4"
+          ]
+        ],
+        "hit": 5,
+        "note": "An interval DP solves <b>small pieces first</b> (by length), because a piece is built from the pieces inside it. The answer is the whole interval, <code>dp[0][n-1]</code>: 4 (\"bbbb\")."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>function lps(s) {\n  const n = s.length\n  const dp = Array.from({ length: n }, () =&gt; new Array(n).fill(0))\n  for (let i = n - 1; i &gt;= 0; i--) {\n    dp[i][i] = 1\n    for (let j = i + 1; j &lt; n; j++) {\n      dp[i][j] = s[i] === s[j] ? dp[i + 1][j - 1] + 2 : Math.max(dp[i + 1][j], dp[i][j - 1])\n    }\n  }\n  return dp[0][n - 1]\n}\nconsole.log(lps(\"bbbab\"))</code></pre>",
+          "opts": [
+            "<code>3</code>",
+            "<code>4</code>",
+            "<code>5</code>",
+            "<code>2</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "The letters b, b, b, b (skipping the a) form the palindrome \"bbbb\" of length 4.",
+            "Here <code>i</code> goes from the end to the start so that <code>dp[i + 1][...]</code> is ready. That is another way to fill by growing length."
+          ],
+          "exec": "function lps(s) {\n  const n = s.length\n  const dp = Array.from({ length: n }, () => new Array(n).fill(0))\n  for (let i = n - 1; i >= 0; i--) {\n    dp[i][i] = 1\n    for (let j = i + 1; j < n; j++) {\n      dp[i][j] = s[i] === s[j] ? dp[i + 1][j - 1] + 2 : Math.max(dp[i + 1][j], dp[i][j - 1])\n    }\n  }\n  return dp[0][n - 1]\n}\nconsole.log(lps(\"bbbab\"))"
+        },
+        {
+          "tag": "What is dp[i][j]?",
+          "q": "<p>In interval DP, what does <code>dp[i][j]</code> usually mean?</p>",
+          "opts": [
+            "The answer for the first j items",
+            "The answer for the piece of the input from i to j, treated as its own problem",
+            "The distance between i and j",
+            "The number of pieces"
+          ],
+          "ans": 1,
+          "why": [
+            "Both ends are part of the state, which is why the table is n × n. Only the cells with <code>i &lt;= j</code> are used.",
+            "The transition looks at what happens at the ends, or at one split point inside the interval."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Fill order",
+          "q": "<p>Why must shorter intervals be solved before longer ones?</p>",
+          "opts": [
+            "It is faster",
+            "A long interval is built from smaller intervals inside it, which must be ready",
+            "To keep the table symmetric",
+            "It is not necessary"
+          ],
+          "ans": 1,
+          "why": [
+            "<code>dp[i][j]</code> reads <code>dp[i + 1][j - 1]</code>, <code>dp[i + 1][j]</code> and <code>dp[i][j - 1]</code>, all of them shorter.",
+            "Two safe orders: by increasing length, or <code>i</code> from n - 1 down to 0 with <code>j</code> upwards."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>For a string of length n, what is the time of this palindromic-subsequence DP?</p>",
+          "opts": [
+            "<code>O(n)</code>",
+            "<code>O(n log n)</code>",
+            "<code>O(n²)</code>",
+            "<code>O(n³)</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "There are about n² / 2 intervals and each is computed in O(1).",
+            "Interval DPs with a split point (matrix-chain multiplication, burst balloons) cost O(n³): n² intervals times n split points."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Split-point type",
+          "q": "<p>\"Burst balloons\": you pop balloons in some order and earn coins for each pop. The trick is to think about which balloon in an interval is popped <b>last</b>. Why does that help?</p>",
+          "opts": [
+            "It sorts the balloons",
+            "When x is last, its neighbours inside the interval are fixed (the interval ends), so the two sides become independent smaller problems",
+            "It removes the need for a table",
+            "It makes the problem greedy"
+          ],
+          "ans": 1,
+          "why": [
+            "Choosing the last item to act on splits the interval into two parts that no longer affect each other.",
+            "This \"choose the last one\" move is the key idea of the harder interval DPs."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>longestPalindromeSubseq(s)</code>. Return the length of the longest palindromic <b>subsequence</b> of <code>s</code> (letters in order, skipping allowed). An empty string gives 0.</p>",
+        "examples": [
+          "longestPalindromeSubseq(\"bbbab\")  // 4",
+          "longestPalindromeSubseq(\"cbbd\")  // 2"
+        ],
+        "hint": "<p><code>dp[i][j]</code> for the piece from i to j. A single letter is 1. If <code>s[i] === s[j]</code> then <code>dp[i+1][j-1] + 2</code>, else the larger of <code>dp[i+1][j]</code> and <code>dp[i][j-1]</code>. Loop <code>i</code> downwards.</p>",
+        "fn": "longestPalindromeSubseq",
+        "starter": "function longestPalindromeSubseq(s) {\n  // your code\n}",
+        "solution": "function longestPalindromeSubseq(s) {\n  const n = s.length\n  if (n === 0) return 0\n  const dp = Array.from({ length: n }, () => new Array(n).fill(0))\n  for (let i = n - 1; i >= 0; i--) {\n    dp[i][i] = 1\n    for (let j = i + 1; j < n; j++) {\n      dp[i][j] = s[i] === s[j] ? dp[i + 1][j - 1] + 2 : Math.max(dp[i + 1][j], dp[i][j - 1])\n    }\n  }\n  return dp[0][n - 1]\n}",
+        "checks": [
+          {
+            "t": "bbbab",
+            "verify": "assert(longestPalindromeSubseq(\"bbbab\") === 4, \"expected 4\")"
+          },
+          {
+            "t": "cbbd",
+            "verify": "assert(longestPalindromeSubseq(\"cbbd\") === 2, \"expected 2\")"
+          },
+          {
+            "t": "a whole palindrome",
+            "verify": "assert(longestPalindromeSubseq(\"abcdcba\") === 7, \"expected 7\")"
+          },
+          {
+            "t": "one letter and an empty string",
+            "verify": "assert(longestPalindromeSubseq(\"a\") === 1 && longestPalindromeSubseq(\"\") === 0, \"edge cases\")"
+          },
+          {
+            "t": "1,500 letters",
+            "verify": "const t0 = Date.now(); assert(longestPalindromeSubseq(\"a\".repeat(1500)) === 1500 && Date.now() - t0 < 1500, \"wrong or too slow\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Interval DP: <code>dp[i][j]</code> is the answer for the piece <b>i..j</b>, built from smaller pieces inside it. Fill by <b>increasing length</b>. Palindromic subsequence is O(n²); split-point problems are O(n³).",
+        "mistakes": [
+          "Filling in an order where the smaller pieces are not ready.",
+          "Forgetting the single-letter base case.",
+          "Mixing up subsequence (can skip) and substring (continuous).",
+          "Using the wrong inside cell: it is <code>[i + 1][j - 1]</code> when the ends match."
+        ]
+      }
+    },
+    {
+      "id": "dp-bitmask",
+      "prereqs": [
+        "dp-1d",
+        "dp-2d-seq"
+      ],
+      "dryRun": {
+        "title": "Shortest round trip through 3 cities from city 0. Distances: 0-1 is 10, 0-2 is 15, 1-2 is 20. A mask says which cities are visited (bit i = city i)",
+        "columns": [
+          "mask (visited)",
+          "last city",
+          "cost so far",
+          "comes from"
+        ],
+        "rows": [
+          [
+            "001 (0)",
+            "0",
+            "0",
+            "start"
+          ],
+          [
+            "011 (0, 1)",
+            "1",
+            "10",
+            "0 → 1"
+          ],
+          [
+            "101 (0, 2)",
+            "2",
+            "15",
+            "0 → 2"
+          ],
+          [
+            "111 (all)",
+            "2",
+            "30",
+            "from 011: 10 + 20"
+          ],
+          [
+            "111 (all)",
+            "1",
+            "35",
+            "from 101: 15 + 20"
+          ],
+          [
+            "back to city 0",
+            "-",
+            "45",
+            "min(30 + 15, 35 + 10)"
+          ]
+        ],
+        "hit": 5,
+        "note": "When the state needs to remember <b>a set of up to ~20 things</b>, store the set as the bits of one integer. The state here is (which cities are visited, which one I am at)."
+      },
+      "think": [
+        {
+          "tag": "Bit tricks",
+          "q": "<pre><code>console.log(1 &lt;&lt; 3, 13 &amp; (1 &lt;&lt; 2), 13 | 2, 13 ^ 1)</code></pre>",
+          "opts": [
+            "<code>8 4 15 12</code>",
+            "<code>3 1 15 12</code>",
+            "<code>8 0 15 14</code>",
+            "<code>8 4 13 12</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "<code>1 &lt;&lt; 3</code> is 8 (a single bit). 13 is 1101 in binary, so <code>13 &amp; 4</code> keeps bit 2 (value 4), <code>13 | 2</code> sets bit 1 (15), and <code>13 ^ 1</code> flips bit 0 (12).",
+            "The four moves you need: test a bit (<code>&amp;</code>), set it (<code>|</code>), flip it (<code>^</code>), and make a mask (<code>1 &lt;&lt; i</code>)."
+          ],
+          "exec": "console.log(1 << 3, 13 & (1 << 2), 13 | 2, 13 ^ 1)"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const d = [[0, 10, 15], [10, 0, 20], [15, 20, 0]], n = 3, INF = Infinity\nconst dp = Array.from({ length: 1 &lt;&lt; n }, () =&gt; Array(n).fill(INF))\ndp[1][0] = 0\nfor (let mask = 1; mask &lt; (1 &lt;&lt; n); mask++)\n  for (let last = 0; last &lt; n; last++) {\n    if (!(mask &amp; (1 &lt;&lt; last)) || dp[mask][last] === INF) continue\n    for (let nx = 0; nx &lt; n; nx++) {\n      if (mask &amp; (1 &lt;&lt; nx)) continue\n      const nm = mask | (1 &lt;&lt; nx)\n      dp[nm][nx] = Math.min(dp[nm][nx], dp[mask][last] + d[last][nx])\n    }\n  }\nlet best = INF\nfor (let last = 1; last &lt; n; last++) best = Math.min(best, dp[(1 &lt;&lt; n) - 1][last] + d[last][0])\nconsole.log(best)</code></pre>",
+          "opts": [
+            "<code>35</code>",
+            "<code>40</code>",
+            "<code>45</code>",
+            "<code>50</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "Both orders cost 45: 0→1→2→0 is 10 + 20 + 15, and 0→2→1→0 is 15 + 20 + 10.",
+            "The table has 2ⁿ masks × n cities, and each cell tries n next cities: O(2ⁿ · n²)."
+          ],
+          "exec": "const d = [[0, 10, 15], [10, 0, 20], [15, 20, 0]], n = 3, INF = Infinity\nconst dp = Array.from({ length: 1 << n }, () => Array(n).fill(INF))\ndp[1][0] = 0\nfor (let mask = 1; mask < (1 << n); mask++)\n  for (let last = 0; last < n; last++) {\n    if (!(mask & (1 << last)) || dp[mask][last] === INF) continue\n    for (let nx = 0; nx < n; nx++) {\n      if (mask & (1 << nx)) continue\n      const nm = mask | (1 << nx)\n      dp[nm][nx] = Math.min(dp[nm][nx], dp[mask][last] + d[last][nx])\n    }\n  }\nlet best = INF\nfor (let last = 1; last < n; last++) best = Math.min(best, dp[(1 << n) - 1][last] + d[last][0])\nconsole.log(best)"
+        },
+        {
+          "tag": "Is city i visited?",
+          "q": "<p>How do you test whether bit <code>i</code> of <code>mask</code> is set (city i visited)?</p>",
+          "opts": [
+            "<code>(mask >> i) & 1</code>",
+            "<code>mask * i</code>",
+            "<code>mask | i</code>",
+            "<code>mask === i</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "Shift the bit down to position 0 and keep only that bit. <code>mask &amp; (1 &lt;&lt; i)</code> works too.",
+            "The other options mix numbers up with bit positions."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "How big can n be?",
+          "q": "<p>Why is bitmask DP used only when n is small, around 20 at most?</p>",
+          "opts": [
+            "Because JavaScript has only 20 bits",
+            "The number of masks is 2ⁿ, which doubles with every extra item",
+            "Because bits are slow",
+            "Because masks must be sorted"
+          ],
+          "ans": 1,
+          "why": [
+            "2²⁰ is about a million masks, and each has up to n × n transitions. 2³⁰ would be a billion masks, far too many.",
+            "Check the constraints: \"n ≤ 15 or 20\" is the signal for a bitmask solution."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>What is the time of the bitmask solution to the travelling salesman problem?</p>",
+          "opts": [
+            "<code>O(n!)</code>",
+            "<code>O(2ⁿ · n²)</code>",
+            "<code>O(n²)</code>",
+            "<code>O(n log n)</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "It beats trying every order (n!) by remembering the best cost for each (set of visited cities, last city) pair.",
+            "For n = 20 that is about 400 million simple steps, the practical limit."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>tsp(dist)</code>. <code>dist[i][j]</code> is the distance from city <code>i</code> to city <code>j</code> (a square matrix). Return the length of the shortest tour that starts at city 0, visits every other city exactly once and returns to city 0. With one city the answer is 0. It must handle up to 15 cities.</p>",
+        "examples": [
+          "tsp([[0, 10, 15], [10, 0, 20], [15, 20, 0]])  // 45",
+          "tsp([[0]])  // 0"
+        ],
+        "hint": "<p><code>dp[mask][last]</code> = cheapest way to start at 0, visit exactly the cities in <code>mask</code> and stand at <code>last</code>. Start with <code>dp[1][0] = 0</code>. Finish with the best <code>dp[full][last] + dist[last][0]</code>.</p>",
+        "fn": "tsp",
+        "starter": "function tsp(dist) {\n  // your code\n}",
+        "solution": "function tsp(dist) {\n  const n = dist.length\n  if (n <= 1) return 0\n  const full = (1 << n) - 1\n  const dp = Array.from({ length: 1 << n }, () => new Array(n).fill(Infinity))\n  dp[1][0] = 0\n  for (let mask = 1; mask <= full; mask++) {\n    for (let last = 0; last < n; last++) {\n      const cur = dp[mask][last]\n      if (cur === Infinity || !(mask & (1 << last))) continue\n      for (let nx = 0; nx < n; nx++) {\n        if (mask & (1 << nx)) continue\n        const nm = mask | (1 << nx)\n        const cost = cur + dist[last][nx]\n        if (cost < dp[nm][nx]) dp[nm][nx] = cost\n      }\n    }\n  }\n  let best = Infinity\n  for (let last = 1; last < n; last++) best = Math.min(best, dp[full][last] + dist[last][0])\n  return best\n}",
+        "checks": [
+          {
+            "t": "three cities",
+            "verify": "assert(tsp([[0, 10, 15], [10, 0, 20], [15, 20, 0]]) === 45, \"expected 45\")"
+          },
+          {
+            "t": "the classic four-city example",
+            "verify": "assert(tsp([[0, 10, 15, 20], [10, 0, 35, 25], [15, 35, 0, 30], [20, 25, 30, 0]]) === 80, \"expected 80\")"
+          },
+          {
+            "t": "one city and two cities",
+            "verify": "assert(tsp([[0]]) === 0 && tsp([[0, 7], [7, 0]]) === 14, \"expected 0 and 14\")"
+          },
+          {
+            "t": "a ring of 15 cities (neighbours cost 1, others 5)",
+            "verify": "const n = 15; const d = Array.from({ length: n }, (_, i) => Array.from({ length: n }, (_, j) => (i === j ? 0 : (Math.abs(i - j) === 1 || Math.abs(i - j) === n - 1 ? 1 : 5)))); const t0 = Date.now(); assert(tsp(d) === 15 && Date.now() - t0 < 2000, \"expected 15 in under 2 seconds\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Bitmask DP stores a <b>set as the bits of an integer</b>. Test with <code>(mask >> i) & 1</code>, add with <code>mask | (1 << i)</code>. Use it when n ≤ ~20. TSP: O(2ⁿ · n²) instead of O(n!).",
+        "mistakes": [
+          "Using it with n in the hundreds.",
+          "Mixing up <code>&amp;</code> (test) and <code>|</code> (set).",
+          "Forgetting to add the way back to the start.",
+          "Operator precedence: write <code>mask &amp; (1 &lt;&lt; i)</code> with brackets."
+        ]
+      }
+    },
+    {
+      "id": "dp-digit",
+      "prereqs": [
+        "dp-1d",
+        "identify-dp"
+      ],
+      "dryRun": {
+        "title": "Count the numbers from 1 to 45 that have no digit 4. N = 45, built digit by digit with a \"tight\" flag",
+        "columns": [
+          "position",
+          "tight?",
+          "digits allowed",
+          "what we count"
+        ],
+        "rows": [
+          [
+            "tens digit",
+            "yes: the limit is 4",
+            "0, 1, 2, 3  (digit 4 is banned)",
+            "each choice is below the limit, so the next digit is free"
+          ],
+          [
+            "ones digit after 0, 1, 2 or 3",
+            "no: free",
+            "0 to 9 except 4  (9 choices)",
+            "4 × 9 = 36 numbers from 00 to 39"
+          ],
+          [
+            "tens digit = 4",
+            "-",
+            "banned",
+            "no number starting with 4 is allowed"
+          ],
+          [
+            "total",
+            "",
+            "",
+            "36 - 1 (the number 0) = 35"
+          ]
+        ],
+        "hit": 0,
+        "note": "<b>Tight</b> means \"the digits so far are exactly the start of N\", so the next digit is capped by the next digit of N. Once we go below N it becomes <b>free</b> (0 to 9). The state is only (position, tight), so we never loop up to N."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>function count(n) {\n  const s = String(n)\n  const memo = new Map()\n  const go = (i, tight) =&gt; {\n    if (i === s.length) return 1\n    const key = i * 2 + (tight ? 1 : 0)\n    if (memo.has(key)) return memo.get(key)\n    const lim = tight ? +s[i] : 9\n    let total = 0\n    for (let d = 0; d &lt;= lim; d++) {\n      if (d === 4) continue\n      total += go(i + 1, tight &amp;&amp; d === lim)\n    }\n    memo.set(key, total)\n    return total\n  }\n  return go(0, true) - 1\n}\nconsole.log(count(45))</code></pre>",
+          "opts": [
+            "<code>36</code>",
+            "<code>35</code>",
+            "<code>40</code>",
+            "<code>44</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "The function counts the strings 00 to 45 without a 4, which is 36 (including 00), then <code>- 1</code> removes the number 0. The answer is 35.",
+            "<code>tight &amp;&amp; d === lim</code> stays true only while we copy N's digits exactly."
+          ],
+          "exec": "function count(n) {\n  const s = String(n)\n  const memo = new Map()\n  const go = (i, tight) => {\n    if (i === s.length) return 1\n    const key = i * 2 + (tight ? 1 : 0)\n    if (memo.has(key)) return memo.get(key)\n    const lim = tight ? +s[i] : 9\n    let total = 0\n    for (let d = 0; d <= lim; d++) {\n      if (d === 4) continue\n      total += go(i + 1, tight && d === lim)\n    }\n    memo.set(key, total)\n    return total\n  }\n  return go(0, true) - 1\n}\nconsole.log(count(45))"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>function count(n) {\n  const s = String(n)\n  const memo = new Map()\n  const go = (i, tight) =&gt; {\n    if (i === s.length) return 1\n    const key = i * 2 + (tight ? 1 : 0)\n    if (memo.has(key)) return memo.get(key)\n    const lim = tight ? +s[i] : 9\n    let total = 0\n    for (let d = 0; d &lt;= lim; d++) {\n      if (d === 4) continue\n      total += go(i + 1, tight &amp;&amp; d === lim)\n    }\n    memo.set(key, total)\n    return total\n  }\n  return go(0, true) - 1\n}\nconsole.log(count(100))</code></pre>",
+          "opts": [
+            "<code>100</code>",
+            "<code>80</code>",
+            "<code>81</code>",
+            "<code>90</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "From 00 to 99 there are 9 × 9 = 81 strings without a 4. Remove the number 0 to get 80 (the numbers 1 to 99), then add 100 itself, which has no 4. That is 81.",
+            "The code reaches the same answer without writing any of these cases by hand."
+          ],
+          "exec": "function count(n) {\n  const s = String(n)\n  const memo = new Map()\n  const go = (i, tight) => {\n    if (i === s.length) return 1\n    const key = i * 2 + (tight ? 1 : 0)\n    if (memo.has(key)) return memo.get(key)\n    const lim = tight ? +s[i] : 9\n    let total = 0\n    for (let d = 0; d <= lim; d++) {\n      if (d === 4) continue\n      total += go(i + 1, tight && d === lim)\n    }\n    memo.set(key, total)\n    return total\n  }\n  return go(0, true) - 1\n}\nconsole.log(count(100))"
+        },
+        {
+          "tag": "What is \"tight\"?",
+          "q": "<p>What does the <code>tight</code> flag mean?</p>",
+          "opts": [
+            "The digit is prime",
+            "The memo is full",
+            "The number is small",
+            "The digits chosen so far are exactly the leading digits of N, so the next digit may not go above N's next digit"
+          ],
+          "ans": 3,
+          "why": [
+            "If we already chose a smaller digit somewhere, the number is below N whatever follows, so later digits are free (0 to 9).",
+            "Forgetting this flag counts numbers bigger than N."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Why not loop?",
+          "q": "<p>N can be as large as 10¹⁵. Why can you not simply loop from 1 to N and test each number?</p>",
+          "opts": [
+            "It would need a quadrillion steps, while digit DP needs about 15 positions × 2 states × 10 digits",
+            "The loop would give wrong answers",
+            "Strings are too long",
+            "JavaScript cannot count that high"
+          ],
+          "ans": 0,
+          "why": [
+            "Digit DP works on the <b>digits</b>, not on the numbers: its cost grows with the number of digits (about log N).",
+            "This is the signal for digit DP: \"count numbers up to N with a property of their digits\", with N huge."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>N has D digits. What is the time of the digit DP above?</p>",
+          "opts": [
+            "<code>O(D)</code>",
+            "<code>O(D * 10)</code>",
+            "<code>O(N)</code>",
+            "<code>O(10^D)</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "There are D positions × 2 tight values, and each state tries up to 10 digits. That is about 20 × D steps.",
+            "If the property needs extra memory (like the sum of digits so far), that value joins the state and multiplies the size."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>countWithout4(n)</code>. Return how many integers from <code>1</code> to <code>n</code> (included) do <b>not</b> contain the digit 4. <code>n</code> can be as large as <code>10**15</code>.</p>",
+        "examples": [
+          "countWithout4(45)  // 35",
+          "countWithout4(100)  // 81"
+        ],
+        "hint": "<p>Turn <code>n</code> into a string of digits. <code>go(i, tight)</code> returns how many ways to fill positions <code>i</code> onwards. The limit is <code>tight ? digit : 9</code>. Skip the digit 4. Subtract 1 at the end for the number 0.</p>",
+        "fn": "countWithout4",
+        "starter": "function countWithout4(n) {\n  // your code\n}",
+        "solution": "function countWithout4(n) {\n  const s = String(n)\n  const memo = new Map()\n  const go = (i, tight) => {\n    if (i === s.length) return 1\n    const key = i * 2 + (tight ? 1 : 0)\n    if (memo.has(key)) return memo.get(key)\n    const lim = tight ? Number(s[i]) : 9\n    let total = 0\n    for (let d = 0; d <= lim; d++) {\n      if (d === 4) continue\n      total += go(i + 1, tight && d === lim)\n    }\n    memo.set(key, total)\n    return total\n  }\n  return go(0, true) - 1\n}",
+        "checks": [
+          {
+            "t": "the lesson examples",
+            "verify": "assert(countWithout4(45) === 35 && countWithout4(100) === 81, \"expected 35 and 81\")"
+          },
+          {
+            "t": "small numbers",
+            "verify": "assert(countWithout4(3) === 3 && countWithout4(4) === 3 && countWithout4(5) === 4, \"expected 3, 3, 4\")"
+          },
+          {
+            "t": "agrees with a brute-force count",
+            "verify": "assert(countWithout4(4567) === 2915 && countWithout4(100000) === 59049, \"does not match the brute-force count\")"
+          },
+          {
+            "t": "a power of ten",
+            "verify": "assert(countWithout4(1000) === 729, \"expected 729\")"
+          },
+          {
+            "t": "a huge number (10 to the 15th)",
+            "verify": "assert(String(countWithout4(10 ** 15)) === \"205891132094649\", \"expected 205891132094649\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Digit DP counts numbers up to N by their digits. State: <b>(position, tight)</b> plus whatever the property needs. Cost grows with the number of digits, not with N.",
+        "mistakes": [
+          "Looping up to N when N is huge.",
+          "Forgetting the tight flag, or keeping it true after choosing a smaller digit.",
+          "Not removing the number 0 (or counting it by mistake).",
+          "Putting the memo key together wrongly so that tight and free states collide."
+        ]
+      }
+    }
+  ],
+  "flags": [
+    "knapsack: the \"big\" check uses a capacity that fits every item, so the expected value is just the sum of all values. It tests speed and the 1D loop, not selection. The selection tests are the first four checks.",
+    "dp-digit: brute-force expected counts for 4567 and 100000 and the answer for 10**15 (9**15) were computed in the generator.",
+    "dp-bitmask: the 15 city ring check expects 15 (neighbours cost 1).",
+    "The dry-run tables are traced by hand (concept dry runs are not machine-run)."
+  ]
+}

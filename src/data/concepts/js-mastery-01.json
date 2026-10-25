@@ -1,0 +1,1303 @@
+{
+ "course": "js-mastery",
+ "items": [
+  {
+   "id": "variables",
+   "prereqs": [],
+   "dryRun": {
+    "title": "What each line does",
+    "columns": [
+     "line",
+     "var",
+     "let",
+     "const"
+    ],
+    "rows": [
+     [
+      "declare twice in one scope",
+      "allowed",
+      "SyntaxError",
+      "SyntaxError"
+     ],
+     [
+      "reassign",
+      "allowed",
+      "allowed",
+      "TypeError"
+     ],
+     [
+      "visible outside { } block",
+      "yes",
+      "no",
+      "no"
+     ],
+     [
+      "used before the line",
+      "undefined",
+      "ReferenceError (TDZ)",
+      "ReferenceError (TDZ)"
+     ],
+     [
+      "const obj; obj.x = 1",
+      "-",
+      "-",
+      "allowed (binding is fixed, object is not)"
+     ]
+    ],
+    "hit": 4,
+    "note": "<b>const</b> fixes the <i>binding</i>, not the value. You cannot point the name at something else, but you can still change the object it points to."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>if (true) { var a = 1; let b = 2 }\nconsole.log(typeof a, typeof b)</code></pre>",
+     "opts": [
+      "<code>number number</code>",
+      "<code>undefined undefined</code>",
+      "<code>number undefined</code>",
+      "<code>undefined number</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "<code>var</code> ignores the block and lives in the whole function (here the whole script). <code>let</code> stays inside <code>{ }</code>, so outside it <code>b</code> does not exist and <code>typeof</code> gives \"undefined\"."
+     ],
+     "exec": "if (true) { var a = 1; let b = 2 }\nconsole.log(typeof a, typeof b)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const user = { name: 'A' }\nuser.name = 'B'\nconsole.log(user.name)</code></pre>",
+     "opts": [
+      "<code>B</code>",
+      "<code>A</code>",
+      "<code>TypeError</code>",
+      "<code>undefined</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "<code>const</code> stops you reassigning <code>user</code>, not changing its properties. The object is still mutable.",
+      "To freeze the object too, use <code>Object.freeze(user)</code>."
+     ],
+     "exec": "const user = { name: 'A' }\nuser.name = 'B'\nconsole.log(user.name)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>for (var i = 0; i &lt; 3; i++) setTimeout(() =&gt; console.log(i))</code></pre>",
+     "opts": [
+      "<code>0 1 2</code>",
+      "<code>undefined undefined undefined</code>",
+      "<code>2 2 2</code>",
+      "<code>3 3 3</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "There is only <b>one</b> <code>var i</code> for the whole loop. When the timeouts run, the loop has finished and <code>i</code> is 3.",
+      "With <code>let</code> each iteration gets its own <code>i</code>, so it prints 0 1 2."
+     ],
+     "exec": "for (var i = 0; i < 3; i++) setTimeout(() => console.log(i))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>for (let i = 0; i &lt; 3; i++) setTimeout(() =&gt; console.log(i))</code></pre>",
+     "opts": [
+      "<code>3 3 3</code>",
+      "<code>0 1 2</code>",
+      "<code>2 2 2</code>",
+      "<code>0 0 0</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "<code>let</code> in a for loop creates a fresh binding per iteration, so each callback remembers its own value."
+     ],
+     "exec": "for (let i = 0; i < 3; i++) setTimeout(() => console.log(i))"
+    },
+    {
+     "tag": "Pick the default",
+     "q": "Which should you use by default for a new variable?",
+     "opts": [
+      "<code>var</code>",
+      "<code>const</code>",
+      "<code>let</code>",
+      "It does not matter"
+     ],
+     "ans": 1,
+     "why": [
+      "Start with <code>const</code>. Switch to <code>let</code> only when you really reassign. <code>var</code> is legacy.",
+      "Reading <code>const</code> tells the next person \"this name never points elsewhere\"."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>makeCounters(n)</code> that returns an array of <code>n</code> functions; the i-th function returns i. It must work with a normal for loop.",
+    "examples": [
+     "makeCounters(3).map((f) => f())  // [0, 1, 2]",
+     "makeCounters(0)  // []"
+    ],
+    "hint": "Use <code>let</code> in the loop header so every function captures its own <code>i</code>.",
+    "fn": "makeCounters",
+    "starter": "function makeCounters(n) {\n  // your code\n}",
+    "solution": "function makeCounters(n) {\n  const out = []\n  for (let i = 0; i < n; i++) out.push(() => i)\n  return out\n}",
+    "checks": [
+     {
+      "t": "returns n functions",
+      "verify": "assert(makeCounters(3).length === 3, \"length\")"
+     },
+     {
+      "t": "each function returns its own index",
+      "verify": "assert(JSON.stringify(makeCounters(3).map((f) => f())) === \"[0,1,2]\", \"got \" + JSON.stringify(makeCounters(3).map((f) => f())))"
+     },
+     {
+      "t": "n = 0 gives an empty array",
+      "verify": "assert(Array.isArray(makeCounters(0)) && makeCounters(0).length === 0, \"empty\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Use <code>const</code> by default, <code>let</code> when you reassign, never <code>var</code>. const fixes the name, not the object.",
+    "mistakes": [
+     "Thinking <code>const</code> makes an object immutable.",
+     "Using <code>var</code> in a loop with callbacks: all of them see the last value.",
+     "Reading a <code>let</code> before its line: that is the TDZ, a ReferenceError."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Counter",
+     "diff": "easy",
+     "lc": "counter"
+    }
+   ]
+  },
+  {
+   "id": "datatypes",
+   "prereqs": [
+    "variables"
+   ],
+   "dryRun": {
+    "title": "Copying a primitive vs copying an object",
+    "columns": [
+     "line",
+     "a",
+     "b",
+     "same thing?"
+    ],
+    "rows": [
+     [
+      "let a = 5; let b = a",
+      "5",
+      "5",
+      "two separate values"
+     ],
+     [
+      "b = 6",
+      "5",
+      "6",
+      "a unchanged"
+     ],
+     [
+      "let x = {n: 1}; let y = x",
+      "{n: 1}",
+      "{n: 1}",
+      "ONE object, two names"
+     ],
+     [
+      "y.n = 2",
+      "{n: 2}",
+      "{n: 2}",
+      "x changed too"
+     ],
+     [
+      "y = {n: 3}",
+      "{n: 2}",
+      "{n: 3}",
+      "y now points elsewhere"
+     ]
+    ],
+    "hit": 3,
+    "note": "Primitives (number, string, boolean, null, undefined, symbol, bigint) are copied by <b>value</b>. Objects, arrays and functions are copied by <b>reference</b>: both names point at the same thing."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let x = { n: 1 }\nlet y = x\ny.n = 2\nconsole.log(x.n)</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>undefined</code>",
+      "<code>TypeError</code>",
+      "<code>2</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "<code>y = x</code> copies the reference, so both names share one object."
+     ],
+     "exec": "let x = { n: 1 }\nlet y = x\ny.n = 2\nconsole.log(x.n)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log([1] === [1], 'a' === 'a')</code></pre>",
+     "opts": [
+      "<code>false true</code>",
+      "<code>true true</code>",
+      "<code>false false</code>",
+      "<code>true false</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Two array literals are two different objects, so <code>===</code> compares references and says false. Strings are primitives and compare by value."
+     ],
+     "exec": "console.log([1] === [1], 'a' === 'a')"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log(typeof null, typeof [], typeof function () {})</code></pre>",
+     "opts": [
+      "<code>null array function</code>",
+      "<code>object array object</code>",
+      "<code>object object function</code>",
+      "<code>null object function</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "<code>typeof null</code> is \"object\": a famous bug from JavaScript's first version that can never be fixed.",
+      "Arrays are objects; use <code>Array.isArray</code>. Functions are the one object type <code>typeof</code> reports separately."
+     ],
+     "exec": "console.log(typeof null, typeof [], typeof function () {})"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function f(o) { o.n = 9; o = { n: 0 } }\nconst obj = { n: 1 }\nf(obj)\nconsole.log(obj.n)</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>0</code>",
+      "<code>undefined</code>",
+      "<code>9</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Inside <code>f</code>, <code>o</code> starts as a copy of the reference, so <code>o.n = 9</code> changes the shared object. Then <code>o = {...}</code> only re-points the local name.",
+      "JavaScript always passes by value; for objects the value is a reference."
+     ],
+     "exec": "function f(o) { o.n = 9; o = { n: 0 } }\nconst obj = { n: 1 }\nf(obj)\nconsole.log(obj.n)"
+    },
+    {
+     "tag": "Pick the tool",
+     "q": "You want a copy of <code>{ a: 1, tags: [\"x\"] }</code> where changing <code>copy.tags</code> does not change the original. What do you use?",
+     "opts": [
+      "<code>{ ...obj }</code>",
+      "<code>structuredClone(obj)</code>",
+      "<code>Object.assign({}, obj)</code>",
+      "<code>const copy = obj</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Spread and Object.assign make a <b>shallow</b> copy: <code>tags</code> is still shared.",
+      "<code>structuredClone</code> makes a deep copy (built into browsers and Node 17+)."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>isPrimitive(value)</code>: true for the 7 primitive types, false for objects, arrays and functions. Careful with <code>null</code>.",
+    "examples": [
+     "isPrimitive(null)  // true",
+     "isPrimitive([])  // false",
+     "isPrimitive(() => 1)  // false"
+    ],
+    "hint": "A value is an object if <code>typeof</code> is \"object\" or \"function\", except <code>null</code>.",
+    "fn": "isPrimitive",
+    "starter": "function isPrimitive(value) {\n  // your code\n}",
+    "solution": "function isPrimitive(value) {\n  return value === null || (typeof value !== 'object' && typeof value !== 'function')\n}",
+    "checks": [
+     {
+      "t": "null is primitive",
+      "verify": "assert(isPrimitive(null) === true, \"null\")"
+     },
+     {
+      "t": "numbers, strings, undefined, symbols, bigints are primitive",
+      "verify": "assert([1, \"a\", undefined, Symbol(\"s\"), 10n, true].every(isPrimitive), \"primitives\")"
+     },
+     {
+      "t": "objects, arrays and functions are not",
+      "verify": "assert([{}, [], () => 1, new Date()].every((v) => isPrimitive(v) === false), \"objects\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Primitives are copied by value; objects by reference. Two names can share one object, and <code>===</code> on objects compares identity, not contents.",
+    "mistakes": [
+     "Expecting <code>{ ...obj }</code> to deep-copy nested objects.",
+     "Trusting <code>typeof x === \"object\"</code> without excluding <code>null</code>.",
+     "Comparing arrays or objects with <code>===</code> to check equal contents."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Is Object Empty",
+     "diff": "easy",
+     "lc": "is-object-empty"
+    }
+   ]
+  },
+  {
+   "id": "nullish",
+   "prereqs": [
+    "datatypes"
+   ],
+   "dryRun": {
+    "title": "Which fallback wins?",
+    "columns": [
+     "value",
+     "value || \"d\"",
+     "value ?? \"d\""
+    ],
+    "rows": [
+     [
+      "0",
+      "\"d\"",
+      "0"
+     ],
+     [
+      "\"\"",
+      "\"d\"",
+      "\"\""
+     ],
+     [
+      "false",
+      "\"d\"",
+      "false"
+     ],
+     [
+      "null",
+      "\"d\"",
+      "\"d\""
+     ],
+     [
+      "undefined",
+      "\"d\"",
+      "\"d\""
+     ],
+     [
+      "NaN",
+      "\"d\"",
+      "NaN"
+     ]
+    ],
+    "hit": 0,
+    "note": "<code>||</code> falls back on <b>any falsy</b> value. <code>??</code> falls back only on <b>null or undefined</b>, so real values like 0 and \"\" survive."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const n = 0\nconsole.log(n || 10, n ?? 10)</code></pre>",
+     "opts": [
+      "<code>10 10</code>",
+      "<code>0 0</code>",
+      "<code>10 0</code>",
+      "<code>0 10</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "<code>||</code> treats 0 as falsy and falls back. <code>??</code> only falls back on null/undefined, so 0 stays."
+     ],
+     "exec": "const n = 0\nconsole.log(n || 10, n ?? 10)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const user = {}\nconsole.log(user.address?.city, user.getName?.())</code></pre>",
+     "opts": [
+      "<code>undefined undefined</code>",
+      "<code>TypeError</code>",
+      "<code>null null</code>",
+      "<code>undefined null</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "<code>?.</code> stops and returns <code>undefined</code> as soon as the left side is null or undefined, instead of throwing."
+     ],
+     "exec": "const user = {}\nconsole.log(user.address?.city, user.getName?.())"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log(NaN === NaN, Number.isNaN(NaN), isNaN('abc'))</code></pre>",
+     "opts": [
+      "<code>true true true</code>",
+      "<code>false false true</code>",
+      "<code>false true true</code>",
+      "<code>false true false</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "NaN is the only value not equal to itself. <code>Number.isNaN</code> checks for real NaN. The old global <code>isNaN</code> first converts: \"abc\" becomes NaN, so it says true."
+     ],
+     "exec": "console.log(NaN === NaN, Number.isNaN(NaN), isNaN('abc'))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let a\nconst b = null\nconsole.log(a == b, a === b, typeof a, typeof b)</code></pre>",
+     "opts": [
+      "<code>true false undefined object</code>",
+      "<code>true true undefined null</code>",
+      "<code>false false undefined object</code>",
+      "<code>true false undefined undefined</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "<code>==</code> treats null and undefined as equal to each other (and to nothing else). <code>===</code> does not. <code>typeof null</code> is \"object\"."
+     ],
+     "exec": "let a\nconst b = null\nconsole.log(a == b, a === b, typeof a, typeof b)"
+    },
+    {
+     "tag": "Meaning",
+     "q": "What is the difference in intent between <code>undefined</code> and <code>null</code>?",
+     "opts": [
+      "They mean exactly the same",
+      "null is for numbers, undefined for strings",
+      "undefined is an error, null is not",
+      "undefined: no value was ever set. null: someone deliberately set \"no value\"."
+     ],
+     "ans": 3,
+     "why": [
+      "Missing properties, missing arguments and uninitialised variables are undefined. You write null on purpose."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>getSetting(config, key, fallback)</code>: return <code>config[key]</code> unless it is null or undefined (or config itself is missing), else the fallback. 0, false and \"\" are real values.",
+    "examples": [
+     "getSetting({ retries: 0 }, \"retries\", 3)  // 0",
+     "getSetting(undefined, \"retries\", 3)  // 3"
+    ],
+    "hint": "Combine <code>?.</code> and <code>??</code>.",
+    "fn": "getSetting",
+    "starter": "function getSetting(config, key, fallback) {\n  // your code\n}",
+    "solution": "function getSetting(config, key, fallback) {\n  return config?.[key] ?? fallback\n}",
+    "checks": [
+     {
+      "t": "0, false and \"\" are kept",
+      "verify": "assert(getSetting({ a: 0 }, \"a\", 9) === 0 && getSetting({ a: false }, \"a\", 9) === false && getSetting({ a: \"\" }, \"a\", 9) === \"\", \"falsy values must be kept\")"
+     },
+     {
+      "t": "missing or null falls back",
+      "verify": "assert(getSetting({}, \"a\", 9) === 9 && getSetting({ a: null }, \"a\", 9) === 9, \"fallback\")"
+     },
+     {
+      "t": "a missing config does not throw",
+      "verify": "assert(getSetting(undefined, \"a\", 9) === 9 && getSetting(null, \"a\", 9) === 9, \"no config\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Use <code>??</code> for defaults and <code>?.</code> for maybe-missing paths. Check NaN with <code>Number.isNaN</code>.",
+    "mistakes": [
+     "Using <code>||</code> for defaults and losing a real 0 or \"\".",
+     "Checking <code>x === NaN</code>: it is always false.",
+     "Using global <code>isNaN(\"abc\")</code> and getting true for a string."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Compact Object",
+     "diff": "medium",
+     "lc": "compact-object"
+    }
+   ]
+  },
+  {
+   "id": "coercion",
+   "prereqs": [
+    "nullish"
+   ],
+   "dryRun": {
+    "title": "How + decides",
+    "columns": [
+     "expression",
+     "one side a string?",
+     "result"
+    ],
+    "rows": [
+     [
+      "1 + 2",
+      "no",
+      "3"
+     ],
+     [
+      "\"1\" + 2",
+      "yes → concat",
+      "\"12\""
+     ],
+     [
+      "1 + \"2\"",
+      "yes → concat",
+      "\"12\""
+     ],
+     [
+      "\"5\" - 2",
+      "- only does numbers",
+      "3"
+     ],
+     [
+      "[] + {}",
+      "both become strings",
+      "\"[object Object]\""
+     ],
+     [
+      "true + 1",
+      "no → true is 1",
+      "2"
+     ]
+    ],
+    "hit": 1,
+    "note": "<code>+</code> concatenates if <b>either</b> side is (or becomes) a string. Every other arithmetic operator converts both sides to numbers."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log('5' + 3, '5' - 3, '5' * '2')</code></pre>",
+     "opts": [
+      "<code>8 2 10</code>",
+      "<code>53 2 10</code>",
+      "<code>53 53 52</code>",
+      "<code>8 2 52</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "+ with a string concatenates: \"53\". Minus and times only work on numbers, so \"5\" becomes 5."
+     ],
+     "exec": "console.log('5' + 3, '5' - 3, '5' * '2')"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log(JSON.stringify([] + []), [] + {}, 1 + null, 1 + undefined)</code></pre>",
+     "opts": [
+      "<code>0 [object Object] 1 1</code>",
+      "<code>\"\" [object Object] 1 NaN</code>",
+      "<code>\"\" undefined 1 NaN</code>",
+      "<code>[] {} null undefined</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Arrays become strings: [] → \"\". Objects become \"[object Object]\". null becomes 0, undefined becomes NaN."
+     ],
+     "exec": "console.log(JSON.stringify([] + []), [] + {}, 1 + null, 1 + undefined)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log(Boolean(''), Boolean('0'), Boolean([]), Boolean(0))</code></pre>",
+     "opts": [
+      "<code>false false false false</code>",
+      "<code>true true true false</code>",
+      "<code>false true false false</code>",
+      "<code>false true true false</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Only 8 falsy values exist: false, 0, -0, 0n, \"\", null, undefined, NaN. The string \"0\" and an empty array are truthy."
+     ],
+     "exec": "console.log(Boolean(''), Boolean('0'), Boolean([]), Boolean(0))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log(Number(''), Number(' 42 '), Number('4x'), parseInt('4x'))</code></pre>",
+     "opts": [
+      "<code>0 42 NaN 4</code>",
+      "<code>NaN 42 NaN NaN</code>",
+      "<code>0 NaN NaN 4</code>",
+      "<code>0 42 4 4</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "<code>Number</code> converts the whole string (spaces trimmed, empty → 0) and fails with NaN on any junk. <code>parseInt</code> reads digits until it hits junk."
+     ],
+     "exec": "console.log(Number(''), Number(' 42 '), Number('4x'), parseInt('4x'))"
+    },
+    {
+     "tag": "Read the bug",
+     "q": "A form gives <code>\"10\"</code> and <code>\"5\"</code>. <code>total = a + b</code> shows <code>105</code>. Fix?",
+     "opts": [
+      "<code>total = a - -b</code>",
+      "<code>total = (a + b) * 1</code>",
+      "<code>total = Number(a) + Number(b)</code>",
+      "<code>total = String(a + b)</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Convert explicitly at the boundary where the data comes in.",
+      "<code>a - -b</code> happens to work but nobody reading it knows why."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>toNumberStrict(value)</code>: return a number for a number or a numeric string (spaces allowed), else <code>null</code>. Empty or blank strings, booleans, arrays and null give null.",
+    "examples": [
+     "toNumberStrict(\" 42 \")  // 42",
+     "toNumberStrict(\"\")  // null",
+     "toNumberStrict(true)  // null"
+    ],
+    "hint": "Reject non-strings/non-numbers first, then blank strings, then use <code>Number</code> and <code>Number.isNaN</code>.",
+    "fn": "toNumberStrict",
+    "starter": "function toNumberStrict(value) {\n  // your code\n}",
+    "solution": "function toNumberStrict(value) {\n  if (typeof value === 'number') return Number.isNaN(value) ? null : value\n  if (typeof value !== 'string' || value.trim() === '') return null\n  const n = Number(value)\n  return Number.isNaN(n) ? null : n\n}",
+    "checks": [
+     {
+      "t": "numeric strings and numbers convert",
+      "verify": "assert(toNumberStrict(\" 42 \") === 42 && toNumberStrict(7) === 7 && toNumberStrict(\"1.5\") === 1.5, \"numbers\")"
+     },
+     {
+      "t": "blank strings give null, not 0",
+      "verify": "assert(toNumberStrict(\"\") === null && toNumberStrict(\"   \") === null, \"blank\")"
+     },
+     {
+      "t": "junk, booleans, arrays and null give null",
+      "verify": "assert([ \"4x\", true, [], null, undefined, NaN ].every((v) => toNumberStrict(v) === null), \"junk\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "<code>+</code> concatenates if either side is a string; other operators convert to numbers. Convert explicitly with <code>Number()</code> / <code>String()</code> / <code>Boolean()</code>.",
+    "mistakes": [
+     "Adding form input strings with <code>+</code>.",
+     "Thinking \"0\" or [] is falsy.",
+     "<code>Number(\"\")</code> is 0, not NaN."
+    ]
+   }
+  },
+  {
+   "id": "equality",
+   "prereqs": [
+    "coercion"
+   ],
+   "dryRun": {
+    "title": "What == does before comparing",
+    "columns": [
+     "expression",
+     "step",
+     "result"
+    ],
+    "rows": [
+     [
+      "1 == \"1\"",
+      "string → number",
+      "true"
+     ],
+     [
+      "0 == \"\"",
+      "\"\" → 0",
+      "true"
+     ],
+     [
+      "null == undefined",
+      "special rule",
+      "true"
+     ],
+     [
+      "null == 0",
+      "null only equals undefined",
+      "false"
+     ],
+     [
+      "[1] == 1",
+      "[1] → \"1\" → 1",
+      "true"
+     ],
+     [
+      "NaN == NaN",
+      "NaN equals nothing",
+      "false"
+     ]
+    ],
+    "hit": 3,
+    "note": "<code>===</code> never converts: different types are simply not equal. <code>==</code> converts first, with special rules. Use <code>===</code>, except <code>x == null</code> as a short \"null or undefined\" check."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log(0 == '', 0 === '', null == 0, null == undefined)</code></pre>",
+     "opts": [
+      "<code>true true false true</code>",
+      "<code>false false false false</code>",
+      "<code>true false true true</code>",
+      "<code>true false false true</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "<code>\"\"</code> becomes 0 under ==, so true. Strict equality says different types, false. null equals only undefined under ==."
+     ],
+     "exec": "console.log(0 == '', 0 === '', null == 0, null == undefined)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log(Object.is(NaN, NaN), Object.is(0, -0), 0 === -0)</code></pre>",
+     "opts": [
+      "<code>false true true</code>",
+      "<code>true false true</code>",
+      "<code>true true true</code>",
+      "<code>false false true</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "<code>Object.is</code> is \"same value\": NaN equals NaN, and 0 and -0 are different. <code>===</code> says the opposite for both."
+     ],
+     "exec": "console.log(Object.is(NaN, NaN), Object.is(0, -0), 0 === -0)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const a = { id: 1 }, b = { id: 1 }\nconsole.log(a == b, a === b, a === a)</code></pre>",
+     "opts": [
+      "<code>true true true</code>",
+      "<code>true false true</code>",
+      "<code>false false true</code>",
+      "<code>false false false</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Objects compare by identity with both operators. Same contents, different objects: false."
+     ],
+     "exec": "const a = { id: 1 }, b = { id: 1 }\nconsole.log(a == b, a === b, a === a)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log([1, NaN].includes(NaN), [1, NaN].indexOf(NaN))</code></pre>",
+     "opts": [
+      "<code>true -1</code>",
+      "<code>false -1</code>",
+      "<code>true 1</code>",
+      "<code>false 1</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "<code>includes</code> uses SameValueZero, which finds NaN. <code>indexOf</code> uses ===, which never matches NaN."
+     ],
+     "exec": "console.log([1, NaN].includes(NaN), [1, NaN].indexOf(NaN))"
+    },
+    {
+     "tag": "When is == OK?",
+     "q": "Which use of <code>==</code> is a common, accepted idiom?",
+     "opts": [
+      "<code>if (x == 0)</code>",
+      "<code>if (x == \"\")</code>",
+      "<code>if (x == null)</code>",
+      "<code>if (arr == \"\")</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "<code>x == null</code> is true exactly for null and undefined. Everything else should use ===."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>shallowEqual(a, b)</code>: true when two plain objects have the same keys and each value is <code>Object.is</code>-equal (one level only).",
+    "examples": [
+     "shallowEqual({ a: 1 }, { a: 1 })  // true",
+     "shallowEqual({ a: {} }, { a: {} })  // false (different objects)"
+    ],
+    "hint": "Compare key counts first, then every key with <code>Object.is</code>. Use <code>Object.hasOwn</code> so a missing key does not match an undefined value.",
+    "fn": "shallowEqual",
+    "starter": "function shallowEqual(a, b) {\n  // your code\n}",
+    "solution": "function shallowEqual(a, b) {\n  const ka = Object.keys(a), kb = Object.keys(b)\n  if (ka.length !== kb.length) return false\n  return ka.every((k) => Object.hasOwn(b, k) && Object.is(a[k], b[k]))\n}",
+    "checks": [
+     {
+      "t": "same keys and values are equal",
+      "verify": "assert(shallowEqual({ a: 1, b: \"x\" }, { b: \"x\", a: 1 }) === true, \"equal\")"
+     },
+     {
+      "t": "nested objects compare by reference",
+      "verify": "const o = {}; assert(shallowEqual({ a: {} }, { a: {} }) === false && shallowEqual({ a: o }, { a: o }) === true, \"reference\")"
+     },
+     {
+      "t": "NaN equals NaN, extra or missing keys differ",
+      "verify": "assert(shallowEqual({ a: NaN }, { a: NaN }) === true && shallowEqual({ a: 1 }, { a: 1, b: 2 }) === false && shallowEqual({ a: undefined }, { b: undefined }) === false, \"edge\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Use <code>===</code>. It never converts. The one accepted <code>==</code> is <code>x == null</code>. Objects compare by identity.",
+    "mistakes": [
+     "Expecting two objects with the same contents to be ===.",
+     "Finding NaN with <code>indexOf</code>; use <code>includes</code> or <code>Number.isNaN</code>.",
+     "Relying on <code>==</code> rules like <code>0 == \"\"</code>."
+    ]
+   },
+   "problems": [
+    {
+     "name": "To Be Or Not To Be",
+     "diff": "easy",
+     "lc": "to-be-or-not-to-be"
+    }
+   ]
+  },
+  {
+   "id": "destructuring",
+   "prereqs": [
+    "equality"
+   ],
+   "dryRun": {
+    "title": "const { a, b: { c } = {}, ...rest } = obj",
+    "columns": [
+     "part",
+     "takes",
+     "obj = { a: 1, b: { c: 2 }, d: 3 }"
+    ],
+    "rows": [
+     [
+      "a",
+      "obj.a",
+      "1"
+     ],
+     [
+      "b: { c }",
+      "obj.b.c (b itself is not a variable)",
+      "c = 2"
+     ],
+     [
+      "= {}",
+      "default if obj.b is undefined",
+      "not used"
+     ],
+     [
+      "...rest",
+      "every other own key",
+      "{ d: 3 }"
+     ]
+    ],
+    "hit": 1,
+    "note": "Destructuring pulls values out by <b>name</b> (objects) or <b>position</b> (arrays). Defaults apply only when the value is <code>undefined</code>, not null."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const { a = 5, b = 5 } = { a: null }\nconsole.log(a, b)</code></pre>",
+     "opts": [
+      "<code>null 5</code>",
+      "<code>5 5</code>",
+      "<code>null null</code>",
+      "<code>undefined 5</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Defaults kick in only for <code>undefined</code>. <code>a</code> is null, which is a real value, so the default is skipped."
+     ],
+     "exec": "const { a = 5, b = 5 } = { a: null }\nconsole.log(a, b)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const [x, , y = 9, ...rest] = [1, 2, undefined, 4, 5]\nconsole.log(x, y, rest)</code></pre>",
+     "opts": [
+      "<code>1 2 [ 4, 5 ]</code>",
+      "<code>1 undefined [ 4, 5 ]</code>",
+      "<code>1 9 [ 5 ]</code>",
+      "<code>1 9 [ 4, 5 ]</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "The empty slot skips 2. The third item is undefined, so the default 9 applies. <code>...rest</code> collects what is left."
+     ],
+     "exec": "const [x, , y = 9, ...rest] = [1, 2, undefined, 4, 5]\nconsole.log(x, y, rest)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const a = { x: 1, inner: { y: 2 } }\nconst b = { ...a }\nb.inner.y = 99\nconsole.log(a.inner.y)</code></pre>",
+     "opts": [
+      "<code>2</code>",
+      "<code>99</code>",
+      "<code>undefined</code>",
+      "<code>TypeError</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Spread copies one level. <code>inner</code> is the same object in both."
+     ],
+     "exec": "const a = { x: 1, inner: { y: 2 } }\nconst b = { ...a }\nb.inner.y = 99\nconsole.log(a.inner.y)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let p = 1, q = 2;\n[p, q] = [q, p]\nconsole.log(p, q)</code></pre>",
+     "opts": [
+      "<code>1 2</code>",
+      "<code>2 1</code>",
+      "<code>2 2</code>",
+      "<code>undefined undefined</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Array destructuring swaps two variables without a temp. Note the semicolon before the line starting with [."
+     ],
+     "exec": "let p = 1, q = 2;\n[p, q] = [q, p]\nconsole.log(p, q)"
+    },
+    {
+     "tag": "Function params",
+     "q": "Which signature lets callers pass options in any order and skip the whole object?",
+     "opts": [
+      "<code>function f(size, color)</code>",
+      "<code>function f({ size, color })</code>",
+      "<code>function f(...options)</code>",
+      "<code>function f({ size = 10, color = \"red\" } = {})</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Destructured params with defaults read like named arguments. The trailing <code>= {}</code> makes <code>f()</code> work without an argument."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>pick(obj, keys)</code> that returns a new object with only the listed keys that exist in <code>obj</code>, and <code>omit(obj, keys)</code> that returns everything else.",
+    "examples": [
+     "pick({ a: 1, b: 2 }, [\"a\", \"z\"])  // { a: 1 }",
+     "omit({ a: 1, b: 2 }, [\"a\"])  // { b: 2 }"
+    ],
+    "hint": "For <code>omit</code>, copy with spread, then delete the keys. For <code>pick</code>, loop over keys and use <code>Object.hasOwn</code>.",
+    "fn": "pick",
+    "starter": "function pick(obj, keys) {\n  // your code\n}\nfunction omit(obj, keys) {\n  // your code\n}",
+    "solution": "function pick(obj, keys) {\n  const out = {}\n  for (const k of keys) if (Object.hasOwn(obj, k)) out[k] = obj[k]\n  return out\n}\nfunction omit(obj, keys) {\n  const out = { ...obj }\n  for (const k of keys) delete out[k]\n  return out\n}",
+    "checks": [
+     {
+      "t": "pick keeps only listed, existing keys",
+      "verify": "assert(JSON.stringify(pick({ a: 1, b: 2 }, [\"a\", \"z\"])) === '{\"a\":1}', \"pick\")"
+     },
+     {
+      "t": "omit removes listed keys",
+      "verify": "assert(JSON.stringify(omit({ a: 1, b: 2, c: 3 }, [\"a\", \"c\"])) === '{\"b\":2}', \"omit\")"
+     },
+     {
+      "t": "neither changes the input",
+      "verify": "const o = { a: 1, b: 2 }; const p = pick(o, [\"a\"]), r = omit(o, [\"a\"]); assert(p && r && r.b === 2 && o.a === 1 && o.b === 2 && p !== o && r !== o, \"input changed or no new object\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Destructure by name or position, defaults apply only to <code>undefined</code>, and spread/rest copy just one level.",
+    "mistakes": [
+     "Expecting a default for a null value.",
+     "Thinking <code>{ ...obj }</code> copies nested objects.",
+     "Forgetting <code>= {}</code> on a destructured parameter, so calling with no argument throws."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Return Length of Arguments Passed",
+     "diff": "easy",
+     "lc": "return-length-of-arguments-passed"
+    }
+   ]
+  },
+  {
+   "id": "map-set",
+   "prereqs": [
+    "destructuring"
+   ],
+   "dryRun": {
+    "title": "new Map() vs a plain object as a dictionary",
+    "columns": [
+     "need",
+     "object {}",
+     "Map"
+    ],
+    "rows": [
+     [
+      "keys that are objects",
+      "turned into \"[object Object]\"",
+      "kept as real keys"
+     ],
+     [
+      "size",
+      "Object.keys(o).length",
+      "m.size"
+     ],
+     [
+      "insertion order",
+      "mostly, numbers first",
+      "always"
+     ],
+     [
+      "key \"__proto__\"",
+      "dangerous",
+      "safe"
+     ],
+     [
+      "frequent add/delete",
+      "ok",
+      "built for it"
+     ]
+    ],
+    "hit": 0,
+    "note": "Use <b>Map</b> when keys are dynamic or not strings; use <b>Set</b> for unique values. A plain object is best for fixed, known fields."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const o = {}\nconst k1 = { id: 1 }, k2 = { id: 2 }\no[k1] = 'a'; o[k2] = 'b'\nconsole.log(Object.keys(o).length, o[k1])</code></pre>",
+     "opts": [
+      "<code>1 b</code>",
+      "<code>2 a</code>",
+      "<code>1 a</code>",
+      "<code>2 b</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Both object keys become the same string <code>\"[object Object]\"</code>, so the second write overwrites the first.",
+      "A Map would keep both keys."
+     ],
+     "exec": "const o = {}\nconst k1 = { id: 1 }, k2 = { id: 2 }\no[k1] = 'a'; o[k2] = 'b'\nconsole.log(Object.keys(o).length, o[k1])"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const s = new Set([1, 1, '1', NaN, NaN])\nconsole.log(s.size)</code></pre>",
+     "opts": [
+      "<code>5</code>",
+      "<code>2</code>",
+      "<code>3</code>",
+      "<code>4</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Set uses SameValueZero: duplicate 1 removed, \"1\" is a different value, and NaN counts once."
+     ],
+     "exec": "const s = new Set([1, 1, '1', NaN, NaN])\nconsole.log(s.size)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const m = new Map([['b', 2], ['a', 1]])\nm.set('c', 3)\nconsole.log([...m.keys()].join(''))</code></pre>",
+     "opts": [
+      "<code>abc</code>",
+      "<code>cab</code>",
+      "<code>acb</code>",
+      "<code>bac</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Map iterates in insertion order. It never sorts keys."
+     ],
+     "exec": "const m = new Map([['b', 2], ['a', 1]])\nm.set('c', 3)\nconsole.log([...m.keys()].join(''))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const s = new Set([{ a: 1 }])\nconsole.log(s.has({ a: 1 }))</code></pre>",
+     "opts": [
+      "<code>true</code>",
+      "<code>false</code>",
+      "<code>undefined</code>",
+      "<code>TypeError</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "A Set compares objects by identity, like ===. A new object literal is a different object."
+     ],
+     "exec": "const s = new Set([{ a: 1 }])\nconsole.log(s.has({ a: 1 }))"
+    },
+    {
+     "tag": "Pick one",
+     "q": "You need to remove duplicates from an array of strings, keeping first-seen order. Simplest?",
+     "opts": [
+      "<code>arr.sort().filter(...)</code>",
+      "<code>Object.keys(arr)</code>",
+      "<code>[...new Set(arr)]</code>",
+      "<code>arr.filter((x, i) =&gt; i % 2)</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "A Set keeps the first of each value in insertion order, and spreading it back gives an array."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>groupCount(words)</code>: return a <code>Map</code> from each word to how many times it appears, in first-seen order.",
+    "examples": [
+     "groupCount([\"a\", \"b\", \"a\"])  // Map { \"a\" => 2, \"b\" => 1 }",
+     "groupCount([])  // Map {}"
+    ],
+    "hint": "<code>m.set(w, (m.get(w) ?? 0) + 1)</code>.",
+    "fn": "groupCount",
+    "starter": "function groupCount(words) {\n  // your code\n}",
+    "solution": "function groupCount(words) {\n  const m = new Map()\n  for (const w of words) m.set(w, (m.get(w) ?? 0) + 1)\n  return m\n}",
+    "checks": [
+     {
+      "t": "returns a Map",
+      "verify": "assert(groupCount([\"a\"]) instanceof Map, \"must be a Map\")"
+     },
+     {
+      "t": "counts each word",
+      "verify": "const m = groupCount([\"a\", \"b\", \"a\"]); assert(m.get(\"a\") === 2 && m.get(\"b\") === 1, \"counts\")"
+     },
+     {
+      "t": "keeps first-seen order",
+      "verify": "assert([...groupCount([\"z\", \"a\", \"z\"]).keys()].join() === \"z,a\", \"order\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Map for dynamic or non-string keys, Set for uniqueness. Both keep insertion order and compare objects by identity.",
+    "mistakes": [
+     "Using objects as keys in a plain object: they all become \"[object Object]\".",
+     "Expecting <code>set.has({...})</code> to match an equal-looking object."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Join Two Arrays by ID",
+     "diff": "medium",
+     "lc": "join-two-arrays-by-id"
+    }
+   ]
+  },
+  {
+   "id": "json-methods",
+   "prereqs": [
+    "map-set"
+   ],
+   "dryRun": {
+    "title": "JSON.stringify({ a: 1, f() {}, u: undefined, d: new Date(0), n: NaN, m: new Map([[1, 2]]) })",
+    "columns": [
+     "key",
+     "value",
+     "in the JSON"
+    ],
+    "rows": [
+     [
+      "a",
+      "1",
+      "\"a\":1"
+     ],
+     [
+      "f",
+      "a function",
+      "dropped"
+     ],
+     [
+      "u",
+      "undefined",
+      "dropped"
+     ],
+     [
+      "d",
+      "a Date",
+      "\"1970-01-01T00:00:00.000Z\" (via toJSON)"
+     ],
+     [
+      "n",
+      "NaN",
+      "null"
+     ],
+     [
+      "m",
+      "a Map",
+      "{} (Maps have no own enumerable props)"
+     ]
+    ],
+    "hit": 5,
+    "note": "JSON knows only strings, numbers, booleans, null, arrays and plain objects. Everything else is dropped, turned into null, or turned into something lossy. Round-tripping through JSON is not a safe clone."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log(JSON.stringify({ a: undefined, b: () =&gt; 1, c: null }))</code></pre>",
+     "opts": [
+      "<code>{\"c\":null}</code>",
+      "<code>{\"a\":undefined,\"b\":null,\"c\":null}</code>",
+      "<code>{\"c\":null,\"a\":null}</code>",
+      "<code>{}</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Object properties holding undefined or functions are skipped. null is kept."
+     ],
+     "exec": "console.log(JSON.stringify({ a: undefined, b: () => 1, c: null }))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log(JSON.stringify([undefined, () =&gt; 1, NaN]))</code></pre>",
+     "opts": [
+      "<code>[]</code>",
+      "<code>[undefined,null,NaN]</code>",
+      "<code>[null,null,null]</code>",
+      "<code>[null,null,\"NaN\"]</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Inside arrays they cannot be skipped (positions matter), so they become null."
+     ],
+     "exec": "console.log(JSON.stringify([undefined, () => 1, NaN]))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const d = JSON.parse(JSON.stringify({ when: new Date(0) }))\nconsole.log(typeof d.when)</code></pre>",
+     "opts": [
+      "<code>string</code>",
+      "<code>object</code>",
+      "<code>undefined</code>",
+      "<code>number</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "The Date became a string on the way out, and JSON.parse does not turn it back. Use a reviver if you need a Date again."
+     ],
+     "exec": "const d = JSON.parse(JSON.stringify({ when: new Date(0) }))\nconsole.log(typeof d.when)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log(JSON.stringify({ b: 1, a: [1, 2] }, null, 0) === JSON.stringify({ b: 1, a: [1, 2] }), JSON.stringify({ x: 1 }, ['x', 'y']))</code></pre>",
+     "opts": [
+      "<code>false {\"x\":1,\"y\":null}</code>",
+      "<code>true {}</code>",
+      "<code>false {}</code>",
+      "<code>true {\"x\":1}</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "A space argument of 0 adds no whitespace, so the strings are identical. An array as the second argument is an allow-list of keys."
+     ],
+     "exec": "console.log(JSON.stringify({ b: 1, a: [1, 2] }, null, 0) === JSON.stringify({ b: 1, a: [1, 2] }), JSON.stringify({ x: 1 }, ['x', 'y']))"
+    },
+    {
+     "tag": "Read the error",
+     "q": "<code>JSON.stringify(obj)</code> throws \"Converting circular structure to JSON\". What does it mean?",
+     "opts": [
+      "The object is too large",
+      "Some object inside refers back to an ancestor, so the output would be infinite",
+      "It contains a function",
+      "It contains undefined"
+     ],
+     "ans": 1,
+     "why": [
+      "Functions and undefined are silently dropped. Only cycles (and BigInt) throw."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>reviveDates(json)</code>: parse a JSON string and turn every string that looks like an ISO date (<code>YYYY-MM-DDTHH:mm:ss...Z</code>) back into a <code>Date</code>, at any depth.",
+    "examples": [
+     "reviveDates('{\"at\":\"2026-01-02T03:04:05.000Z\"}').at instanceof Date  // true",
+     "reviveDates('{\"n\":\"hello\"}').n  // \"hello\""
+    ],
+    "hint": "JSON.parse takes a second argument: <code>(key, value) =&gt; newValue</code>, called for every value, deepest first.",
+    "fn": "reviveDates",
+    "starter": "function reviveDates(json) {\n  // your code\n}",
+    "solution": "function reviveDates(json) {\n  const ISO = /^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$/\n  return JSON.parse(json, (key, value) => (typeof value === 'string' && ISO.test(value) ? new Date(value) : value))\n}",
+    "checks": [
+     {
+      "t": "top-level ISO strings become Dates",
+      "verify": "const r = reviveDates('{\"at\":\"2026-01-02T03:04:05.000Z\"}'); assert(r.at instanceof Date && r.at.getUTCFullYear() === 2026, \"date\")"
+     },
+     {
+      "t": "nested ones too",
+      "verify": "const r = reviveDates('{\"list\":[{\"at\":\"2020-05-06T07:08:09Z\"}]}'); assert(r.list[0].at instanceof Date, \"nested\")"
+     },
+     {
+      "t": "other strings stay strings",
+      "verify": "const r = reviveDates('{\"n\":\"hello\",\"d\":\"2020-05-06\"}'); assert(r.n === \"hello\" && r.d === \"2020-05-06\", \"plain strings\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "JSON keeps strings, numbers, booleans, null, arrays and plain objects. Functions/undefined vanish, NaN becomes null, Dates become strings. Use a reviver to restore types.",
+    "mistakes": [
+     "Cloning with <code>JSON.parse(JSON.stringify(x))</code> and losing Dates, Maps and undefined.",
+     "Expecting a Date back after parse."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Deep Clone",
+     "diff": "medium",
+     "mc": "deep-clone"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,1211 @@
+{
+  "items": [
+    {
+      "id": "xor",
+      "prereqs": [
+        "arrays"
+      ],
+      "dryRun": {
+        "title": "Find the number that appears once in [4, 1, 2, 1, 2] by XOR-ing everything",
+        "columns": [
+          "x",
+          "running value before",
+          "running value after (before ^ x)"
+        ],
+        "rows": [
+          [
+            "4  (100)",
+            "000",
+            "100  (4)"
+          ],
+          [
+            "1  (001)",
+            "100",
+            "101  (5)"
+          ],
+          [
+            "2  (010)",
+            "101",
+            "111  (7)"
+          ],
+          [
+            "1  (001)",
+            "111",
+            "110  (6)"
+          ],
+          [
+            "2  (010)",
+            "110",
+            "100  (4)"
+          ]
+        ],
+        "hit": 4,
+        "note": "XOR has two rules: <code>x ^ x = 0</code> and <code>x ^ 0 = x</code>, and the order does not matter. So every pair cancels out, and only the number that has no partner stays: 4."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>console.log(5 ^ 5, 5 ^ 0, 6 ^ 3)</code></pre>",
+          "opts": [
+            "<code>0 5 5</code>",
+            "<code>10 5 9</code>",
+            "<code>5 0 5</code>",
+            "<code>0 0 3</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "A number XOR itself is 0, and XOR with 0 changes nothing. 6 is 110 and 3 is 011, so 6 ^ 3 = 101 = 5.",
+            "XOR answers the question \"which bits are different?\"."
+          ],
+          "exec": "console.log(5 ^ 5, 5 ^ 0, 6 ^ 3)"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>let r = 0\nfor (const x of [4, 1, 2, 1, 2]) r ^= x\nconsole.log(r)</code></pre>",
+          "opts": [
+            "<code>0</code>",
+            "<code>10</code>",
+            "<code>4</code>",
+            "<code>2</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "The two 1s cancel, the two 2s cancel, and 4 is left. The answer needs O(n) time and O(1) space, with no hash map.",
+            "It works for any order of the input."
+          ],
+          "exec": "let r = 0\nfor (const x of [4, 1, 2, 1, 2]) r ^= x\nconsole.log(r)"
+        },
+        {
+          "tag": "Swap without a temp",
+          "q": "<pre><code>let a = 3, b = 5\na ^= b\nb ^= a\na ^= b\nconsole.log(a, b)</code></pre>",
+          "opts": [
+            "<code>3 5</code>",
+            "<code>5 3</code>",
+            "<code>0 0</code>",
+            "<code>8 8</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "After the three steps the values are swapped: 5 and 3. Each step uses the cancel rule: <code>a ^ b ^ b = a</code>.",
+            "It is a nice trick, but in real code <code>[a, b] = [b, a]</code> is clearer."
+          ],
+          "exec": "let a = 3, b = 5\na ^= b\nb ^= a\na ^= b\nconsole.log(a, b)"
+        },
+        {
+          "tag": "Missing number",
+          "q": "<pre><code>const nums = [3, 0, 1]\nlet x = nums.length\nfor (let i = 0; i &lt; nums.length; i++) x ^= i ^ nums[i]\nconsole.log(x)</code></pre><p>The array should hold every number from 0 to 3 once, but one is missing.</p>",
+          "opts": [
+            "<code>0</code>",
+            "<code>1</code>",
+            "<code>3</code>",
+            "<code>2</code>"
+          ],
+          "ans": 3,
+          "why": [
+            "XOR all the indexes (and the length) and all the values together. Everything that is present appears twice and cancels out, so the missing number is left: 2.",
+            "This avoids the overflow risk of summing very large numbers."
+          ],
+          "exec": "const nums = [3, 0, 1]\nlet x = nums.length\nfor (let i = 0; i < nums.length; i++) x ^= i ^ nums[i]\nconsole.log(x)"
+        },
+        {
+          "tag": "Why does it work?",
+          "q": "<p>Which properties make the XOR trick work?</p>",
+          "opts": [
+            "x ^ x = 0, x ^ 0 = x, and the order of XOR-ing does not matter",
+            "XOR always returns the bigger number",
+            "XOR sorts the bits",
+            "XOR only works on positive numbers"
+          ],
+          "ans": 0,
+          "why": [
+            "Because the order does not matter you can imagine the pairs standing next to each other, and each pair becomes 0.",
+            "It also works for negative numbers, because JavaScript XOR treats them as 32-bit integers."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>singleNumber(nums)</code>. Every number appears <b>twice</b> except one, which appears once. Return that number. Use O(1) extra space.</p>",
+        "examples": [
+          "singleNumber([4, 1, 2, 1, 2])  // 4",
+          "singleNumber([7])  // 7"
+        ],
+        "hint": "<p>Start with <code>result = 0</code> and XOR every number into it.</p>",
+        "fn": "singleNumber",
+        "starter": "function singleNumber(nums) {\n  // your code\n}",
+        "solution": "function singleNumber(nums) {\n  let result = 0\n  for (const x of nums) result ^= x\n  return result\n}",
+        "checks": [
+          {
+            "t": "the lesson example",
+            "verify": "assert(singleNumber([4, 1, 2, 1, 2]) === 4, \"expected 4\")"
+          },
+          {
+            "t": "one number",
+            "verify": "assert(singleNumber([7]) === 7, \"expected 7\")"
+          },
+          {
+            "t": "the single number is last",
+            "verify": "assert(singleNumber([2, 2, 3, 3, 9]) === 9, \"expected 9\")"
+          },
+          {
+            "t": "negative numbers",
+            "verify": "assert(singleNumber([-1, 5, -1]) === 5 && singleNumber([8, -3, 8]) === -3, \"negative numbers\")"
+          },
+          {
+            "t": "a big input stays fast",
+            "verify": "const a = []; for (let i = 1; i <= 100000; i++) a.push(i, i); a.push(424242); const t0 = Date.now(); assert(singleNumber(a) === 424242 && Date.now() - t0 < 100, \"wrong or too slow\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "XOR cancels equal pairs: <code>x ^ x = 0</code>, <code>x ^ 0 = x</code>, in any order. So \"everything appears twice except one\" is a single loop with <b>O(1) space</b>.",
+        "mistakes": [
+          "Using a hash map when O(1) space is asked.",
+          "Using <code>+</code> or <code>-</code> instead of <code>^</code>.",
+          "Forgetting that it only works if the other numbers come in pairs.",
+          "Expecting it to work on numbers larger than 32 bits."
+        ]
+      }
+    },
+    {
+      "id": "bit-shifts",
+      "prereqs": [
+        "xor"
+      ],
+      "dryRun": {
+        "title": "Bit operations on 10 (binary 1010)",
+        "columns": [
+          "operation",
+          "expression",
+          "result in binary",
+          "decimal"
+        ],
+        "rows": [
+          [
+            "make a mask for bit 2",
+            "1 << 2",
+            "0100",
+            "4"
+          ],
+          [
+            "test bit 2",
+            "10 & 4",
+            "0000",
+            "0, so the bit is not set"
+          ],
+          [
+            "set bit 2",
+            "10 | 4",
+            "1110",
+            "14"
+          ],
+          [
+            "clear bit 1",
+            "10 & ~2",
+            "1000",
+            "8"
+          ],
+          [
+            "toggle bit 0",
+            "10 ^ 1",
+            "1011",
+            "11"
+          ]
+        ],
+        "hit": 2,
+        "note": "Four moves cover almost everything: <b>mask</b> <code>1 &lt;&lt; i</code>, <b>test</b> with <code>&amp;</code>, <b>set</b> with <code>|</code>, <b>clear</b> with <code>&amp; ~</code>, <b>toggle</b> with <code>^</code>."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>console.log(1 &lt;&lt; 4, 20 &gt;&gt; 2, -8 &gt;&gt; 1, -8 &gt;&gt;&gt; 28)</code></pre>",
+          "opts": [
+            "<code>16 5 -4 15</code>",
+            "<code>16 5 4 15</code>",
+            "<code>4 5 -4 15</code>",
+            "<code>16 10 -4 0</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "<code>&lt;&lt; 4</code> multiplies by 16, and <code>&gt;&gt; 2</code> divides 20 by 4. The sign-keeping shift <code>-8 &gt;&gt; 1</code> is -4. The unsigned shift <code>-8 &gt;&gt;&gt; 28</code> treats -8 as 0xFFFFFFF8, so the top 4 bits (all ones) remain: 15.",
+            "<code>&gt;&gt;</code> keeps the sign; <code>&gt;&gt;&gt;</code> fills with zeros."
+          ],
+          "exec": "console.log(1 << 4, 20 >> 2, -8 >> 1, -8 >>> 28)"
+        },
+        {
+          "tag": "Read a bit",
+          "q": "<pre><code>console.log((10 &gt;&gt; 0) &amp; 1, (10 &gt;&gt; 1) &amp; 1)</code></pre>",
+          "opts": [
+            "<code>0 1</code>",
+            "<code>1 0</code>",
+            "<code>1 1</code>",
+            "<code>0 0</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "10 is 1010. Bit 0 (the rightmost) is 0 and bit 1 is 1. Shifting right by i puts bit i at position 0, and <code>&amp; 1</code> keeps only that bit.",
+            "This is the standard way to read bit i."
+          ],
+          "exec": "console.log((10 >> 0) & 1, (10 >> 1) & 1)"
+        },
+        {
+          "tag": "Precedence trap",
+          "q": "<pre><code>console.log(1 &lt;&lt; 2 + 1, (1 &lt;&lt; 2) + 1)</code></pre>",
+          "opts": [
+            "<code>5 5</code>",
+            "<code>8 5</code>",
+            "<code>5 8</code>",
+            "<code>8 8</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "Addition binds tighter than a shift, so <code>1 &lt;&lt; 2 + 1</code> means <code>1 &lt;&lt; 3</code>, which is 8. With brackets we get 4 + 1 = 5.",
+            "The same trap exists for <code>&amp;</code> and <code>==</code>. Use brackets around bit operations."
+          ],
+          "exec": "console.log(1 << 2 + 1, (1 << 2) + 1)"
+        },
+        {
+          "tag": "32-bit limit",
+          "q": "<pre><code>console.log(1 &lt;&lt; 31, 1 &lt;&lt; 32)</code></pre>",
+          "opts": [
+            "<code>2147483648 4294967296</code>",
+            "<code>-2147483648 1</code>",
+            "<code>2147483648 0</code>",
+            "<code>-2147483648 0</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "JavaScript bit operations work on <b>32-bit signed integers</b>. Bit 31 is the sign bit, so <code>1 &lt;&lt; 31</code> is negative. The shift count wraps modulo 32, so <code>1 &lt;&lt; 32</code> is <code>1 &lt;&lt; 0</code> = 1.",
+            "For bigger numbers use BigInt or plain arithmetic."
+          ],
+          "exec": "console.log(1 << 31, 1 << 32)"
+        },
+        {
+          "tag": "Count the ones",
+          "q": "<p>To count the 1-bits of a non-negative number <code>n</code> you loop with <code>n &amp; 1</code> and then shift <code>n</code>. Which shift avoids an endless loop when n has its top bit set?</p>",
+          "opts": [
+            "<code>n >>= 1</code>",
+            "<code>n >>>= 1</code>",
+            "<code>n <<= 1</code>",
+            "<code>n -= 1</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "With <code>&gt;&gt;</code> a negative number keeps its sign bit, so it never reaches 0. The unsigned shift <code>&gt;&gt;&gt;</code> fills with zeros, so the loop ends after at most 32 steps.",
+            "The brackets-and-shifts details are the reason this lesson is worth a look."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>countBits(n)</code>. <code>n</code> is an integer from 0 to 4294967295 (32 bits, treated as unsigned). Return how many bits are 1. Use shifts and masks.</p>",
+        "examples": [
+          "countBits(11)  // 3  (1011)",
+          "countBits(4294967295)  // 32"
+        ],
+        "hint": "<p>Loop 32 times: add <code>n &amp; 1</code> to a counter and do <code>n = n &gt;&gt;&gt; 1</code>. Use <code>&gt;&gt;&gt;</code>, not <code>&gt;&gt;</code>.</p>",
+        "fn": "countBits",
+        "starter": "function countBits(n) {\n  // your code\n}",
+        "solution": "function countBits(n) {\n  let count = 0\n  for (let i = 0; i < 32; i++) {\n    count += n & 1\n    n = n >>> 1\n  }\n  return count\n}",
+        "checks": [
+          {
+            "t": "small numbers",
+            "verify": "assert(countBits(0) === 0 && countBits(11) === 3 && countBits(8) === 1, \"expected 0, 3, 1\")"
+          },
+          {
+            "t": "a power of two",
+            "verify": "assert(countBits(1024) === 1, \"expected 1\")"
+          },
+          {
+            "t": "the biggest signed 32-bit number",
+            "verify": "assert(countBits(2147483647) === 31, \"expected 31\")"
+          },
+          {
+            "t": "all 32 bits set",
+            "verify": "assert(countBits(4294967295) === 32, \"expected 32 (use >>>)\")"
+          },
+          {
+            "t": "the top bit only",
+            "verify": "assert(countBits(2147483648) === 1, \"expected 1\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Bits: <b>mask</b> <code>1 << i</code>, <b>test</b> <code>&</code>, <b>set</b> <code>|</code>, <b>clear</b> <code>& ~</code>, <b>toggle</b> <code>^</code>. JavaScript uses 32-bit signed integers: use <code>>>></code> for unsigned shifts and brackets for precedence.",
+        "mistakes": [
+          "Writing <code>a &amp; 1 == 1</code> (precedence).",
+          "Using <code>&gt;&gt;</code> on numbers with the top bit set.",
+          "Shifting by 32 or more.",
+          "Using bit operations on numbers larger than 32 bits."
+        ]
+      }
+    },
+    {
+      "id": "n-minus-1",
+      "prereqs": [
+        "bit-shifts"
+      ],
+      "dryRun": {
+        "title": "n & (n - 1) removes the lowest set bit. Starting with 12",
+        "columns": [
+          "n",
+          "n - 1",
+          "n & (n - 1)",
+          "meaning"
+        ],
+        "rows": [
+          [
+            "1100  (12)",
+            "1011  (11)",
+            "1000  (8)",
+            "the lowest 1 bit is gone: 1 bit removed"
+          ],
+          [
+            "1000  (8)",
+            "0111  (7)",
+            "0000  (0)",
+            "removed another: 2 bits in total"
+          ],
+          [
+            "10000  (16)",
+            "01111  (15)",
+            "00000  (0)",
+            "a power of two has only one bit, so one step gives 0"
+          ]
+        ],
+        "hit": 0,
+        "note": "Subtracting 1 flips the lowest 1 bit to 0 and every 0 below it to 1. AND-ing with the original clears exactly that lowest 1 bit. The loop <code>while (n) n &amp;= n - 1</code> runs once <b>per set bit</b>."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>console.log(12 &amp; 11, 8 &amp; 7, 10 &amp; 9)</code></pre>",
+          "opts": [
+            "<code>8 0 8</code>",
+            "<code>4 0 8</code>",
+            "<code>8 0 2</code>",
+            "<code>12 8 10</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "12 is 1100 and 11 is 1011, so the AND is 1000 = 8. 8 & 7 is 0. 10 (1010) & 9 (1001) is 1000 = 8.",
+            "Each time exactly one 1 bit, the lowest, disappears."
+          ],
+          "exec": "console.log(12 & 11, 8 & 7, 10 & 9)"
+        },
+        {
+          "tag": "Count the ones",
+          "q": "<pre><code>let n = 13, c = 0\nwhile (n) {\n  n &amp;= n - 1\n  c++\n}\nconsole.log(c)</code></pre>",
+          "opts": [
+            "<code>2</code>",
+            "<code>3</code>",
+            "<code>4</code>",
+            "<code>13</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "13 is 1101, which has three 1 bits, so the loop runs three times: 1101 → 1100 → 1000 → 0000.",
+            "It is faster than checking every bit when only a few bits are set."
+          ],
+          "exec": "let n = 13, c = 0\nwhile (n) {\n  n &= n - 1\n  c++\n}\nconsole.log(c)"
+        },
+        {
+          "tag": "Power of two",
+          "q": "<pre><code>console.log([1, 6, 16, 0].map((n) =&gt; n &gt; 0 &amp;&amp; (n &amp; (n - 1)) === 0).join())</code></pre>",
+          "opts": [
+            "<code>true,false,true,false</code>",
+            "<code>true,true,true,true</code>",
+            "<code>false,false,true,false</code>",
+            "<code>true,false,true,true</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "A power of two has exactly one 1 bit, so removing it leaves 0. 6 (110) has two bits. 0 has none, so the <code>n &gt; 0</code> check is needed.",
+            "This one-liner is a classic interview question."
+          ],
+          "exec": "console.log([1, 6, 16, 0].map((n) => n > 0 && (n & (n - 1)) === 0).join())"
+        },
+        {
+          "tag": "Lowest set bit",
+          "q": "<pre><code>console.log(12 &amp; -12)</code></pre>",
+          "opts": [
+            "<code>0</code>",
+            "<code>4</code>",
+            "<code>8</code>",
+            "<code>12</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "In two's complement, <code>-n</code> flips all bits above the lowest 1 and keeps the lowest 1. The AND leaves only that bit: 4 (the 100 in 1100).",
+            "Sibling trick of <code>n &amp; (n - 1)</code>: one isolates the lowest bit, the other removes it."
+          ],
+          "exec": "console.log(12 & -12)"
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>How many steps does <code>while (n) n &amp;= n - 1</code> take?</p>",
+          "opts": [
+            "Always 32",
+            "The number of 1 bits in n",
+            "The value of n",
+            "log n, always"
+          ],
+          "ans": 1,
+          "why": [
+            "One step per set bit. A number with 2 set bits finishes in 2 steps, even if it is huge.",
+            "In the worst case (all bits set) it is 32 steps, so it is O(1) for 32-bit numbers anyway."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>bitsToFlip(a, b)</code>. Return how many bits you have to flip to turn the 32-bit integer <code>a</code> into <code>b</code> (the number of positions where their bits differ). Use <code>n &amp; (n - 1)</code> to count.</p>",
+        "examples": [
+          "bitsToFlip(29, 15)  // 2",
+          "bitsToFlip(7, 0)  // 3"
+        ],
+        "hint": "<p><code>a ^ b</code> has a 1 exactly where the bits differ. Then count the 1 bits with <code>while (x) { x &amp;= x - 1; count++ }</code>.</p>",
+        "fn": "bitsToFlip",
+        "starter": "function bitsToFlip(a, b) {\n  // your code\n}",
+        "solution": "function bitsToFlip(a, b) {\n  let x = a ^ b\n  let count = 0\n  while (x !== 0) {\n    x &= x - 1\n    count++\n  }\n  return count\n}",
+        "checks": [
+          {
+            "t": "29 and 15",
+            "verify": "assert(bitsToFlip(29, 15) === 2, \"expected 2\")"
+          },
+          {
+            "t": "equal numbers",
+            "verify": "assert(bitsToFlip(5, 5) === 0 && bitsToFlip(0, 0) === 0, \"expected 0\")"
+          },
+          {
+            "t": "one number is zero",
+            "verify": "assert(bitsToFlip(7, 0) === 3 && bitsToFlip(0, 8) === 1, \"expected 3 and 1\")"
+          },
+          {
+            "t": "high bits",
+            "verify": "assert(bitsToFlip(2 ** 30, 0) === 1, \"expected 1\")"
+          },
+          {
+            "t": "every bit differs",
+            "verify": "assert(bitsToFlip(4294967295, 0) === 32, \"expected 32\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "<code>n & (n - 1)</code> <b>removes the lowest set bit</b>. Use it to count bits (one step per 1 bit), to test for a power of two (<code>n > 0 && (n & (n - 1)) === 0</code>), and with XOR to count differing bits.",
+        "mistakes": [
+          "Forgetting <code>n &gt; 0</code> in the power-of-two test.",
+          "Mixing up <code>n &amp; (n - 1)</code> (removes the lowest bit) with <code>n &amp; -n</code> (keeps only it).",
+          "Brackets: <code>(n &amp; (n - 1)) === 0</code>.",
+          "Using it on numbers beyond 32 bits."
+        ]
+      }
+    },
+    {
+      "id": "boyer-moore",
+      "prereqs": [
+        "arrays",
+        "hashmaps"
+      ],
+      "dryRun": {
+        "title": "Boyer-Moore voting on [2, 2, 1, 1, 1, 2, 2]",
+        "columns": [
+          "x",
+          "candidate",
+          "count",
+          "what happened"
+        ],
+        "rows": [
+          [
+            "2",
+            "2",
+            "1",
+            "count was 0, so 2 becomes the candidate"
+          ],
+          [
+            "2",
+            "2",
+            "2",
+            "same as the candidate: +1"
+          ],
+          [
+            "1",
+            "2",
+            "1",
+            "different: -1"
+          ],
+          [
+            "1",
+            "2",
+            "0",
+            "different: -1"
+          ],
+          [
+            "1",
+            "1",
+            "1",
+            "count was 0, so 1 becomes the candidate"
+          ],
+          [
+            "2",
+            "1",
+            "0",
+            "different: -1"
+          ],
+          [
+            "2",
+            "2",
+            "1",
+            "count was 0, so 2 becomes the candidate"
+          ]
+        ],
+        "hit": 6,
+        "note": "Think of each different pair as cancelling out. The element that appears <b>more than half</b> of the time cannot be cancelled completely, so it is the candidate left at the end. One pass, two variables."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>let cand = null, count = 0\nfor (const x of [2, 2, 1, 1, 1, 2, 2]) {\n  if (count === 0) cand = x\n  count += x === cand ? 1 : -1\n}\nconsole.log(cand)</code></pre>",
+          "opts": [
+            "<code>1</code>",
+            "<code>2</code>",
+            "<code>null</code>",
+            "<code>0</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "The number 2 appears four times out of seven, which is more than half. It survives the cancelling and ends as the candidate.",
+            "The trace in the table above shows how the candidate switches to 1 and back."
+          ],
+          "exec": "let cand = null, count = 0\nfor (const x of [2, 2, 1, 1, 1, 2, 2]) {\n  if (count === 0) cand = x\n  count += x === cand ? 1 : -1\n}\nconsole.log(cand)"
+        },
+        {
+          "tag": "No majority",
+          "q": "<pre><code>let cand = null, count = 0\nfor (const x of [1, 2, 3]) {\n  if (count === 0) cand = x\n  count += x === cand ? 1 : -1\n}\nconsole.log(cand)</code></pre>",
+          "opts": [
+            "<code>1</code>",
+            "<code>2</code>",
+            "<code>3</code>",
+            "<code>null</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "No number appears more than half the time, yet the loop still ends with a candidate: 3. The algorithm only gives the right answer <b>if</b> a majority exists.",
+            "When it is not guaranteed, run a second pass to count the candidate and check it."
+          ],
+          "exec": "let cand = null, count = 0\nfor (const x of [1, 2, 3]) {\n  if (count === 0) cand = x\n  count += x === cand ? 1 : -1\n}\nconsole.log(cand)"
+        },
+        {
+          "tag": "Why does it work?",
+          "q": "<p>Why can the majority element (more than n / 2 times) never be fully cancelled?</p>",
+          "opts": [
+            "Because it is the biggest",
+            "Each cancel removes one majority and one other element, but there are more majority elements than all the others together",
+            "Because the array is sorted",
+            "Because the count never goes below 0"
+          ],
+          "ans": 1,
+          "why": [
+            "Cancel different pairs. The others can cancel at most as many majority copies as there are others, and the majority has more copies than that.",
+            "So at least one copy of it survives."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>Compared with counting in a hash map, what is the benefit of Boyer-Moore?</p>",
+          "opts": [
+            "It is faster than O(n)",
+            "The same O(n) time but O(1) space instead of O(n)",
+            "It works without a loop",
+            "It finds every duplicate"
+          ],
+          "ans": 1,
+          "why": [
+            "Both read the array once. The hash map stores up to n counts; Boyer-Moore stores two numbers.",
+            "Interviewers often ask for the constant-space version as a follow-up."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Variation",
+          "q": "<p>You want every element that appears more than n / 3 times. How many candidates can there be, and how many do you keep?</p>",
+          "opts": [
+            "One",
+            "At most two, so keep two candidates and two counts",
+            "At most three",
+            "It cannot be solved"
+          ],
+          "ans": 1,
+          "why": [
+            "Two different elements can each appear more than a third of the time, but three cannot (they would need more than all n slots).",
+            "Cancel in groups of three different elements, and verify both candidates at the end."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>majorityElement(nums)</code>. Return the value that appears <b>more than half</b> the time, or <code>null</code> if there is none. Use O(1) extra space (two passes are fine).</p>",
+        "examples": [
+          "majorityElement([2, 2, 1, 1, 1, 2, 2])  // 2",
+          "majorityElement([1, 2, 3])  // null"
+        ],
+        "hint": "<p>Pass 1: keep <code>cand</code> and <code>count</code> (Boyer-Moore). Pass 2: count how many times <code>cand</code> appears, and return it only if that is more than <code>nums.length / 2</code>.</p>",
+        "fn": "majorityElement",
+        "starter": "function majorityElement(nums) {\n  // your code\n}",
+        "solution": "function majorityElement(nums) {\n  let cand = null\n  let count = 0\n  for (const x of nums) {\n    if (count === 0) cand = x\n    count += x === cand ? 1 : -1\n  }\n  let seen = 0\n  for (const x of nums) if (x === cand) seen++\n  return seen > nums.length / 2 ? cand : null\n}",
+        "checks": [
+          {
+            "t": "the lesson example",
+            "verify": "assert(majorityElement([2, 2, 1, 1, 1, 2, 2]) === 2, \"expected 2\")"
+          },
+          {
+            "t": "no majority",
+            "verify": "assert(majorityElement([1, 2, 3]) === null, \"expected null\")"
+          },
+          {
+            "t": "exactly half is not enough",
+            "verify": "assert(majorityElement([1, 1, 2, 2]) === null, \"expected null, half is not more than half\")"
+          },
+          {
+            "t": "one item and an empty array",
+            "verify": "assert(majorityElement([5]) === 5 && majorityElement([]) === null, \"edge cases\")"
+          },
+          {
+            "t": "a big input stays fast",
+            "verify": "const a = Array.from({ length: 200001 }, (_, i) => (i % 2 === 0 ? 7 : i)); const t0 = Date.now(); assert(majorityElement(a) === 7 && Date.now() - t0 < 100, \"wrong or too slow\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Boyer-Moore voting: keep a <b>candidate and a count</b>; equal adds, different subtracts, zero picks a new candidate. If a majority exists it survives. <b>Verify with a second pass</b> if it is not guaranteed. O(n) time, O(1) space.",
+        "mistakes": [
+          "Trusting the candidate without checking when no majority is guaranteed.",
+          "Using \"at least half\" instead of \"more than half\".",
+          "Forgetting to reset the candidate when the count hits 0.",
+          "Using it for the n/3 version with only one candidate."
+        ]
+      }
+    },
+    {
+      "id": "string-matching",
+      "prereqs": [
+        "strings"
+      ],
+      "dryRun": {
+        "title": "KMP failure table (lps) for the pattern \"abab\". lps[i] = length of the longest proper prefix of pattern[0..i] that is also its suffix",
+        "columns": [
+          "i",
+          "pattern[i]",
+          "compared with",
+          "lps[i]"
+        ],
+        "rows": [
+          [
+            "0",
+            "a",
+            "(first letter)",
+            "0"
+          ],
+          [
+            "1",
+            "b",
+            "a: no match",
+            "0"
+          ],
+          [
+            "2",
+            "a",
+            "a: match, length 1",
+            "1"
+          ],
+          [
+            "3",
+            "b",
+            "b: match, length 2",
+            "2"
+          ]
+        ],
+        "hit": 3,
+        "note": "When a mismatch happens at position j of the pattern, <code>lps[j - 1]</code> says how much of the pattern we have <b>already matched again</b>, so we jump back that far and <b>never move backwards in the text</b>. Total O(n + m)."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>function lps(p) {\n  const l = [0]\n  let k = 0\n  for (let i = 1; i &lt; p.length; i++) {\n    while (k &amp;&amp; p[i] !== p[k]) k = l[k - 1]\n    if (p[i] === p[k]) k++\n    l.push(k)\n  }\n  return l\n}\nconsole.log(lps(\"aabaaab\").join(\",\"))</code></pre>",
+          "opts": [
+            "<code>0,1,0,1,2,2,3</code>",
+            "<code>0,1,0,1,2,3,4</code>",
+            "<code>0,0,0,0,0,0,0</code>",
+            "<code>0,1,2,3,4,5,6</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "At the last letter, \"aaab\" ends with the same letters as the prefix \"aab\" for 3 characters (\"aab\" and \"aab\"), so the value is 3.",
+            "The inner <code>while</code> falls back along earlier table entries, like the real search does."
+          ],
+          "exec": "function lps(p) {\n  const l = [0]\n  let k = 0\n  for (let i = 1; i < p.length; i++) {\n    while (k && p[i] !== p[k]) k = l[k - 1]\n    if (p[i] === p[k]) k++\n    l.push(k)\n  }\n  return l\n}\nconsole.log(lps(\"aabaaab\").join(\",\"))"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>function find(t, p) {\n  const l = [0]\n  let k = 0\n  for (let i = 1; i &lt; p.length; i++) {\n    while (k &amp;&amp; p[i] !== p[k]) k = l[k - 1]\n    if (p[i] === p[k]) k++\n    l.push(k)\n  }\n  const out = []\n  k = 0\n  for (let i = 0; i &lt; t.length; i++) {\n    while (k &amp;&amp; t[i] !== p[k]) k = l[k - 1]\n    if (t[i] === p[k]) k++\n    if (k === p.length) { out.push(i - k + 1); k = l[k - 1] }\n  }\n  return out\n}\nconsole.log(find(\"ababa\", \"aba\").join(\",\"))</code></pre>",
+          "opts": [
+            "<code>0</code>",
+            "<code>0,2</code>",
+            "<code>2</code>",
+            "<code>0,1,2</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "\"aba\" appears at index 0 and again at index 2, and the two matches share the middle \"a\". After a full match we set <code>k = l[k - 1]</code> so overlapping matches are found.",
+            "Resetting <code>k</code> to 0 would miss the second one."
+          ],
+          "exec": "function find(t, p) {\n  const l = [0]\n  let k = 0\n  for (let i = 1; i < p.length; i++) {\n    while (k && p[i] !== p[k]) k = l[k - 1]\n    if (p[i] === p[k]) k++\n    l.push(k)\n  }\n  const out = []\n  k = 0\n  for (let i = 0; i < t.length; i++) {\n    while (k && t[i] !== p[k]) k = l[k - 1]\n    if (t[i] === p[k]) k++\n    if (k === p.length) { out.push(i - k + 1); k = l[k - 1] }\n  }\n  return out\n}\nconsole.log(find(\"ababa\", \"aba\").join(\",\"))"
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>Text length n, pattern length m. What do the naive search and KMP cost?</p>",
+          "opts": [
+            "Naive O(n * m), KMP O(n + m)",
+            "Both O(n)",
+            "Naive O(n), KMP O(n * m)",
+            "Naive O(n²), KMP O(n log n)"
+          ],
+          "ans": 0,
+          "why": [
+            "The naive way restarts from the next text position after every mismatch. KMP uses the table to keep the matched part and never moves backwards in the text.",
+            "Worst case for naive: text \"aaaa...ab\" and pattern \"aaab\"."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Rabin-Karp",
+          "q": "<p>Rabin-Karp compares hash values of windows instead of letters. What makes it fast, and what must you do on a hash match?</p>",
+          "opts": [
+            "It sorts the windows; nothing more",
+            "A rolling hash updates in O(1) when the window slides (drop the old letter, add the new one); on a match, compare the real letters because hashes can collide",
+            "It never has collisions",
+            "It needs the table from KMP"
+          ],
+          "ans": 1,
+          "why": [
+            "The hash of the next window comes from the previous one with a couple of arithmetic steps. Equal hashes only suggest equal strings.",
+            "Rabin-Karp shines when searching for many patterns at once."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "In an interview",
+          "q": "<p>What is a sensible plan when asked \"find a pattern in a text\"?</p>",
+          "opts": [
+            "Always write KMP from memory",
+            "Start with the built-in <code>indexOf</code> or the naive loop, explain its worst case, and then describe (or write) KMP if asked for better",
+            "Use a trie",
+            "Use a heap"
+          ],
+          "ans": 1,
+          "why": [
+            "Most real questions are about the idea, so state the cost of the simple solution and know how the table avoids the repeated work.",
+            "Many string questions (repeated substring pattern, shortest palindrome) quietly use the same table."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>findAll(text, pattern)</code>. Return a list of every index in <code>text</code> where <code>pattern</code> starts (matches may overlap), in increasing order. An empty pattern returns <code>[]</code>. It must handle a text of 200,000 letters.</p>",
+        "examples": [
+          "findAll(\"ababa\", \"aba\")  // [0, 2]",
+          "findAll(\"hello\", \"xyz\")  // []"
+        ],
+        "hint": "<p>Build the <code>lps</code> table for the pattern. Then scan the text with a pointer <code>k</code> into the pattern; on a full match record <code>i - m + 1</code> and set <code>k = lps[k - 1]</code>.</p>",
+        "fn": "findAll",
+        "starter": "function findAll(text, pattern) {\n  // your code\n}",
+        "solution": "function findAll(text, pattern) {\n  const m = pattern.length\n  if (m === 0) return []\n  const lps = [0]\n  let k = 0\n  for (let i = 1; i < m; i++) {\n    while (k && pattern[i] !== pattern[k]) k = lps[k - 1]\n    if (pattern[i] === pattern[k]) k++\n    lps.push(k)\n  }\n  const out = []\n  k = 0\n  for (let i = 0; i < text.length; i++) {\n    while (k && text[i] !== pattern[k]) k = lps[k - 1]\n    if (text[i] === pattern[k]) k++\n    if (k === m) {\n      out.push(i - m + 1)\n      k = lps[k - 1]\n    }\n  }\n  return out\n}",
+        "checks": [
+          {
+            "t": "overlapping matches",
+            "verify": "assert(JSON.stringify(findAll(\"ababa\", \"aba\")) === \"[0,2]\", \"expected [0,2]\")"
+          },
+          {
+            "t": "no match",
+            "verify": "assert(JSON.stringify(findAll(\"hello\", \"xyz\")) === \"[]\", \"expected []\")"
+          },
+          {
+            "t": "the pattern equals the text, and an empty pattern",
+            "verify": "assert(JSON.stringify(findAll(\"abc\", \"abc\")) === \"[0]\" && JSON.stringify(findAll(\"abc\", \"\")) === \"[]\", \"expected [0] and []\")"
+          },
+          {
+            "t": "repeated letters",
+            "verify": "assert(JSON.stringify(findAll(\"aaaa\", \"aa\")) === \"[0,1,2]\", \"expected [0,1,2]\")"
+          },
+          {
+            "t": "a worst case for the naive loop",
+            "verify": "const text = \"a\".repeat(200000) + \"b\"; const pat = \"a\".repeat(1000) + \"b\"; const t0 = Date.now(); const r = findAll(text, pat); assert(JSON.stringify(r) === \"[199000]\" && Date.now() - t0 < 1000, \"wrong or too slow\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "KMP builds an <b>lps table</b> (longest prefix that is also a suffix) so that after a mismatch the pattern pointer falls back without moving backwards in the text: <b>O(n + m)</b>. Rabin-Karp uses a rolling hash and must verify matches.",
+        "mistakes": [
+          "Resetting the pattern pointer to 0 after a mismatch (naive O(n × m)).",
+          "Resetting to 0 after a full match and missing overlaps.",
+          "Off-by-one in the start index (<code>i - m + 1</code>).",
+          "Trusting a hash match without comparing the letters."
+        ]
+      }
+    },
+    {
+      "id": "bucket-sort",
+      "prereqs": [
+        "insertion-sort",
+        "hashmaps"
+      ],
+      "dryRun": {
+        "title": "Bucket sort [29, 25, 3, 49, 9, 37, 21, 43] into 5 buckets, bucket = floor(x / 10)",
+        "columns": [
+          "bucket",
+          "items put in",
+          "after sorting the bucket"
+        ],
+        "rows": [
+          [
+            "0  (0 to 9)",
+            "3, 9",
+            "3, 9"
+          ],
+          [
+            "1  (10 to 19)",
+            "(empty)",
+            "-"
+          ],
+          [
+            "2  (20 to 29)",
+            "29, 25, 21",
+            "21, 25, 29"
+          ],
+          [
+            "3  (30 to 39)",
+            "37",
+            "37"
+          ],
+          [
+            "4  (40 to 49)",
+            "49, 43",
+            "43, 49"
+          ]
+        ],
+        "hit": 2,
+        "note": "Spread the items over buckets by value, sort each small bucket, then read the buckets in order: <code>3, 9, 21, 25, 29, 37, 43, 49</code>. It is fast when the values are spread evenly over a known range."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const nums = [29, 25, 3, 49, 9, 37, 21, 43]\nconst buckets = Array.from({ length: 5 }, () =&gt; [])\nfor (const x of nums) buckets[Math.floor(x / 10)].push(x)\nconst out = buckets.flatMap((b) =&gt; b.sort((p, q) =&gt; p - q))\nconsole.log(out.join(\",\"))</code></pre>",
+          "opts": [
+            "<code>3,9,21,25,29,37,43,49</code>",
+            "<code>29,25,21,3,9,37,49,43</code>",
+            "<code>49,43,37,29,25,21,9,3</code>",
+            "<code>3,9,25,21,29,37,49,43</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "Items go into bucket <code>floor(x / 10)</code>, each bucket is sorted, and <code>flatMap</code> joins them in bucket order.",
+            "The buckets already separate small from large, so no later step has to compare across buckets."
+          ],
+          "exec": "const nums = [29, 25, 3, 49, 9, 37, 21, 43]\nconst buckets = Array.from({ length: 5 }, () => [])\nfor (const x of nums) buckets[Math.floor(x / 10)].push(x)\nconst out = buckets.flatMap((b) => b.sort((p, q) => p - q))\nconsole.log(out.join(\",\"))"
+        },
+        {
+          "tag": "Counting sort",
+          "q": "<pre><code>const nums = [3, 1, 2, 3, 1]\nconst count = new Array(4).fill(0)\nfor (const x of nums) count[x]++\nconst out = []\ncount.forEach((c, v) =&gt; { for (let i = 0; i &lt; c; i++) out.push(v) })\nconsole.log(out.join(\",\"))</code></pre>",
+          "opts": [
+            "<code>1,1,2,3,3</code>",
+            "<code>3,3,2,1,1</code>",
+            "<code>1,2,3</code>",
+            "<code>3,1,2,3,1</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "When the values are small integers, a bucket per value is just a counter. This is <b>counting sort</b>: O(n + k) for values in 0..k.",
+            "It never compares two items with each other."
+          ],
+          "exec": "const nums = [3, 1, 2, 3, 1]\nconst count = new Array(4).fill(0)\nfor (const x of nums) count[x]++\nconst out = []\ncount.forEach((c, v) => { for (let i = 0; i < c; i++) out.push(v) })\nconsole.log(out.join(\",\"))"
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>What is the time of bucket sort on n evenly spread items with about n buckets?</p>",
+          "opts": [
+            "<code>O(n) on average</code>",
+            "<code>O(n log n) always</code>",
+            "<code>O(n²) always</code>",
+            "<code>O(log n)</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "Each bucket holds only a few items, so sorting them is cheap and the total work is linear.",
+            "If everything lands in one bucket, you are sorting n items with a normal sort (O(n log n) or worse)."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "When to use it",
+          "q": "<p>When is bucket sort a good choice?</p>",
+          "opts": [
+            "The values are spread fairly evenly over a known range",
+            "The values are strings of unknown length",
+            "The data is already sorted",
+            "Memory is extremely tight"
+          ],
+          "ans": 0,
+          "why": [
+            "You need to know the range to choose the bucket for each value, and an even spread to keep the buckets small.",
+            "For skewed data, a comparison sort (merge or quick sort) is safer."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Top K frequent",
+          "q": "<p>\"Top k frequent elements\": count each value, then group the values by their <b>frequency</b>. How are the buckets arranged?</p>",
+          "opts": [
+            "Bucket index = the value; the bucket holds its count",
+            "Bucket index = the frequency (1 to n); the bucket holds the values with that frequency",
+            "Bucket index = the position in the array",
+            "One bucket for all the values"
+          ],
+          "ans": 1,
+          "why": [
+            "A frequency can never be more than n, so there are at most n buckets. Reading them from the highest index down gives the most frequent values first, in O(n).",
+            "This beats a heap (O(n log k)) when k is large."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>topKFrequent(nums, k)</code>. Return the <code>k</code> values that appear most often (in any order). The tests never have a tie at the border, so the answer is unique. Aim for O(n) using buckets indexed by frequency.</p>",
+        "examples": [
+          "topKFrequent([1, 1, 1, 2, 2, 3], 2)  // [1, 2] (any order)",
+          "topKFrequent([5], 1)  // [5]"
+        ],
+        "hint": "<p>Count with a Map. Make <code>buckets = Array.from({ length: n + 1 }, () =&gt; [])</code> and put each value in <code>buckets[count]</code>. Then walk from the highest index down, collecting values until you have <code>k</code>.</p>",
+        "fn": "topKFrequent",
+        "starter": "function topKFrequent(nums, k) {\n  // your code\n}",
+        "solution": "function topKFrequent(nums, k) {\n  const counts = new Map()\n  for (const x of nums) counts.set(x, (counts.get(x) || 0) + 1)\n  const buckets = Array.from({ length: nums.length + 1 }, () => [])\n  for (const [v, c] of counts) buckets[c].push(v)\n  const out = []\n  for (let f = buckets.length - 1; f >= 1 && out.length < k; f--) {\n    for (const v of buckets[f]) {\n      if (out.length < k) out.push(v)\n    }\n  }\n  return out\n}",
+        "checks": [
+          {
+            "t": "the lesson example",
+            "verify": "assert(JSON.stringify([...topKFrequent([1, 1, 1, 2, 2, 3], 2)].sort()) === \"[1,2]\", \"expected 1 and 2\")"
+          },
+          {
+            "t": "one value",
+            "verify": "assert(JSON.stringify(topKFrequent([5], 1)) === \"[5]\", \"expected [5]\")"
+          },
+          {
+            "t": "negative numbers",
+            "verify": "assert(JSON.stringify([...topKFrequent([-1, -1, 2, 2, 2, 7], 1)]) === \"[2]\", \"expected [2]\")"
+          },
+          {
+            "t": "k = 3",
+            "verify": "assert(JSON.stringify([...topKFrequent([4, 4, 4, 4, 5, 5, 5, 6, 6, 7], 3)].sort()) === \"[4,5,6]\", \"expected 4, 5 and 6\")"
+          },
+          {
+            "t": "a big input stays fast",
+            "verify": "const a = []; for (let i = 0; i < 100000; i++) a.push(i % 1000 === 0 ? 0 : i % 1000 < 500 ? 1 : (i % 1000) + 5000); for (let i = 0; i < 50000; i++) a.push(77777); const t0 = Date.now(); const r = topKFrequent(a, 1); assert(r.length === 1 && r[0] === 77777 && Date.now() - t0 < 500, \"wrong or too slow\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Bucket sort spreads items over buckets by value, sorts each small bucket and reads them in order: <b>O(n) on average</b> for evenly spread data. Counting sort is the one-value-per-bucket case. Buckets indexed by <b>frequency</b> solve \"top k frequent\" in O(n).",
+        "mistakes": [
+          "Using it on data with an unknown or heavily skewed range.",
+          "Making buckets too few (they get crowded) or too many (wasted memory).",
+          "Forgetting to sort inside each bucket.",
+          "Using a bucket array that is too short for the biggest frequency (needs n + 1 slots)."
+        ]
+      }
+    },
+    {
+      "id": "monotonic-stack-2",
+      "prereqs": [
+        "monotonic-stack"
+      ],
+      "dryRun": {
+        "title": "Largest rectangle in the histogram [2, 1, 5, 6, 2, 3]. The stack keeps bars with increasing height; a shorter bar pops taller ones",
+        "columns": [
+          "arrives",
+          "popped bar",
+          "width",
+          "area"
+        ],
+        "rows": [
+          [
+            "bar 1 (height 1)",
+            "bar 0 (height 2)",
+            "1",
+            "2 × 1 = 2"
+          ],
+          [
+            "bar 4 (height 2)",
+            "bar 3 (height 6)",
+            "1",
+            "6 × 1 = 6"
+          ],
+          [
+            "bar 4 (height 2)",
+            "bar 2 (height 5)",
+            "2",
+            "5 × 2 = 10  (best)"
+          ],
+          [
+            "end (height 0)",
+            "bar 5 (height 3)",
+            "1",
+            "3 × 1 = 3"
+          ],
+          [
+            "end (height 0)",
+            "bar 4 (height 2)",
+            "4",
+            "2 × 4 = 8"
+          ],
+          [
+            "end (height 0)",
+            "bar 1 (height 1)",
+            "6",
+            "1 × 6 = 6"
+          ]
+        ],
+        "hit": 2,
+        "note": "When a bar is popped, the bar that arrives is its <b>right</b> limit (the first shorter bar) and the bar below it on the stack is its <b>left</b> limit. So width = <code>i - leftIndex - 1</code>, or the whole <code>i</code> if the stack is empty."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>function largest(h) {\n  const st = []\n  let best = 0\n  const bars = [...h, 0]\n  for (let i = 0; i &lt; bars.length; i++) {\n    while (st.length &amp;&amp; bars[st[st.length - 1]] &gt; bars[i]) {\n      const height = bars[st.pop()]\n      const left = st.length ? st[st.length - 1] : -1\n      best = Math.max(best, height * (i - left - 1))\n    }\n    st.push(i)\n  }\n  return best\n}\nconsole.log(largest([2, 1, 5, 6, 2, 3]))</code></pre>",
+          "opts": [
+            "<code>8</code>",
+            "<code>10</code>",
+            "<code>12</code>",
+            "<code>6</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "The bars 5 and 6 side by side give a rectangle of height 5 and width 2, which is 10. No other rectangle is bigger.",
+            "The extra <code>0</code> at the end is a sentinel: it is shorter than everything, so it pops every remaining bar."
+          ],
+          "exec": "function largest(h) {\n  const st = []\n  let best = 0\n  const bars = [...h, 0]\n  for (let i = 0; i < bars.length; i++) {\n    while (st.length && bars[st[st.length - 1]] > bars[i]) {\n      const height = bars[st.pop()]\n      const left = st.length ? st[st.length - 1] : -1\n      best = Math.max(best, height * (i - left - 1))\n    }\n    st.push(i)\n  }\n  return best\n}\nconsole.log(largest([2, 1, 5, 6, 2, 3]))"
+        },
+        {
+          "tag": "Width formula",
+          "q": "<p>A bar is popped when bar <code>i</code> arrives. After the pop, the stack top (if any) is at index <code>left</code>. What is the width of the rectangle that uses the popped bar as its height?</p>",
+          "opts": [
+            "<code>i - left</code>",
+            "<code>i - left - 1</code>",
+            "<code>i + left</code>",
+            "<code>left</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "The rectangle covers all bars strictly between the left limit (a shorter bar at <code>left</code>) and the right limit (the shorter bar at <code>i</code>). That is <code>i - left - 1</code> bars.",
+            "If the stack is empty, nothing shorter is to the left, so use <code>left = -1</code>, which gives width <code>i</code>."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Why a sentinel?",
+          "q": "<p>Why do we add a bar of height 0 at the end?</p>",
+          "opts": [
+            "It makes the answer bigger",
+            "It is shorter than every bar, so it forces all the bars still on the stack to be popped and measured",
+            "It sorts the bars",
+            "It avoids an empty array"
+          ],
+          "ans": 1,
+          "why": [
+            "Bars that never meet a shorter bar to their right would otherwise stay on the stack unmeasured.",
+            "The same trick appears in many stack problems."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>Why is the whole histogram solution O(n) even with a <code>while</code> inside a <code>for</code>?</p>",
+          "opts": [
+            "The while loop runs at most once",
+            "Every bar is pushed once and popped at most once, so the total pops are at most n",
+            "The stack is sorted",
+            "It is really O(n²)"
+          ],
+          "ans": 1,
+          "why": [
+            "It is the same argument as for the next-greater element. A pop is paid for by an earlier push.",
+            "A brute force that expands from every bar would be O(n²)."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Family of problems",
+          "q": "<p>Which problems are close relatives of this one, using a stack of heights?</p>",
+          "opts": [
+            "Trapping rain water, maximal rectangle in a binary matrix, and next smaller element",
+            "Number of islands",
+            "Merge intervals",
+            "Word ladder"
+          ],
+          "ans": 0,
+          "why": [
+            "\"Maximal rectangle\" builds a histogram from each row of the matrix and runs this same function. Trapping rain water has a stack version too.",
+            "The question to ask is: for each item, where is the nearest smaller (or bigger) item on each side?"
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>largestRectangle(heights)</code>. <code>heights[i]</code> is the height of a bar of width 1 in a histogram. Return the area of the biggest rectangle that fits inside the histogram. An empty list gives 0. It must run in O(n).</p>",
+        "examples": [
+          "largestRectangle([2, 1, 5, 6, 2, 3])  // 10",
+          "largestRectangle([2, 4])  // 4"
+        ],
+        "hint": "<p>Append a 0 to the heights. Keep a stack of indexes with increasing heights. When the new bar is shorter than the top, pop it, find the left limit (the new top, or -1), and compute <code>height * (i - left - 1)</code>.</p>",
+        "fn": "largestRectangle",
+        "starter": "function largestRectangle(heights) {\n  // your code\n}",
+        "solution": "function largestRectangle(heights) {\n  const bars = [...heights, 0]\n  const st = []\n  let best = 0\n  for (let i = 0; i < bars.length; i++) {\n    while (st.length && bars[st[st.length - 1]] > bars[i]) {\n      const h = bars[st.pop()]\n      const left = st.length ? st[st.length - 1] : -1\n      best = Math.max(best, h * (i - left - 1))\n    }\n    st.push(i)\n  }\n  return best\n}",
+        "checks": [
+          {
+            "t": "the lesson example",
+            "verify": "assert(largestRectangle([2, 1, 5, 6, 2, 3]) === 10, \"expected 10\")"
+          },
+          {
+            "t": "two bars",
+            "verify": "assert(largestRectangle([2, 4]) === 4, \"expected 4\")"
+          },
+          {
+            "t": "equal bars make one wide rectangle",
+            "verify": "assert(largestRectangle([1, 1, 1, 1]) === 4, \"expected 4\")"
+          },
+          {
+            "t": "empty list and one bar",
+            "verify": "assert(largestRectangle([]) === 0 && largestRectangle([7]) === 7, \"edge cases\")"
+          },
+          {
+            "t": "100,000 rising bars stay fast",
+            "verify": "const h = Array.from({ length: 100000 }, (_, i) => i + 1); const t0 = Date.now(); assert(largestRectangle(h) === 2500050000 && Date.now() - t0 < 300, \"wrong or too slow\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "A stack of increasing bar heights finds, for every bar, the <b>nearest shorter bar on each side</b> in one pass. Width = <code>i - left - 1</code>. Add a 0 at the end to flush the stack. O(n).",
+        "mistakes": [
+          "Computing the width as <code>i - left</code> (off by one).",
+          "Forgetting the sentinel and leaving bars unmeasured.",
+          "Using the wrong comparison for equal heights (both work, but be consistent).",
+          "Checking every pair of bars (O(n²))."
+        ]
+      }
+    }
+  ],
+  "flags": [
+    "string-matching: the 200,000 letter check expects [199000]; the pattern is 1,000 a-letters followed by b at the very end of the text.",
+    "bucket-sort: topKFrequent tests avoid ties at the border by design.",
+    "monotonic-stack-2: the 100,000 rising bars answer 2,500,050,000 is the maximum of k × (n - k + 1) computed by a loop.",
+    "The dry-run tables are traced by hand (concept dry runs are not machine-run)."
+  ]
+}

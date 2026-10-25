@@ -1,0 +1,602 @@
+{
+ "course": "js-mastery",
+ "items": [
+  {
+   "id": "modules",
+   "prereqs": [
+    "web-workers"
+   ],
+   "dryRun": {
+    "title": "ES Modules vs CommonJS",
+    "columns": [
+     "",
+     "ESM (import/export)",
+     "CommonJS (require)"
+    ],
+    "rows": [
+     [
+      "syntax",
+      "import x from \"./a.js\"",
+      "const x = require(\"./a\")"
+     ],
+     [
+      "when resolved",
+      "before running (static)",
+      "while running (dynamic)"
+     ],
+     [
+      "exports are",
+      "live bindings",
+      "a copied value / object"
+     ],
+     [
+      "top-level await",
+      "yes",
+      "no"
+     ],
+     [
+      "strict mode",
+      "always",
+      "opt-in"
+     ],
+     [
+      "tree-shaking",
+      "yes",
+      "hard"
+     ]
+    ],
+    "hit": 2,
+    "note": "ESM imports are analysed before the code runs, so bundlers can drop unused code. An imported binding is <b>live</b>: if the module changes it, you see the new value. Every module runs once and is cached; later imports get the same instance."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>import('data:text/javascript,export let n = 1; export function inc() { n++ }').then((m) =&gt; { m.inc(); console.log(m.n) })</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>undefined</code>",
+      "<code>2</code>",
+      "<code>TypeError</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "ESM exports are live bindings, so the importer sees n change to 2. In CommonJS you would get a copy of the old value."
+     ],
+     "exec": "import('data:text/javascript,export let n = 1; export function inc() { n++ }').then((m) => { m.inc(); console.log(m.n) })"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>import('data:text/javascript,export const o = { hits: 0 }').then(async (m1) =&gt; { m1.o.hits++; const m2 = await import('data:text/javascript,export const o = { hits: 0 }'); console.log(m2.o.hits, m1 === m2) })</code></pre>",
+     "opts": [
+      "<code>1 true</code>",
+      "<code>0 false</code>",
+      "<code>1 false</code>",
+      "<code>0 true</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "A module is evaluated once per URL and cached; importing the same specifier again returns the same module instance (and the same object)."
+     ],
+     "exec": "import('data:text/javascript,export const o = { hits: 0 }').then(async (m1) => { m1.o.hits++; const m2 = await import('data:text/javascript,export const o = { hits: 0 }'); console.log(m2.o.hits, m1 === m2) })"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>import('data:text/javascript,export default 1; export const two = 2').then((m) =&gt; console.log(Object.keys(m).sort().join()))</code></pre>",
+     "opts": [
+      "<code>two</code>",
+      "<code>default</code>",
+      "<code>1,2</code>",
+      "<code>default,two</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "A namespace object holds the named exports plus default."
+     ],
+     "exec": "import('data:text/javascript,export default 1; export const two = 2').then((m) => console.log(Object.keys(m).sort().join()))"
+    },
+    {
+     "tag": "Import cost",
+     "q": "Why can <code>import()</code> (dynamic import) make an app load faster?",
+     "opts": [
+      "It runs on another thread",
+      "It splits code: the module is fetched only when that line runs",
+      "It skips parsing",
+      "It caches forever"
+     ],
+     "ans": 1,
+     "why": [
+      "Load rarely used routes and heavy libraries on demand."
+     ]
+    },
+    {
+     "tag": "Interop",
+     "q": "In Node, a file with <code>\"type\": \"module\"</code> in package.json uses <code>require(\"./x\")</code>. What happens?",
+     "opts": [
+      "It works the same",
+      "require is not defined in ES modules: use import (or createRequire)",
+      "It imports asynchronously",
+      "It loads x twice"
+     ],
+     "ans": 1,
+     "why": [
+      "ESM and CJS have different loaders; mixing them needs care."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Build a tiny module system: <code>createRegistry()</code> returns <code>{ define(name, factory), require(name) }</code>. <code>factory(require, exports)</code> fills exports. Each module runs <b>once</b>; later requires return the cached exports. Requiring an unknown name throws.",
+    "examples": [
+     "const r = createRegistry(); r.define(\"a\", (req, ex) => { ex.v = 1 }); r.require(\"a\").v  // 1",
+     "// factory runs only on the first require"
+    ],
+    "hint": "Keep two Maps: factories and cache. Put the exports object in the cache BEFORE running the factory (that is how cycles work in CommonJS).",
+    "fn": "createRegistry",
+    "starter": "function createRegistry() {\n  // your code\n}",
+    "solution": "function createRegistry() {\n  const factories = new Map(), cache = new Map()\n  const require = (name) => {\n    if (cache.has(name)) return cache.get(name)\n    if (!factories.has(name)) throw new Error('module not found: ' + name)\n    const exports = {}\n    cache.set(name, exports)\n    factories.get(name)(require, exports)\n    return exports\n  }\n  return { define: (name, f) => factories.set(name, f), require }\n}",
+    "checks": [
+     {
+      "t": "exports are returned",
+      "verify": "const r = createRegistry(); r.define(\"a\", (req, ex) => { ex.v = 1 }); assert(r.require(\"a\").v === 1, \"exports\")"
+     },
+     {
+      "t": "a module runs once and is cached",
+      "verify": "let runs = 0; const r = createRegistry(); r.define(\"a\", (req, ex) => { runs++; ex.o = {} }); assert(r.require(\"a\").o === r.require(\"a\").o && runs === 1, \"cache\")"
+     },
+     {
+      "t": "modules can require each other, unknown names throw",
+      "verify": "const r = createRegistry(); r.define(\"b\", (req, ex) => { ex.v = 2 }); r.define(\"a\", (req, ex) => { ex.v = req(\"b\").v + 1 }); let t = false; try { r.require(\"zzz\") } catch { t = true }; assert(r.require(\"a\").v === 3 && t, \"deps\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "ESM: static imports, live bindings, one cached instance per module, tree-shakable. Use dynamic import() to split code.",
+    "mistakes": [
+     "Expecting a module to run again on every import.",
+     "Mixing require and import in the same file."
+    ]
+   }
+  },
+  {
+   "id": "singleton",
+   "prereqs": [
+    "modules"
+   ],
+   "dryRun": {
+    "title": "Three ways to get \"only one\"",
+    "columns": [
+     "way",
+     "how",
+     "catch"
+    ],
+    "rows": [
+     [
+      "module export",
+      "export const store = createStore()",
+      "modules are cached: simplest"
+     ],
+     [
+      "class with static instance",
+      "static getInstance()",
+      "more code, same result"
+     ],
+     [
+      "global variable",
+      "window.store = ...",
+      "anyone can overwrite it"
+     ],
+     [
+      "test isolation",
+      "—",
+      "singletons share state between tests"
+     ]
+    ],
+    "hit": 0,
+    "note": "A <b>singleton</b> guarantees one shared instance (a logger, a config, an API client). In JavaScript a module export already is one. The cost: hidden shared state, which makes testing harder."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>class Config { static #i; static get() { return (Config.#i ??= new Config()) } }\nconsole.log(Config.get() === Config.get())</code></pre>",
+     "opts": [
+      "<code>false</code>",
+      "<code>undefined</code>",
+      "<code>TypeError</code>",
+      "<code>true</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "The first call creates the instance; later calls return it."
+     ],
+     "exec": "class Config { static #i; static get() { return (Config.#i ??= new Config()) } }\nconsole.log(Config.get() === Config.get())"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function makeLogger() { const lines = []; return { log: (s) =&gt; lines.push(s), count: () =&gt; lines.length } }\nconst a = makeLogger(), b = makeLogger()\na.log('x')\nconsole.log(b.count())</code></pre>",
+     "opts": [
+      "<code>0</code>",
+      "<code>1</code>",
+      "<code>undefined</code>",
+      "<code>2</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "A factory call gives a new instance each time. A singleton would share the lines."
+     ],
+     "exec": "function makeLogger() { const lines = []; return { log: (s) => lines.push(s), count: () => lines.length } }\nconst a = makeLogger(), b = makeLogger()\na.log('x')\nconsole.log(b.count())"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const counter = (() =&gt; { let n = 0; return { inc: () =&gt; ++n } })()\ncounter.inc()\nconst sameModuleImportedAgain = counter\nconsole.log(sameModuleImportedAgain.inc())</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>0</code>",
+      "<code>2</code>",
+      "<code>undefined</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Every importer gets the same object, so state is shared."
+     ],
+     "exec": "const counter = (() => { let n = 0; return { inc: () => ++n } })()\ncounter.inc()\nconst sameModuleImportedAgain = counter\nconsole.log(sameModuleImportedAgain.inc())"
+    },
+    {
+     "tag": "Downside",
+     "q": "What is the biggest downside of singletons?",
+     "opts": [
+      "They are slow",
+      "They use more memory",
+      "They cannot have methods",
+      "Hidden global state: tests and features affect each other through it"
+     ],
+     "ans": 3,
+     "why": [
+      "Prefer passing dependencies in where you can; keep singletons for truly app-wide things."
+     ]
+    },
+    {
+     "tag": "Pick one",
+     "q": "Which is a reasonable singleton?",
+     "opts": [
+      "A list item in a todo app",
+      "One HTTP client with base URL and auth headers shared by the app",
+      "A form input value",
+      "A user row from the database"
+     ],
+     "ans": 1,
+     "why": [
+      "Shared infrastructure, not data with many instances."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>createSingleton(factory)</code>: returns <code>{ get(), reset() }</code>. <code>get</code> creates the instance with factory on first use and returns the same one after that; <code>reset</code> forgets it (handy for tests).",
+    "examples": [
+     "const s = createSingleton(() => ({ id: Math.random() })); s.get() === s.get()  // true",
+     "s.reset(); // next get() makes a new one"
+    ],
+    "hint": "Store the instance in a closure variable; use ??= in get.",
+    "fn": "createSingleton",
+    "starter": "function createSingleton(factory) {\n  // your code\n}",
+    "solution": "function createSingleton(factory) {\n  let inst\n  return {\n    get: () => (inst ??= factory()),\n    reset: () => { inst = undefined },\n  }\n}",
+    "checks": [
+     {
+      "t": "same instance",
+      "verify": "const s = createSingleton(() => ({})); assert(s.get() === s.get() && typeof s.get() === \"object\", \"same\")"
+     },
+     {
+      "t": "lazy: factory runs on first get only",
+      "verify": "let n = 0; const s = createSingleton(() => (n++, {})); assert(n === 0, \"eager\"); s.get(); s.get(); assert(n === 1, \"runs \" + n)"
+     },
+     {
+      "t": "reset creates a new instance next time",
+      "verify": "const s = createSingleton(() => ({})); const a = s.get(); s.reset(); assert(s.get() !== a, \"reset\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "A module export already is a singleton. Use one for shared infrastructure, and give tests a way to reset it.",
+    "mistakes": [
+     "Singletons for things that should have many instances.",
+     "Tests leaking state into each other through a singleton."
+    ]
+   }
+  },
+  {
+   "id": "factory",
+   "prereqs": [
+    "singleton"
+   ],
+   "dryRun": {
+    "title": "createShape(type, size)",
+    "columns": [
+     "input",
+     "returns"
+    ],
+    "rows": [
+     [
+      "(\"circle\", 2)",
+      "{ type: \"circle\", area: () => π·4 }"
+     ],
+     [
+      "(\"square\", 2)",
+      "{ type: \"square\", area: () => 4 }"
+     ],
+     [
+      "(\"hexagon\", 2)",
+      "throws: unknown type"
+     ],
+     [
+      "caller code",
+      "never uses new or knows the classes"
+     ]
+    ],
+    "hit": 3,
+    "note": "A <b>factory</b> is a function that creates objects for you, hiding which class or shape is used. Callers ask for \"a circle\", not for \"new Circle\". It also lets you return cached objects, mocks in tests, or different implementations per environment."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const make = (type) =&gt; ({ circle: () =&gt; ({ sides: 0 }), square: () =&gt; ({ sides: 4 }) })[type]?.() ?? null\nconsole.log(make('square').sides, make('blob'))</code></pre>",
+     "opts": [
+      "<code>4 undefined</code>",
+      "<code>0 null</code>",
+      "<code>4 null</code>",
+      "<code>TypeError</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "A lookup table of creators keeps the factory open for new types; unknown types return null here."
+     ],
+     "exec": "const make = (type) => ({ circle: () => ({ sides: 0 }), square: () => ({ sides: 4 }) })[type]?.() ?? null\nconsole.log(make('square').sides, make('blob'))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function createUser(name) { return { name, greet() { return 'hi ' + this.name } } }\nconst a = createUser('A'), b = createUser('B')\nconsole.log(a.greet === b.greet)</code></pre>",
+     "opts": [
+      "<code>false</code>",
+      "<code>true</code>",
+      "<code>undefined</code>",
+      "<code>TypeError</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Object-literal methods are created per object. Classes share methods on the prototype; for many objects that saves memory."
+     ],
+     "exec": "function createUser(name) { return { name, greet() { return 'hi ' + this.name } } }\nconst a = createUser('A'), b = createUser('B')\nconsole.log(a.greet === b.greet)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function createCounter() { let n = 0; return { inc: () =&gt; ++n } }\nconst c = createCounter()\nc.inc()\nconsole.log(c.n, c.inc())</code></pre>",
+     "opts": [
+      "<code>1 2</code>",
+      "<code>2 2</code>",
+      "<code>undefined 2</code>",
+      "<code>undefined 1</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Factories with closures give real privacy: n is not a property."
+     ],
+     "exec": "function createCounter() { let n = 0; return { inc: () => ++n } }\nconst c = createCounter()\nc.inc()\nconsole.log(c.n, c.inc())"
+    },
+    {
+     "tag": "Why",
+     "q": "Why might a team use <code>createStorage()</code> instead of <code>new LocalStorageAdapter()</code> everywhere?",
+     "opts": [
+      "The factory can return a memory store in tests or SSR without changing callers",
+      "new is deprecated",
+      "Factories are faster",
+      "Classes cannot be exported"
+     ],
+     "ans": 0,
+     "why": [
+      "Callers depend on the shape, not on a concrete class."
+     ]
+    },
+    {
+     "tag": "Factory vs class",
+     "q": "When is a plain class usually better than a factory?",
+     "opts": [
+      "Never",
+      "When you need privacy",
+      "When you need closures",
+      "When you create many instances and want shared prototype methods and instanceof"
+     ],
+     "ans": 3,
+     "why": [
+      "Classes share methods; factories with closures give privacy. Both are fine tools."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>createNotifier(channel)</code> returning an object with <code>send(msg)</code> that returns a string: <code>\"email: msg\"</code>, <code>\"sms: msg\"</code> (cut to 20 chars), or <code>\"push: msg\"</code>. Unknown channels throw. Callers must not need to know any class names.",
+    "examples": [
+     "createNotifier(\"sms\").send(\"x\".repeat(30)).length  // 25",
+     "createNotifier(\"fax\")  // throws"
+    ],
+    "hint": "A lookup object from channel to a creator function.",
+    "fn": "createNotifier",
+    "starter": "function createNotifier(channel) {\n  // your code\n}",
+    "solution": "function createNotifier(channel) {\n  const creators = {\n    email: () => ({ send: (m) => `email: ${m}` }),\n    sms: () => ({ send: (m) => `sms: ${m.slice(0, 20)}` }),\n    push: () => ({ send: (m) => `push: ${m}` }),\n  }\n  if (!Object.hasOwn(creators, channel)) throw new Error('unknown channel ' + channel)\n  return creators[channel]()\n}",
+    "checks": [
+     {
+      "t": "email and push",
+      "verify": "assert(createNotifier(\"email\").send(\"hi\") === \"email: hi\" && createNotifier(\"push\").send(\"yo\") === \"push: yo\", \"basic\")"
+     },
+     {
+      "t": "sms cuts to 20 characters",
+      "verify": "assert(createNotifier(\"sms\").send(\"x\".repeat(30)) === \"sms: \" + \"x\".repeat(20), \"sms\")"
+     },
+     {
+      "t": "unknown channels throw",
+      "verify": "let t = false; try { createNotifier(\"fax\") } catch { t = true }; assert(t, \"throw\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "A factory hides how objects are made: callers ask for a kind, the factory decides the implementation.",
+    "mistakes": [
+     "Long if/else chains instead of a lookup table.",
+     "Per-object methods when you create thousands of objects."
+    ]
+   }
+  },
+  {
+   "id": "observer",
+   "prereqs": [
+    "factory"
+   ],
+   "dryRun": {
+    "title": "emitter.on(\"save\", a); emitter.on(\"save\", b); emitter.emit(\"save\", doc)",
+    "columns": [
+     "step",
+     "listeners",
+     "what runs"
+    ],
+    "rows": [
+     [
+      "on(\"save\", a)",
+      "save: [a]",
+      "—"
+     ],
+     [
+      "on(\"save\", b)",
+      "save: [a, b]",
+      "—"
+     ],
+     [
+      "emit(\"save\", doc)",
+      "save: [a, b]",
+      "a(doc), then b(doc)"
+     ],
+     [
+      "off(\"save\", a)",
+      "save: [b]",
+      "—"
+     ],
+     [
+      "emit(\"other\")",
+      "none",
+      "nothing"
+     ]
+    ],
+    "hit": 2,
+    "note": "The <b>observer</b> (pub/sub) pattern lets parts of an app react to events without knowing each other. DOM events, Node's EventEmitter and state stores all use it. Always give subscribers a way to unsubscribe, or you leak."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const t = new EventTarget()\nconst log = []\nconst h = (e) =&gt; log.push(e.type)\nt.addEventListener('ping', h)\nt.addEventListener('ping', h)\nt.dispatchEvent(new Event('ping'))\nconsole.log(log.length)</code></pre>",
+     "opts": [
+      "<code>2</code>",
+      "<code>1</code>",
+      "<code>0</code>",
+      "<code>undefined</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "EventTarget ignores adding the exact same listener twice. Many hand-written emitters do not."
+     ],
+     "exec": "const t = new EventTarget()\nconst log = []\nconst h = (e) => log.push(e.type)\nt.addEventListener('ping', h)\nt.addEventListener('ping', h)\nt.dispatchEvent(new Event('ping'))\nconsole.log(log.length)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const subs = new Set()\nconst subscribe = (fn) =&gt; (subs.add(fn), () =&gt; subs.delete(fn))\nconst unsub = subscribe((v) =&gt; console.log('got', v))\nsubs.forEach((f) =&gt; f(1))\nunsub()\nsubs.forEach((f) =&gt; f(2))</code></pre>",
+     "opts": [
+      "<code>got 1 got 2</code>",
+      "<code>got 1</code>",
+      "<code>got 2</code>",
+      "<code>nothing</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Returning an unsubscribe function from subscribe is the cleanest API."
+     ],
+     "exec": "const subs = new Set()\nconst subscribe = (fn) => (subs.add(fn), () => subs.delete(fn))\nconst unsub = subscribe((v) => console.log('got', v))\nsubs.forEach((f) => f(1))\nunsub()\nsubs.forEach((f) => f(2))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const listeners = [() =&gt; { throw new Error('bad') }, () =&gt; console.log('second')]\nfor (const l of listeners) { try { l() } catch (e) { console.log('caught', e.message) } }</code></pre>",
+     "opts": [
+      "<code>second</code>",
+      "<code>caught bad</code>",
+      "<code>second caught bad</code>",
+      "<code>caught bad second</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Without the try/catch one broken listener stops the others. Robust emitters isolate listener errors."
+     ],
+     "exec": "const listeners = [() => { throw new Error('bad') }, () => console.log('second')]\nfor (const l of listeners) { try { l() } catch (e) { console.log('caught', e.message) } }"
+    },
+    {
+     "tag": "Order",
+     "q": "In what order are listeners for one event called in Node's EventEmitter?",
+     "opts": [
+      "In the order they were added",
+      "Random",
+      "Last added first",
+      "Alphabetical"
+     ],
+     "ans": 0,
+     "why": [
+      "Synchronously, in registration order."
+     ]
+    },
+    {
+     "tag": "Leak",
+     "q": "A component subscribes to a store on mount but never unsubscribes. What happens after it is removed?",
+     "opts": [
+      "Nothing",
+      "The store unsubscribes automatically",
+      "The store keeps the callback (and the component's closure) alive and keeps calling it",
+      "The browser throws"
+     ],
+     "ans": 2,
+     "why": [
+      "Unsubscribe in cleanup."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Implement <code>class Emitter</code> with <code>on(name, fn)</code> (returns an unsubscribe function), <code>once(name, fn)</code>, and <code>emit(name, ...args)</code> returning how many listeners ran.",
+    "examples": [
+     "const e = new Emitter(); const off = e.on(\"x\", f); e.emit(\"x\", 1)  // 1",
+     "e.once(\"y\", g); e.emit(\"y\"); e.emit(\"y\")  // g ran once"
+    ],
+    "hint": "Store a Map from name to an array of listeners. once wraps fn in a function that removes itself first. Copy the array before looping in emit.",
+    "fn": "Emitter",
+    "starter": "class Emitter {\n  // your code\n}",
+    "solution": "class Emitter {\n  #m = new Map()\n  on(name, fn) {\n    const list = this.#m.get(name) ?? []\n    list.push(fn); this.#m.set(name, list)\n    return () => { const l = this.#m.get(name) ?? []; const i = l.indexOf(fn); if (i >= 0) l.splice(i, 1) }\n  }\n  once(name, fn) {\n    const off = this.on(name, (...a) => { off(); fn(...a) })\n    return off\n  }\n  emit(name, ...args) {\n    const list = [...(this.#m.get(name) ?? [])]\n    for (const fn of list) fn(...args)\n    return list.length\n  }\n}",
+    "checks": [
+     {
+      "t": "emit calls listeners with arguments",
+      "verify": "const e = new Emitter(); const got = []; e.on(\"x\", (a, b) => got.push(a + b)); assert(e.emit(\"x\", 1, 2) === 1 && got[0] === 3, \"emit\")"
+     },
+     {
+      "t": "unsubscribe works",
+      "verify": "const e = new Emitter(); let n = 0; const off = e.on(\"x\", () => n++); e.emit(\"x\"); off(); e.emit(\"x\"); assert(n === 1, \"off\")"
+     },
+     {
+      "t": "once runs only once",
+      "verify": "const e = new Emitter(); let n = 0; e.once(\"y\", () => n++); e.emit(\"y\"); assert(e.emit(\"y\") === 0 && n === 1, \"once\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Observer = subscribe, emit, unsubscribe. Return an unsubscribe function and call it on cleanup.",
+    "mistakes": [
+     "Never unsubscribing (leaks and duplicate handlers).",
+     "Mutating the listener list while looping over it."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Event Emitter",
+     "diff": "medium",
+     "lc": "event-emitter"
+    }
+   ]
+  }
+ ]
+}

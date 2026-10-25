@@ -1,0 +1,594 @@
+{
+  "items": [
+    {
+      "id": "binary-search",
+      "pattern": {
+        "name": "Halve a sorted search space",
+        "question": "The numbers are sorted and you look at the middle one. It is smaller than the target. What can you now throw away, and how much is that?",
+        "idea": [
+          "Because the array is <b>sorted</b>, one look at the middle number rules out a whole half. If the middle is smaller than the target, the target cannot be in the left half or at the middle. Only the right half is left.",
+          "Repeat on the remaining half. The range shrinks 8, 4, 2, 1, so even a million numbers need only about 20 looks. Scanning one by one would need up to a million."
+        ],
+        "spotWhen": [
+          "The statement says the array is <b>sorted</b>.",
+          "It asks you to find a value, or its position, faster than O(n).",
+          "After one comparison you can say which half cannot contain the answer."
+        ],
+        "prereqs": [
+          "linear-search",
+          "binary-search"
+        ]
+      },
+      "dryRun": {
+        "title": "nums = [-1, 0, 3, 5, 9, 12], target = 12",
+        "columns": [
+          "step",
+          "left",
+          "right",
+          "mid",
+          "nums[mid]",
+          "action"
+        ],
+        "rows": [
+          [
+            "1",
+            "0",
+            "5",
+            "2",
+            "3",
+            "3 < 12: the target is on the right, left = 3"
+          ],
+          [
+            "2",
+            "3",
+            "5",
+            "4",
+            "9",
+            "9 < 12: left = 5"
+          ],
+          [
+            "3",
+            "5",
+            "5",
+            "5",
+            "12",
+            "equal: return 5"
+          ]
+        ],
+        "hit": 2,
+        "note": "The range shrinks every step: 6 numbers, then 3, then 1. The loop must still run when <b>left equals right</b>, because that last number may be the answer.",
+        "args": [
+          [
+            -1,
+            0,
+            3,
+            5,
+            9,
+            12
+          ],
+          12
+        ],
+        "result": 5
+      },
+      "constraints": [
+        "nums is sorted in ascending order",
+        "All values in nums are different",
+        "Return the index of target, or -1 if it is not there",
+        "Target: O(log n) time"
+      ],
+      "minutes": 15,
+      "review": {
+        "approaches": [
+          {
+            "name": "Linear scan",
+            "time": "O(n)",
+            "space": "O(1)",
+            "idea": "Check every number from the left until you find the target. It ignores the fact that the array is sorted.",
+            "best": false
+          },
+          {
+            "name": "Binary search",
+            "time": "O(log n)",
+            "space": "O(1)",
+            "idea": "Compare the target with the middle number and keep only the half that can still hold it.",
+            "best": true
+          }
+        ],
+        "why": [
+          "The target can only be inside the range <code>[left, right]</code>. When the middle is smaller, everything at or before the middle is smaller too, so moving <code>left</code> past the middle loses nothing. The same holds on the other side.",
+          "Each step cuts the range in half, so after about log₂(n) steps the range is empty. Only a few variables are used, so the space is O(1)."
+        ],
+        "mistakes": [
+          "Writing <code>left &lt; right</code> instead of <code>left &lt;= right</code>. A range with one number left is never checked.",
+          "Setting <code>left = mid</code> or <code>right = mid</code> instead of <code>mid + 1</code> or <code>mid - 1</code>. The range may stop shrinking and the loop never ends.",
+          "Using <code>(left + right) / 2</code> without rounding down, so the index is a fraction.",
+          "Running it on an array that is not sorted. The halves rule only works on sorted data."
+        ],
+        "variations": [
+          "The array has <b>duplicates</b>. Return the index of the first one.",
+          "The sorted array was rotated at an unknown point. Can you still search in O(log n)?",
+          "Find where the target <b>would be inserted</b> to keep the array sorted."
+        ]
+      }
+    },
+    {
+      "id": "max-subarray",
+      "pattern": {
+        "name": "Extend or restart (Kadane)",
+        "question": "You are at one number and know the best sum of a subarray that ends just before it. When is it better to throw that sum away and start fresh here?",
+        "idea": [
+          "Look at the best subarray that must <b>end at the current number</b>. It is either the number alone, or the number added to the best subarray ending at the previous number. So you only keep one running value.",
+          "If the running value before the current number is negative, adding it can only make things worse, so you restart. Keep a second variable with the best value seen anywhere. One pass is enough."
+        ],
+        "spotWhen": [
+          "The statement asks for the <b>best sum of a contiguous part</b> of an array.",
+          "The array can hold negative numbers, so taking everything is not always best.",
+          "The best answer ending at a position depends only on the best answer ending at the position before it."
+        ],
+        "prereqs": [
+          "kadanes",
+          "arrays"
+        ]
+      },
+      "dryRun": {
+        "title": "nums = [2, -5, 3, 4, -1]",
+        "columns": [
+          "i",
+          "num",
+          "current (best ending here)",
+          "best so far",
+          "what happened"
+        ],
+        "rows": [
+          [
+            "0",
+            "2",
+            "2",
+            "2",
+            "start with the first number"
+          ],
+          [
+            "1",
+            "-5",
+            "-3",
+            "2",
+            "max(-5, 2 + -5) = -3: extend, but the sum is now negative"
+          ],
+          [
+            "2",
+            "3",
+            "3",
+            "3",
+            "max(3, -3 + 3) = 3: the old sum hurts, so restart at 3"
+          ],
+          [
+            "3",
+            "4",
+            "7",
+            "7",
+            "max(4, 3 + 4) = 7: extend"
+          ],
+          [
+            "4",
+            "-1",
+            "6",
+            "7",
+            "max(-1, 7 + -1) = 6: extend, best stays 7"
+          ]
+        ],
+        "hit": 2,
+        "note": "At index 2 the running sum was negative (-3), so the best move was to <b>restart</b> with the number alone. The answer is the sub-array [3, 4].",
+        "args": [
+          [
+            2,
+            -5,
+            3,
+            4,
+            -1
+          ]
+        ],
+        "result": 7
+      },
+      "constraints": [
+        "nums has at least one number",
+        "Numbers can be negative, zero or positive",
+        "The subarray must be contiguous and have at least one number",
+        "Target: O(n) time and O(1) extra space"
+      ],
+      "minutes": 25,
+      "review": {
+        "approaches": [
+          {
+            "name": "Try every start and end",
+            "time": "O(n²)",
+            "space": "O(1)",
+            "idea": "For each start, extend the end one step at a time with a running sum and keep the largest.",
+            "best": false
+          },
+          {
+            "name": "Divide and conquer",
+            "time": "O(n log n)",
+            "space": "O(log n)",
+            "idea": "Best is in the left half, in the right half, or crosses the middle. Combine the three.",
+            "best": false
+          },
+          {
+            "name": "Kadane: extend or restart",
+            "time": "O(n)",
+            "space": "O(1)",
+            "idea": "Keep the best sum ending here and the best sum seen so far, in one pass.",
+            "best": true
+          }
+        ],
+        "why": [
+          "Every subarray ends somewhere. For a fixed end, the best choice is the number alone or the number plus the best subarray ending right before. So checking <code>max(num, current + num)</code> at every position covers every possible best subarray.",
+          "Each number is visited once with a few operations, so the time is O(n). Only two variables are kept, so the space is O(1)."
+        ],
+        "mistakes": [
+          "Starting <code>best</code> at 0. When every number is negative, the answer is the largest negative number, not 0.",
+          "Resetting <code>current</code> to 0 when it is negative without including the current number, which fails on all-negative input.",
+          "Updating <code>best</code> before updating <code>current</code>, so it uses the previous position.",
+          "Returning <code>current</code> instead of <code>best</code>. The best subarray may end earlier."
+        ],
+        "variations": [
+          "Return the <b>start and end indexes</b> of the best subarray, not only its sum.",
+          "The array is circular. The best subarray may wrap around the end.",
+          "Find the contiguous subarray with the largest <b>product</b>."
+        ]
+      }
+    },
+    {
+      "id": "longest-substring",
+      "pattern": {
+        "name": "Sliding window that jumps past a repeat",
+        "question": "You are growing a window of different characters and a letter you already hold shows up again. Which part of the window is now useless?",
+        "idea": [
+          "Keep a window <code>[left, right]</code> with no repeated character. Move <code>right</code> one step at a time. When the new character is already inside the window, the window is broken, so <code>left</code> has to move past the old copy.",
+          "Store the <b>last index</b> of every character in a map. Then <code>left</code> can jump straight to just after the old copy, with no step by step shrinking. Each character is handled once."
+        ],
+        "spotWhen": [
+          "The statement asks for the longest part of a string or array with a rule such as <b>no repeats</b>.",
+          "The part must be contiguous.",
+          "When the rule breaks, you only need to move the start forward, never go back."
+        ],
+        "prereqs": [
+          "sliding-window",
+          "hashset"
+        ]
+      },
+      "dryRun": {
+        "title": "s = \"abba\"",
+        "columns": [
+          "right",
+          "char",
+          "last index of char",
+          "left",
+          "window",
+          "best"
+        ],
+        "rows": [
+          [
+            "0",
+            "a",
+            "none",
+            "0",
+            "\"a\"",
+            "1"
+          ],
+          [
+            "1",
+            "b",
+            "none",
+            "0",
+            "\"ab\"",
+            "2"
+          ],
+          [
+            "2",
+            "b",
+            "1 (inside window)",
+            "2",
+            "\"b\"",
+            "2"
+          ],
+          [
+            "3",
+            "a",
+            "0 (before left)",
+            "2",
+            "\"ba\"",
+            "2"
+          ]
+        ],
+        "hit": 3,
+        "note": "On the last step the old <code>a</code> is at index 0, but <code>left</code> is already 2. That copy is <b>outside the window</b>, so left must not move back.",
+        "args": [
+          "abba"
+        ],
+        "result": 2
+      },
+      "constraints": [
+        "s can contain letters, digits, symbols and spaces",
+        "The substring must be contiguous",
+        "An empty string gives 0",
+        "Target: O(n) time"
+      ],
+      "minutes": 25,
+      "review": {
+        "approaches": [
+          {
+            "name": "Check every substring",
+            "time": "O(n²)",
+            "space": "O(min(n, alphabet size))",
+            "idea": "For each start, extend the end until a repeat appears. Stop and try the next start.",
+            "best": false
+          },
+          {
+            "name": "Window with a set",
+            "time": "O(n)",
+            "space": "O(min(n, alphabet size))",
+            "idea": "Add the new character. While it is a duplicate, remove characters from the left one by one.",
+            "best": false
+          },
+          {
+            "name": "Window with last-index map",
+            "time": "O(n)",
+            "space": "O(min(n, alphabet size))",
+            "idea": "Remember where each character was last seen and move left straight past the old copy.",
+            "best": true
+          }
+        ],
+        "why": [
+          "The window always holds distinct characters. When the new character was last seen inside the window, every start position up to that copy would repeat it, so the earliest valid start is one step after it. Taking the maximum with the old left keeps the window from moving backward.",
+          "right visits each position once and left only moves forward, so the time is O(n). The map holds at most one entry per different character, which is at most the alphabet size or n."
+        ],
+        "mistakes": [
+          "Moving <code>left</code> to <code>last + 1</code> without checking that <code>last &gt;= left</code>. On <code>\"abba\"</code> the window jumps backward and the answer is wrong.",
+          "Computing the length as <code>right - left</code>. The window <code>[left, right]</code> has <code>right - left + 1</code> characters.",
+          "Forgetting to update the stored index after handling a repeat.",
+          "Returning the substring or the last window instead of the best length seen."
+        ],
+        "variations": [
+          "Return the <b>substring</b> itself, not only its length.",
+          "Allow at most <b>k</b> different characters in the window.",
+          "Find the longest part where you may replace up to k characters to make all letters the same."
+        ]
+      }
+    },
+    {
+      "id": "subarray-sum-k",
+      "pattern": {
+        "name": "Prefix sums with a count map",
+        "question": "If the sum of the first j numbers is S and the sum of the first i numbers is S - k, what is the sum of the numbers between i and j?",
+        "idea": [
+          "A subarray sum is a difference of two <b>prefix sums</b>: sum(i..j) = prefix[j] - prefix[i-1]. So a subarray ending here adds up to k exactly when an earlier prefix equals <code>prefix - k</code>.",
+          "Keep a map from prefix sum to how many times it appeared. At each number, add the count of <code>prefix - k</code> to the answer. Start the map with <code>0 → 1</code> so subarrays starting at index 0 are counted."
+        ],
+        "spotWhen": [
+          "The statement counts or finds subarrays whose <b>sum equals a target</b>.",
+          "Numbers can be negative, so a window that grows and shrinks does not work.",
+          "You need the number of such subarrays, not only whether one exists."
+        ],
+        "prereqs": [
+          "prefix-sum",
+          "hashmaps"
+        ]
+      },
+      "dryRun": {
+        "title": "nums = [1, 2, 3], k = 3",
+        "columns": [
+          "num",
+          "prefix sum",
+          "look up (prefix - k)",
+          "times seen",
+          "count"
+        ],
+        "rows": [
+          [
+            "start",
+            "0",
+            "-",
+            "-",
+            "0 (map: {0: 1})"
+          ],
+          [
+            "1",
+            "1",
+            "-2",
+            "0",
+            "0"
+          ],
+          [
+            "2",
+            "3",
+            "0",
+            "1",
+            "1 (subarray [1, 2])"
+          ],
+          [
+            "3",
+            "6",
+            "3",
+            "1",
+            "2 (subarray [3])"
+          ]
+        ],
+        "hit": 2,
+        "note": "The map starts with <b>{0: 1}</b>. That \"empty prefix\" is why the subarray [1, 2], which starts at index 0, is counted.",
+        "args": [
+          [
+            1,
+            2,
+            3
+          ],
+          3
+        ],
+        "result": 2
+      },
+      "constraints": [
+        "nums can contain negative numbers, zero and positive numbers",
+        "Count every subarray with sum k, even if they overlap",
+        "Subarrays must be contiguous and not empty",
+        "Target: O(n) time"
+      ],
+      "minutes": 25,
+      "review": {
+        "approaches": [
+          {
+            "name": "Check every subarray",
+            "time": "O(n²)",
+            "space": "O(1)",
+            "idea": "For each start, extend the end with a running sum and count the times it equals k.",
+            "best": false
+          },
+          {
+            "name": "Prefix array, then compare pairs",
+            "time": "O(n²)",
+            "space": "O(n)",
+            "idea": "Build all prefix sums, then check every pair of prefixes for a difference of k.",
+            "best": false
+          },
+          {
+            "name": "Prefix sums with a hash map",
+            "time": "O(n)",
+            "space": "O(n)",
+            "idea": "Count how many earlier prefixes equal prefix - k while walking once.",
+            "best": true
+          }
+        ],
+        "why": [
+          "A subarray ending at the current position adds up to k exactly when an earlier prefix equals <code>current prefix - k</code>. The map tells you how many earlier prefixes have that value, so each of them is a different subarray.",
+          "The array is walked once with constant-time map operations, so the time is O(n). In the worst case every prefix is different, so the map holds n entries: O(n) space."
+        ],
+        "mistakes": [
+          "Not starting the map with <code>0 → 1</code>. Subarrays that begin at index 0 are missed.",
+          "Updating the map with the current prefix <b>before</b> looking up <code>prefix - k</code>. With k = 0 a number is counted against itself.",
+          "Using a sliding window. It breaks when numbers can be negative.",
+          "Storing only whether a prefix was seen, not how many times. Repeated prefixes give several subarrays."
+        ],
+        "variations": [
+          "Return whether <b>any</b> subarray has sum k, not the count.",
+          "Find the <b>length of the longest</b> subarray with sum k.",
+          "Count subarrays whose sum is divisible by k."
+        ]
+      }
+    },
+    {
+      "id": "fibonacci-memo",
+      "pattern": {
+        "name": "Keep only the last two values",
+        "question": "To get the next Fibonacci number you add two earlier ones. How many earlier values do you really have to remember?",
+        "idea": [
+          "The plain recursion <code>fib(n - 1) + fib(n - 2)</code> solves the same small cases again and again, so its calls double at every level. You can store each answer once (memoization) so every value is computed only one time.",
+          "Going further, you only ever need the <b>last two</b> values. Walk from 0 up to n and slide two variables forward. That keeps the O(n) time of memoization and drops the memory to O(1)."
+        ],
+        "spotWhen": [
+          "Each answer is built from a fixed number of <b>previous answers</b>.",
+          "A recursion tree shows the same call appearing many times.",
+          "Only a few recent values are needed, so a table of all values is wasteful."
+        ],
+        "prereqs": [
+          "fibonacci",
+          "recursion"
+        ]
+      },
+      "dryRun": {
+        "title": "n = 5",
+        "columns": [
+          "after step",
+          "a",
+          "b"
+        ],
+        "rows": [
+          [
+            "start",
+            "0",
+            "1"
+          ],
+          [
+            "1",
+            "1",
+            "1"
+          ],
+          [
+            "2",
+            "1",
+            "2"
+          ],
+          [
+            "3",
+            "2",
+            "3"
+          ],
+          [
+            "4",
+            "3",
+            "5"
+          ],
+          [
+            "5",
+            "5",
+            "8"
+          ]
+        ],
+        "hit": 5,
+        "note": "Here <code>a</code> is F(k) and <code>b</code> is F(k+1). After 5 steps <b>a</b> holds F(5), so the answer is a, not b.",
+        "args": [
+          5
+        ],
+        "result": 5
+      },
+      "constraints": [
+        "F(0) = 0 and F(1) = 1",
+        "n is a non-negative integer",
+        "Return F(n)",
+        "Target: O(n) time, not exponential"
+      ],
+      "minutes": 15,
+      "review": {
+        "approaches": [
+          {
+            "name": "Plain recursion",
+            "time": "O(2ⁿ)",
+            "space": "O(n)",
+            "idea": "Return fib(n - 1) + fib(n - 2). The same values are recomputed many times.",
+            "best": false
+          },
+          {
+            "name": "Memoized recursion",
+            "time": "O(n)",
+            "space": "O(n)",
+            "idea": "Store each result in a map or array so every value is computed once.",
+            "best": false
+          },
+          {
+            "name": "Two variables, bottom-up",
+            "time": "O(n)",
+            "space": "O(1)",
+            "idea": "Slide a pair (F(k), F(k+1)) forward n times and return the first value.",
+            "best": true
+          }
+        ],
+        "why": [
+          "Every value depends only on the two before it, so a pair of variables carries all the information the next step needs. Moving the pair forward n times reaches F(n) with n additions.",
+          "No table is stored and no calls pile up on the stack, so the space is O(1)."
+        ],
+        "mistakes": [
+          "Returning <code>b</code> instead of <code>a</code>, which gives F(n + 1).",
+          "Looping one time too many or too few. Check n = 0 (answer 0) and n = 1 (answer 1).",
+          "Updating <code>a</code> first and then using the new <code>a</code> to compute <code>b</code>. Update both at once.",
+          "Using plain recursion, which is far too slow once n is around 40."
+        ],
+        "variations": [
+          "Climbing stairs: you can take 1 or 2 steps at a time. How many ways reach step n?",
+          "Return F(n) modulo 1,000,000,007 for a very large n.",
+          "Compute F(n) in O(log n) time with matrix exponentiation."
+        ]
+      }
+    }
+  ],
+  "flags": [
+    "fibonacci-memo: the reference solution is the bottom-up two-variable version, not a memoized one. The memoized recursion is listed as a middle approach.",
+    "constraints: I wrote only limits that the statement or reference solution implies, not numeric size limits, because the input does not give any."
+  ]
+}

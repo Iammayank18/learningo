@@ -1,0 +1,630 @@
+{
+  "items": [
+    {
+      "id": "subsets",
+      "pattern": {
+        "name": "Backtracking: choose, explore, undo",
+        "question": "You have built a partial subset. Which numbers may you still add, so that the same subset is never built twice?",
+        "idea": [
+          "Backtracking walks through a tree of choices. Each partial answer is a list you extend by one number (<b>choose</b>), then you let a recursive call explore all ways to continue (<b>explore</b>), then you remove the number again (<b>undo</b>).",
+          "To avoid duplicates, only allow numbers that come <b>after</b> the last one you used. Then [1, 2] is built once and [2, 1] is never built. Every list you build along the way is a subset, so you record it at every call."
+        ],
+        "spotWhen": [
+          "The statement asks for <b>all</b> combinations, subsets or arrangements, not just a count.",
+          "The answer is built by making a sequence of choices.",
+          "The input is small (about 20 items or fewer)."
+        ],
+        "prereqs": [
+          "backtracking",
+          "recursion"
+        ]
+      },
+      "dryRun": {
+        "title": "nums = [1, 2]",
+        "columns": [
+          "call",
+          "cur (choices so far)",
+          "action",
+          "recorded"
+        ],
+        "rows": [
+          [
+            "go(0)",
+            "[]",
+            "record the empty subset",
+            "[]"
+          ],
+          [
+            "go(1)",
+            "[1]",
+            "choose 1, record",
+            "[1]"
+          ],
+          [
+            "go(2)",
+            "[1, 2]",
+            "choose 2, record; nothing left to add, so undo 2, then undo 1",
+            "[1, 2]"
+          ],
+          [
+            "go(2)",
+            "[2]",
+            "back at go(0): choose 2, record, then undo",
+            "[2]"
+          ]
+        ],
+        "hit": 2,
+        "note": "After recording [1, 2], the choices are <b>undone</b> one by one. That is what lets the same list be reused to build [2].",
+        "args": [
+          [
+            1,
+            2
+          ]
+        ],
+        "result": [
+          [],
+          [
+            1
+          ],
+          [
+            1,
+            2
+          ],
+          [
+            2
+          ]
+        ]
+      },
+      "constraints": [
+        "All numbers in nums are different",
+        "nums can be empty; then the answer is [[]]",
+        "There are 2\u207f subsets, so n is small (up to about 20)",
+        "The order of the subsets does not matter"
+      ],
+      "minutes": 25,
+      "review": {
+        "approaches": [
+          {
+            "name": "Double the list for each number",
+            "time": "O(n \u00d7 2\u207f)",
+            "space": "O(n) extra",
+            "idea": "Start with [[]]. For each number, add a copy of every existing subset with that number appended.",
+            "best": false
+          },
+          {
+            "name": "Backtracking with a start index",
+            "time": "O(n \u00d7 2\u207f)",
+            "space": "O(n) extra",
+            "idea": "Record the current list at every call, then try each later number and undo it afterwards.",
+            "best": true
+          }
+        ],
+        "why": [
+          "Every subset can be written with its numbers in index order. The call that has chosen exactly that list is reached once, because later numbers are only taken from higher indexes. So every subset is recorded exactly once.",
+          "There are 2\u207f subsets and each takes up to n steps to copy, so the time is O(n \u00d7 2\u207f). Besides the answer, only the current list and the call stack are stored, which is O(n)."
+        ],
+        "mistakes": [
+          "Recording <code>cur</code> itself instead of a copy <code>[...cur]</code>. All the entries end up pointing to the same list.",
+          "Forgetting <code>cur.pop()</code>, so choices pile up.",
+          "Starting the loop at 0 in every call, which builds [1, 2] and [2, 1] as separate subsets.",
+          "Recording only at the end of the loop, so the shorter subsets are missed."
+        ],
+        "variations": [
+          "The array contains <b>duplicates</b>. Return each distinct subset once.",
+          "Return only the subsets of size k.",
+          "Return only the subsets whose sum equals a target."
+        ]
+      }
+    },
+    {
+      "id": "permutations",
+      "pattern": {
+        "name": "Fill positions with a used marker",
+        "question": "You are filling the second position of a permutation. Which numbers are not allowed, and how do you remember that?",
+        "idea": [
+          "A permutation uses every number exactly once. Fill the positions from left to right: at each position, try every number that is <b>not used yet</b>.",
+          "Mark the number as used, go deeper, and when you come back <b>undo</b> the mark. When all positions are filled, record a copy of the list. The used markers are what separates this from Subsets, where order did not matter."
+        ],
+        "spotWhen": [
+          "The statement asks for all <b>arrangements</b> or orderings of the items.",
+          "Every item is used exactly once and order matters.",
+          "The input is small (about 8 items or fewer)."
+        ],
+        "prereqs": [
+          "backtracking",
+          "recursion"
+        ]
+      },
+      "dryRun": {
+        "title": "nums = [1, 2, 3] (first two results shown)",
+        "columns": [
+          "step",
+          "cur",
+          "used",
+          "action"
+        ],
+        "rows": [
+          [
+            "1",
+            "[1]",
+            "1",
+            "pick 1 for the first position"
+          ],
+          [
+            "2",
+            "[1, 2]",
+            "1, 2",
+            "pick 2 for the second position"
+          ],
+          [
+            "3",
+            "[1, 2, 3]",
+            "1, 2, 3",
+            "full: record [1, 2, 3], then undo 3"
+          ],
+          [
+            "4",
+            "[1, 3]",
+            "1, 3",
+            "undo 2, pick 3 for the second position"
+          ],
+          [
+            "5",
+            "[1, 3, 2]",
+            "1, 3, 2",
+            "full: record [1, 3, 2]"
+          ],
+          [
+            "6",
+            "[2]",
+            "2",
+            "all with 1 first are done: start with 2 (then 3 starts)"
+          ]
+        ],
+        "hit": 2,
+        "note": "The table shows only the first steps. The same process runs with 2 and then 3 as the first number, so <b>6 permutations</b> are recorded in total.",
+        "args": [
+          [
+            1,
+            2,
+            3
+          ]
+        ],
+        "result": [
+          [
+            1,
+            2,
+            3
+          ],
+          [
+            1,
+            3,
+            2
+          ],
+          [
+            2,
+            1,
+            3
+          ],
+          [
+            2,
+            3,
+            1
+          ],
+          [
+            3,
+            1,
+            2
+          ],
+          [
+            3,
+            2,
+            1
+          ]
+        ]
+      },
+      "constraints": [
+        "All numbers in nums are different",
+        "There are n! permutations, so n is small (up to about 8)",
+        "Each permutation uses every number once",
+        "The order of the permutations does not matter"
+      ],
+      "minutes": 25,
+      "review": {
+        "approaches": [
+          {
+            "name": "Insert each number into every position of the smaller permutations",
+            "time": "O(n \u00d7 n!)",
+            "space": "O(n \u00d7 n!)",
+            "idea": "Build permutations of the first i numbers from those of the first i - 1 numbers.",
+            "best": false
+          },
+          {
+            "name": "Backtracking with a used array",
+            "time": "O(n \u00d7 n!)",
+            "space": "O(n) extra",
+            "idea": "Fill positions one by one with unused numbers and undo each choice.",
+            "best": true
+          }
+        ],
+        "why": [
+          "Every permutation is a sequence of n different numbers. The recursion tries every unused number at every position, so every sequence is built exactly once, and a sequence that repeats a number is never built because of the used marker.",
+          "There are n! permutations and copying each takes O(n), so the time is O(n \u00d7 n!). The extra memory is the current list, the used array and the call stack, each of size n."
+        ],
+        "mistakes": [
+          "Not unmarking <code>used[i]</code> after the recursive call, so later branches see wrong data.",
+          "Recording <code>cur</code> instead of a copy of it.",
+          "Looping from the last used index like in Subsets, which only creates ordered subsets and misses permutations.",
+          "Checking <code>cur.includes(nums[i])</code> in the loop. It works, but costs O(n) per check."
+        ],
+        "variations": [
+          "The array has <b>duplicates</b>. Return each distinct permutation once.",
+          "Return only the next permutation in sorted order.",
+          "Generate the k-th permutation without building all of them."
+        ]
+      }
+    },
+    {
+      "id": "combination-sum",
+      "pattern": {
+        "name": "Backtracking with reuse and pruning",
+        "question": "After picking a candidate, you may pick it again. How do you allow that but still avoid [2, 3] and [3, 2] both appearing?",
+        "idea": [
+          "Keep the recursive call at the <b>same index</b> so a candidate can be used again, but never go back to a smaller index. Then a combination is always built in non-decreasing order of candidate position, which means every combination is built once.",
+          "Track the remaining target. Reaching 0 means a valid combination. Going below 0 is a dead end, so sort the candidates and <b>stop the loop</b> at the first candidate bigger than the remaining target."
+        ],
+        "spotWhen": [
+          "The statement asks for all <b>combinations</b> (order does not matter) that reach a target.",
+          "Items can be reused.",
+          "Candidates are positive, so adding more only makes the sum bigger (pruning works)."
+        ],
+        "prereqs": [
+          "backtracking",
+          "recursion"
+        ]
+      },
+      "dryRun": {
+        "title": "candidates = [2, 3, 6, 7], target = 7",
+        "columns": [
+          "choices",
+          "remaining",
+          "action"
+        ],
+        "rows": [
+          [
+            "[2]",
+            "5",
+            "pick 2 again"
+          ],
+          [
+            "[2, 2]",
+            "3",
+            "pick 2 again"
+          ],
+          [
+            "[2, 2, 2]",
+            "1",
+            "every candidate is bigger than 1: dead end, undo"
+          ],
+          [
+            "[2, 2, 3]",
+            "0",
+            "record [2, 2, 3]"
+          ],
+          [
+            "[2, 3], [2, 6], [3, ...], [6]",
+            "-",
+            "all fail: they run out of room before reaching 0"
+          ],
+          [
+            "[7]",
+            "0",
+            "record [7]"
+          ]
+        ],
+        "hit": 3,
+        "note": "The branch [2, 2, 2] stops because the smallest candidate (2) is already bigger than the remaining <b>1</b>. That is the pruning.",
+        "args": [
+          [
+            2,
+            3,
+            6,
+            7
+          ],
+          7
+        ],
+        "result": [
+          [
+            2,
+            2,
+            3
+          ],
+          [
+            7
+          ]
+        ]
+      },
+      "constraints": [
+        "Candidates are different positive integers",
+        "A candidate may be used any number of times",
+        "The result has no duplicate combinations",
+        "If no combination exists, return an empty array"
+      ],
+      "minutes": 25,
+      "review": {
+        "approaches": [
+          {
+            "name": "Try any candidate at every step, then remove repeats",
+            "time": "O(n^(t/m) \u00d7 t/m)",
+            "space": "O(t/m)",
+            "idea": "Allow all candidates at every step and clean up [2, 3] versus [3, 2] at the end.",
+            "best": false
+          },
+          {
+            "name": "Backtracking with a start index and pruning",
+            "time": "O(n^(t/m))",
+            "space": "O(t/m)",
+            "idea": "Reuse the same index, never go back, and stop when a candidate is too big. t is the target, m the smallest candidate.",
+            "best": true
+          }
+        ],
+        "why": [
+          "Every combination can be written with its candidates in non-decreasing order of position. The recursion produces exactly those sequences: it can repeat the current candidate or move to a later one, and it never moves back. So each combination appears once.",
+          "The depth of the recursion is at most t / m (all smallest candidates), and each level tries up to n candidates, so the time is bounded by O(n^(t/m)). The stack and the current list hold at most t / m numbers."
+        ],
+        "mistakes": [
+          "Calling <code>go(i + 1, ...)</code>. Each candidate then can be used only once.",
+          "Calling <code>go(0, ...)</code>, which builds the same combination in several orders.",
+          "Not stopping at a candidate bigger than the remaining target, so the recursion goes into negative numbers.",
+          "Recording <code>cur</code> instead of a copy."
+        ],
+        "variations": [
+          "Each candidate may be used <b>at most once</b> and the array has duplicates (Combination Sum II).",
+          "Only count the combinations; do not list them.",
+          "Return combinations of exactly k numbers that add up to n (digits 1 to 9)."
+        ]
+      }
+    },
+    {
+      "id": "kth-largest-element",
+      "pattern": {
+        "name": "Min-heap of size k",
+        "question": "To find the k-th largest, which k numbers do you need to remember, and which one of them do you need to reach quickly?",
+        "idea": [
+          "You only need the <b>k largest</b> numbers seen so far. The k-th largest is the smallest among them. A <b>min-heap</b> keeps its smallest element at the top, so it is exactly what you read when you want the k-th largest.",
+          "When a new number is bigger than the top, the top can never be in the top k again. Replace it with the new number and fix the heap. Each fix costs O(log k), so the total is O(n log k), better than sorting everything."
+        ],
+        "spotWhen": [
+          "The statement asks for the <b>k-th largest or smallest</b>, or the top k items.",
+          "k is much smaller than n, or the data arrives as a stream.",
+          "You need the smallest of a group you keep updating."
+        ],
+        "prereqs": [
+          "heap",
+          "heapify"
+        ]
+      },
+      "dryRun": {
+        "title": "nums = [3, 2, 1, 5, 6, 4], k = 2",
+        "columns": [
+          "x",
+          "heap after (top first)",
+          "action"
+        ],
+        "rows": [
+          [
+            "3",
+            "[3]",
+            "heap is not full: add"
+          ],
+          [
+            "2",
+            "[2, 3]",
+            "heap is not full: add; the smallest is on top"
+          ],
+          [
+            "1",
+            "[2, 3]",
+            "1 is not bigger than the top 2: skip"
+          ],
+          [
+            "5",
+            "[3, 5]",
+            "5 > 2: replace the top and sift down"
+          ],
+          [
+            "6",
+            "[5, 6]",
+            "6 > 3: replace the top and sift down"
+          ],
+          [
+            "4",
+            "[5, 6]",
+            "4 is not bigger than 5: skip"
+          ]
+        ],
+        "hit": 3,
+        "note": "The heap always holds the 2 largest numbers so far. At the end the top is <b>5</b>, the 2nd largest.",
+        "args": [
+          [
+            3,
+            2,
+            1,
+            5,
+            6,
+            4
+          ],
+          2
+        ],
+        "result": 5
+      },
+      "constraints": [
+        "1 <= k <= nums.length",
+        "Duplicates count as separate elements",
+        "Values can be negative",
+        "Target: better than sorting when k is small"
+      ],
+      "minutes": 25,
+      "review": {
+        "approaches": [
+          {
+            "name": "Sort in descending order",
+            "time": "O(n log n)",
+            "space": "O(n)",
+            "idea": "Sort a copy and read the element at index k - 1.",
+            "best": false
+          },
+          {
+            "name": "Quickselect",
+            "time": "O(n) average",
+            "space": "O(1)",
+            "idea": "Partition around a pivot and continue in the side that contains the k-th position. The worst case is O(n\u00b2).",
+            "best": false
+          },
+          {
+            "name": "Min-heap of size k",
+            "time": "O(n log k)",
+            "space": "O(k)",
+            "idea": "Keep the k largest numbers in a min-heap; the top is the answer.",
+            "best": true
+          }
+        ],
+        "why": [
+          "At every moment the heap holds the k largest of the numbers read so far. A new number enters only if it is bigger than the smallest of them, and then the smallest leaves. After the last number, the heap holds the k largest overall, and its smallest is the k-th largest.",
+          "Each of the n numbers causes at most one push or replace, each costing O(log k), so the time is O(n log k). The heap holds k numbers."
+        ],
+        "mistakes": [
+          "Using a max-heap of size k. The top would be the largest, not the k-th largest.",
+          "Sorting with the default <code>sort()</code>, which compares numbers as text.",
+          "Removing duplicates before counting. Duplicates count as separate elements.",
+          "Forgetting to fix the heap after replacing the top."
+        ],
+        "variations": [
+          "Find the k-th <b>smallest</b> element.",
+          "Numbers arrive as a stream. After each number, return the current k-th largest.",
+          "Return the k largest elements, not only the k-th."
+        ]
+      }
+    },
+    {
+      "id": "top-k-frequent",
+      "pattern": {
+        "name": "Count, then bucket by frequency",
+        "question": "A value can appear at most n times. What structure can group the values by \"how many times\" without sorting?",
+        "idea": [
+          "First a Map counts each value. Now every value has a frequency between 1 and n. Instead of sorting the pairs, put each value into the bucket at the index equal to its frequency: an array of n + 1 lists.",
+          "Reading the array from the end gives the most frequent values first. Stop when you have k. The same job can be done with a min-heap of size k in O(n log k) if the number of different values is large."
+        ],
+        "spotWhen": [
+          "The statement asks for the <b>top k</b> most or least frequent items.",
+          "The \"key\" you would sort by is a small whole number (a count between 1 and n).",
+          "Sorting is allowed but a linear solution is expected."
+        ],
+        "prereqs": [
+          "heap",
+          "hashmaps"
+        ]
+      },
+      "dryRun": {
+        "title": "nums = [1, 1, 1, 2, 2, 3], k = 2",
+        "columns": [
+          "step",
+          "answer so far",
+          "note"
+        ],
+        "rows": [
+          [
+            "count",
+            "[]",
+            "{1: 3, 2: 2, 3: 1}"
+          ],
+          [
+            "bucket",
+            "[]",
+            "bucket 1: [3], bucket 2: [2], bucket 3: [1]"
+          ],
+          [
+            "f = 6, 5, 4",
+            "[]",
+            "empty buckets: skip"
+          ],
+          [
+            "f = 3",
+            "[1]",
+            "take 1 (appears 3 times)"
+          ],
+          [
+            "f = 2",
+            "[1, 2]",
+            "take 2: k values found, stop"
+          ]
+        ],
+        "hit": 3,
+        "note": "The loop stops at <b>f = 2</b>. The bucket for count 1 (value 3) is never looked at.",
+        "args": [
+          [
+            1,
+            1,
+            1,
+            2,
+            2,
+            3
+          ],
+          2
+        ],
+        "result": [
+          1,
+          2
+        ]
+      },
+      "constraints": [
+        "1 <= k <= number of different values",
+        "The answer is unique: no ties at the border",
+        "Values can be negative",
+        "Target: better than O(n log n) time"
+      ],
+      "minutes": 25,
+      "review": {
+        "approaches": [
+          {
+            "name": "Sort the (value, count) pairs",
+            "time": "O(n log n)",
+            "space": "O(n)",
+            "idea": "Count with a Map, sort the entries by count and take the first k.",
+            "best": false
+          },
+          {
+            "name": "Min-heap of size k",
+            "time": "O(n log k)",
+            "space": "O(n)",
+            "idea": "Keep the k most frequent pairs in a min-heap ordered by count.",
+            "best": false
+          },
+          {
+            "name": "Bucket by frequency",
+            "time": "O(n)",
+            "space": "O(n)",
+            "idea": "Group values by their count and read the buckets from the highest count down.",
+            "best": true
+          }
+        ],
+        "why": [
+          "Every value goes into exactly one bucket (its count), and counts are at most n, so the buckets cover all values. Reading from the highest bucket down visits values in order of decreasing frequency, so the first k you meet are the k most frequent.",
+          "Counting is O(n), filling the buckets is O(d) with d different values, and the scan is O(n + d), so the total is O(n). The Map and the buckets hold O(n) items."
+        ],
+        "mistakes": [
+          "Returning the counts instead of the values.",
+          "Making the bucket array only as long as the number of different values. Counts go up to n.",
+          "Continuing to collect after k values have been found.",
+          "Sorting the entries with <code>sort()</code> and no comparator, which compares as text."
+        ],
+        "variations": [
+          "Return the k <b>least</b> frequent values.",
+          "Sort words by how often they appear, and alphabetically for ties.",
+          "Do it for a stream of numbers where you can ask for the top k at any time."
+        ]
+      }
+    }
+  ],
+  "flags": []
+}

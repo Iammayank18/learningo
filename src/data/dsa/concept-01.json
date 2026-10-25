@@ -1,0 +1,847 @@
+{
+  "items": [
+    {
+      "id": "big-o",
+      "prereqs": [],
+      "dryRun": {
+        "title": "Work done for different n (rounded)",
+        "columns": [
+          "n",
+          "O(1)",
+          "O(log n)",
+          "O(n)",
+          "O(n²)"
+        ],
+        "rows": [
+          [
+            "10",
+            "1",
+            "3",
+            "10",
+            "100"
+          ],
+          [
+            "100",
+            "1",
+            "7",
+            "100",
+            "10,000"
+          ],
+          [
+            "1,000",
+            "1",
+            "10",
+            "1,000",
+            "1,000,000"
+          ],
+          [
+            "1,000,000",
+            "1",
+            "20",
+            "1,000,000",
+            "1,000,000,000,000"
+          ]
+        ],
+        "hit": 3,
+        "note": "Look at the last row. When n grows 100,000 times, <b>O(log n)</b> only goes from 3 to 20, but <b>O(n²)</b> explodes. This gap is what Big O measures."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>let c = 0\nfor (let i = 0; i &lt; 4; i++) {\n  for (let j = 0; j &lt; 4; j++) c++\n}\nconsole.log(c)</code></pre>",
+          "opts": [
+            "<code>8</code>",
+            "<code>16</code>",
+            "<code>4</code>",
+            "<code>12</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "The inner loop runs 4 times for each of the 4 outer rounds. Loops inside loops <b>multiply</b>: 4 × 4 = 16.",
+            "Trap: adding the two loops (4 + 4 = 8). That is the answer for loops one after the other."
+          ],
+          "exec": "let c = 0\nfor (let i = 0; i < 4; i++) {\n  for (let j = 0; j < 4; j++) c++\n}\nconsole.log(c)"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>let c = 0\nfor (let i = 0; i &lt; 5; i++) c++\nfor (let j = 0; j &lt; 5; j++) c++\nconsole.log(c)</code></pre>",
+          "opts": [
+            "<code>25</code>",
+            "<code>5</code>",
+            "<code>15</code>",
+            "<code>10</code>"
+          ],
+          "ans": 3,
+          "why": [
+            "Two loops <b>one after the other</b> add up: 5 + 5 = 10. In Big O this is still O(n), because 2n drops the constant.",
+            "Trap: multiplying (25). Multiplying is only for a loop <b>inside</b> another loop."
+          ],
+          "exec": "let c = 0\nfor (let i = 0; i < 5; i++) c++\nfor (let j = 0; j < 5; j++) c++\nconsole.log(c)"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>let n = 64, steps = 0\nwhile (n &gt; 1) {\n  n = n / 2\n  steps++\n}\nconsole.log(steps)</code></pre>",
+          "opts": [
+            "<code>32</code>",
+            "<code>8</code>",
+            "<code>6</code>",
+            "<code>64</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "64 → 32 → 16 → 8 → 4 → 2 → 1. That is 6 halvings, and 6 is log₂(64).",
+            "Trap: thinking a loop over n always takes n steps. Cutting the input in half each time makes the work grow very slowly."
+          ],
+          "exec": "let n = 64, steps = 0\nwhile (n > 1) {\n  n = n / 2\n  steps++\n}\nconsole.log(steps)"
+        },
+        {
+          "tag": "Pick the right answer",
+          "q": "<p>A function takes about 2 ms for n = 1,000 and about 8 ms for n = 2,000. Which growth fits best?</p>",
+          "opts": [
+            "<code>O(n²)</code>",
+            "<code>O(n)</code>",
+            "<code>O(log n)</code>",
+            "<code>O(2n)</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "Doubling the input made the time <b>four times</b> bigger. That is the signature of O(n²): (2n)² = 4n².",
+            "Trap: O(2n) is not a separate growth. It is the same as O(n), and doubling n would only double the time."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Space",
+          "q": "<p>This function adds the numbers from 1 to n. It creates no arrays or objects.</p><pre><code>function sum(n) {\n  if (n === 0) return 0\n  return n + sum(n - 1)\n}</code></pre><p>What is its extra space?</p>",
+          "opts": [
+            "<code>O(1)</code>",
+            "<code>O(n)</code>",
+            "<code>O(n²)</code>",
+            "<code>O(log n)</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "Each call waits for the next one, so n frames sit on the call stack at the deepest point. Space is O(n).",
+            "Trap: counting only variables you created. The call stack is memory too."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>countHandshakes(n)</code>. At a party with <code>n</code> guests, every guest shakes hands with every other guest <b>once</b>. Count the handshakes with loops (do not use a formula), then say its Big O.</p>",
+        "examples": [
+          "countHandshakes(4)  // 6",
+          "countHandshakes(1)  // 0"
+        ],
+        "hint": "<p>For guest <code>i</code>, only count guests after <code>i</code>, so no pair is counted twice. That is a loop inside a loop.</p>",
+        "fn": "countHandshakes",
+        "starter": "function countHandshakes(n) {\n  // your code\n}",
+        "solution": "function countHandshakes(n) {\n  let count = 0\n  for (let i = 0; i < n; i++) {\n    for (let j = i + 1; j < n; j++) count++\n  }\n  return count\n}",
+        "checks": [
+          {
+            "t": "4 guests make 6 handshakes",
+            "verify": "assert(countHandshakes(4) === 6, \"expected 6\")"
+          },
+          {
+            "t": "1 guest makes 0",
+            "verify": "assert(countHandshakes(1) === 0, \"expected 0\")"
+          },
+          {
+            "t": "0 guests make 0",
+            "verify": "assert(countHandshakes(0) === 0, \"expected 0\")"
+          },
+          {
+            "t": "100 guests make 4950",
+            "verify": "assert(countHandshakes(100) === 4950, \"expected 4950\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Big O tells you how the work <b>grows</b> as n grows, not how many seconds it takes.",
+        "mistakes": [
+          "Keeping constants and small terms: O(3n + 10) is just O(n).",
+          "Adding when you should multiply: a loop inside a loop is n × n.",
+          "Forgetting space. Recursion uses stack memory even if you create no arrays."
+        ]
+      }
+    },
+    {
+      "id": "arrays",
+      "prereqs": [
+        "big-o"
+      ],
+      "dryRun": {
+        "title": "arr = [10, 20, 30], then arr.unshift(5)",
+        "columns": [
+          "step",
+          "action",
+          "array now",
+          "moves so far"
+        ],
+        "rows": [
+          [
+            "1",
+            "start",
+            "[10, 20, 30]",
+            "0"
+          ],
+          [
+            "2",
+            "move 30 one place right",
+            "[10, 20, 30, 30]",
+            "1"
+          ],
+          [
+            "3",
+            "move 20 one place right",
+            "[10, 20, 20, 30]",
+            "2"
+          ],
+          [
+            "4",
+            "move 10 one place right",
+            "[10, 10, 20, 30]",
+            "3"
+          ],
+          [
+            "5",
+            "write 5 at index 0",
+            "[5, 10, 20, 30]",
+            "3"
+          ]
+        ],
+        "hit": 3,
+        "note": "Every old element had to move. With n elements that is <b>n moves</b>, so <code>unshift</code> is O(n). <code>push</code> would have moved nothing."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const a = [3, 1, 2]\nconst b = a.sort()\nconsole.log(a === b)</code></pre>",
+          "opts": [
+            "<code>false</code>",
+            "<code>true</code>",
+            "<code>undefined</code>",
+            "<code>TypeError</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "<code>sort</code> changes the original array <b>in place</b> and returns that same array. So <code>a</code> and <code>b</code> are one array.",
+            "Trap: expecting a new sorted copy. Use <code>[...a].sort()</code> when you need to keep the original."
+          ],
+          "exec": "const a = [3, 1, 2]\nconst b = a.sort()\nconsole.log(a === b)"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const a = [1, 2, 3, 4]\nconst b = a.slice(1, 3)\nconsole.log(a.length, b.length)</code></pre>",
+          "opts": [
+            "<code>2 2</code>",
+            "<code>3 2</code>",
+            "<code>4 3</code>",
+            "<code>4 2</code>"
+          ],
+          "ans": 3,
+          "why": [
+            "<code>slice</code> builds a new array from index 1 up to (not including) 3, so it has 2 items. The original keeps all 4.",
+            "Trap: thinking slice removes items. That is <code>splice</code>."
+          ],
+          "exec": "const a = [1, 2, 3, 4]\nconst b = a.slice(1, 3)\nconsole.log(a.length, b.length)"
+        },
+        {
+          "tag": "Edge case",
+          "q": "<pre><code>const a = [1, 2, 3]\na.length = 1\na[3] = 9\nconsole.log(a.length)</code></pre>",
+          "opts": [
+            "<code>2</code>",
+            "<code>3</code>",
+            "<code>4</code>",
+            "<code>1</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "Setting <code>length = 1</code> cuts the array to <code>[1]</code>. Writing at index 3 then makes <code>length</code> 4, because length is always the highest index plus one. Indexes 1 and 2 become empty holes.",
+            "Trap: thinking an array must stay packed. In JS it is an object with a <code>length</code> counter."
+          ],
+          "exec": "const a = [1, 2, 3]\na.length = 1\na[3] = 9\nconsole.log(a.length)"
+        },
+        {
+          "tag": "Cost",
+          "q": "<p>A loop calls <code>arr.shift()</code> n times to empty an array. Each <code>shift</code> moves every remaining element. Total time?</p>",
+          "opts": [
+            "<code>O(n²)</code>",
+            "<code>O(n)</code>",
+            "<code>O(n log n)</code>",
+            "<code>O(1)</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "The moves are n + (n-1) + ... + 1, which adds up to about n²/2. That is O(n²).",
+            "Trap: reading one <code>shift</code> as O(1) because it is a single line of code."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Spot the bug",
+          "q": "<p>In a React component:</p><pre><code>list.push(3)\nsetList(list)</code></pre><p>The screen does not update. Why?</p>",
+          "opts": [
+            "<code>push</code> is too slow to update the screen",
+            "The array is the same object, so React sees no change",
+            "<code>push</code> returns a new array that is thrown away",
+            "<code>setList</code> does not accept arrays"
+          ],
+          "ans": 1,
+          "why": [
+            "<code>push</code> changes the array in place. React compares the old and new reference, finds the same one, and skips the update.",
+            "Fix: <code>setList([...list, 3])</code> creates a new array."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>rotateLeftOne(arr)</code>. Return a <b>new</b> array with the first item moved to the end. The original array must stay unchanged.</p>",
+        "examples": [
+          "rotateLeftOne([1, 2, 3])  // [2, 3, 1]",
+          "rotateLeftOne([])  // []"
+        ],
+        "hint": "<p><code>slice(1)</code> gives everything except the first item. Add <code>arr[0]</code> at the end.</p>",
+        "fn": "rotateLeftOne",
+        "starter": "function rotateLeftOne(arr) {\n  // your code\n}",
+        "solution": "function rotateLeftOne(arr) {\n  if (arr.length < 2) return arr.slice()\n  return [...arr.slice(1), arr[0]]\n}",
+        "checks": [
+          {
+            "t": "rotates [1, 2, 3]",
+            "verify": "assert(JSON.stringify(rotateLeftOne([1, 2, 3])) === \"[2,3,1]\", \"expected [2,3,1]\")"
+          },
+          {
+            "t": "does not change the input",
+            "verify": "const a = [1, 2, 3]; rotateLeftOne(a); assert(JSON.stringify(a) === \"[1,2,3]\", \"input was changed\")"
+          },
+          {
+            "t": "empty array",
+            "verify": "assert(JSON.stringify(rotateLeftOne([])) === \"[]\", \"expected []\")"
+          },
+          {
+            "t": "one item",
+            "verify": "assert(JSON.stringify(rotateLeftOne([7])) === \"[7]\", \"expected [7]\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Work at the <b>end</b> of an array is cheap; work at the start or middle moves every element after it.",
+        "mistakes": [
+          "Using <code>shift</code> or <code>unshift</code> inside a loop and getting O(n²).",
+          "Forgetting that <code>sort</code>, <code>splice</code>, <code>reverse</code> and <code>push</code> change the original.",
+          "Changing React state arrays in place instead of making a new array."
+        ]
+      }
+    },
+    {
+      "id": "objects-map-set",
+      "prereqs": [
+        "big-o",
+        "arrays"
+      ],
+      "dryRun": {
+        "title": "Count letters in \"banana\" with a Map",
+        "columns": [
+          "step",
+          "char",
+          "map before",
+          "action"
+        ],
+        "rows": [
+          [
+            "1",
+            "b",
+            "{}",
+            "set b = 1"
+          ],
+          [
+            "2",
+            "a",
+            "{b:1}",
+            "set a = 1"
+          ],
+          [
+            "3",
+            "n",
+            "{b:1, a:1}",
+            "set n = 1"
+          ],
+          [
+            "4",
+            "a",
+            "{b:1, a:1, n:1}",
+            "a exists, make it 2"
+          ],
+          [
+            "5",
+            "n",
+            "{b:1, a:2, n:1}",
+            "n exists, make it 2"
+          ],
+          [
+            "6",
+            "a",
+            "{b:1, a:2, n:2}",
+            "a exists, make it 3"
+          ]
+        ],
+        "hit": 3,
+        "note": "Step 4 is the key moment: the key <b>already exists</b>, so we update it. Each step is O(1), so the whole count is O(n)."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const m = new Map([[1, 'a']])\nconsole.log(String(m.get('1')))</code></pre>",
+          "opts": [
+            "<code>a</code>",
+            "<code>undefined</code>",
+            "<code>null</code>",
+            "<code>1</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "A Map keeps the key type. The number <code>1</code> and the string <code>\"1\"</code> are different keys, so <code>get(\"1\")</code> finds nothing.",
+            "Trap: thinking Map turns keys into strings. A plain Object does that, a Map does not."
+          ],
+          "exec": "const m = new Map([[1, 'a']])\nconsole.log(String(m.get('1')))"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const o = {}\no[1] = 'x'\no['1'] = 'y'\nconsole.log(Object.keys(o).length)</code></pre>",
+          "opts": [
+            "<code>1</code>",
+            "<code>2</code>",
+            "<code>0</code>",
+            "<code>3</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "Object keys are always strings. The number 1 becomes <code>\"1\"</code>, so the second line overwrites the first.",
+            "This is the opposite of the Map in the question before."
+          ],
+          "exec": "const o = {}\no[1] = 'x'\no['1'] = 'y'\nconsole.log(Object.keys(o).length)"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>console.log(new Set([{ a: 1 }, { a: 1 }]).size)</code></pre>",
+          "opts": [
+            "<code>1</code>",
+            "<code>0</code>",
+            "<code>2</code>",
+            "<code>3</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "A Set compares objects by <b>reference</b>, not by content. Two separate <code>{ a: 1 }</code> literals are two different objects.",
+            "Numbers and strings are compared by value, so <code>new Set([1, 1]).size</code> is 1."
+          ],
+          "exec": "console.log(new Set([{ a: 1 }, { a: 1 }]).size)"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const m = new Map()\nm.set('a', 1)\nm.set('b', 2)\nm.set('a', 3)\nconsole.log([...m.keys()].join(','))</code></pre>",
+          "opts": [
+            "<code>a,b,a</code>",
+            "<code>a,b</code>",
+            "<code>b,a</code>",
+            "<code>a</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "Setting an existing key <b>updates its value</b> and keeps its original place in the order. So the keys stay <code>a, b</code>.",
+            "Trap: thinking the updated key moves to the end."
+          ],
+          "exec": "const m = new Map()\nm.set('a', 1)\nm.set('b', 2)\nm.set('a', 3)\nconsole.log([...m.keys()].join(','))"
+        },
+        {
+          "tag": "Pick the right tool",
+          "q": "<p>You must find out whether an array of n numbers has any repeated value, in O(n) time. Which is best?</p>",
+          "opts": [
+            "Two nested loops that compare every pair",
+            "Call <code>includes()</code> on a growing array inside one loop",
+            "Sort the array, then compare neighbours",
+            "Add each value to a Set, checking <code>has()</code> first"
+          ],
+          "ans": 3,
+          "why": [
+            "<code>has()</code> and <code>add()</code> are O(1) on average, so one pass is O(n).",
+            "Trap: <code>includes()</code> looks like one line but scans the array each time, so the loop becomes O(n²). Sorting works but costs O(n log n)."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>charCount(str)</code>. Return a plain object that tells how many times each character appears.</p>",
+        "examples": [
+          "charCount(\"banana\")  // { b: 1, a: 3, n: 2 }",
+          "charCount(\"\")  // {}"
+        ],
+        "hint": "<p>Use a <code>Map</code> and update each count. At the end, <code>Object.fromEntries(map)</code> turns it into an object. Or use an object with <code>(obj[ch] || 0) + 1</code>.</p>",
+        "fn": "charCount",
+        "starter": "function charCount(str) {\n  // your code\n}",
+        "solution": "function charCount(str) {\n  const m = new Map()\n  for (const ch of str) m.set(ch, (m.get(ch) || 0) + 1)\n  return Object.fromEntries(m)\n}",
+        "checks": [
+          {
+            "t": "banana",
+            "verify": "const r = charCount(\"banana\"); assert(r.b === 1 && r.a === 3 && r.n === 2, \"wrong counts\")"
+          },
+          {
+            "t": "empty string gives an empty object",
+            "verify": "assert(Object.keys(charCount(\"\")).length === 0, \"expected {}\")"
+          },
+          {
+            "t": "case matters",
+            "verify": "const r = charCount(\"aA\"); assert(r.a === 1 && r.A === 1, \"a and A are different\")"
+          },
+          {
+            "t": "one repeated letter",
+            "verify": "assert(charCount(\"zzzz\").z === 4, \"expected 4\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Hash-based structures turn \"search for it\" into \"look it up\", which is O(1) on average.",
+        "mistakes": [
+          "Calling <code>includes()</code> on an array inside a loop when a Set would do.",
+          "Using an Object when keys are not strings: the number 1 and the string \"1\" collide.",
+          "Expecting a Set to remove duplicate objects by content. It compares references."
+        ]
+      }
+    },
+    {
+      "id": "recursion",
+      "prereqs": [
+        "big-o"
+      ],
+      "dryRun": {
+        "title": "factorial(3)",
+        "columns": [
+          "step",
+          "call",
+          "stack depth",
+          "result"
+        ],
+        "rows": [
+          [
+            "1",
+            "factorial(3)",
+            "1",
+            "waits for factorial(2)"
+          ],
+          [
+            "2",
+            "factorial(2)",
+            "2",
+            "waits for factorial(1)"
+          ],
+          [
+            "3",
+            "factorial(1)",
+            "3",
+            "base case: returns 1"
+          ],
+          [
+            "4",
+            "back in factorial(2)",
+            "2",
+            "returns 2 × 1 = 2"
+          ],
+          [
+            "5",
+            "back in factorial(3)",
+            "1",
+            "returns 3 × 2 = 6"
+          ]
+        ],
+        "hit": 2,
+        "note": "The stack grows to depth 3, hits the <b>base case</b>, then unwinds. The answer is built on the way <b>back</b>."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>function f(n) {\n  if (n === 0) return 0\n  return n + f(n - 1)\n}\nconsole.log(f(4))</code></pre>",
+          "opts": [
+            "<code>4</code>",
+            "<code>10</code>",
+            "<code>24</code>",
+            "<code>0</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "f(4) = 4 + f(3) = 4 + 3 + f(2) = ... = 4 + 3 + 2 + 1 + 0 = 10.",
+            "Trap: 24 is 4 × 3 × 2 × 1. This function adds, it does not multiply."
+          ],
+          "exec": "function f(n) {\n  if (n === 0) return 0\n  return n + f(n - 1)\n}\nconsole.log(f(4))"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>let out = ''\nfunction show(n) {\n  if (n === 0) return\n  out += n\n  show(n - 1)\n  out += n\n}\nshow(2)\nconsole.log(out)</code></pre>",
+          "opts": [
+            "<code>1221</code>",
+            "<code>2121</code>",
+            "<code>2112</code>",
+            "<code>1122</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "The first <code>out += n</code> runs on the way <b>down</b> (2, then 1). The second runs on the way <b>back up</b> (1, then 2). So the result is 2112.",
+            "Trap: forgetting that code after the recursive call runs during the unwind."
+          ],
+          "exec": "let out = ''\nfunction show(n) {\n  if (n === 0) return\n  out += n\n  show(n - 1)\n  out += n\n}\nshow(2)\nconsole.log(out)"
+        },
+        {
+          "tag": "Why does this fail?",
+          "q": "<pre><code>function count(n) {\n  return count(n - 1)\n}\ntry { count(3) } catch (e) { console.log(e.name) }</code></pre>",
+          "opts": [
+            "<code>RangeError</code>",
+            "<code>TypeError</code>",
+            "<code>ReferenceError</code>",
+            "No error, it returns <code>undefined</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "There is no base case, so the calls never stop. The stack fills up and JS throws <code>RangeError: Maximum call stack size exceeded</code>.",
+            "Every recursive function needs a path that returns <b>without</b> calling itself."
+          ],
+          "exec": "function count(n) {\n  return count(n - 1)\n}\ntry { count(3) } catch (e) { console.log(e.name) }"
+        },
+        {
+          "tag": "Space",
+          "q": "<p>A recursive function sums an array of n numbers by calling itself with the next index. It creates no new arrays. What is its extra space?</p>",
+          "opts": [
+            "<code>O(1)</code>",
+            "<code>O(log n)</code>",
+            "<code>O(n²)</code>",
+            "<code>O(n)</code>"
+          ],
+          "ans": 3,
+          "why": [
+            "The recursion goes n levels deep, and every level keeps a frame on the call stack. Space is O(depth) = O(n).",
+            "Trap: saying O(1) because no array is created."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Count the calls",
+          "q": "<pre><code>let calls = 0\nfunction fib(n) {\n  if (n === 2) calls++\n  if (n &lt; 2) return n\n  return fib(n - 1) + fib(n - 2)\n}\nfib(5)\nconsole.log(calls)</code></pre>",
+          "opts": [
+            "<code>1</code>",
+            "<code>3</code>",
+            "<code>2</code>",
+            "<code>5</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "<code>fib(2)</code> is computed again and again by different branches of the call tree. Here it runs 3 times, just for n = 5.",
+            "This repeated work is why naive Fibonacci is O(2^n), and why memoization helps later."
+          ],
+          "exec": "let calls = 0\nfunction fib(n) {\n  if (n === 2) calls++\n  if (n < 2) return n\n  return fib(n - 1) + fib(n - 2)\n}\nfib(5)\nconsole.log(calls)"
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>sumDigits(n)</code> with <b>recursion</b>. It returns the sum of the digits of a non-negative whole number.</p>",
+        "examples": [
+          "sumDigits(1234)  // 10",
+          "sumDigits(7)  // 7"
+        ],
+        "hint": "<p>Base case: a single digit (<code>n &lt; 10</code>) is its own sum. Otherwise take the last digit with <code>n % 10</code> and recurse on <code>Math.floor(n / 10)</code>.</p>",
+        "fn": "sumDigits",
+        "starter": "function sumDigits(n) {\n  // your code\n}",
+        "solution": "function sumDigits(n) {\n  if (n < 10) return n\n  return (n % 10) + sumDigits(Math.floor(n / 10))\n}",
+        "checks": [
+          {
+            "t": "1234 gives 10",
+            "verify": "assert(sumDigits(1234) === 10, \"expected 10\")"
+          },
+          {
+            "t": "zero",
+            "verify": "assert(sumDigits(0) === 0, \"expected 0\")"
+          },
+          {
+            "t": "one digit",
+            "verify": "assert(sumDigits(7) === 7, \"expected 7\")"
+          },
+          {
+            "t": "9999 gives 36",
+            "verify": "assert(sumDigits(9999) === 36, \"expected 36\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "A recursive function needs a <b>base case</b> that stops it and a step that gets <b>smaller</b>; every waiting call costs stack space.",
+        "mistakes": [
+          "No base case, or a base case the input never reaches.",
+          "Calling with an input that does not get smaller.",
+          "Forgetting <code>return</code> before the recursive call, so the result is lost.",
+          "Ignoring stack space: depth n means O(n) space."
+        ]
+      }
+    },
+    {
+      "id": "hashmaps",
+      "prereqs": [
+        "big-o",
+        "objects-map-set"
+      ],
+      "dryRun": {
+        "title": "Two Sum: nums = [3, 2, 4], target = 6",
+        "columns": [
+          "i",
+          "num",
+          "need",
+          "map before",
+          "result"
+        ],
+        "rows": [
+          [
+            "0",
+            "3",
+            "3",
+            "{}",
+            "not found, then store 3 → 0"
+          ],
+          [
+            "1",
+            "2",
+            "4",
+            "{3:0}",
+            "not found, then store 2 → 1"
+          ],
+          [
+            "2",
+            "4",
+            "2",
+            "{3:0, 2:1}",
+            "found at 1: answer [1, 2]"
+          ]
+        ],
+        "hit": 2,
+        "note": "At i = 0 we <b>need</b> 3 and the number is 3. If we stored it first, it would match itself. That is why we <b>check first, then store</b>."
+      },
+      "think": [
+        {
+          "tag": "Spot the bug",
+          "q": "<pre><code>function twoSum(nums, target) {\n  const seen = new Map()\n  for (let i = 0; i &lt; nums.length; i++) {\n    seen.set(nums[i], i)\n    const j = seen.get(target - nums[i])\n    if (j !== undefined) return [j, i]\n  }\n}\nconsole.log(twoSum([3, 2, 4], 6).join(\",\"))</code></pre>",
+          "opts": [
+            "<code>1,2</code>",
+            "<code>0,0</code>",
+            "<code>0,2</code>",
+            "<code>0,1</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "The code stores the number <b>before</b> looking for its partner. At i = 0 it finds itself (3 + 3 = 6) and returns <code>[0, 0]</code>.",
+            "Fix: do the <code>get</code> first, then the <code>set</code>."
+          ],
+          "exec": "function twoSum(nums, target) {\n  const seen = new Map()\n  for (let i = 0; i < nums.length; i++) {\n    seen.set(nums[i], i)\n    const j = seen.get(target - nums[i])\n    if (j !== undefined) return [j, i]\n  }\n}\nconsole.log(twoSum([3, 2, 4], 6).join(\",\"))"
+        },
+        {
+          "tag": "Spot the bug",
+          "q": "<pre><code>const count = {}\nfor (const ch of 'aa') {\n  count[ch] = count[ch] + 1\n}\nconsole.log(String(count.a))</code></pre>",
+          "opts": [
+            "<code>1</code>",
+            "<code>2</code>",
+            "<code>NaN</code>",
+            "<code>undefined</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "The first time, <code>count.a</code> does not exist, so <code>undefined + 1</code> is <code>NaN</code>. NaN plus 1 stays NaN.",
+            "Fix: start from zero with <code>(count[ch] || 0) + 1</code>."
+          ],
+          "exec": "const count = {}\nfor (const ch of 'aa') {\n  count[ch] = count[ch] + 1\n}\nconsole.log(String(count.a))"
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>Two Sum solved with a hash map, one pass. What are the time and extra space?</p>",
+          "opts": [
+            "<code>O(n²) time, O(1) space</code>",
+            "<code>O(n) time, O(1) space</code>",
+            "<code>O(n log n) time, O(n) space</code>",
+            "<code>O(n) time, O(n) space</code>"
+          ],
+          "ans": 3,
+          "why": [
+            "One pass with O(1) lookups is O(n) time. The map can hold up to n numbers, so space is O(n).",
+            "The O(n²) / O(1) option is the brute force. The map <b>trades space for time</b>."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Pick the right key",
+          "q": "<p>You want to group words that are anagrams, such as \"eat\", \"tea\" and \"ate\". Which key puts them in the same group?</p>",
+          "opts": [
+            "The letters sorted alphabetically",
+            "The first letter",
+            "The word length",
+            "The word reversed"
+          ],
+          "ans": 0,
+          "why": [
+            "All anagrams have the same letters, so sorting the letters gives one shared key: \"aet\".",
+            "Trap: \"bat\" and \"bar\" share a first letter and \"eat\" and \"bat\" share a length, but they are not anagrams."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const m = new Map()\nm.set({}, 1)\nconsole.log(String(m.get({})))</code></pre>",
+          "opts": [
+            "<code>1</code>",
+            "<code>undefined</code>",
+            "<code>null</code>",
+            "<code>{}</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "Object keys are matched by <b>reference</b>. The second <code>{}</code> is a different object, so nothing is found.",
+            "Use strings or numbers as keys when you want lookups by value."
+          ],
+          "exec": "const m = new Map()\nm.set({}, 1)\nconsole.log(String(m.get({})))"
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>firstUnique(str)</code>. Return the first character that appears <b>only once</b> in the string, or <code>null</code> if there is none.</p>",
+        "examples": [
+          "firstUnique(\"banana\")  // \"b\"",
+          "firstUnique(\"aabb\")  // null"
+        ],
+        "hint": "<p>Pass 1: count every character in a Map. Pass 2: walk the string again and return the first character whose count is 1. Two passes is still O(n).</p>",
+        "fn": "firstUnique",
+        "starter": "function firstUnique(str) {\n  // your code\n}",
+        "solution": "function firstUnique(str) {\n  const count = new Map()\n  for (const ch of str) count.set(ch, (count.get(ch) || 0) + 1)\n  for (const ch of str) if (count.get(ch) === 1) return ch\n  return null\n}",
+        "checks": [
+          {
+            "t": "banana gives b",
+            "verify": "assert(firstUnique(\"banana\") === \"b\", \"expected b\")"
+          },
+          {
+            "t": "no unique character",
+            "verify": "assert(firstUnique(\"aabb\") === null, \"expected null\")"
+          },
+          {
+            "t": "empty string",
+            "verify": "assert(firstUnique(\"\") === null, \"expected null\")"
+          },
+          {
+            "t": "loveleetcode gives v",
+            "verify": "assert(firstUnique(\"loveleetcode\") === \"v\", \"expected v\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Ask \"have I seen this before?\" and let a hash map answer it in O(1) instead of scanning.",
+        "mistakes": [
+          "Storing the current item before checking, so it matches itself.",
+          "Scanning an array inside a loop when a map would answer in O(1).",
+          "Using objects as keys and expecting lookup by content.",
+          "Forgetting that the map costs O(n) extra space."
+        ]
+      }
+    }
+  ],
+  "flags": [
+    "The existing lesson texts (for example big-o \"why\") mention what an interviewer asks. I did not rewrite them, but the rule says learning material should not use that framing.",
+    "recursion belongs to Unit 4 in the new order, but it is in this batch because it is already written. Its prerequisite is only big-o."
+  ]
+}

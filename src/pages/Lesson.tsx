@@ -13,6 +13,10 @@ import { snap, stepsBetween } from '../lib/celebrate'
 import { sfx } from '../lib/sound'
 import { usePrefs } from '../lib/prefs'
 import { lockedIds } from '../lib/unlock'
+import { BuildFlow } from '../components/BuildFlow'
+import { ConceptFlow } from '../components/ConceptFlow'
+import { conceptFor } from '../data/dsa'
+import { buildLessonFor } from '../data/build'
 import type { Course } from '../types'
 import { t } from '../lib/i18n'
 
@@ -41,6 +45,14 @@ function Gate({ course, lessonId }: { course: Course; lessonId: string }) {
         </div>
       </div>
     )
+  }
+  const loc = locate(course, lessonId)
+  const nextLesson = loc ? course.units[loc.ui].lessons[loc.li + 1] ?? course.units[loc.ui + 1]?.lessons[0] : undefined
+  const bl = buildLessonFor(course.id, lessonId)
+  if (bl && loc) return <BuildFlow course={course} lesson={loc.lesson} bl={bl} nextId={nextLesson?.id} />
+  const dc = conceptFor(course.id, lessonId)
+  if (dc && loc) {
+    return <ConceptFlow course={course} lesson={loc.lesson} concept={dc} nextId={nextLesson?.id} />
   }
   return <Runner course={course} lessonId={lessonId} />
 }

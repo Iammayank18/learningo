@@ -1,0 +1,653 @@
+{
+  "items": [
+    {
+      "id": "contains-duplicate",
+      "pattern": {
+        "name": "Seen-before check with a Set",
+        "question": "While walking through the numbers, what is the one fact about the past you need at each step?",
+        "idea": [
+          "The question is only \"have I met this value already?\". You do not need positions or counts, only a yes or no.",
+          "Comparing every pair answers it but does about n\u00b2/2 checks. A <b>Set</b> keeps every value you passed and answers the question in one step, so one walk is enough."
+        ],
+        "spotWhen": [
+          "The statement asks if <b>any value repeats</b>, or if all values are different.",
+          "Order and position do not matter for the answer."
+        ],
+        "prereqs": [
+          "hashset",
+          "arrays"
+        ]
+      },
+      "dryRun": {
+        "title": "nums = [4, 1, 7, 1]",
+        "columns": [
+          "i",
+          "num",
+          "seen before",
+          "in the Set?",
+          "action"
+        ],
+        "rows": [
+          [
+            "0",
+            "4",
+            "{}",
+            "no",
+            "add 4"
+          ],
+          [
+            "1",
+            "1",
+            "{4}",
+            "no",
+            "add 1"
+          ],
+          [
+            "2",
+            "7",
+            "{4, 1}",
+            "no",
+            "add 7"
+          ],
+          [
+            "3",
+            "1",
+            "{4, 1, 7}",
+            "yes",
+            "return true"
+          ]
+        ],
+        "hit": 3,
+        "note": "The answer is found at the <b>second</b> time a value appears. The loop stops there.",
+        "args": [
+          [
+            4,
+            1,
+            7,
+            1
+          ]
+        ],
+        "result": true
+      },
+      "constraints": [
+        "nums can be empty; then the answer is false",
+        "Values are integers, negative values are allowed",
+        "Up to about 200,000 numbers",
+        "Target: better than O(n\u00b2) time"
+      ],
+      "minutes": 15,
+      "review": {
+        "approaches": [
+          {
+            "name": "Compare every pair",
+            "time": "O(n\u00b2)",
+            "space": "O(1)",
+            "idea": "Two loops check each pair of positions.",
+            "best": false
+          },
+          {
+            "name": "Sort, then compare neighbours",
+            "time": "O(n log n)",
+            "space": "O(1) extra",
+            "idea": "After sorting, equal values sit next to each other.",
+            "best": false
+          },
+          {
+            "name": "Set of seen values",
+            "time": "O(n)",
+            "space": "O(n)",
+            "idea": "Add each value to a Set and stop at the first one that is already there.",
+            "best": true
+          }
+        ],
+        "why": [
+          "A value is a duplicate exactly when it was added to the Set earlier. Checking before adding makes sure a number is not compared with itself.",
+          "Each number causes one Set lookup and one insert, both constant time on average, so the time is O(n). In the worst case the Set holds all n values."
+        ],
+        "mistakes": [
+          "Adding the number to the Set before checking it, so every number looks like a duplicate.",
+          "Using <code>nums.includes</code> inside the loop. It scans the array, so the whole thing is O(n\u00b2).",
+          "Returning <code>false</code> inside the loop at the first new number instead of after the loop.",
+          "Comparing a number with itself in a pair loop (<code>j</code> starting at <code>i</code> instead of <code>i + 1</code>), so every array looks like it has a duplicate."
+        ],
+        "variations": [
+          "Return true only if two equal values are within <b>k positions</b> of each other.",
+          "Return the <b>first value</b> that repeats.",
+          "Solve it in O(1) extra space if the numbers are all between 1 and n."
+        ]
+      }
+    },
+    {
+      "id": "best-time-to-buy-sell-stock",
+      "pattern": {
+        "name": "Track the best so far while scanning",
+        "question": "If you decide to sell today, which buy day would you pick, and what do you need to remember to know it?",
+        "idea": [
+          "For a fixed selling day, the best buy is simply the <b>cheapest earlier day</b>. So you never need to look back at every earlier price, only at the lowest one.",
+          "Keep one variable with the lowest price seen so far. At each day, the profit if you sell today is <code>price - lowest</code>. Keep the largest such profit."
+        ],
+        "spotWhen": [
+          "The answer is a difference between two positions where the <b>first must come before the second</b>.",
+          "You scan once and the best earlier value can be summarised in one number (a minimum or a maximum).",
+          "A pair-by-pair check would be correct but too slow."
+        ],
+        "prereqs": [
+          "arrays"
+        ]
+      },
+      "dryRun": {
+        "title": "prices = [7, 1, 5, 3, 6, 4]",
+        "columns": [
+          "day",
+          "price",
+          "lowest so far",
+          "profit if sold today",
+          "best"
+        ],
+        "rows": [
+          [
+            "0",
+            "7",
+            "7",
+            "0",
+            "0"
+          ],
+          [
+            "1",
+            "1",
+            "1",
+            "0 (new lowest)",
+            "0"
+          ],
+          [
+            "2",
+            "5",
+            "1",
+            "4",
+            "4"
+          ],
+          [
+            "3",
+            "3",
+            "1",
+            "2",
+            "4"
+          ],
+          [
+            "4",
+            "6",
+            "1",
+            "5",
+            "5"
+          ],
+          [
+            "5",
+            "4",
+            "1",
+            "3",
+            "5"
+          ]
+        ],
+        "hit": 4,
+        "note": "The best trade is found on day 4: buy on day 1 (price 1), sell at 6. The big price 7 on day 0 can never be a sell price because there is no earlier day to buy.",
+        "args": [
+          [
+            7,
+            1,
+            5,
+            3,
+            6,
+            4
+          ]
+        ],
+        "result": 5
+      },
+      "constraints": [
+        "You must buy before you sell (different days, buy first)",
+        "At most one buy and one sell",
+        "Return 0 if no profit is possible",
+        "Target: O(n) time and O(1) extra space"
+      ],
+      "minutes": 15,
+      "review": {
+        "approaches": [
+          {
+            "name": "Try every buy and sell pair",
+            "time": "O(n\u00b2)",
+            "space": "O(1)",
+            "idea": "Two loops, keep the biggest difference where the sell day is later.",
+            "best": false
+          },
+          {
+            "name": "One pass with the lowest price so far",
+            "time": "O(n)",
+            "space": "O(1)",
+            "idea": "Track the cheapest earlier price and the best profit while scanning once.",
+            "best": true
+          }
+        ],
+        "why": [
+          "Every possible trade sells on some day. For that day, the profit is highest when the buy price is lowest, and the lowest earlier price is exactly what the variable holds. So the best answer over all days is found.",
+          "The array is scanned once with constant work per day, so the time is O(n). Only two variables are used, so the space is O(1)."
+        ],
+        "mistakes": [
+          "Taking the lowest price of the whole array, even if it comes after the highest price. The buy must come first.",
+          "Starting <code>best</code> at a negative number or at the first price. Falling prices must give 0.",
+          "Updating <code>lowest</code> after computing the profit for the same day. It is harmless here but breaks if you compare to the wrong price.",
+          "Returning the sell price or the buy price instead of the difference."
+        ],
+        "variations": [
+          "You may make <b>as many trades</b> as you like (but hold one share at a time).",
+          "You may make <b>at most two</b> trades.",
+          "Return the buy and sell <b>days</b>, not the profit."
+        ]
+      }
+    },
+    {
+      "id": "move-zeroes",
+      "pattern": {
+        "name": "Read and write pointers",
+        "question": "You read the numbers left to right. Where should the next non-zero number go so that the earlier ones keep their order?",
+        "idea": [
+          "Think of two fingers. The <b>read</b> finger visits every number. The <b>write</b> finger marks the next free slot at the front for a non-zero value.",
+          "Every non-zero value is copied to the write slot, and write moves one step. Because read is never behind write, no value is overwritten before it is copied. The zeros are then written at the end."
+        ],
+        "spotWhen": [
+          "The statement asks you to <b>filter or compact</b> an array in place.",
+          "The order of the kept values must not change.",
+          "Extra memory should be O(1), so a second array is not allowed."
+        ],
+        "prereqs": [
+          "arrays-2",
+          "two-pointers"
+        ]
+      },
+      "dryRun": {
+        "title": "nums = [0, 1, 0, 3]",
+        "columns": [
+          "read",
+          "nums[read]",
+          "write",
+          "array after",
+          "action"
+        ],
+        "rows": [
+          [
+            "0",
+            "0",
+            "0",
+            "[0, 1, 0, 3]",
+            "zero: skip"
+          ],
+          [
+            "1",
+            "1",
+            "0",
+            "[1, 1, 0, 3]",
+            "copy 1 to index 0, write = 1"
+          ],
+          [
+            "2",
+            "0",
+            "1",
+            "[1, 1, 0, 3]",
+            "zero: skip"
+          ],
+          [
+            "3",
+            "3",
+            "1",
+            "[1, 3, 0, 3]",
+            "copy 3 to index 1, write = 2"
+          ],
+          [
+            "end",
+            "-",
+            "2",
+            "[1, 3, 0, 0]",
+            "fill indexes 2 to 3 with zeros"
+          ]
+        ],
+        "hit": 1,
+        "note": "After the copy the array still holds old values behind the write finger. That is fine: the final loop <b>overwrites them with zeros</b>.",
+        "args": [
+          [
+            0,
+            1,
+            0,
+            3
+          ]
+        ],
+        "result": [
+          1,
+          3,
+          0,
+          0
+        ]
+      },
+      "constraints": [
+        "Keep the order of the non-zero values",
+        "Work in place; no second array",
+        "The array can be empty",
+        "Target: O(n) time and O(1) extra space"
+      ],
+      "minutes": 15,
+      "review": {
+        "approaches": [
+          {
+            "name": "Shift left every time you see a zero",
+            "time": "O(n\u00b2)",
+            "space": "O(1)",
+            "idea": "When you meet a zero, move all later values one step left and put the zero at the end.",
+            "best": false
+          },
+          {
+            "name": "Copy non-zero values to a new array",
+            "time": "O(n)",
+            "space": "O(n)",
+            "idea": "Collect the non-zero values, then append the zeros.",
+            "best": false
+          },
+          {
+            "name": "Read and write pointers",
+            "time": "O(n)",
+            "space": "O(1)",
+            "idea": "Compact the non-zero values to the front in place, then fill the rest with zeros.",
+            "best": true
+          }
+        ],
+        "why": [
+          "The write index is never ahead of the read index, so a value is always copied before its slot can be reused. That keeps every non-zero value and its order. The number of zeros is whatever remains.",
+          "Both loops walk the array once, so the time is O(n). Only two indexes are used, so the space is O(1)."
+        ],
+        "mistakes": [
+          "Swapping the first zero with the last non-zero value. It breaks the order of the non-zero values.",
+          "Forgetting the final loop. The old copies stay behind write and the array is wrong.",
+          "Using <code>nums.splice</code> inside the loop. It shifts the array each time and makes the solution O(n\u00b2).",
+          "Comparing with <code>if (nums[read])</code>, which also treats <code>NaN</code> as a zero."
+        ],
+        "variations": [
+          "Remove all copies of a given value in place and return the new length.",
+          "Move all zeros to the <b>front</b> instead.",
+          "Remove duplicates from a <b>sorted</b> array in place."
+        ]
+      }
+    },
+    {
+      "id": "product-except-self",
+      "pattern": {
+        "name": "Prefix product times suffix product",
+        "question": "Without dividing, how can you split \"everything except me\" into two parts that are each easy to build with one walk?",
+        "idea": [
+          "\"Everything except i\" is the product of the part <b>before</b> i multiplied by the part <b>after</b> i. Each part is a running product, which one walk can produce.",
+          "First walk left to right and store the product of everything before each index. Then walk right to left with a second running product, multiply it into the answer, and you are done. The answer array doubles as storage, so no extra memory is needed."
+        ],
+        "spotWhen": [
+          "Each result depends on <b>all other elements</b> but division is not allowed (or zeros break it).",
+          "The result can be split into a part on the left and a part on the right.",
+          "A nested loop would work but is O(n\u00b2)."
+        ],
+        "prereqs": [
+          "arrays-2",
+          "prefix-sum"
+        ]
+      },
+      "dryRun": {
+        "title": "nums = [1, 2, 3, 4]",
+        "columns": [
+          "pass",
+          "i",
+          "running product used",
+          "answer after"
+        ],
+        "rows": [
+          [
+            "left",
+            "0",
+            "1 (nothing on the left)",
+            "[1, 1, 1, 1]"
+          ],
+          [
+            "left",
+            "1",
+            "1",
+            "[1, 1, 1, 1]"
+          ],
+          [
+            "left",
+            "2",
+            "2",
+            "[1, 1, 2, 1]"
+          ],
+          [
+            "left",
+            "3",
+            "6",
+            "[1, 1, 2, 6]"
+          ],
+          [
+            "right",
+            "3",
+            "1 (nothing on the right)",
+            "[1, 1, 2, 6]"
+          ],
+          [
+            "right",
+            "2",
+            "4",
+            "[1, 1, 8, 6]"
+          ],
+          [
+            "right",
+            "1",
+            "12",
+            "[1, 12, 8, 6]"
+          ],
+          [
+            "right",
+            "0",
+            "24",
+            "[24, 12, 8, 6]"
+          ]
+        ],
+        "hit": 5,
+        "note": "At i = 2 the left part is 1 \u00d7 2 = 2 and the right part is 4, so the answer is <b>2 \u00d7 4 = 8</b>, without ever dividing.",
+        "args": [
+          [
+            1,
+            2,
+            3,
+            4
+          ]
+        ],
+        "result": [
+          24,
+          12,
+          8,
+          6
+        ]
+      },
+      "constraints": [
+        "Do not use division",
+        "The array can contain zeros",
+        "The answer array may be reused for the left products",
+        "Target: O(n) time and O(1) extra space (the output does not count)"
+      ],
+      "minutes": 25,
+      "review": {
+        "approaches": [
+          {
+            "name": "Multiply all the others for each index",
+            "time": "O(n\u00b2)",
+            "space": "O(1) extra",
+            "idea": "A nested loop multiplies every other value for each position.",
+            "best": false
+          },
+          {
+            "name": "Separate prefix and suffix arrays",
+            "time": "O(n)",
+            "space": "O(n)",
+            "idea": "Build one array of left products and one of right products, then multiply them.",
+            "best": false
+          },
+          {
+            "name": "Prefix in the answer, suffix in a variable",
+            "time": "O(n)",
+            "space": "O(1) extra",
+            "idea": "Store left products in the answer and multiply the right products in on the way back.",
+            "best": true
+          }
+        ],
+        "why": [
+          "The product of all others is left(i) \u00d7 right(i), where left(i) is the product of indexes before i and right(i) of indexes after i. Both are running products, so each one can be updated with a single multiplication per step.",
+          "Two passes of constant work per index give O(n) time. Besides the output, only the two running products are stored, so the extra space is O(1)."
+        ],
+        "mistakes": [
+          "Dividing the total product by <code>nums[i]</code>. It fails when a value is 0 and is not allowed here.",
+          "Including <code>nums[i]</code> itself in the left product before storing it. Store first, then multiply.",
+          "Starting the running products at 0 instead of 1, so everything becomes 0.",
+          "Looping the second pass from the start instead of the end."
+        ],
+        "variations": [
+          "Allow division but handle the zeros correctly.",
+          "Return the sum of all others for each index.",
+          "Do it for a 2D matrix: the product of the other cells in the same row."
+        ]
+      }
+    },
+    {
+      "id": "longest-consecutive-sequence",
+      "pattern": {
+        "name": "Count runs from their start with a Set",
+        "question": "In the set {1, 2, 3, 4}, which number should start counting, and how can you recognise it without sorting?",
+        "idea": [
+          "A run of consecutive values has exactly one <b>start</b>: a number whose predecessor is not in the data. If you only count from starts, every run is counted once.",
+          "Put all numbers in a Set for instant lookups. For each start, step up by 1 while the next value exists. Each number is stepped over only inside its own run, so the work adds up to O(n)."
+        ],
+        "spotWhen": [
+          "The statement asks for the longest <b>consecutive</b> values but the array is not sorted and sorting is not allowed or too slow.",
+          "You need fast \"is x present?\" checks.",
+          "Order in the array does not matter for the answer."
+        ],
+        "prereqs": [
+          "hashset"
+        ]
+      },
+      "dryRun": {
+        "title": "nums = [100, 4, 200, 1, 3, 2]",
+        "columns": [
+          "x",
+          "x - 1 in set?",
+          "run start?",
+          "walk",
+          "best"
+        ],
+        "rows": [
+          [
+            "100",
+            "no",
+            "yes",
+            "100 (101 missing), length 1",
+            "1"
+          ],
+          [
+            "4",
+            "yes (3)",
+            "no",
+            "skip",
+            "1"
+          ],
+          [
+            "200",
+            "no",
+            "yes",
+            "200 (201 missing), length 1",
+            "1"
+          ],
+          [
+            "1",
+            "no",
+            "yes",
+            "1, 2, 3, 4 (5 missing), length 4",
+            "4"
+          ],
+          [
+            "3",
+            "yes (2)",
+            "no",
+            "skip",
+            "4"
+          ],
+          [
+            "2",
+            "yes (1)",
+            "no",
+            "skip",
+            "4"
+          ]
+        ],
+        "hit": 3,
+        "note": "Only <b>1</b> starts the long run. The numbers 2, 3 and 4 are skipped, because each has its predecessor in the set.",
+        "args": [
+          [
+            100,
+            4,
+            200,
+            1,
+            3,
+            2
+          ]
+        ],
+        "result": 4
+      },
+      "constraints": [
+        "nums can be empty; then the answer is 0",
+        "Duplicates count once",
+        "Values can be negative",
+        "Target: O(n) time"
+      ],
+      "minutes": 25,
+      "review": {
+        "approaches": [
+          {
+            "name": "For each number, walk up without a start check",
+            "time": "O(n\u00b2)",
+            "space": "O(n)",
+            "idea": "Every number walks upward through the set, even in the middle of a run.",
+            "best": false
+          },
+          {
+            "name": "Sort, then scan",
+            "time": "O(n log n)",
+            "space": "O(1) extra",
+            "idea": "After sorting, count runs of neighbours that differ by 1 and skip equal ones.",
+            "best": false
+          },
+          {
+            "name": "Set and run starts",
+            "time": "O(n)",
+            "space": "O(n)",
+            "idea": "Walk only from numbers whose predecessor is missing.",
+            "best": true
+          }
+        ],
+        "why": [
+          "Each run has exactly one start, so every run is walked exactly once. The best length over all runs is the answer.",
+          "The outer loop visits n numbers and the inner loop only runs for starts. All inner steps together visit each number at most once, so the time is O(n). The Set holds up to n values."
+        ],
+        "mistakes": [
+          "Walking from every number. A run of length n is then walked n times and the solution is O(n\u00b2).",
+          "Looping over the array instead of the Set, and counting duplicates twice.",
+          "Forgetting that an empty array should give 0.",
+          "Starting <code>len</code> at 0 so every run is one too short."
+        ],
+        "variations": [
+          "Return the actual run (its start and end), not only the length.",
+          "Allow the run to skip at most one missing number.",
+          "Solve it again using Union-Find."
+        ]
+      }
+    }
+  ],
+  "flags": []
+}

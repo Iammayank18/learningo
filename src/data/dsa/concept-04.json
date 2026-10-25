@@ -1,0 +1,1010 @@
+{
+  "items": [
+    {
+      "id": "matrix-2d",
+      "prereqs": [
+        "arrays",
+        "arrays-2"
+      ],
+      "dryRun": {
+        "title": "Rotate a 3 × 3 matrix 90° clockwise",
+        "columns": [
+          "step",
+          "matrix (rows separated by /)",
+          "what happened"
+        ],
+        "rows": [
+          [
+            "start",
+            "1 2 3 / 4 5 6 / 7 8 9",
+            "the original"
+          ],
+          [
+            "1. transpose",
+            "1 4 7 / 2 5 8 / 3 6 9",
+            "rows became columns"
+          ],
+          [
+            "2. reverse each row",
+            "7 4 1 / 8 5 2 / 9 6 3",
+            "the first row 1 2 3 is now the last column"
+          ]
+        ],
+        "hit": 2,
+        "note": "Rotation is two simple moves: <b>transpose</b>, then <b>reverse every row</b>. No special case for each cell."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const m = [[1, 2], [3, 4]]\nconsole.log(m[1][0], m.length, m[0].length)</code></pre>",
+          "opts": [
+            "<code>2 2 2</code>",
+            "<code>3 2 2</code>",
+            "<code>1 2 2</code>",
+            "<code>3 4 2</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "<code>m[1]</code> is the second row <code>[3, 4]</code>, and <code>[0]</code> of it is 3. <code>m.length</code> counts rows (2) and <code>m[0].length</code> counts columns (2).",
+            "The <b>row</b> index always comes first: <code>m[row][col]</code>."
+          ],
+          "exec": "const m = [[1, 2], [3, 4]]\nconsole.log(m[1][0], m.length, m[0].length)"
+        },
+        {
+          "tag": "Spot the bug",
+          "q": "<pre><code>const g = new Array(2).fill([])\ng[0].push(1)\nconsole.log(g[1].length)</code></pre>",
+          "opts": [
+            "<code>0</code>",
+            "<code>2</code>",
+            "<code>undefined</code>",
+            "<code>1</code>"
+          ],
+          "ans": 3,
+          "why": [
+            "<code>fill([])</code> puts the <b>same</b> empty array into every slot. A push into row 0 also shows up in row 1.",
+            "Fix: <code>Array.from({ length: 2 }, () =&gt; [])</code>, which makes a fresh row each time."
+          ],
+          "exec": "const g = new Array(2).fill([])\ng[0].push(1)\nconsole.log(g[1].length)"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const m = [[1, 2, 3], [4, 5, 6]]\nconst t = m[0].map((_, c) => m.map((row) =&gt; row[c]))\nconsole.log(JSON.stringify(t))</code></pre>",
+          "opts": [
+            "<code>[[1,2,3],[4,5,6]]</code>",
+            "<code>[[4,5,6],[1,2,3]]</code>",
+            "<code>[[1,4],[2,5],[3,6]]</code>",
+            "<code>[[3,2,1],[6,5,4]]</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "For every column <code>c</code>, the code reads that column from top to bottom and makes it a new row. This is a <b>transpose</b>.",
+            "A 2 × 3 matrix becomes 3 × 2."
+          ],
+          "exec": "const m = [[1, 2, 3], [4, 5, 6]]\nconst t = m[0].map((_, c) => m.map((row) => row[c]))\nconsole.log(JSON.stringify(t))"
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>A matrix has R rows and C columns. How long does it take to visit every cell once?</p>",
+          "opts": [
+            "<code>O(R + C)</code>",
+            "<code>O(R * C)</code>",
+            "<code>O(R²)</code>",
+            "<code>O(max(R, C))</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "Every one of the R × C cells is touched once. That is O(R * C).",
+            "If the matrix is square with n rows, this is O(n²)."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Spiral order",
+          "q": "<p>You are walking a matrix in spiral order with four boundaries (top, bottom, left, right). You have just walked the top row from left to right. What do you do next?</p>",
+          "opts": [
+            "Move the top boundary down by one",
+            "Move the bottom boundary up by one",
+            "Start again from the first cell",
+            "Reverse the whole matrix"
+          ],
+          "ans": 0,
+          "why": [
+            "That row is finished, so the top boundary shrinks by one. Then you walk down the right column, and so on.",
+            "Each pass shrinks one boundary. The walk ends when the boundaries cross."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>rotate90(matrix)</code>. Return a <b>new</b> matrix rotated 90° clockwise. The matrix may not be square. The input must stay unchanged.</p>",
+        "examples": [
+          "rotate90([[1, 2], [3, 4]])  // [[3, 1], [4, 2]]",
+          "rotate90([[1, 2, 3], [4, 5, 6]])  // [[4, 1], [5, 2], [6, 3]]"
+        ],
+        "hint": "<p>Transpose, then reverse each row. In one go: new row <code>c</code> is column <code>c</code> read from the bottom to the top.</p>",
+        "fn": "rotate90",
+        "starter": "function rotate90(matrix) {\n  // your code\n}",
+        "solution": "function rotate90(matrix) {\n  if (matrix.length === 0) return []\n  return matrix[0].map((_, c) => matrix.map((row) => row[c]).reverse())\n}",
+        "checks": [
+          {
+            "t": "2 × 2 matrix",
+            "verify": "assert(JSON.stringify(rotate90([[1, 2], [3, 4]])) === \"[[3,1],[4,2]]\", \"expected [[3,1],[4,2]]\")"
+          },
+          {
+            "t": "3 × 3 matrix",
+            "verify": "assert(JSON.stringify(rotate90([[1, 2, 3], [4, 5, 6], [7, 8, 9]])) === \"[[7,4,1],[8,5,2],[9,6,3]]\", \"wrong rotation\")"
+          },
+          {
+            "t": "not square",
+            "verify": "assert(JSON.stringify(rotate90([[1, 2, 3], [4, 5, 6]])) === \"[[4,1],[5,2],[6,3]]\", \"expected [[4,1],[5,2],[6,3]]\")"
+          },
+          {
+            "t": "does not change the input",
+            "verify": "const m = [[1, 2], [3, 4]]; rotate90(m); assert(JSON.stringify(m) === \"[[1,2],[3,4]]\", \"input was changed\")"
+          },
+          {
+            "t": "empty matrix and one cell",
+            "verify": "assert(JSON.stringify(rotate90([])) === \"[]\" && JSON.stringify(rotate90([[5]])) === \"[[5]]\", \"edge cases\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "A matrix is an array of arrays: reading a cell is O(1), visiting all cells is O(rows × columns), and <b>rotate = transpose + reverse each row</b>.",
+        "mistakes": [
+          "Building rows with <code>fill([])</code>, so all rows are the same array.",
+          "Mixing up the order: it is <code>m[row][col]</code>, not <code>m[col][row]</code>.",
+          "Forgetting empty or non-square matrices.",
+          "Off-by-one errors when the spiral boundaries shrink."
+        ]
+      }
+    },
+    {
+      "id": "hashset",
+      "prereqs": [
+        "objects-map-set",
+        "hashmaps"
+      ],
+      "dryRun": {
+        "title": "Remove duplicates from [3, 1, 3, 2, 1], keeping the first appearance",
+        "columns": [
+          "i",
+          "value",
+          "set before",
+          "in the set?",
+          "result so far"
+        ],
+        "rows": [
+          [
+            "0",
+            "3",
+            "{}",
+            "no: add it",
+            "[3]"
+          ],
+          [
+            "1",
+            "1",
+            "{3}",
+            "no: add it",
+            "[3, 1]"
+          ],
+          [
+            "2",
+            "3",
+            "{3, 1}",
+            "yes: skip",
+            "[3, 1]"
+          ],
+          [
+            "3",
+            "2",
+            "{3, 1}",
+            "no: add it",
+            "[3, 1, 2]"
+          ],
+          [
+            "4",
+            "1",
+            "{3, 1, 2}",
+            "yes: skip",
+            "[3, 1, 2]"
+          ]
+        ],
+        "hit": 2,
+        "note": "The question at every step is one yes or no: \"have I seen this value?\". The set answers it in O(1), and the order of first appearance is kept."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>console.log([...new Set([3, 1, 3, 2, 1])].join(','))</code></pre>",
+          "opts": [
+            "<code>1,2,3</code>",
+            "<code>3,1,2</code>",
+            "<code>3,1,3,2,1</code>",
+            "<code>1,3,2</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "A Set keeps each value once and remembers the order in which values were <b>first</b> added: 3, 1, 2.",
+            "Trap: expecting a sorted result. A Set does not sort."
+          ],
+          "exec": "console.log([...new Set([3, 1, 3, 2, 1])].join(','))"
+        },
+        {
+          "tag": "Edge case",
+          "q": "<pre><code>console.log(new Set([0, -0]).size)</code></pre>",
+          "opts": [
+            "<code>1</code>",
+            "<code>2</code>",
+            "<code>0</code>",
+            "<code>undefined</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "A Set treats <code>0</code> and <code>-0</code> as the same value, so only one item remains.",
+            "Sets compare with \"same value zero\". It also treats <code>NaN</code> as equal to itself, unlike <code>===</code>."
+          ],
+          "exec": "console.log(new Set([0, -0]).size)"
+        },
+        {
+          "tag": "Complexity",
+          "q": "<pre><code>const seen = []\nfor (const x of arr) {\n  if (!seen.includes(x)) seen.push(x)\n}</code></pre><p>What is the time of this \"remove duplicates\" code for n items?</p>",
+          "opts": [
+            "<code>O(n)</code>",
+            "<code>O(n²)</code>",
+            "<code>O(log n)</code>",
+            "<code>O(1)</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "<code>includes</code> scans the whole <code>seen</code> array on every round. Scanning inside a loop is O(n²).",
+            "With a Set, <code>has</code> is O(1) on average and the same code is O(n)."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const a = new Set([1, 2, 3])\nconst b = new Set([2, 3, 4])\nconsole.log([...a].filter((x) =&gt; b.has(x)).join(\",\"))</code></pre>",
+          "opts": [
+            "<code>2,3</code>",
+            "<code>1,4</code>",
+            "<code>1,2,3,4</code>",
+            "<code>3</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "The code keeps the items of <code>a</code> that are also in <code>b</code>. That is the <b>intersection</b>: 2 and 3.",
+            "Each <code>b.has</code> is O(1), so the whole thing is O(n)."
+          ],
+          "exec": "const a = new Set([1, 2, 3])\nconst b = new Set([2, 3, 4])\nconsole.log([...a].filter((x) => b.has(x)).join(\",\"))"
+        },
+        {
+          "tag": "Edge case",
+          "q": "<pre><code>const s = new Set([1])\nfor (const x of s) {\n  if (x &lt; 3) s.add(x + 1)\n}\nconsole.log([...s].join(\",\"))</code></pre>",
+          "opts": [
+            "<code>1</code>",
+            "<code>1,2</code>",
+            "<code>1,2,3</code>",
+            "It loops forever"
+          ],
+          "ans": 2,
+          "why": [
+            "A Set loop also visits items that are added <b>while</b> it runs. It sees 1, adds 2, sees 2, adds 3, sees 3 and stops.",
+            "Changing a collection while you loop over it is a common source of surprises."
+          ],
+          "exec": "const s = new Set([1])\nfor (const x of s) {\n  if (x < 3) s.add(x + 1)\n}\nconsole.log([...s].join(\",\"))"
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>intersect(a, b)</code>. Return an array with the values that appear in <b>both</b> arrays. Each value must appear only once in the result. The order does not matter.</p>",
+        "examples": [
+          "intersect([1, 2, 2, 1], [2, 2])  // [2]",
+          "intersect([4, 9, 5], [9, 4, 9, 8, 4])  // [4, 9]"
+        ],
+        "hint": "<p>Put one array in a Set. Walk the other array and keep the values that the first Set has. Put the kept values in a second Set to drop repeats.</p>",
+        "fn": "intersect",
+        "starter": "function intersect(a, b) {\n  // your code\n}",
+        "solution": "function intersect(a, b) {\n  const first = new Set(a)\n  const both = new Set()\n  for (const x of b) if (first.has(x)) both.add(x)\n  return [...both]\n}",
+        "checks": [
+          {
+            "t": "repeats are removed",
+            "verify": "assert(JSON.stringify(intersect([1, 2, 2, 1], [2, 2])) === \"[2]\", \"expected [2]\")"
+          },
+          {
+            "t": "two common values",
+            "verify": "assert(JSON.stringify(intersect([4, 9, 5], [9, 4, 9, 8, 4]).sort()) === \"[4,9]\", \"expected 4 and 9\")"
+          },
+          {
+            "t": "nothing in common",
+            "verify": "assert(intersect([1, 2], [3, 4]).length === 0, \"expected an empty array\")"
+          },
+          {
+            "t": "empty input",
+            "verify": "assert(intersect([], [1]).length === 0 && intersect([1], []).length === 0, \"expected empty arrays\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "A Set answers \"is it in here?\" in O(1) and drops duplicates for free. Use it instead of <code>includes()</code> inside a loop.",
+        "mistakes": [
+          "Calling <code>includes()</code> on an array inside a loop, which makes it O(n²).",
+          "Expecting a Set to treat two equal-looking objects as the same value.",
+          "Expecting a Set to be sorted or to have index access. Spread it into an array first.",
+          "Changing the Set while looping over it."
+        ]
+      }
+    },
+    {
+      "id": "hash-impl",
+      "prereqs": [
+        "hashmaps",
+        "objects-map-set"
+      ],
+      "dryRun": {
+        "title": "Insert 5, 9, 2, 13 into 4 buckets (bucket = key % 4)",
+        "columns": [
+          "step",
+          "key",
+          "bucket",
+          "bucket after",
+          "note"
+        ],
+        "rows": [
+          [
+            "1",
+            "5",
+            "1",
+            "[5]",
+            "empty bucket"
+          ],
+          [
+            "2",
+            "9",
+            "1",
+            "[5, 9]",
+            "collision: the key joins the chain"
+          ],
+          [
+            "3",
+            "2",
+            "2",
+            "[2]",
+            "empty bucket"
+          ],
+          [
+            "4",
+            "13",
+            "1",
+            "[5, 9, 13]",
+            "collision again: a lookup of 13 must scan the chain"
+          ]
+        ],
+        "hit": 1,
+        "note": "Different keys can land in the <b>same bucket</b>. The bucket keeps a short list, and lookup scans only that list, not the whole table."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>console.log(-3 % 4)</code></pre>",
+          "opts": [
+            "<code>1</code>",
+            "<code>3</code>",
+            "<code>-3</code>",
+            "<code>0</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "In JavaScript the result of <code>%</code> takes the sign of the left side, so <code>-3 % 4</code> is <code>-3</code>, not 1.",
+            "A negative bucket index would break the table. Hash functions must make the number non-negative first."
+          ],
+          "exec": "console.log(-3 % 4)"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const buckets = [[], [], [], []]\nfor (const k of [5, 9, 2, 13]) buckets[k % 4].push(k)\nconsole.log(buckets.map((b) =&gt; b.length).join(\",\"))</code></pre>",
+          "opts": [
+            "<code>1,1,1,1</code>",
+            "<code>0,2,1,1</code>",
+            "<code>3,1,0,0</code>",
+            "<code>0,3,1,0</code>"
+          ],
+          "ans": 3,
+          "why": [
+            "5, 9 and 13 all have remainder 1, so bucket 1 holds three keys. 2 goes to bucket 2.",
+            "Uneven buckets are normal. A good hash function keeps them close to even."
+          ],
+          "exec": "const buckets = [[], [], [], []]\nfor (const k of [5, 9, 2, 13]) buckets[k % 4].push(k)\nconsole.log(buckets.map((b) => b.length).join(\",\"))"
+        },
+        {
+          "tag": "Worst case",
+          "q": "<p>A terrible hash function sends every key to the same bucket. What does a lookup cost with n keys?</p>",
+          "opts": [
+            "<code>O(1)</code>",
+            "<code>O(n)</code>",
+            "<code>O(log n)</code>",
+            "<code>O(n²)</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "All n keys sit in one chain, so a lookup may scan all of them: O(n).",
+            "This is why O(1) is only the <b>average</b> case, and why the hash function matters."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Why resize?",
+          "q": "<p>Why do we double the number of buckets when the table gets too full (a high load factor)?</p>",
+          "opts": [
+            "To keep the chains short, so lookups stay close to O(1)",
+            "To save memory",
+            "To keep the keys sorted",
+            "To avoid calling the hash function"
+          ],
+          "ans": 0,
+          "why": [
+            "Load factor is items divided by buckets. If it grows, chains grow and lookups slow down. More buckets spread the keys out again.",
+            "Resizing costs O(n) once, but it is rare, just like a dynamic array."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Spot the bug",
+          "q": "<p>A <code>set(key, value)</code> always pushes a new entry into the bucket and never checks whether the key is already there. You call <code>set(\"a\", 1)</code> and then <code>set(\"a\", 2)</code>. What goes wrong?</p>",
+          "opts": [
+            "Nothing: both values are stored correctly",
+            "The array crashes",
+            "<code>get(\"a\")</code> can return the old value 1, because the first match wins",
+            "The hash of \"a\" changes"
+          ],
+          "ans": 2,
+          "why": [
+            "The chain now holds two entries for \"a\". A lookup that stops at the first match returns the old value.",
+            "Fix: search the chain first. If the key exists, <b>update</b> it. Otherwise push a new entry."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>createHashMap()</code>. It returns an object with <code>set(key, value)</code>, <code>get(key)</code>, <code>has(key)</code> and <code>delete(key)</code> for <b>string keys</b>. Build it from an array of buckets with chaining. Do not use <code>Map</code> or plain objects as storage.</p>",
+        "examples": [
+          "const m = createHashMap(); m.set(\"a\", 1); m.get(\"a\")  // 1",
+          "m.get(\"zzz\")  // undefined"
+        ],
+        "hint": "<p>Use 8 buckets, each an array of <code>[key, value]</code> pairs. Hash a string by looping over its characters: <code>h = (h * 31 + code) % 8</code>. In <code>set</code>, look for the key in the bucket first and update it if found.</p>",
+        "fn": "createHashMap",
+        "starter": "function createHashMap() {\n  // your code\n}",
+        "solution": "function createHashMap() {\n  const SIZE = 8\n  const buckets = Array.from({ length: SIZE }, () => [])\n  const hash = (key) => {\n    let h = 0\n    for (const ch of String(key)) h = (h * 31 + ch.charCodeAt(0)) % SIZE\n    return h\n  }\n  const find = (key) => buckets[hash(key)].find((e) => e[0] === key)\n  return {\n    set(key, value) {\n      const e = find(key)\n      if (e) e[1] = value\n      else buckets[hash(key)].push([key, value])\n    },\n    get(key) {\n      const e = find(key)\n      return e ? e[1] : undefined\n    },\n    has(key) {\n      return !!find(key)\n    },\n    delete(key) {\n      const b = buckets[hash(key)]\n      const i = b.findIndex((e) => e[0] === key)\n      if (i === -1) return false\n      b.splice(i, 1)\n      return true\n    },\n  }\n}",
+        "checks": [
+          {
+            "t": "set and get",
+            "verify": "const m = createHashMap(); m.set(\"a\", 1); m.set(\"b\", 2); assert(m.get(\"a\") === 1 && m.get(\"b\") === 2, \"get should return the stored values\")"
+          },
+          {
+            "t": "a missing key",
+            "verify": "const m = createHashMap(); assert(m.get(\"zzz\") === undefined && m.has(\"zzz\") === false, \"missing key\")"
+          },
+          {
+            "t": "setting the same key again updates it",
+            "verify": "const m = createHashMap(); m.set(\"a\", 1); m.set(\"a\", 2); assert(m.get(\"a\") === 2, \"expected the updated value 2\")"
+          },
+          {
+            "t": "delete",
+            "verify": "const m = createHashMap(); m.set(\"a\", 1); assert(m.delete(\"a\") === true && m.has(\"a\") === false && m.delete(\"a\") === false, \"delete should remove once\")"
+          },
+          {
+            "t": "50 keys (many collisions)",
+            "verify": "const m = createHashMap(); for (let i = 0; i < 50; i++) m.set(\"k\" + i, i); let ok = true; for (let i = 0; i < 50; i++) if (m.get(\"k\" + i) !== i) ok = false; assert(ok, \"every key must be found\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "A hash table is an array of buckets: <b>hash the key, take % size, then search the short chain</b>. Collisions and a high load factor are the two things to handle.",
+        "mistakes": [
+          "Using a negative number as a bucket index, because <code>%</code> can return a negative value.",
+          "Pushing a new entry when the key already exists, instead of updating it.",
+          "Never resizing, so chains grow and lookups slow down.",
+          "Believing the O(1) is guaranteed. It is the average case."
+        ]
+      }
+    },
+    {
+      "id": "doubly-linked-lists",
+      "prereqs": [
+        "linked-lists"
+      ],
+      "dryRun": {
+        "title": "Remove B from A ⇄ B ⇄ C when you hold node B",
+        "columns": [
+          "step",
+          "action",
+          "list now"
+        ],
+        "rows": [
+          [
+            "start",
+            "hold node B",
+            "A ⇄ B ⇄ C"
+          ],
+          [
+            "1",
+            "B.prev.next = B.next",
+            "A → C, but C.prev still points to B"
+          ],
+          [
+            "2",
+            "B.next.prev = B.prev",
+            "A ⇄ C"
+          ]
+        ],
+        "hit": 1,
+        "note": "Two links must change, one on each side. No walk from the head is needed because B already knows both neighbours."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const a = { val: 'a', prev: null, next: null }\nconst b = { val: 'b', prev: a, next: null }\na.next = b\nconsole.log(b.prev.val, a.next.val, String(a.prev))</code></pre>",
+          "opts": [
+            "<code>a b null</code>",
+            "<code>b a null</code>",
+            "<code>a a null</code>",
+            "<code>null b a</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "<code>b.prev</code> is <code>a</code>, <code>a.next</code> is <code>b</code>, and <code>a.prev</code> is <code>null</code> because <code>a</code> is the head.",
+            "Every link in a doubly linked list has a partner in the other direction."
+          ],
+          "exec": "const a = { val: 'a', prev: null, next: null }\nconst b = { val: 'b', prev: a, next: null }\na.next = b\nconsole.log(b.prev.val, a.next.val, String(a.prev))"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const a = { val: 1, prev: null, next: null }\nconst b = { val: 2, prev: a, next: null }\nconst c = { val: 3, prev: b, next: null }\na.next = b\nb.next = c\nb.prev.next = b.next\nb.next.prev = b.prev\nconsole.log(a.next.val, c.prev.val)</code></pre>",
+          "opts": [
+            "<code>2 2</code>",
+            "<code>3 2</code>",
+            "<code>2 1</code>",
+            "<code>3 1</code>"
+          ],
+          "ans": 3,
+          "why": [
+            "After the two lines, <code>a.next</code> is <code>c</code> (value 3) and <code>c.prev</code> is <code>a</code> (value 1). Node <code>b</code> is out of the list.",
+            "Both directions agree again."
+          ],
+          "exec": "const a = { val: 1, prev: null, next: null }\nconst b = { val: 2, prev: a, next: null }\nconst c = { val: 3, prev: b, next: null }\na.next = b\nb.next = c\nb.prev.next = b.next\nb.next.prev = b.prev\nconsole.log(a.next.val, c.prev.val)"
+        },
+        {
+          "tag": "Cost",
+          "q": "<p>You already hold a reference to the node to delete. How do singly and doubly linked lists compare?</p>",
+          "opts": [
+            "Both are O(1)",
+            "Both are O(n)",
+            "Singly: O(n), because you must find the previous node. Doubly: O(1)",
+            "Singly: O(1). Doubly: O(n)"
+          ],
+          "ans": 2,
+          "why": [
+            "A singly linked node does not know its previous node, so you walk from the head to find it. A doubly linked node has <code>prev</code>.",
+            "This is the whole reason for the extra pointer."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Spot the bug",
+          "q": "<p>You remove <code>b</code> (between <code>a</code> and <code>c</code>) with only <code>b.prev.next = b.next</code>. What is wrong afterwards?</p>",
+          "opts": [
+            "<code>c.prev</code> still points to <code>b</code>, so walking backward from <code>c</code> visits the removed node",
+            "Nothing is wrong",
+            "<code>a.next</code> still points to <code>b</code>",
+            "The head is lost"
+          ],
+          "ans": 0,
+          "why": [
+            "Walking forward is fine: <code>a.next</code> is now <code>c</code>. But <code>c.prev</code> still points to <code>b</code>, so the list is broken in the other direction.",
+            "Always update both links."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Why use it?",
+          "q": "<p>An LRU cache moves a used item to the front of the list in O(1). Which two things make that possible?</p>",
+          "opts": [
+            "A sorted array and binary search",
+            "A hash map to find the node, and <code>prev</code> / <code>next</code> to unlink it",
+            "A stack and a queue",
+            "Recursion and a Set"
+          ],
+          "ans": 1,
+          "why": [
+            "The map finds the node instantly. With <code>prev</code> and <code>next</code> you cut it out and put it at the front with a few pointer changes.",
+            "A singly linked list could not unlink the node without a walk."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>removeNode(node)</code>. The node is part of a doubly linked list (each node is <code>{ val, prev, next }</code>). Unlink it so its neighbours point to each other. The node may be the head, the tail, or the only node.</p>",
+        "examples": [
+          "A ⇄ B ⇄ C, removeNode(B)  // A ⇄ C",
+          "removeNode on the head  // the next node becomes the head"
+        ],
+        "hint": "<p>If <code>node.prev</code> exists, set <code>node.prev.next = node.next</code>. If <code>node.next</code> exists, set <code>node.next.prev = node.prev</code>. Guard each one, because the head has no prev and the tail has no next.</p>",
+        "fn": "removeNode",
+        "starter": "function removeNode(node) {\n  // your code\n}",
+        "solution": "function removeNode(node) {\n  if (node.prev) node.prev.next = node.next\n  if (node.next) node.next.prev = node.prev\n  node.prev = null\n  node.next = null\n}",
+        "checks": [
+          {
+            "t": "remove a middle node",
+            "verify": "{ const mk = (v) => { const ns = v.map((x) => ({ val: x, prev: null, next: null })); ns.forEach((n, i) => { n.prev = ns[i - 1] || null; n.next = ns[i + 1] || null }); return ns }; const fwd = (h) => { const o = []; while (h) { o.push(h.val); h = h.next } return o }; const bwd = (t) => { const o = []; while (t) { o.push(t.val); t = t.prev } return o }; const ns = mk([1, 2, 3]); removeNode(ns[1]); assert(JSON.stringify(fwd(ns[0])) === \"[1,3]\" && JSON.stringify(bwd(ns[2])) === \"[3,1]\", \"both directions must skip the removed node\") }"
+          },
+          {
+            "t": "remove the head",
+            "verify": "{ const mk = (v) => { const ns = v.map((x) => ({ val: x, prev: null, next: null })); ns.forEach((n, i) => { n.prev = ns[i - 1] || null; n.next = ns[i + 1] || null }); return ns }; const ns = mk([1, 2, 3]); removeNode(ns[0]); assert(ns[1].prev === null && ns[1].next === ns[2], \"node 2 must become the head\") }"
+          },
+          {
+            "t": "remove the tail",
+            "verify": "{ const mk = (v) => { const ns = v.map((x) => ({ val: x, prev: null, next: null })); ns.forEach((n, i) => { n.prev = ns[i - 1] || null; n.next = ns[i + 1] || null }); return ns }; const ns = mk([1, 2, 3]); removeNode(ns[2]); assert(ns[1].next === null && ns[1].prev === ns[0], \"node 2 must become the tail\") }"
+          },
+          {
+            "t": "remove the only node",
+            "verify": "{ const n = { val: 1, prev: null, next: null }; removeNode(n); assert(n.prev === null && n.next === null, \"should not crash\") }"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "A doubly linked list adds <code>prev</code>, so removing a node you already hold costs O(1): fix <b>two links</b>, one on each side.",
+        "mistakes": [
+          "Updating only one direction, which leaves the list broken the other way.",
+          "Not guarding the head and the tail, where <code>prev</code> or <code>next</code> is <code>null</code>.",
+          "Leaving the removed node still pointing into the list.",
+          "Forgetting the extra memory: every node stores two pointers."
+        ]
+      }
+    },
+    {
+      "id": "circular-linked-lists",
+      "prereqs": [
+        "linked-lists"
+      ],
+      "dryRun": {
+        "title": "Floyd on 1 → 2 → 3 → 4 → back to 2",
+        "columns": [
+          "step",
+          "slow",
+          "fast",
+          "meet?"
+        ],
+        "rows": [
+          [
+            "start",
+            "1",
+            "1",
+            "no"
+          ],
+          [
+            "1",
+            "2",
+            "3",
+            "no"
+          ],
+          [
+            "2",
+            "3",
+            "2",
+            "no (fast went 4, then back to 2)"
+          ],
+          [
+            "3",
+            "4",
+            "4",
+            "yes: there is a cycle"
+          ]
+        ],
+        "hit": 3,
+        "note": "Slow moves one node, fast moves two. Inside a cycle, fast gains <b>one node per step</b> on slow, so they must meet."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const a = { val: 1, next: null }\nconst b = { val: 2, next: null }\nconst c = { val: 3, next: null }\na.next = b\nb.next = c\nc.next = a\nlet cur = a, out = ''\nfor (let i = 0; i &lt; 7; i++) {\n  out += cur.val\n  cur = cur.next\n}\nconsole.log(out)</code></pre>",
+          "opts": [
+            "<code>1231231</code>",
+            "<code>123</code>",
+            "<code>1233333</code>",
+            "<code>12312</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "The last node points back to the first, so the walk wraps around: 1, 2, 3, 1, 2, 3, 1.",
+            "No <code>% length</code> is needed. The wrap is built into the links."
+          ],
+          "exec": "const a = { val: 1, next: null }\nconst b = { val: 2, next: null }\nconst c = { val: 3, next: null }\na.next = b\nb.next = c\nc.next = a\nlet cur = a, out = ''\nfor (let i = 0; i < 7; i++) {\n  out += cur.val\n  cur = cur.next\n}\nconsole.log(out)"
+        },
+        {
+          "tag": "Why does this fail?",
+          "q": "<p>You walk a circular list with <code>while (cur) { cur = cur.next }</code>. What happens?</p>",
+          "opts": [
+            "It stops at the last node",
+            "It never ends, because no node has <code>next === null</code>",
+            "It throws a TypeError",
+            "It returns <code>undefined</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "The loop stops only when <code>cur</code> is <code>null</code>. In a circle there is no null, so the loop runs forever.",
+            "This is also what a plain loop does when a normal list accidentally has a cycle."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const n = [1, 2, 3, 4].map((v) =&gt; ({ val: v, next: null }))\nn[0].next = n[1]\nn[1].next = n[2]\nn[2].next = n[3]\nn[3].next = n[1]\nlet s = n[0], f = n[0], steps = 0\ndo {\n  s = s.next\n  f = f.next.next\n  steps++\n} while (s !== f)\nconsole.log(steps, s.val)</code></pre>",
+          "opts": [
+            "<code>2 3</code>",
+            "<code>3 2</code>",
+            "<code>3 4</code>",
+            "<code>4 4</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "This is the same list as the dry run. After 3 steps both pointers stand on the node with value 4.",
+            "They meet inside the cycle, not necessarily at its start."
+          ],
+          "exec": "const n = [1, 2, 3, 4].map((v) => ({ val: v, next: null }))\nn[0].next = n[1]\nn[1].next = n[2]\nn[2].next = n[3]\nn[3].next = n[1]\nlet s = n[0], f = n[0], steps = 0\ndo {\n  s = s.next\n  f = f.next.next\n  steps++\n} while (s !== f)\nconsole.log(steps, s.val)"
+        },
+        {
+          "tag": "Reasoning",
+          "q": "<p>Why must the fast and slow pointers meet if there is a cycle?</p>",
+          "opts": [
+            "They both move at random",
+            "The slow pointer moves backward",
+            "They always meet at the head",
+            "Inside the cycle, fast gains one node on slow each step, so the gap must reach zero"
+          ],
+          "ans": 3,
+          "why": [
+            "Fast moves two and slow moves one, so the distance between them changes by exactly one each step. It cannot jump over zero.",
+            "If there is no cycle, fast reaches <code>null</code> instead."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Space",
+          "q": "<p>What is a simpler way to detect a cycle, and what does it cost?</p>",
+          "opts": [
+            "Reverse the list: O(1) space",
+            "Remember visited nodes in a Set: O(n) space",
+            "Count the nodes first: O(1) space",
+            "Sort the nodes: O(n log n) space"
+          ],
+          "ans": 1,
+          "why": [
+            "If you reach a node you have already seen, there is a cycle. It is simple, but the Set holds up to n nodes.",
+            "Floyd needs only two pointers, so O(1) space."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>hasCycle(head)</code>. Return <code>true</code> if following <code>next</code> from the head ever loops back, and <code>false</code> if it reaches <code>null</code>. Use two pointers and O(1) extra space.</p>",
+        "examples": [
+          "1 → 2 → 3 → back to 2  // true",
+          "1 → 2 → 3 → null  // false"
+        ],
+        "hint": "<p>Start both pointers at the head. Move <code>slow</code> by one and <code>fast</code> by two. If they are the same node, return true. If <code>fast</code> or <code>fast.next</code> is <code>null</code>, there is no cycle.</p>",
+        "fn": "hasCycle",
+        "starter": "function hasCycle(head) {\n  // your code\n}",
+        "solution": "function hasCycle(head) {\n  let slow = head\n  let fast = head\n  while (fast && fast.next) {\n    slow = slow.next\n    fast = fast.next.next\n    if (slow === fast) return true\n  }\n  return false\n}",
+        "checks": [
+          {
+            "t": "empty list",
+            "verify": "assert(hasCycle(null) === false, \"expected false\")"
+          },
+          {
+            "t": "a straight list",
+            "verify": "{ const ns = [1, 2, 3, 4, 5].map((v) => ({ val: v, next: null })); ns.forEach((n, i) => { n.next = ns[i + 1] || null }); assert(hasCycle(ns[0]) === false, \"expected false\") }"
+          },
+          {
+            "t": "a node pointing to itself",
+            "verify": "{ const n = { val: 1, next: null }; n.next = n; assert(hasCycle(n) === true, \"expected true\") }"
+          },
+          {
+            "t": "a cycle in the middle",
+            "verify": "{ const ns = [1, 2, 3, 4].map((v) => ({ val: v, next: null })); ns[0].next = ns[1]; ns[1].next = ns[2]; ns[2].next = ns[3]; ns[3].next = ns[1]; assert(hasCycle(ns[0]) === true, \"expected true\") }"
+          },
+          {
+            "t": "the whole list is a circle",
+            "verify": "{ const ns = [1, 2, 3].map((v) => ({ val: v, next: null })); ns[0].next = ns[1]; ns[1].next = ns[2]; ns[2].next = ns[0]; assert(hasCycle(ns[0]) === true, \"expected true\") }"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "A circular list has no <code>null</code> end, so never loop with <code>while (cur)</code> on it. Floyd's slow and fast pointers meet <b>only if</b> there is a cycle.",
+        "mistakes": [
+          "Looping until <code>null</code> on a list that may be circular.",
+          "Moving the fast pointer without checking <code>fast.next</code>, which crashes on <code>null</code>.",
+          "Comparing node values instead of the nodes themselves.",
+          "Using a Set when O(1) space is possible."
+        ]
+      }
+    },
+    {
+      "id": "deque",
+      "prereqs": [
+        "queue",
+        "stacks"
+      ],
+      "dryRun": {
+        "title": "Window maximum of [1, 3, -1, -3, 5] with k = 3 (deque holds values, front is the max)",
+        "columns": [
+          "i",
+          "value",
+          "deque after",
+          "window max"
+        ],
+        "rows": [
+          [
+            "0",
+            "1",
+            "[1]",
+            "-"
+          ],
+          [
+            "1",
+            "3",
+            "[3]  (1 is smaller than 3, removed from the back)",
+            "-"
+          ],
+          [
+            "2",
+            "-1",
+            "[3, -1]",
+            "3"
+          ],
+          [
+            "3",
+            "-3",
+            "[3, -1, -3]",
+            "3"
+          ],
+          [
+            "4",
+            "5",
+            "[5]  (5 removed every smaller value from the back)",
+            "5"
+          ]
+        ],
+        "hit": 4,
+        "note": "The deque stays in <b>decreasing order</b>, so the front is always the maximum. New values clean the back, and stale values leave from the front."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const d = [2, 3]\nd.unshift(1)\nd.push(4)\nconsole.log(d.shift(), d.pop(), d.join(\",\"))</code></pre>",
+          "opts": [
+            "<code>4 1 2,3</code>",
+            "<code>1 4 1,2,3</code>",
+            "<code>1 4 2,3</code>",
+            "<code>1 4 2,3,4</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "After <code>unshift(1)</code> and <code>push(4)</code> the array is <code>[1, 2, 3, 4]</code>. <code>shift</code> removes the front (1), <code>pop</code> removes the back (4), and <code>[2, 3]</code> is left.",
+            "A deque works at both ends. In JS an array can act as one."
+          ],
+          "exec": "const d = [2, 3]\nd.unshift(1)\nd.push(4)\nconsole.log(d.shift(), d.pop(), d.join(\",\"))"
+        },
+        {
+          "tag": "Cost",
+          "q": "<p>Why is a plain JavaScript array a poor deque for a very large input?</p>",
+          "opts": [
+            "<code>push</code> at the back is O(n)",
+            "Both <code>pop</code> and <code>push</code> are O(n)",
+            "<code>shift</code> and <code>unshift</code> at the front can be O(n)",
+            "Arrays cannot hold numbers"
+          ],
+          "ans": 2,
+          "why": [
+            "Working at the front can move every other item. A true deque does all four operations in O(1).",
+            "For interview-size inputs an array is fine. For huge ones, keep a head index or use a linked list."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Pick the right moves",
+          "q": "<p>You keep the maximum of a moving window in a deque of indexes. Which two removals do you need?</p>",
+          "opts": [
+            "From the front when an index leaves the window, and from the back when a new value is bigger than the last one",
+            "Only from the front",
+            "From the middle",
+            "From the back when an index leaves the window"
+          ],
+          "ans": 0,
+          "why": [
+            "The <b>front</b> may hold an item that has left the window, so remove it. The <b>back</b> may hold values that can never be the maximum again, so remove them.",
+            "Two ends, two different reasons: that is why a queue or a stack alone is not enough."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const dq = []\nfor (const x of [5, 3, 4, 1]) {\n  while (dq.length &amp;&amp; dq[dq.length - 1] &lt; x) dq.pop()\n  dq.push(x)\n}\nconsole.log(dq.join(\",\"))</code></pre>",
+          "opts": [
+            "<code>5,3,4,1</code>",
+            "<code>5,4,1</code>",
+            "<code>1,3,4,5</code>",
+            "<code>5,4</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "When 4 arrives, the smaller 3 at the back is removed, because 3 can never beat 4 again. Then 1 is smaller than 4, so it stays.",
+            "The result is in decreasing order: 5, 4, 1."
+          ],
+          "exec": "const dq = []\nfor (const x of [5, 3, 4, 1]) {\n  while (dq.length && dq[dq.length - 1] < x) dq.pop()\n  dq.push(x)\n}\nconsole.log(dq.join(\",\"))"
+        },
+        {
+          "tag": "Why indexes?",
+          "q": "<p>In the window-maximum deque we store <b>indexes</b>, not values. Why?</p>",
+          "opts": [
+            "To save memory",
+            "Because values cannot repeat",
+            "Because indexes sort faster",
+            "So we can tell when the front item has left the window"
+          ],
+          "ans": 3,
+          "why": [
+            "An index tells us the position, so we can check <code>index &lt;= i - k</code> and drop it. A value alone does not say where it came from.",
+            "The value is always one lookup away: <code>nums[index]</code>."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>windowMax(nums, k)</code>. Return the maximum of every window of <code>k</code> neighbouring numbers, from left to right. Use a deque of indexes so the work is O(n).</p>",
+        "examples": [
+          "windowMax([1, 3, -1, -3, 5, 3, 6, 7], 3)  // [3, 3, 5, 5, 6, 7]",
+          "windowMax([4, 2, 5], 1)  // [4, 2, 5]"
+        ],
+        "hint": "<p>For each index <code>i</code>: drop the front if it is <code>&lt;= i - k</code>; drop from the back while <code>nums[back] &lt; nums[i]</code>; push <code>i</code>; once <code>i &gt;= k - 1</code>, the answer for this window is <code>nums[front]</code>.</p>",
+        "fn": "windowMax",
+        "starter": "function windowMax(nums, k) {\n  // your code\n}",
+        "solution": "function windowMax(nums, k) {\n  const dq = []\n  const out = []\n  for (let i = 0; i < nums.length; i++) {\n    while (dq.length && dq[0] <= i - k) dq.shift()\n    while (dq.length && nums[dq[dq.length - 1]] < nums[i]) dq.pop()\n    dq.push(i)\n    if (i >= k - 1) out.push(nums[dq[0]])\n  }\n  return out\n}",
+        "checks": [
+          {
+            "t": "the classic example",
+            "verify": "assert(JSON.stringify(windowMax([1, 3, -1, -3, 5, 3, 6, 7], 3)) === \"[3,3,5,5,6,7]\", \"expected [3,3,5,5,6,7]\")"
+          },
+          {
+            "t": "k = 1 returns the array",
+            "verify": "assert(JSON.stringify(windowMax([4, 2, 5], 1)) === \"[4,2,5]\", \"expected [4,2,5]\")"
+          },
+          {
+            "t": "a decreasing array",
+            "verify": "assert(JSON.stringify(windowMax([9, 8, 7, 6], 2)) === \"[9,8,7]\", \"expected [9,8,7]\")"
+          },
+          {
+            "t": "the window is the whole array",
+            "verify": "assert(JSON.stringify(windowMax([1, 2, 3], 3)) === \"[3]\", \"expected [3]\")"
+          },
+          {
+            "t": "one item",
+            "verify": "assert(JSON.stringify(windowMax([1], 1)) === \"[1]\", \"expected [1]\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "A deque works at <b>both ends in O(1)</b>: drop stale items from the front and weaker items from the back. It stays in order, so the front is the answer.",
+        "mistakes": [
+          "Using <code>Array.shift</code> on a huge input and getting O(n) per call.",
+          "Storing values instead of indexes, so you cannot tell when an item left the window.",
+          "Forgetting to drop the front item when it leaves the window.",
+          "Being inconsistent with ties: decide whether an equal value stays or goes."
+        ]
+      }
+    }
+  ],
+  "flags": [
+    "hash-impl: the try-it hash only supports string keys and a fixed 8 buckets (no resize), on purpose. Resizing is a variation.",
+    "deque: the dry-run table is traced by hand (dry runs of concept lessons are not machine-run). The window-max try-it solution is machine-checked.",
+    "The old texts of deque and others contain interviewer framing. I did not rewrite them."
+  ]
+}

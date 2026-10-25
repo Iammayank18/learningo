@@ -1,0 +1,866 @@
+{
+  "items": [
+    {
+      "id": "bst",
+      "prereqs": [
+        "binary-tree",
+        "dfs",
+        "binary-search"
+      ],
+      "dryRun": {
+        "title": "Insert 5 into the search tree 8 (3 (1, 6), 10)",
+        "columns": [
+          "node",
+          "compare",
+          "go"
+        ],
+        "rows": [
+          [
+            "8",
+            "5 is less than 8",
+            "go left"
+          ],
+          [
+            "3",
+            "5 is greater than 3",
+            "go right"
+          ],
+          [
+            "6",
+            "5 is less than 6",
+            "go left"
+          ],
+          [
+            "empty spot",
+            "-",
+            "put 5 here as the left child of 6"
+          ]
+        ],
+        "hit": 3,
+        "note": "In a BST everything to the left is smaller and everything to the right is bigger. So each comparison <b>throws away one whole side</b>, like binary search. Search, insert and delete all follow one path from the root."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>function insert(n, v) {\n  if (!n) return { val: v, left: null, right: null }\n  if (v &lt; n.val) n.left = insert(n.left, v)\n  else n.right = insert(n.right, v)\n  return n\n}\nlet root = null\nfor (const v of [5, 3, 8, 1, 4]) root = insert(root, v)\nconst out = []\nconst walk = (n) =&gt; { if (!n) return; walk(n.left); out.push(n.val); walk(n.right) }\nwalk(root)\nconsole.log(out.join(\",\"))</code></pre>",
+          "opts": [
+            "<code>5,3,8,1,4</code>",
+            "<code>1,3,4,5,8</code>",
+            "<code>8,5,4,3,1</code>",
+            "<code>1,4,3,8,5</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "Whatever order values go in, a BST keeps them arranged so an <b>inorder</b> walk gives sorted values: 1, 3, 4, 5, 8.",
+            "The shape depends on the insert order, but the inorder result does not."
+          ],
+          "exec": "function insert(n, v) {\n  if (!n) return { val: v, left: null, right: null }\n  if (v < n.val) n.left = insert(n.left, v)\n  else n.right = insert(n.right, v)\n  return n\n}\nlet root = null\nfor (const v of [5, 3, 8, 1, 4]) root = insert(root, v)\nconst out = []\nconst walk = (n) => { if (!n) return; walk(n.left); out.push(n.val); walk(n.right) }\nwalk(root)\nconsole.log(out.join(\",\"))"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>function insert(n, v) {\n  if (!n) return { val: v, left: null, right: null }\n  if (v &lt; n.val) n.left = insert(n.left, v)\n  else n.right = insert(n.right, v)\n  return n\n}\nconst height = (n) =&gt; (n ? 1 + Math.max(height(n.left), height(n.right)) : 0)\nlet root = null\nfor (const v of [1, 2, 3, 4]) root = insert(root, v)\nconsole.log(height(root))</code></pre>",
+          "opts": [
+            "<code>2</code>",
+            "<code>3</code>",
+            "<code>4</code>",
+            "<code>1</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "Sorted input makes every new value the right child of the last one: a straight line with height 4.",
+            "Then search costs O(n), not O(log n). This is why balanced trees exist."
+          ],
+          "exec": "function insert(n, v) {\n  if (!n) return { val: v, left: null, right: null }\n  if (v < n.val) n.left = insert(n.left, v)\n  else n.right = insert(n.right, v)\n  return n\n}\nconst height = (n) => (n ? 1 + Math.max(height(n.left), height(n.right)) : 0)\nlet root = null\nfor (const v of [1, 2, 3, 4]) root = insert(root, v)\nconsole.log(height(root))"
+        },
+        {
+          "tag": "Spot the bug",
+          "q": "<p>A tree is <code>5 (1, 6 (3, 7))</code>. Every node is bigger than its left child and smaller than its right child. Is it a valid BST?</p>",
+          "opts": [
+            "Yes, every parent-child pair is fine",
+            "No, 3 is in the right subtree of 5 but is smaller than 5",
+            "No, 6 has two children",
+            "Yes, because it is inorder"
+          ],
+          "ans": 1,
+          "why": [
+            "The rule is for the <b>whole subtree</b>, not just the direct child. Everything under the right child of 5 must be greater than 5, and 3 is not.",
+            "So when validating, pass down a <code>min</code> and a <code>max</code> that every node must stay inside."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>What is the cost of search in a BST with n nodes and height h?</p>",
+          "opts": [
+            "O(h), which is O(log n) if balanced and O(n) if it is a line",
+            "O(log n) always",
+            "O(n) always",
+            "O(1)"
+          ],
+          "ans": 0,
+          "why": [
+            "One path from the root, so the cost is the height. Balanced trees keep h near log n.",
+            "A plain BST gives no guarantee, so say \"O(h)\" in an interview."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Delete",
+          "q": "<p>You delete a node that has <b>two</b> children. What is the usual way to do it?</p>",
+          "opts": [
+            "Delete the whole subtree",
+            "Copy in the smallest value of the right subtree (the inorder successor), then delete that node",
+            "Move the left child up and drop the right child",
+            "Mark it as empty and leave it"
+          ],
+          "ans": 1,
+          "why": [
+            "The inorder successor is the next bigger value, so putting it in the node's place keeps the BST rule true.",
+            "Nodes with zero or one child are easy: remove them, and connect the parent to the single child."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Nodes look like <code>{ val, left, right }</code>. Write <code>isValidBST(root)</code>. Return <code>true</code> if the tree is a valid binary search tree: for every node, all values in its left subtree are <b>smaller</b> and all values in its right subtree are <b>larger</b> (no duplicates allowed). An empty tree is valid.</p>",
+        "examples": [
+          "isValidBST(tree 2 (1, 3))  // true",
+          "isValidBST(tree 5 (1, 6 (3, 7)))  // false"
+        ],
+        "hint": "<p>Write a helper <code>check(node, min, max)</code> that needs <code>min &lt; node.val &lt; max</code>. Going left, the new max is <code>node.val</code>. Going right, the new min is <code>node.val</code>. Start with <code>-Infinity</code> and <code>Infinity</code>.</p>",
+        "fn": "isValidBST",
+        "starter": "function isValidBST(root) {\n  // your code\n}",
+        "solution": "function isValidBST(root) {\n  const check = (n, min, max) => {\n    if (!n) return true\n    if (n.val <= min || n.val >= max) return false\n    return check(n.left, min, n.val) && check(n.right, n.val, max)\n  }\n  return check(root, -Infinity, Infinity)\n}",
+        "checks": [
+          {
+            "t": "a small valid tree",
+            "verify": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r }); assert(isValidBST(T(2, T(1), T(3))) === true, \"expected true\")"
+          },
+          {
+            "t": "right child is smaller",
+            "verify": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r }); assert(isValidBST(T(5, T(1), T(4, T(3), T(6)))) === false, \"expected false\")"
+          },
+          {
+            "t": "the deep violation (3 under the right side of 5)",
+            "verify": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r }); assert(isValidBST(T(5, T(1), T(6, T(3), T(7)))) === false, \"expected false, check the whole subtree\")"
+          },
+          {
+            "t": "duplicates are not allowed",
+            "verify": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r }); assert(isValidBST(T(2, T(2), T(3))) === false && isValidBST(T(2, T(1), T(2))) === false, \"expected false for equal values\")"
+          },
+          {
+            "t": "empty tree and single node",
+            "verify": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r }); assert(isValidBST(null) === true && isValidBST(T(1)) === true, \"expected true\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "A BST keeps <b>smaller on the left, larger on the right</b> for the whole subtree. Search, insert and delete cost O(h): O(log n) if balanced, O(n) if it is a line. Inorder gives sorted values.",
+        "mistakes": [
+          "Validating only parent versus child, not the whole subtree (use min and max).",
+          "Using <code>&lt;</code> where equal values must be rejected.",
+          "Inserting sorted data and getting a straight line.",
+          "Forgetting to return the node from a recursive insert, so the link is lost."
+        ]
+      }
+    },
+    {
+      "id": "tree-measurements",
+      "prereqs": [
+        "binary-tree",
+        "dfs"
+      ],
+      "dryRun": {
+        "title": "Diameter of the tree 1 (2 (4, 5), 3), in edges. Height is counted in nodes (empty = 0)",
+        "columns": [
+          "node",
+          "left height",
+          "right height",
+          "longest path through node",
+          "best so far"
+        ],
+        "rows": [
+          [
+            "4",
+            "0",
+            "0",
+            "0",
+            "0"
+          ],
+          [
+            "5",
+            "0",
+            "0",
+            "0",
+            "0"
+          ],
+          [
+            "2",
+            "1",
+            "1",
+            "2  (4-2-5)",
+            "2"
+          ],
+          [
+            "3",
+            "0",
+            "0",
+            "0",
+            "2"
+          ],
+          [
+            "1",
+            "2",
+            "1",
+            "3  (4-2-1-3)",
+            "3"
+          ]
+        ],
+        "hit": 4,
+        "note": "The longest path through a node is <b>left height + right height</b>. Postorder gives each node its children's heights, so one pass is enough: O(n)."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const T = (v, l = null, r = null) =&gt; ({ val: v, left: l, right: r })\nconst root = T(1, T(2, T(4), T(5)), T(3))\nconst height = (n) =&gt; (n ? 1 + Math.max(height(n.left), height(n.right)) : 0)\nconsole.log(height(root), height(root.right), height(null))</code></pre>",
+          "opts": [
+            "<code>3 1 0</code>",
+            "<code>2 1 0</code>",
+            "<code>3 2 1</code>",
+            "<code>3 1 -1</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "The longest path from the root is 1, 2, 4: three nodes. The node 3 alone is height 1. An empty tree is 0 here.",
+            "Some books count edges and make an empty tree -1. Always check which one the question uses."
+          ],
+          "exec": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r })\nconst root = T(1, T(2, T(4), T(5)), T(3))\nconst height = (n) => (n ? 1 + Math.max(height(n.left), height(n.right)) : 0)\nconsole.log(height(root), height(root.right), height(null))"
+        },
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const T = (v, l = null, r = null) =&gt; ({ val: v, left: l, right: r })\nconst root = T(1, T(2, T(4), T(5)), T(3))\nlet best = 0\nfunction h(n) {\n  if (!n) return 0\n  const l = h(n.left), r = h(n.right)\n  best = Math.max(best, l + r)\n  return 1 + Math.max(l, r)\n}\nh(root)\nconsole.log(best)</code></pre>",
+          "opts": [
+            "<code>2</code>",
+            "<code>3</code>",
+            "<code>4</code>",
+            "<code>5</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "At the root, <code>l = 2</code> and <code>r = 1</code>, so the path 4-2-1-3 has 3 edges.",
+            "Note the function <b>returns</b> the height but <b>records</b> the diameter in a side variable. Those are two different numbers."
+          ],
+          "exec": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r })\nconst root = T(1, T(2, T(4), T(5)), T(3))\nlet best = 0\nfunction h(n) {\n  if (!n) return 0\n  const l = h(n.left), r = h(n.right)\n  best = Math.max(best, l + r)\n  return 1 + Math.max(l, r)\n}\nh(root)\nconsole.log(best)"
+        },
+        {
+          "tag": "Common trap",
+          "q": "<p>Is the diameter (the longest path between any two nodes) always the path that goes through the root?</p>",
+          "opts": [
+            "Yes, always",
+            "No, a deep subtree can hold a longer path that never touches the root",
+            "Only for BSTs",
+            "Only for full trees"
+          ],
+          "ans": 1,
+          "why": [
+            "If the left subtree is a long zig-zag and the right side is tiny, the longest path stays inside the left subtree.",
+            "That is why we check <code>l + r</code> at <b>every</b> node and keep the maximum."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Vocabulary",
+          "q": "<p>Which statement is correct?</p>",
+          "opts": [
+            "Depth of a node counts down from the node to its deepest leaf",
+            "Height of a node counts up from the node to the root",
+            "Depth of a node counts from the root to that node; height counts from the node down to its deepest leaf",
+            "Depth and height are the same"
+          ],
+          "ans": 2,
+          "why": [
+            "Depth looks <b>up</b> (how far from the root). Height looks <b>down</b> (how far to the farthest leaf below).",
+            "The root has depth 0, and the height of the tree is the root's height."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>A solution calls <code>height()</code> on both children at every node to get the diameter. What is its worst-case time?</p>",
+          "opts": [
+            "<code>O(n)</code>",
+            "<code>O(n²)</code>",
+            "<code>O(log n)</code>",
+            "<code>O(n log n)</code>"
+          ],
+          "ans": 1,
+          "why": [
+            "In a line-shaped tree, each <code>height</code> call walks almost the whole tree, and it is called at every node. That is O(n²).",
+            "Computing the heights and the best path in the same recursion fixes it: O(n)."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Nodes look like <code>{ val, left, right }</code>. Write <code>diameter(root)</code>. Return the number of <b>edges</b> on the longest path between any two nodes. An empty tree or a single node gives 0. It must be O(n).</p>",
+        "examples": [
+          "// tree 1 (2 (4, 5), 3)",
+          "diameter(root)  // 3",
+          "diameter(null)  // 0"
+        ],
+        "hint": "<p>Write a helper <code>h(node)</code> that returns the height (empty = 0). Inside it, after getting <code>l</code> and <code>r</code>, update <code>best = Math.max(best, l + r)</code>.</p>",
+        "fn": "diameter",
+        "starter": "function diameter(root) {\n  // your code\n}",
+        "solution": "function diameter(root) {\n  let best = 0\n  const h = (n) => {\n    if (!n) return 0\n    const l = h(n.left)\n    const r = h(n.right)\n    best = Math.max(best, l + r)\n    return 1 + Math.max(l, r)\n  }\n  h(root)\n  return best\n}",
+        "checks": [
+          {
+            "t": "the tree from the lesson",
+            "verify": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r }); assert(diameter(T(1, T(2, T(4), T(5)), T(3))) === 3, \"expected 3\")"
+          },
+          {
+            "t": "empty tree and single node",
+            "verify": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r }); assert(diameter(null) === 0 && diameter(T(1)) === 0, \"expected 0\")"
+          },
+          {
+            "t": "a straight line of 4 nodes",
+            "verify": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r }); assert(diameter(T(1, T(2, T(3, T(4)), null), null)) === 3, \"expected 3\")"
+          },
+          {
+            "t": "the longest path does not touch the root",
+            "verify": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r }); const left = T(2, T(3, T(5), T(6)), T(4, T(7), T(8))); assert(diameter(T(1, left, null)) === 4, \"expected 4\")"
+          },
+          {
+            "t": "a big line stays fast",
+            "verify": "let t = null; for (let i = 0; i < 5000; i++) t = { val: i, left: t, right: null }; const t0 = Date.now(); assert(diameter(t) === 4999 && Date.now() - t0 < 200, \"wrong or too slow, it must be O(n)\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Height looks <b>down</b>, depth looks <b>up</b>. Compute heights in postorder and use the same pass to record the best <code>left + right</code> at every node: diameter in <b>O(n)</b>.",
+        "mistakes": [
+          "Assuming the diameter goes through the root.",
+          "Calling a separate <code>height()</code> at every node and getting O(n²).",
+          "Mixing edges and nodes when counting.",
+          "Returning the diameter from the helper instead of the height."
+        ]
+      }
+    },
+    {
+      "id": "construct-tree",
+      "prereqs": [
+        "dfs",
+        "hashmaps"
+      ],
+      "dryRun": {
+        "title": "Build a tree from preorder [3, 9, 20, 15, 7] and inorder [9, 3, 15, 20, 7]",
+        "columns": [
+          "preorder piece",
+          "root",
+          "inorder: left | right",
+          "left size"
+        ],
+        "rows": [
+          [
+            "3 9 20 15 7",
+            "3",
+            "9 | 15 20 7",
+            "1"
+          ],
+          [
+            "9",
+            "9",
+            "(nothing) | (nothing)",
+            "0"
+          ],
+          [
+            "20 15 7",
+            "20",
+            "15 | 7",
+            "1"
+          ],
+          [
+            "15 and 7",
+            "15, 7",
+            "both are leaves",
+            "0"
+          ]
+        ],
+        "hit": 0,
+        "note": "The <b>first</b> item of preorder is the root. Find it in inorder: everything on its left is the left subtree, everything on its right is the right subtree. Repeat on each piece."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const pre = [3, 9, 20, 15, 7], ino = [9, 3, 15, 20, 7]\nconst idx = new Map(ino.map((v, i) =&gt; [v, i]))\nlet p = 0\nfunction build(lo, hi) {\n  if (lo &gt; hi) return null\n  const v = pre[p++]\n  const m = idx.get(v)\n  const node = { val: v, left: null, right: null }\n  node.left = build(lo, m - 1)\n  node.right = build(m + 1, hi)\n  return node\n}\nconst root = build(0, ino.length - 1)\nconsole.log(root.val, root.left.val, root.right.val, root.right.left.val)</code></pre>",
+          "opts": [
+            "<code>3 9 20 15</code>",
+            "<code>3 20 9 15</code>",
+            "<code>3 9 20 7</code>",
+            "<code>9 3 20 15</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "3 is the root. 9 is the only value left of 3 in inorder, so it is the left child. The right part <code>15 20 7</code> has 20 as its root (next in preorder), and 15 is to its left.",
+            "The pointer <code>p</code> walks through preorder once. The order of the two recursive calls matters: <b>left first</b>, because preorder lists the left subtree before the right."
+          ],
+          "exec": "const pre = [3, 9, 20, 15, 7], ino = [9, 3, 15, 20, 7]\nconst idx = new Map(ino.map((v, i) => [v, i]))\nlet p = 0\nfunction build(lo, hi) {\n  if (lo > hi) return null\n  const v = pre[p++]\n  const m = idx.get(v)\n  const node = { val: v, left: null, right: null }\n  node.left = build(lo, m - 1)\n  node.right = build(m + 1, hi)\n  return node\n}\nconst root = build(0, ino.length - 1)\nconsole.log(root.val, root.left.val, root.right.val, root.right.left.val)"
+        },
+        {
+          "tag": "Why both?",
+          "q": "<p>Why is the preorder list alone not enough to rebuild the tree?</p>",
+          "opts": [
+            "It has the wrong length",
+            "It names the root but does not say where the left subtree ends and the right begins",
+            "It is always sorted",
+            "It contains duplicates"
+          ],
+          "ans": 1,
+          "why": [
+            "Preorder gives root, then all of the left subtree, then all of the right subtree, but nothing marks the border between them.",
+            "Inorder shows the border: the position of the root splits the left values from the right values."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Why a map?",
+          "q": "<p>The code stores each inorder value's index in a Map. What does that improve?</p>",
+          "opts": [
+            "It sorts the values",
+            "Finding the root in inorder becomes O(1), so the whole build is O(n) instead of O(n²)",
+            "It removes duplicates",
+            "It makes the tree balanced"
+          ],
+          "ans": 1,
+          "why": [
+            "Without the map, each node would scan inorder to find its root: O(n) per node. With it, one lookup.",
+            "This needs all values to be unique, which interview versions promise."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Which pairs work?",
+          "q": "<p>Which pair of traversals is <b>not</b> enough to rebuild one unique binary tree?</p>",
+          "opts": [
+            "Preorder and inorder",
+            "Postorder and inorder",
+            "Preorder and postorder",
+            "Level order and inorder"
+          ],
+          "ans": 2,
+          "why": [
+            "Preorder and postorder both give the root but never separate left from right. A node with a single child could be either a left or a right child.",
+            "Any pair that includes <b>inorder</b> works, because inorder always shows the split."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Postorder version",
+          "q": "<p>You build from <b>postorder</b> and inorder. Where is the root, and which subtree do you build first?</p>",
+          "opts": [
+            "The first item; the left subtree first",
+            "The last item; the right subtree first",
+            "The last item; the left subtree first",
+            "The middle item; either one"
+          ],
+          "ans": 1,
+          "why": [
+            "Postorder is left, right, root, so reading it from the end gives root, then right, then left. That is why the right subtree is built first.",
+            "Mixing this order up is the classic bug."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Write <code>buildTree(preorder, inorder)</code>. Both arrays hold the same <b>unique</b> values. Return the root of the tree as nodes <code>{ val, left, right }</code> (missing children are <code>null</code>). Return <code>null</code> for empty input.</p>",
+        "examples": [
+          "buildTree([3, 9, 20, 15, 7], [9, 3, 15, 20, 7])  // root 3, left 9, right 20 (15, 7)",
+          "buildTree([], [])  // null"
+        ],
+        "hint": "<p>Map each inorder value to its index. Keep a pointer <code>p</code> into preorder. <code>build(lo, hi)</code> takes <code>pre[p++]</code> as the root, finds <code>m</code>, then builds left from <code>lo..m-1</code> and right from <code>m+1..hi</code>.</p>",
+        "fn": "buildTree",
+        "starter": "function buildTree(preorder, inorder) {\n  // your code\n}",
+        "solution": "function buildTree(preorder, inorder) {\n  const idx = new Map(inorder.map((v, i) => [v, i]))\n  let p = 0\n  const build = (lo, hi) => {\n    if (lo > hi) return null\n    const v = preorder[p++]\n    const m = idx.get(v)\n    const node = { val: v, left: null, right: null }\n    node.left = build(lo, m - 1)\n    node.right = build(m + 1, hi)\n    return node\n  }\n  return build(0, inorder.length - 1)\n}",
+        "checks": [
+          {
+            "t": "the lesson example",
+            "verify": "const ser = (n) => (n ? [n.val, ser(n.left), ser(n.right)] : null); assert(JSON.stringify(ser(buildTree([3, 9, 20, 15, 7], [9, 3, 15, 20, 7]))) === '[3,[9,null,null],[20,[15,null,null],[7,null,null]]]', \"wrong tree\")"
+          },
+          {
+            "t": "a tree that leans left",
+            "verify": "const ser = (n) => (n ? [n.val, ser(n.left), ser(n.right)] : null); assert(JSON.stringify(ser(buildTree([1, 2, 3], [3, 2, 1]))) === '[1,[2,[3,null,null],null],null]', \"wrong tree\")"
+          },
+          {
+            "t": "a tree that leans right",
+            "verify": "const ser = (n) => (n ? [n.val, ser(n.left), ser(n.right)] : null); assert(JSON.stringify(ser(buildTree([1, 2, 3], [1, 2, 3]))) === '[1,null,[2,null,[3,null,null]]]', \"wrong tree\")"
+          },
+          {
+            "t": "empty input and a single node",
+            "verify": "assert(buildTree([], []) === null, \"expected null\"); const r = buildTree([5], [5]); assert(r && r.val === 5 && r.left === null && r.right === null, \"single node\")"
+          },
+          {
+            "t": "a big line stays fast",
+            "verify": "const n = 5000; const pre = Array.from({ length: n }, (_, i) => i); const ino = [...pre].reverse(); const t0 = Date.now(); const r = buildTree(pre, ino); assert(r && r.val === 0 && Date.now() - t0 < 300, \"wrong or too slow, did you search inorder every time?\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "In preorder the <b>first item is the root</b>. Its position in inorder splits left from right. Use a Map for O(1) lookups and build <b>left before right</b>: O(n).",
+        "mistakes": [
+          "Building the right subtree before the left when reading preorder.",
+          "Scanning inorder for every root (O(n²)).",
+          "Slicing arrays at every step, which copies a lot of data.",
+          "Trying preorder + postorder only (not unique)."
+        ]
+      }
+    },
+    {
+      "id": "dfs-iterative",
+      "prereqs": [
+        "dfs",
+        "stacks"
+      ],
+      "dryRun": {
+        "title": "Iterative inorder of the tree 1 (2 (4, 5), 3)",
+        "columns": [
+          "step",
+          "what we do",
+          "stack",
+          "output"
+        ],
+        "rows": [
+          [
+            "1",
+            "go left as far as possible, push 1, 2, 4",
+            "[1, 2, 4]",
+            "[ ]"
+          ],
+          [
+            "2",
+            "pop 4 and visit it",
+            "[1, 2]",
+            "[4]"
+          ],
+          [
+            "3",
+            "pop 2, visit, then go right to 5 and push it",
+            "[1, 5]",
+            "[4, 2]"
+          ],
+          [
+            "4",
+            "pop 5 and visit it",
+            "[1]",
+            "[4, 2, 5]"
+          ],
+          [
+            "5",
+            "pop 1, visit, then go right to 3 and push it",
+            "[3]",
+            "[4, 2, 5, 1]"
+          ],
+          [
+            "6",
+            "pop 3 and visit it",
+            "[ ]",
+            "[4, 2, 5, 1, 3]"
+          ]
+        ],
+        "hit": 2,
+        "note": "The stack plays the part of the recursion's call stack. After you <b>pop and visit a node</b>, you step into its right child and again go as far left as possible."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const T = (v, l = null, r = null) =&gt; ({ val: v, left: l, right: r })\nconst root = T(1, T(2, T(4), T(5)), T(3))\nconst out = []\nconst stack = [root]\nwhile (stack.length) {\n  const n = stack.pop()\n  out.push(n.val)\n  if (n.right) stack.push(n.right)\n  if (n.left) stack.push(n.left)\n}\nconsole.log(out.join(\",\"))</code></pre>",
+          "opts": [
+            "<code>1,2,4,5,3</code>",
+            "<code>1,3,2,5,4</code>",
+            "<code>4,2,5,1,3</code>",
+            "<code>4,5,2,3,1</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "This is an iterative <b>preorder</b>. Pop the node, visit it, then push its children.",
+            "Push the right child <b>first</b>, so the left child is on top and comes out first."
+          ],
+          "exec": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r })\nconst root = T(1, T(2, T(4), T(5)), T(3))\nconst out = []\nconst stack = [root]\nwhile (stack.length) {\n  const n = stack.pop()\n  out.push(n.val)\n  if (n.right) stack.push(n.right)\n  if (n.left) stack.push(n.left)\n}\nconsole.log(out.join(\",\"))"
+        },
+        {
+          "tag": "Postorder trick",
+          "q": "<pre><code>const T = (v, l = null, r = null) =&gt; ({ val: v, left: l, right: r })\nconst root = T(1, T(2, T(4), T(5)), T(3))\nconst out = []\nconst st = [root]\nwhile (st.length) {\n  const n = st.pop()\n  out.push(n.val)\n  if (n.left) st.push(n.left)\n  if (n.right) st.push(n.right)\n}\nconsole.log(out.reverse().join(\",\"))</code></pre>",
+          "opts": [
+            "<code>4,5,2,3,1</code>",
+            "<code>4,2,5,1,3</code>",
+            "<code>1,3,2,5,4</code>",
+            "<code>1,2,4,5,3</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "This loop visits node, right, left, which gives <code>1,3,2,5,4</code>. Reversing that gives left, right, node: the postorder <code>4,5,2,3,1</code>.",
+            "A neat trick: postorder is the reverse of \"node, right, left\"."
+          ],
+          "exec": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r })\nconst root = T(1, T(2, T(4), T(5)), T(3))\nconst out = []\nconst st = [root]\nwhile (st.length) {\n  const n = st.pop()\n  out.push(n.val)\n  if (n.left) st.push(n.left)\n  if (n.right) st.push(n.right)\n}\nconsole.log(out.reverse().join(\",\"))"
+        },
+        {
+          "tag": "Why go iterative?",
+          "q": "<pre><code>let root = null\nfor (let i = 0; i &lt; 100000; i++) root = { val: i, left: root, right: null }\nconst depth = (n) =&gt; (n ? 1 + depth(n.left) : 0)\ntry {\n  console.log(depth(root))\n} catch (e) {\n  console.log(e.constructor.name)\n}</code></pre>",
+          "opts": [
+            "<code>100000</code>",
+            "<code>0</code>",
+            "<code>RangeError</code>",
+            "<code>TypeError</code>"
+          ],
+          "ans": 2,
+          "why": [
+            "The tree is a line 100,000 nodes deep. The recursion needs 100,000 stack frames, and JavaScript allows only about ten thousand. It throws a <b>RangeError</b>.",
+            "An explicit stack lives on the heap, so it can be as deep as memory allows."
+          ],
+          "exec": "let root = null\nfor (let i = 0; i < 100000; i++) root = { val: i, left: root, right: null }\nconst depth = (n) => (n ? 1 + depth(n.left) : 0)\ntry {\n  console.log(depth(root))\n} catch (e) {\n  console.log(e.constructor.name)\n}"
+        },
+        {
+          "tag": "Order of pushing",
+          "q": "<p>In an iterative <b>preorder</b>, you pop a node and push both children. Which child do you push first?</p>",
+          "opts": [
+            "The left child",
+            "The right child",
+            "Either, it does not matter",
+            "Neither, push the parent again"
+          ],
+          "ans": 1,
+          "why": [
+            "A stack gives back the last item pushed first. To visit the left subtree before the right, the left child must be pushed <b>last</b>.",
+            "With a queue the rule flips, and you get BFS."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>Compared with recursive DFS, what does the iterative version change?</p>",
+          "opts": [
+            "The time becomes O(log n)",
+            "Nothing in big-O (still O(n) time, O(h) space), but it avoids stack overflow",
+            "The space becomes O(1) always",
+            "It visits nodes in a different order"
+          ],
+          "ans": 1,
+          "why": [
+            "The same nodes are visited the same number of times, and the stack still holds a path of up to h nodes.",
+            "The gain is safety on very deep trees and more control over the traversal."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Nodes look like <code>{ val, left, right }</code>. Write <code>inorderIter(root)</code>. Return the inorder values <b>without recursion</b>. It must work on a tree that is 100,000 nodes deep.</p>",
+        "examples": [
+          "// tree 1 (2 (4, 5), 3)",
+          "inorderIter(root)  // [4, 2, 5, 1, 3]"
+        ],
+        "hint": "<p>Keep <code>cur = root</code> and a <code>stack</code>. While <code>cur</code> or the stack is not empty: push and go left while you can; then pop, visit, and set <code>cur</code> to the popped node's right child.</p>",
+        "fn": "inorderIter",
+        "starter": "function inorderIter(root) {\n  // your code\n}",
+        "solution": "function inorderIter(root) {\n  const out = []\n  const stack = []\n  let cur = root\n  while (cur || stack.length) {\n    while (cur) {\n      stack.push(cur)\n      cur = cur.left\n    }\n    cur = stack.pop()\n    out.push(cur.val)\n    cur = cur.right\n  }\n  return out\n}",
+        "checks": [
+          {
+            "t": "the tree from the lesson",
+            "verify": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r }); assert(JSON.stringify(inorderIter(T(1, T(2, T(4), T(5)), T(3)))) === \"[4,2,5,1,3]\", \"expected [4,2,5,1,3]\")"
+          },
+          {
+            "t": "a search tree gives sorted values",
+            "verify": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r }); assert(JSON.stringify(inorderIter(T(4, T(2, T(1), T(3)), T(6, T(5), T(7))))) === \"[1,2,3,4,5,6,7]\", \"expected 1 to 7\")"
+          },
+          {
+            "t": "empty tree and single node",
+            "verify": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r }); assert(JSON.stringify(inorderIter(null)) === \"[]\" && JSON.stringify(inorderIter(T(8))) === \"[8]\", \"edge cases\")"
+          },
+          {
+            "t": "leans right",
+            "verify": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r }); assert(JSON.stringify(inorderIter(T(1, null, T(2, null, T(3))))) === \"[1,2,3]\", \"expected [1,2,3]\")"
+          },
+          {
+            "t": "100,000 nodes deep (recursion would crash)",
+            "verify": "let t = null; for (let i = 0; i < 100000; i++) t = { val: i, left: t, right: null }; const r = inorderIter(t); assert(r.length === 100000 && r[0] === 0 && r[99999] === 99999, \"wrong result for the deep tree\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "Replace the call stack with your own <b>stack</b>. Inorder: go left pushing, pop and visit, then step right. Same O(n) time, but it survives very deep trees.",
+        "mistakes": [
+          "Pushing the left child before the right in preorder (the order flips).",
+          "Forgetting to move to <code>cur.right</code> after visiting.",
+          "Stopping when <code>cur</code> is null even though the stack is not empty.",
+          "Using a queue and getting BFS by accident."
+        ]
+      }
+    },
+    {
+      "id": "balanced-bst",
+      "prereqs": [
+        "bst",
+        "tree-measurements"
+      ],
+      "dryRun": {
+        "title": "Insert 1, 2, 3 into an AVL tree",
+        "columns": [
+          "insert",
+          "shape before fixing",
+          "imbalance",
+          "fix"
+        ],
+        "rows": [
+          [
+            "1",
+            "1",
+            "none",
+            "-"
+          ],
+          [
+            "2",
+            "1 then 2 as its right child",
+            "node 1 leans right by 1 (allowed)",
+            "-"
+          ],
+          [
+            "3",
+            "a line: 1 then 2 then 3",
+            "node 1 leans right by 2 (not allowed)",
+            "rotate left at 1: now 2 is the root with children 1 and 3"
+          ]
+        ],
+        "hit": 2,
+        "note": "AVL rule: at every node, the heights of the left and right subtrees differ by <b>at most 1</b>. A <b>rotation</b> fixes a broken node in O(1) and keeps the inorder order."
+      },
+      "think": [
+        {
+          "tag": "Predict the output",
+          "q": "<pre><code>const n3 = { val: 3, left: null, right: null }\nconst n2 = { val: 2, left: null, right: n3 }\nconst n1 = { val: 1, left: null, right: n2 }\nfunction rotateLeft(x) {\n  const y = x.right\n  x.right = y.left\n  y.left = x\n  return y\n}\nconst r = rotateLeft(n1)\nconsole.log(r.val, r.left.val, r.right.val)</code></pre>",
+          "opts": [
+            "<code>2 1 3</code>",
+            "<code>1 2 3</code>",
+            "<code>3 2 1</code>",
+            "<code>2 3 1</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "The line 1 → 2 → 3 becomes a tree with 2 on top, 1 on the left and 3 on the right. The height drops from 3 to 2.",
+            "The inorder order is still 1, 2, 3, so the search-tree rule still holds."
+          ],
+          "exec": "const n3 = { val: 3, left: null, right: null }\nconst n2 = { val: 2, left: null, right: n3 }\nconst n1 = { val: 1, left: null, right: n2 }\nfunction rotateLeft(x) {\n  const y = x.right\n  x.right = y.left\n  y.left = x\n  return y\n}\nconst r = rotateLeft(n1)\nconsole.log(r.val, r.left.val, r.right.val)"
+        },
+        {
+          "tag": "The AVL rule",
+          "q": "<p>Which condition must hold at <b>every</b> node of an AVL tree?</p>",
+          "opts": [
+            "Both subtrees have the same number of nodes",
+            "The heights of the two subtrees differ by at most 1",
+            "All leaves are at the same depth",
+            "The tree is full"
+          ],
+          "ans": 1,
+          "why": [
+            "It is about heights, not about node counts. This loose rule is enough to keep the height at about 1.44 × log₂(n).",
+            "Red-black trees use a different, looser colour rule with the same O(log n) result."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Complexity",
+          "q": "<p>What do balanced BSTs guarantee for search, insert and delete?</p>",
+          "opts": [
+            "<code>O(log n) in the worst case</code>",
+            "<code>O(1)</code>",
+            "<code>O(n) in the worst case</code>",
+            "<code>O(log n) on average only</code>"
+          ],
+          "ans": 0,
+          "why": [
+            "Because the height is always O(log n), and every operation follows one path plus a few rotations.",
+            "A plain BST has only an average guarantee on random data."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "In an interview",
+          "q": "<p>Do you usually need to write an AVL or red-black tree from scratch in a coding interview?</p>",
+          "opts": [
+            "Yes, it is a very common question",
+            "Rarely. Know why they exist, what a rotation does, and the O(log n) guarantee",
+            "Never, and you should not mention them",
+            "Only in frontend interviews"
+          ],
+          "ans": 1,
+          "why": [
+            "Most interviews ask for a plain BST, or for using a sorted structure. You are expected to explain the idea, not to code the rebalancing.",
+            "JavaScript has no built-in balanced tree, so you would also name the trade-off of writing one yourself."
+          ],
+          "exec": null
+        },
+        {
+          "tag": "Where they are used",
+          "q": "<p>Which of these is typically built on a balanced search tree?</p>",
+          "opts": [
+            "A JavaScript array",
+            "An ordered map or set (for example Java's TreeMap or C++ std::map)",
+            "A hash set",
+            "A plain stack"
+          ],
+          "ans": 1,
+          "why": [
+            "Ordered maps keep keys sorted, so they support \"next bigger key\" and range queries in O(log n). A hash map cannot do that.",
+            "Databases use a related structure, the B-tree, for their indexes."
+          ],
+          "exec": null
+        }
+      ],
+      "try": {
+        "task": "<p>Nodes look like <code>{ val, left, right }</code>. Write <code>isBalanced(root)</code>. Return <code>true</code> if, at <b>every</b> node, the heights of the left and right subtrees differ by at most 1. An empty tree is balanced. It must be O(n).</p>",
+        "examples": [
+          "isBalanced(tree 3 (9, 20 (15, 7)))  // true",
+          "isBalanced(a line 1 → 2 → 3)  // false"
+        ],
+        "hint": "<p>Write <code>h(node)</code> that returns the height, or <code>-1</code> as a signal when the subtree is already unbalanced. Check the two child heights and return early if either is <code>-1</code> or they differ by more than 1.</p>",
+        "fn": "isBalanced",
+        "starter": "function isBalanced(root) {\n  // your code\n}",
+        "solution": "function isBalanced(root) {\n  const h = (n) => {\n    if (!n) return 0\n    const l = h(n.left)\n    if (l === -1) return -1\n    const r = h(n.right)\n    if (r === -1) return -1\n    if (Math.abs(l - r) > 1) return -1\n    return 1 + Math.max(l, r)\n  }\n  return h(root) !== -1\n}",
+        "checks": [
+          {
+            "t": "a balanced tree",
+            "verify": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r }); assert(isBalanced(T(3, T(9), T(20, T(15), T(7)))) === true, \"expected true\")"
+          },
+          {
+            "t": "a line of three nodes",
+            "verify": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r }); assert(isBalanced(T(1, null, T(2, null, T(3)))) === false, \"expected false\")"
+          },
+          {
+            "t": "empty tree and single node",
+            "verify": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r }); assert(isBalanced(null) === true && isBalanced(T(1)) === true, \"expected true\")"
+          },
+          {
+            "t": "balanced at the root but not deeper",
+            "verify": "const T = (v, l = null, r = null) => ({ val: v, left: l, right: r }); assert(isBalanced(T(1, T(2, T(3, T(4), null), null), T(5))) === false, \"expected false, the node 2 is unbalanced\")"
+          },
+          {
+            "t": "a big line stays fast",
+            "verify": "let t = null; for (let i = 0; i < 5000; i++) t = { val: i, left: t, right: null }; const t0 = Date.now(); assert(isBalanced(t) === false && Date.now() - t0 < 200, \"wrong or too slow, it must be O(n)\")"
+          }
+        ]
+      },
+      "takeaway": {
+        "key": "A balanced BST keeps its height near <b>log n</b>, so search, insert and delete are <b>O(log n) worst case</b>. Rotations repair an imbalance in O(1) and keep the sorted order.",
+        "mistakes": [
+          "Checking balance only at the root, not at every node.",
+          "Computing heights again at every node (O(n²)).",
+          "Thinking balanced means perfectly full.",
+          "Expecting to hand-code AVL in a normal interview instead of explaining it."
+        ]
+      }
+    }
+  ],
+  "flags": [
+    "construct-tree: the try-it expected trees were produced by a reference build in the generator and written into the checks. Example 1 matches the classic answer 3 (9, 20 (15, 7)).",
+    "tree-measurements: the \"does not touch the root\" check expects 4 (path 5-3-2-4-7, while the longest path through the root is only 3).",
+    "dfs-iterative: the 100,000 node check relies on the Node/browser stack limit being below 100,000 frames, which holds today.",
+    "balanced-bst: the try-it asks for isBalanced, not a real AVL insert, because a rotation-based AVL is too long for a self-check. The lesson text and rotation question cover the idea.",
+    "The dry-run tables are traced by hand (concept dry runs are not machine-run)."
+  ]
+}

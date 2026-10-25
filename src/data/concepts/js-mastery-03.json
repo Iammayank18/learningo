@@ -1,0 +1,1526 @@
+{
+ "course": "js-mastery",
+ "items": [
+  {
+   "id": "prototype-chain",
+   "prereqs": [
+    "this"
+   ],
+   "dryRun": {
+    "title": "Looking up dog.toString()",
+    "columns": [
+     "look in",
+     "has toString?",
+     "next link"
+    ],
+    "rows": [
+     [
+      "dog (own props)",
+      "no",
+      "Object.getPrototypeOf(dog) = Dog.prototype"
+     ],
+     [
+      "Dog.prototype",
+      "no",
+      "Animal.prototype"
+     ],
+     [
+      "Animal.prototype",
+      "no",
+      "Object.prototype"
+     ],
+     [
+      "Object.prototype",
+      "YES → use it",
+      "(stop)"
+     ],
+     [
+      "if still missing",
+      "—",
+      "null → undefined"
+     ]
+    ],
+    "hit": 3,
+    "note": "Every object has a hidden link (<code>[[Prototype]]</code>) to another object. Reading a property walks that chain until it finds it or reaches <code>null</code>. Writing a property always creates an <b>own</b> property."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const base = { greet() { return 'hi ' + this.name } }\nconst u = Object.create(base)\nu.name = 'A'\nconsole.log(u.greet(), Object.hasOwn(u, 'greet'))</code></pre>",
+     "opts": [
+      "<code>hi A true</code>",
+      "<code>undefined false</code>",
+      "<code>hi A false</code>",
+      "<code>hi undefined false</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "greet is found on the prototype; this is still u (left of the dot). It is not an own property."
+     ],
+     "exec": "const base = { greet() { return 'hi ' + this.name } }\nconst u = Object.create(base)\nu.name = 'A'\nconsole.log(u.greet(), Object.hasOwn(u, 'greet'))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const proto = { list: [] }\nconst a = Object.create(proto), b = Object.create(proto)\na.list.push(1)\nconsole.log(b.list.length)</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>0</code>",
+      "<code>undefined</code>",
+      "<code>TypeError</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "<code>a.list</code> reads the shared array from the prototype and mutates it. Shared mutable state on a prototype is a classic bug."
+     ],
+     "exec": "const proto = { list: [] }\nconst a = Object.create(proto), b = Object.create(proto)\na.list.push(1)\nconsole.log(b.list.length)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const proto = { n: 1 }\nconst o = Object.create(proto)\no.n = 2\nconsole.log(o.n, proto.n)</code></pre>",
+     "opts": [
+      "<code>2 2</code>",
+      "<code>1 1</code>",
+      "<code>1 2</code>",
+      "<code>2 1</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Assignment creates an own property on o that shadows the prototype one. The prototype is unchanged."
+     ],
+     "exec": "const proto = { n: 1 }\nconst o = Object.create(proto)\no.n = 2\nconsole.log(o.n, proto.n)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log(Object.getPrototypeOf([]) === Array.prototype, Object.getPrototypeOf(Array.prototype) === Object.prototype, Object.getPrototypeOf(Object.prototype))</code></pre>",
+     "opts": [
+      "<code>true true undefined</code>",
+      "<code>true true null</code>",
+      "<code>false true null</code>",
+      "<code>true false null</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "[] → Array.prototype → Object.prototype → null. That is why arrays have both map and hasOwnProperty."
+     ],
+     "exec": "console.log(Object.getPrototypeOf([]) === Array.prototype, Object.getPrototypeOf(Array.prototype) === Object.prototype, Object.getPrototypeOf(Object.prototype))"
+    },
+    {
+     "tag": "Pick one",
+     "q": "How do you safely check if an object itself (not its prototype) has a key?",
+     "opts": [
+      "<code>key in obj</code>",
+      "<code>Object.hasOwn(obj, key)</code>",
+      "<code>obj[key] !== undefined</code>",
+      "<code>obj.hasOwnProperty === key</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "<code>in</code> walks the chain. A value check fails for keys holding undefined."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>protoChain(obj)</code>: return the list of prototypes of obj, nearest first, ending before null. Then write <code>findOwner(obj, key)</code>: return the object in the chain (obj itself or a prototype) that owns key, or null.",
+    "examples": [
+     "protoChain([]).length  // 2 (Array.prototype, Object.prototype)",
+     "findOwner([], \"map\") === Array.prototype  // true"
+    ],
+    "hint": "Loop with <code>Object.getPrototypeOf</code> until null; check <code>Object.hasOwn</code> at each step.",
+    "fn": "protoChain",
+    "starter": "function protoChain(obj) {\n  // your code\n}\nfunction findOwner(obj, key) {\n  // your code\n}",
+    "solution": "function protoChain(obj) {\n  const out = []\n  for (let p = Object.getPrototypeOf(obj); p !== null; p = Object.getPrototypeOf(p)) out.push(p)\n  return out\n}\nfunction findOwner(obj, key) {\n  for (let o = obj; o !== null; o = Object.getPrototypeOf(o)) if (Object.hasOwn(o, key)) return o\n  return null\n}",
+    "checks": [
+     {
+      "t": "array chain",
+      "verify": "const c = protoChain([]); assert(c.length === 2 && c[0] === Array.prototype && c[1] === Object.prototype, \"chain\")"
+     },
+     {
+      "t": "Object.create(null) has no chain",
+      "verify": "assert(protoChain(Object.create(null)).length === 0, \"null proto\")"
+     },
+     {
+      "t": "findOwner finds own and inherited keys",
+      "verify": "const a = [1]; assert(findOwner(a, \"0\") === a && findOwner(a, \"map\") === Array.prototype && findOwner(a, \"nope\") === null, \"owner\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Reads walk the prototype chain; writes create own properties. Never put mutable shared data on a prototype.",
+    "mistakes": [
+     "Using <code>in</code> when you meant \"own property\".",
+     "Shared arrays/objects on a prototype, mutated through one instance."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Array Prototype Last",
+     "diff": "easy",
+     "lc": "array-prototype-last"
+    }
+   ]
+  },
+  {
+   "id": "new-keyword",
+   "prereqs": [
+    "prototype-chain"
+   ],
+   "dryRun": {
+    "title": "new User(\"A\")",
+    "columns": [
+     "step",
+     "what new does"
+    ],
+    "rows": [
+     [
+      "1",
+      "creates an empty object"
+     ],
+     [
+      "2",
+      "links it: [[Prototype]] = User.prototype"
+     ],
+     [
+      "3",
+      "calls User with this = that object"
+     ],
+     [
+      "4",
+      "returns the object, unless User returns another object"
+     ]
+    ],
+    "hit": 1,
+    "note": "Four steps. Forgetting <code>new</code> on an old-style constructor runs it with the wrong this. Classes protect you: calling a class without new throws."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function User(n) { this.n = n }\nUser.prototype.hi = function () { return 'hi ' + this.n }\nconsole.log(new User('A').hi())</code></pre>",
+     "opts": [
+      "<code>hi undefined</code>",
+      "<code>TypeError</code>",
+      "<code>undefined</code>",
+      "<code>hi A</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "The new object is linked to User.prototype, so it finds hi; this inside is the new object."
+     ],
+     "exec": "function User(n) { this.n = n }\nUser.prototype.hi = function () { return 'hi ' + this.n }\nconsole.log(new User('A').hi())"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function A() { this.x = 1; return { y: 2 } }\nfunction B() { this.x = 1; return 5 }\nconsole.log(new A().x, new B().x)</code></pre>",
+     "opts": [
+      "<code>undefined 1</code>",
+      "<code>1 1</code>",
+      "<code>undefined undefined</code>",
+      "<code>1 undefined</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Returning an object replaces the new object. Returning a primitive is ignored."
+     ],
+     "exec": "function A() { this.x = 1; return { y: 2 } }\nfunction B() { this.x = 1; return 5 }\nconsole.log(new A().x, new B().x)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function P() {}\nconst p = new P()\nconsole.log(p instanceof P, p.constructor === P, Object.getPrototypeOf(p) === P.prototype)</code></pre>",
+     "opts": [
+      "<code>true false true</code>",
+      "<code>false true true</code>",
+      "<code>true true true</code>",
+      "<code>true true false</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "All three follow from step 2: the new object is linked to P.prototype, whose constructor points back to P."
+     ],
+     "exec": "function P() {}\nconst p = new P()\nconsole.log(p instanceof P, p.constructor === P, Object.getPrototypeOf(p) === P.prototype)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>class C {}\ntry { C() } catch (e) { console.log(e.name) }</code></pre>",
+     "opts": [
+      "<code>ReferenceError</code>",
+      "<code>SyntaxError</code>",
+      "<code>undefined</code>",
+      "<code>TypeError</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Classes must be called with new."
+     ],
+     "exec": "class C {}\ntry { C() } catch (e) { console.log(e.name) }"
+    },
+    {
+     "tag": "Arrows",
+     "q": "Can an arrow function be used with new?",
+     "opts": [
+      "Yes, like any function",
+      "No: arrows have no prototype and no own this, so new throws a TypeError",
+      "Only in strict mode",
+      "Only if it returns an object"
+     ],
+     "ans": 1,
+     "why": [
+      "Constructors need their own this and a prototype."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Implement <code>myNew(Ctor, ...args)</code> that does what <code>new</code> does (all 4 steps), without using new.",
+    "examples": [
+     "function P(n) { this.n = n }; myNew(P, 1).n  // 1",
+     "myNew(P, 1) instanceof P  // true"
+    ],
+    "hint": "Object.create(Ctor.prototype), then Ctor.apply(obj, args); if the result is an object (or function) return it, else obj.",
+    "fn": "myNew",
+    "starter": "function myNew(Ctor, ...args) {\n  // your code\n}",
+    "solution": "function myNew(Ctor, ...args) {\n  const obj = Object.create(Ctor.prototype)\n  const r = Ctor.apply(obj, args)\n  return (r !== null && typeof r === 'object') || typeof r === 'function' ? r : obj\n}",
+    "checks": [
+     {
+      "t": "sets fields and links the prototype",
+      "verify": "function P(n) { this.n = n }; P.prototype.get = function () { return this.n }; const p = myNew(P, 4); assert(p.n === 4 && p.get() === 4 && p instanceof P, \"basic\")"
+     },
+     {
+      "t": "an object return value wins",
+      "verify": "function A() { this.x = 1; return { y: 2 } }; assert(myNew(A).y === 2 && myNew(A).x === undefined, \"object return\")"
+     },
+     {
+      "t": "a primitive return value is ignored",
+      "verify": "function B() { this.x = 1; return 5 }; assert(myNew(B).x === 1, \"primitive return\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "new = create object, link to Ctor.prototype, run Ctor with this, return it (unless Ctor returns an object).",
+    "mistakes": [
+     "Calling an old-style constructor without new.",
+     "Returning an object from a constructor by accident."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Object.create",
+     "diff": "medium",
+     "mc": "object-create"
+    }
+   ]
+  },
+  {
+   "id": "class",
+   "prereqs": [
+    "new-keyword"
+   ],
+   "dryRun": {
+    "title": "class Counter { #n = 0; static made = 0; inc() {} get value() {} }",
+    "columns": [
+     "member",
+     "lives on",
+     "visible as"
+    ],
+    "rows": [
+     [
+      "#n = 0",
+      "each instance (private)",
+      "only inside the class body"
+     ],
+     [
+      "static made",
+      "the class itself",
+      "Counter.made"
+     ],
+     [
+      "inc()",
+      "Counter.prototype (shared)",
+      "c.inc()"
+     ],
+     [
+      "get value()",
+      "Counter.prototype",
+      "c.value (no parentheses)"
+     ]
+    ],
+    "hit": 0,
+    "note": "A class is mostly syntax over constructor functions and prototypes, plus real extras: <b>#private</b> fields, static members, getters/setters, and it must be called with new."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>class C { #secret = 1; reveal() { return this.#secret } }\nconst c = new C()\nconsole.log(c.reveal(), c.secret, Object.keys(c).length)</code></pre>",
+     "opts": [
+      "<code>1 1 1</code>",
+      "<code>undefined undefined 0</code>",
+      "<code>1 undefined 0</code>",
+      "<code>1 undefined 1</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "#secret is truly private: not a normal property, not in keys."
+     ],
+     "exec": "class C { #secret = 1; reveal() { return this.#secret } }\nconst c = new C()\nconsole.log(c.reveal(), c.secret, Object.keys(c).length)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>class A { static count = 0; constructor() { A.count++ } }\nnew A(); new A()\nconsole.log(A.count, new A().count)</code></pre>",
+     "opts": [
+      "<code>2 undefined</code>",
+      "<code>3 3</code>",
+      "<code>2 2</code>",
+      "<code>0 undefined</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Static members live on the class. Instances do not see them. (The third new A runs after A.count is read.)"
+     ],
+     "exec": "class A { static count = 0; constructor() { A.count++ } }\nnew A(); new A()\nconsole.log(A.count, new A().count)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>class T { constructor() { this.v = 2 } get double() { return this.v * 2 } }\nconst t = new T()\nt.v = 5\nconsole.log(t.double, typeof T.prototype.double)</code></pre>",
+     "opts": [
+      "<code>4 function</code>",
+      "<code>10 function</code>",
+      "<code>10 number</code>",
+      "<code>undefined number</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "A getter runs on every read, so it sees the new v. Reading it on the prototype runs it with this = prototype (v undefined) → NaN → typeof \"number\"."
+     ],
+     "exec": "class T { constructor() { this.v = 2 } get double() { return this.v * 2 } }\nconst t = new T()\nt.v = 5\nconsole.log(t.double, typeof T.prototype.double)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>class K { method() {} }\nconsole.log(typeof K, Object.hasOwn(new K(), 'method'))</code></pre>",
+     "opts": [
+      "<code>function false</code>",
+      "<code>class false</code>",
+      "<code>function true</code>",
+      "<code>object false</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "A class is a function. Methods live on the prototype, not on each instance."
+     ],
+     "exec": "class K { method() {} }\nconsole.log(typeof K, Object.hasOwn(new K(), 'method'))"
+    },
+    {
+     "tag": "Field arrows",
+     "q": "<code>class B { handle = () => this.x }</code>. What is the trade-off of this arrow field?",
+     "opts": [
+      "It is shared on the prototype",
+      "It cannot access this",
+      "It runs only once",
+      "this is always the instance (safe as a callback), but every instance gets its own copy of the function"
+     ],
+     "ans": 3,
+     "why": [
+      "Prototype methods are shared; arrow fields are per instance."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write a class <code>Stack</code> with a private <code>#items</code> array, methods <code>push(x)</code> (returns the size), <code>pop()</code>, <code>peek()</code>, a getter <code>size</code>, and a static <code>from(array)</code>.",
+    "examples": [
+     "const s = Stack.from([1, 2]); s.push(3); s.peek()  // 3",
+     "s.size  // 3"
+    ],
+    "hint": "Use <code>#items = []</code>; static from creates a Stack and pushes each item.",
+    "fn": "Stack",
+    "starter": "class Stack {\n  // your code\n}",
+    "solution": "class Stack {\n  #items = []\n  push(x) { this.#items.push(x); return this.#items.length }\n  pop() { return this.#items.pop() }\n  peek() { return this.#items.at(-1) }\n  get size() { return this.#items.length }\n  static from(arr) { const s = new Stack(); for (const x of arr) s.push(x); return s }\n}",
+    "checks": [
+     {
+      "t": "push, peek and pop",
+      "verify": "const s = new Stack(); s.push(1); assert(s.push(2) === 2 && s.peek() === 2 && s.pop() === 2 && s.size === 1, \"basic\")"
+     },
+     {
+      "t": "static from",
+      "verify": "const s = Stack.from([1, 2, 3]); assert(s instanceof Stack && s.size === 3 && s.peek() === 3, \"from\")"
+     },
+     {
+      "t": "items are private",
+      "verify": "const s = Stack.from([1]); assert(Object.keys(s).length === 0 && s.items === undefined && typeof s.size === \"number\", \"private\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Classes give private #fields, static members and getters on top of prototypes. Methods are shared; arrow fields are per instance.",
+    "mistakes": [
+     "Thinking _underscore fields are private.",
+     "Expecting instances to see static members."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Array Wrapper",
+     "diff": "easy",
+     "lc": "array-wrapper"
+    }
+   ]
+  },
+  {
+   "id": "inheritance",
+   "prereqs": [
+    "class"
+   ],
+   "dryRun": {
+    "title": "class Dog extends Animal { constructor(n) { super(n); this.kind = \"dog\" } }",
+    "columns": [
+     "step",
+     "what happens"
+    ],
+    "rows": [
+     [
+      "new Dog(\"Rex\")",
+      "Dog's constructor starts"
+     ],
+     [
+      "before super()",
+      "this is not available yet (ReferenceError)"
+     ],
+     [
+      "super(n)",
+      "Animal's constructor builds the object"
+     ],
+     [
+      "this.kind = \"dog\"",
+      "Dog adds its own fields"
+     ],
+     [
+      "dog.speak()",
+      "Dog.prototype → Animal.prototype → found"
+     ]
+    ],
+    "hit": 1,
+    "note": "<code>extends</code> links two prototype chains. In a subclass constructor you must call <code>super()</code> before using this. <code>super.method()</code> calls the parent version."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>class A { hi() { return 'A' } }\nclass B extends A { hi() { return 'B' + super.hi() } }\nconsole.log(new B().hi())</code></pre>",
+     "opts": [
+      "<code>B</code>",
+      "<code>BA</code>",
+      "<code>A</code>",
+      "<code>AB</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "B overrides hi and calls the parent with super.hi()."
+     ],
+     "exec": "class A { hi() { return 'A' } }\nclass B extends A { hi() { return 'B' + super.hi() } }\nconsole.log(new B().hi())"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>class A { constructor() { this.x = 1 } }\nclass B extends A { constructor() { try { this.y = 2 } catch (e) { console.log(e.name) } super() } }\nnew B()</code></pre>",
+     "opts": [
+      "<code>TypeError</code>",
+      "<code>ReferenceError</code>",
+      "<code>undefined</code>",
+      "<code>SyntaxError</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "this does not exist in a derived constructor until super() runs."
+     ],
+     "exec": "class A { constructor() { this.x = 1 } }\nclass B extends A { constructor() { try { this.y = 2 } catch (e) { console.log(e.name) } super() } }\nnew B()"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>class A {}\nclass B extends A {}\nconst b = new B()\nconsole.log(b instanceof A, Object.getPrototypeOf(B) === A)</code></pre>",
+     "opts": [
+      "<code>true false</code>",
+      "<code>false true</code>",
+      "<code>false false</code>",
+      "<code>true true</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Instances chain through the prototypes, and the classes themselves are chained too (so static methods are inherited)."
+     ],
+     "exec": "class A {}\nclass B extends A {}\nconst b = new B()\nconsole.log(b instanceof A, Object.getPrototypeOf(B) === A)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>class A { static make() { return new this() } }\nclass B extends A {}\nconsole.log(B.make() instanceof B)</code></pre>",
+     "opts": [
+      "<code>true</code>",
+      "<code>false</code>",
+      "<code>TypeError</code>",
+      "<code>undefined</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Static methods are inherited, and this inside a static method is the class it was called on, B."
+     ],
+     "exec": "class A { static make() { return new this() } }\nclass B extends A {}\nconsole.log(B.make() instanceof B)"
+    },
+    {
+     "tag": "Design",
+     "q": "A Bird class gets fly(). Then Penguin extends Bird but cannot fly. What does this tell you?",
+     "opts": [
+      "Add an empty fly() to Penguin",
+      "Throw an error in Penguin.fly",
+      "The hierarchy is wrong: prefer composing abilities over deep inheritance",
+      "Make fly static"
+     ],
+     "ans": 2,
+     "why": [
+      "Inheritance is an \"is-a\" promise. When subclasses must break parent behaviour, compose instead (next: mixins)."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Create <code>class Shape { area() { return 0 } describe() { return `${this.constructor.name} with area ${this.area()}` } }</code>, and subclasses <code>Rect(w, h)</code> and <code>Square(side)</code> where Square extends Rect.",
+    "examples": [
+     "new Square(3).describe()  // \"Square with area 9\"",
+     "new Square(3) instanceof Rect  // true"
+    ],
+    "hint": "Square's constructor calls super(side, side). Only Rect needs its own area().",
+    "fn": "Square",
+    "starter": "class Shape {\n  // your code\n}\nclass Rect {}\nclass Square {}",
+    "solution": "class Shape {\n  area() { return 0 }\n  describe() { return `${this.constructor.name} with area ${this.area()}` }\n}\nclass Rect extends Shape {\n  constructor(w, h) { super(); this.w = w; this.h = h }\n  area() { return this.w * this.h }\n}\nclass Square extends Rect {\n  constructor(s) { super(s, s) }\n}",
+    "checks": [
+     {
+      "t": "rect area and description",
+      "verify": "assert(new Rect(2, 5).describe() === \"Rect with area 10\", \"rect\")"
+     },
+     {
+      "t": "square reuses rect",
+      "verify": "assert(new Square(3).describe() === \"Square with area 9\", \"square\")"
+     },
+     {
+      "t": "the chain is right",
+      "verify": "const s = new Square(1); assert(s instanceof Rect && s instanceof Shape && !Object.hasOwn(Square.prototype, \"area\"), \"chain\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "extends chains prototypes; call super() before this; override and call super.method(). Keep hierarchies shallow.",
+    "mistakes": [
+     "Using this before super() in a subclass constructor.",
+     "Deep hierarchies where children have to undo parent behaviour."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Check if Object Instance of Class",
+     "diff": "medium",
+     "lc": "check-if-object-instance-of-class"
+    }
+   ]
+  },
+  {
+   "id": "object-methods",
+   "prereqs": [
+    "inheritance"
+   ],
+   "dryRun": {
+    "title": "Object.freeze vs Object.seal vs Object.preventExtensions",
+    "columns": [
+     "action",
+     "preventExtensions",
+     "seal",
+     "freeze"
+    ],
+    "rows": [
+     [
+      "add a property",
+      "no",
+      "no",
+      "no"
+     ],
+     [
+      "delete a property",
+      "yes",
+      "no",
+      "no"
+     ],
+     [
+      "change a value",
+      "yes",
+      "yes",
+      "no"
+     ],
+     [
+      "nested objects",
+      "not affected",
+      "not affected",
+      "not affected (shallow)"
+     ]
+    ],
+    "hit": 3,
+    "note": "All three are <b>shallow</b>. In strict mode a blocked change throws; in sloppy mode it fails silently. <code>Object.assign</code> copies own enumerable properties; <code>Object.create(proto)</code> makes an object with a chosen prototype."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>'use strict'\nconst o = Object.freeze({ a: 1, inner: { b: 1 } })\ntry { o.a = 2 } catch (e) { console.log(e.name) }\no.inner.b = 2\nconsole.log(o.inner.b)</code></pre>",
+     "opts": [
+      "<code>TypeError 1</code>",
+      "<code>2</code>",
+      "<code>1</code>",
+      "<code>TypeError 2</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Changing a frozen property throws in strict mode. The nested object is not frozen."
+     ],
+     "exec": "'use strict'\nconst o = Object.freeze({ a: 1, inner: { b: 1 } })\ntry { o.a = 2 } catch (e) { console.log(e.name) }\no.inner.b = 2\nconsole.log(o.inner.b)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const t = { a: 1 }\nconst r = Object.assign(t, { b: 2 }, { a: 3 })\nconsole.log(r === t, t.a, t.b)</code></pre>",
+     "opts": [
+      "<code>false 1 2</code>",
+      "<code>true 3 2</code>",
+      "<code>true 1 2</code>",
+      "<code>false 3 2</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "assign mutates and returns the target. Later sources win."
+     ],
+     "exec": "const t = { a: 1 }\nconst r = Object.assign(t, { b: 2 }, { a: 3 })\nconsole.log(r === t, t.a, t.b)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const o = Object.create(null)\no.x = 1\nconsole.log(typeof o.toString, 'x' in o)</code></pre>",
+     "opts": [
+      "<code>function true</code>",
+      "<code>undefined false</code>",
+      "<code>undefined true</code>",
+      "<code>function false</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "An object with a null prototype has no toString, hasOwnProperty, etc. Useful as a pure dictionary."
+     ],
+     "exec": "const o = Object.create(null)\no.x = 1\nconsole.log(typeof o.toString, 'x' in o)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const o = Object.seal({ a: 1 })\no.a = 5; o.b = 1; delete o.a\nconsole.log(o.a, o.b)</code></pre>",
+     "opts": [
+      "<code>5 undefined</code>",
+      "<code>1 1</code>",
+      "<code>undefined undefined</code>",
+      "<code>5 1</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Sealed: values can change, but adding and deleting silently fail (sloppy mode)."
+     ],
+     "exec": "const o = Object.seal({ a: 1 })\no.a = 5; o.b = 1; delete o.a\nconsole.log(o.a, o.b)"
+    },
+    {
+     "tag": "Getters",
+     "q": "<code>Object.assign({}, src)</code> where src has a getter <code>get now()</code>. What ends up in the copy?",
+     "opts": [
+      "The getter itself",
+      "Nothing",
+      "A plain value: the getter is called once and its result copied",
+      "A TypeError"
+     ],
+     "ans": 2,
+     "why": [
+      "assign reads values. To copy getters use Object.defineProperties with getOwnPropertyDescriptors."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>deepFreeze(obj)</code>: freeze the object and every nested object/array (any depth). Return obj.",
+    "examples": [
+     "const o = deepFreeze({ a: { b: 1 } }); Object.isFrozen(o.a)  // true",
+     "deepFreeze([{ x: 1 }])[0]  // frozen too"
+    ],
+    "hint": "Freeze, then recurse into values that are objects and not already frozen.",
+    "fn": "deepFreeze",
+    "starter": "function deepFreeze(obj) {\n  // your code\n}",
+    "solution": "function deepFreeze(obj) {\n  Object.freeze(obj)\n  for (const v of Object.values(obj)) if (v && typeof v === 'object' && !Object.isFrozen(v)) deepFreeze(v)\n  return obj\n}",
+    "checks": [
+     {
+      "t": "top level is frozen",
+      "verify": "const o = { a: 1 }; deepFreeze(o); assert(Object.isFrozen(o), \"top\")"
+     },
+     {
+      "t": "nested objects and arrays are frozen",
+      "verify": "const o = deepFreeze({ a: { b: { c: [1, { d: 1 }] } } }); assert(Object.isFrozen(o.a.b) && Object.isFrozen(o.a.b.c) && Object.isFrozen(o.a.b.c[1]), \"nested\")"
+     },
+     {
+      "t": "returns the same object",
+      "verify": "const o = {}; assert(deepFreeze(o) === o, \"same\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "freeze/seal/preventExtensions are shallow. assign copies own enumerable values (getters run). Object.create(null) gives a clean dictionary.",
+    "mistakes": [
+     "Thinking freeze is deep.",
+     "Not noticing silent failures in sloppy mode."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Object.assign",
+     "diff": "easy",
+     "mc": "object-assign"
+    }
+   ]
+  },
+  {
+   "id": "mixins",
+   "prereqs": [
+    "object-methods"
+   ],
+   "dryRun": {
+    "title": "Composing abilities instead of a class tree",
+    "columns": [
+     "object",
+     "canFly",
+     "canSwim",
+     "canWalk"
+    ],
+    "rows": [
+     [
+      "duck",
+      "yes",
+      "yes",
+      "yes"
+     ],
+     [
+      "penguin",
+      "no",
+      "yes",
+      "yes"
+     ],
+     [
+      "fish",
+      "no",
+      "yes",
+      "no"
+     ],
+     [
+      "robot",
+      "—",
+      "—",
+      "yes"
+     ]
+    ],
+    "hit": 1,
+    "note": "<b>Composition</b>: build objects from small behaviour pieces (functions that add methods). It avoids the \"Penguin extends Bird but cannot fly\" problem of inheritance."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const canSwim = (o) =&gt; ({ ...o, swim: () =&gt; o.name + ' swims' })\nconst canWalk = (o) =&gt; ({ ...o, walk: () =&gt; o.name + ' walks' })\nconst penguin = canWalk(canSwim({ name: 'P' }))\nconsole.log(penguin.swim(), typeof penguin.fly)</code></pre>",
+     "opts": [
+      "<code>P swims undefined</code>",
+      "<code>P swims function</code>",
+      "<code>undefined undefined</code>",
+      "<code>P swims object</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Only the abilities you compose are present."
+     ],
+     "exec": "const canSwim = (o) => ({ ...o, swim: () => o.name + ' swims' })\nconst canWalk = (o) => ({ ...o, walk: () => o.name + ' walks' })\nconst penguin = canWalk(canSwim({ name: 'P' }))\nconsole.log(penguin.swim(), typeof penguin.fly)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const Serializable = (Base) =&gt; class extends Base { toJSON() { return { type: this.constructor.name } } }\nclass User {}\nclass Admin extends Serializable(User) {}\nconsole.log(JSON.stringify(new Admin()), new Admin() instanceof User)</code></pre>",
+     "opts": [
+      "<code>{} true</code>",
+      "<code>{\"type\":\"User\"} false</code>",
+      "<code>{\"type\":\"Admin\"} false</code>",
+      "<code>{\"type\":\"Admin\"} true</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "A class mixin is a function that takes a base class and returns a subclass. instanceof still works through the chain."
+     ],
+     "exec": "const Serializable = (Base) => class extends Base { toJSON() { return { type: this.constructor.name } } }\nclass User {}\nclass Admin extends Serializable(User) {}\nconsole.log(JSON.stringify(new Admin()), new Admin() instanceof User)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const a = { hi() { return 'a' } }, b = { hi() { return 'b' } }\nconsole.log(Object.assign({}, a, b).hi())</code></pre>",
+     "opts": [
+      "<code>a</code>",
+      "<code>b</code>",
+      "<code>ab</code>",
+      "<code>undefined</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "With Object.assign mixins, the last one wins on a name clash. Clashes are the main risk."
+     ],
+     "exec": "const a = { hi() { return 'a' } }, b = { hi() { return 'b' } }\nconsole.log(Object.assign({}, a, b).hi())"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const counter = () =&gt; { let n = 0; return { inc: () =&gt; ++n } }\nconst o = { ...counter(), ...counter() }\no.inc()\nconsole.log(o.inc())</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>2</code>",
+      "<code>3</code>",
+      "<code>undefined</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "The second counter's inc overwrites the first. Each call of counter() has its own n; o keeps only the last one."
+     ],
+     "exec": "const counter = () => { let n = 0; return { inc: () => ++n } }\nconst o = { ...counter(), ...counter() }\no.inc()\nconsole.log(o.inc())"
+    },
+    {
+     "tag": "When",
+     "q": "When is inheritance still the better choice?",
+     "opts": [
+      "Always",
+      "Never",
+      "When objects have more than 3 methods",
+      "A true, stable \"is-a\" relationship with shared behaviour, like Error → ValidationError"
+     ],
+     "ans": 3,
+     "why": [
+      "Composition is the default for mixing abilities; inheritance fits small, stable hierarchies."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>withEvents(obj)</code> that returns a new object with obj's properties plus <code>on(name, fn)</code> and <code>emit(name, ...args)</code>; listeners are private per object.",
+    "examples": [
+     "const u = withEvents({ name: \"a\" }); u.on(\"x\", (v) => v); u.emit(\"x\", 1)",
+     "withEvents({}).on  // a function"
+    ],
+    "hint": "Keep a Map of listeners in a closure; spread obj into the result.",
+    "fn": "withEvents",
+    "starter": "function withEvents(obj) {\n  // your code\n}",
+    "solution": "function withEvents(obj) {\n  const map = new Map()\n  return {\n    ...obj,\n    on(name, fn) { map.set(name, [...(map.get(name) ?? []), fn]) },\n    emit(name, ...args) { for (const fn of map.get(name) ?? []) fn(...args) },\n  }\n}",
+    "checks": [
+     {
+      "t": "keeps original properties",
+      "verify": "assert(withEvents({ name: \"a\" }).name === \"a\", \"props\")"
+     },
+     {
+      "t": "emit calls listeners with arguments",
+      "verify": "const u = withEvents({}); let got = []; u.on(\"x\", (a, b) => got.push(a + b)); u.on(\"x\", () => got.push(\"2nd\")); u.emit(\"x\", 1, 2); assert(got.join() === \"3,2nd\", \"emit\")"
+     },
+     {
+      "t": "listeners are per object",
+      "verify": "const a = withEvents({}), b = withEvents({}); let n = 0; a.on(\"x\", () => n++); b.emit(\"x\"); assert(n === 0, \"shared listeners\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Compose small behaviours into objects; inherit only for real is-a. Watch name clashes when mixing.",
+    "mistakes": [
+     "Deep inheritance for \"can do\" abilities.",
+     "Two mixins defining the same method silently."
+    ]
+   }
+  },
+  {
+   "id": "symbol",
+   "prereqs": [
+    "mixins"
+   ],
+   "dryRun": {
+    "title": "Symbols as keys",
+    "columns": [
+     "key",
+     "in Object.keys?",
+     "in JSON.stringify?",
+     "in for…in?"
+    ],
+    "rows": [
+     [
+      "\"name\" (string)",
+      "yes",
+      "yes",
+      "yes"
+     ],
+     [
+      "Symbol(\"id\")",
+      "no",
+      "no",
+      "no"
+     ],
+     [
+      "Symbol.iterator",
+      "no",
+      "no",
+      "no"
+     ],
+     [
+      "Object.getOwnPropertySymbols",
+      "—",
+      "—",
+      "lists them"
+     ]
+    ],
+    "hit": 1,
+    "note": "A <b>Symbol</b> is a unique, non-string key. Two symbols are never equal, even with the same description. Well-known symbols like <code>Symbol.iterator</code> and <code>Symbol.toPrimitive</code> let you hook into language behaviour."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log(Symbol('a') === Symbol('a'), Symbol.for('a') === Symbol.for('a'))</code></pre>",
+     "opts": [
+      "<code>false true</code>",
+      "<code>true true</code>",
+      "<code>false false</code>",
+      "<code>true false</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Symbol() always makes a new one. Symbol.for uses a global registry, so the same key gives the same symbol."
+     ],
+     "exec": "console.log(Symbol('a') === Symbol('a'), Symbol.for('a') === Symbol.for('a'))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const id = Symbol('id')\nconst u = { name: 'A', [id]: 7 }\nconsole.log(Object.keys(u).length, JSON.stringify(u), u[id])</code></pre>",
+     "opts": [
+      "<code>2 {\"name\":\"A\"} 7</code>",
+      "<code>1 {\"name\":\"A\",\"id\":7} 7</code>",
+      "<code>1 {\"name\":\"A\"} 7</code>",
+      "<code>1 {} undefined</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Symbol keys are hidden from keys and JSON, but you can read them if you have the symbol."
+     ],
+     "exec": "const id = Symbol('id')\nconst u = { name: 'A', [id]: 7 }\nconsole.log(Object.keys(u).length, JSON.stringify(u), u[id])"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const money = { amount: 5, [Symbol.toPrimitive](hint) { return hint === 'number' ? this.amount : '₹' + this.amount } }\nconsole.log(+money, `${money}`)</code></pre>",
+     "opts": [
+      "<code>NaN ₹5</code>",
+      "<code>5 5</code>",
+      "<code>₹5 ₹5</code>",
+      "<code>5 ₹5</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "toPrimitive receives a hint: \"number\" for unary +, \"string\" for template literals."
+     ],
+     "exec": "const money = { amount: 5, [Symbol.toPrimitive](hint) { return hint === 'number' ? this.amount : '₹' + this.amount } }\nconsole.log(+money, `${money}`)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>class Temp { static [Symbol.hasInstance](x) { return typeof x === 'number' } }\nconsole.log(5 instanceof Temp)</code></pre>",
+     "opts": [
+      "<code>false</code>",
+      "<code>true</code>",
+      "<code>TypeError</code>",
+      "<code>undefined</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Symbol.hasInstance customises instanceof. Rarely needed, but it shows how well-known symbols work."
+     ],
+     "exec": "class Temp { static [Symbol.hasInstance](x) { return typeof x === 'number' } }\nconsole.log(5 instanceof Temp)"
+    },
+    {
+     "tag": "Use",
+     "q": "What is a good everyday use of a Symbol?",
+     "opts": [
+      "Replacing strings for speed",
+      "Making values immutable",
+      "A hidden metadata key on objects you do not own, which cannot clash with their own keys",
+      "Encrypting data"
+     ],
+     "ans": 2,
+     "why": [
+      "A symbol key can never collide with a library's string keys."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>makeMoney(amount, currency)</code> returning an object that works with <code>+m</code> (the number), <code>`${m}`</code> (like <code>\"5.00 INR\"</code>) and <code>m + 1</code> (a number), using <code>Symbol.toPrimitive</code>.",
+    "examples": [
+     "+makeMoney(5, \"INR\")  // 5",
+     "`${makeMoney(5, \"INR\")}`  // \"5.00 INR\""
+    ],
+    "hint": "hint is \"number\", \"string\" or \"default\"; return the number for \"number\" and \"default\".",
+    "fn": "makeMoney",
+    "starter": "function makeMoney(amount, currency) {\n  // your code\n}",
+    "solution": "function makeMoney(amount, currency) {\n  return {\n    amount, currency,\n    [Symbol.toPrimitive](hint) { return hint === 'string' ? `${amount.toFixed(2)} ${currency}` : amount },\n  }\n}",
+    "checks": [
+     {
+      "t": "unary plus gives the number",
+      "verify": "assert(+makeMoney(5, \"INR\") === 5, \"number\")"
+     },
+     {
+      "t": "template literal gives the label",
+      "verify": "assert(`${makeMoney(5, \"INR\")}` === \"5.00 INR\", \"string\")"
+     },
+     {
+      "t": "arithmetic works",
+      "verify": "assert(makeMoney(5, \"INR\") + 1 === 6 && makeMoney(2, \"X\") * 3 === 6, \"default\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Symbols are unique keys, hidden from keys/JSON. Well-known symbols (iterator, toPrimitive, hasInstance) hook into the language.",
+    "mistakes": [
+     "Expecting two Symbol(\"x\") to be equal.",
+     "Expecting symbol-keyed data to survive JSON.stringify."
+    ]
+   }
+  },
+  {
+   "id": "iterators-protocol",
+   "prereqs": [
+    "symbol"
+   ],
+   "dryRun": {
+    "title": "for (const x of range(1, 3))",
+    "columns": [
+     "step",
+     "next() returns",
+     "loop does"
+    ],
+    "rows": [
+     [
+      "1",
+      "{ value: 1, done: false }",
+      "x = 1"
+     ],
+     [
+      "2",
+      "{ value: 2, done: false }",
+      "x = 2"
+     ],
+     [
+      "3",
+      "{ value: 3, done: false }",
+      "x = 3"
+     ],
+     [
+      "4",
+      "{ value: undefined, done: true }",
+      "stops"
+     ]
+    ],
+    "hit": 3,
+    "note": "An object is <b>iterable</b> if it has a <code>[Symbol.iterator]()</code> method returning an <b>iterator</b>: an object with <code>next()</code> that returns <code>{ value, done }</code>. for…of, spread and destructuring all use this protocol."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const it = [10, 20][Symbol.iterator]()\nconsole.log(JSON.stringify([it.next(), it.next(), it.next()]))</code></pre>",
+     "opts": [
+      "<code>[{\"value\":10,\"done\":false},{\"value\":20,\"done\":false},{\"done\":true}]</code>",
+      "<code>[10,20,null]</code>",
+      "<code>[{\"value\":10},{\"value\":20},{}]</code>",
+      "<code>[{\"value\":10,\"done\":false},{\"value\":20,\"done\":false},{\"value\":null,\"done\":true}]</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "The third call returns { value: undefined, done: true }; JSON drops undefined values, so it shows {\"done\":true}."
+     ],
+     "exec": "const it = [10, 20][Symbol.iterator]()\nconsole.log(JSON.stringify([it.next(), it.next(), it.next()]))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const obj = { a: 1 }\ntry { for (const x of obj) {} } catch (e) { console.log(e.name) }</code></pre>",
+     "opts": [
+      "<code>undefined</code>",
+      "<code>ReferenceError</code>",
+      "<code>TypeError</code>",
+      "<code>SyntaxError</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Plain objects are not iterable. Use Object.entries(obj) or for…in."
+     ],
+     "exec": "const obj = { a: 1 }\ntry { for (const x of obj) {} } catch (e) { console.log(e.name) }"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log([...'héllo'].length, [...new Set('aab')].join(''))</code></pre>",
+     "opts": [
+      "<code>5 ab</code>",
+      "<code>6 aab</code>",
+      "<code>5 aab</code>",
+      "<code>6 ab</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Strings and Sets are iterable. Spread uses the iterator."
+     ],
+     "exec": "console.log([...'héllo'].length, [...new Set('aab')].join(''))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const r = { from: 1, to: 3, [Symbol.iterator]() { let c = this.from, t = this.to; return { next: () =&gt; c &lt;= t ? { value: c++, done: false } : { value: undefined, done: true } } } }\nconsole.log([...r].join(','), Math.max(...r))</code></pre>",
+     "opts": [
+      "<code>1,2 2</code>",
+      "<code>undefined NaN</code>",
+      "<code>1,2,3,4 4</code>",
+      "<code>1,2,3 3</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "A hand-written iterable works with spread and with function arguments."
+     ],
+     "exec": "const r = { from: 1, to: 3, [Symbol.iterator]() { let c = this.from, t = this.to; return { next: () => c <= t ? { value: c++, done: false } : { value: undefined, done: true } } } }\nconsole.log([...r].join(','), Math.max(...r))"
+    },
+    {
+     "tag": "Lazy",
+     "q": "Why is the iterator protocol \"lazy\"?",
+     "opts": [
+      "It caches all values first",
+      "Values are produced one by one when next() is called, so a sequence can even be infinite",
+      "It runs in a worker",
+      "It only works with arrays"
+     ],
+     "ans": 1,
+     "why": [
+      "Nothing is computed until someone asks for the next value."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Make <code>range(start, end, step = 1)</code> return an <b>iterable</b> object (not an array) so that <code>[...range(1, 5)]</code> is <code>[1, 2, 3, 4]</code> (end excluded) and it can be iterated more than once.",
+    "examples": [
+     "[...range(1, 5)]  // [1, 2, 3, 4]",
+     "[...range(0, 10, 3)]  // [0, 3, 6, 9]"
+    ],
+    "hint": "Return { [Symbol.iterator]() { let c = start; return { next() {...} } } }. A fresh counter per call makes it reusable.",
+    "fn": "range",
+    "starter": "function range(start, end, step = 1) {\n  // your code\n}",
+    "solution": "function range(start, end, step = 1) {\n  return {\n    [Symbol.iterator]() {\n      let c = start\n      return { next: () => (c < end ? { value: (c += step) - step, done: false } : { value: undefined, done: true }) }\n    },\n  }\n}",
+    "checks": [
+     {
+      "t": "spreads to the right values",
+      "verify": "assert(JSON.stringify([...range(1, 5)]) === \"[1,2,3,4]\" && JSON.stringify([...range(0, 10, 3)]) === \"[0,3,6,9]\", \"values\")"
+     },
+     {
+      "t": "it is not an array",
+      "verify": "assert(!Array.isArray(range(0, 2)) && typeof range(0, 2)[Symbol.iterator] === \"function\", \"iterable\")"
+     },
+     {
+      "t": "can be iterated twice",
+      "verify": "const r = range(0, 3); assert([...r].length === 3 && [...r].length === 3, \"reusable\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Iterable = has [Symbol.iterator]() returning { next() → { value, done } }. for…of, spread and destructuring use it.",
+    "mistakes": [
+     "for…of on a plain object.",
+     "Returning the same exhausted iterator every time, so the object can be looped only once."
+    ]
+   }
+  },
+  {
+   "id": "generators",
+   "prereqs": [
+    "iterators-protocol"
+   ],
+   "dryRun": {
+    "title": "function* g() { const x = yield 1; yield x * 2 }",
+    "columns": [
+     "call",
+     "runs until",
+     "returns"
+    ],
+    "rows": [
+     [
+      "it = g()",
+      "nothing runs yet",
+      "an iterator"
+     ],
+     [
+      "it.next()",
+      "first yield",
+      "{ value: 1, done: false }"
+     ],
+     [
+      "it.next(5)",
+      "x = 5, second yield",
+      "{ value: 10, done: false }"
+     ],
+     [
+      "it.next()",
+      "end of function",
+      "{ value: undefined, done: true }"
+     ]
+    ],
+    "hit": 2,
+    "note": "A generator function (<code>function*</code>) returns an iterator. Each <code>yield</code> pauses it; <code>next(v)</code> resumes it and v becomes the value of that yield. It is the easiest way to write an iterable."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function* g() { console.log('start'); yield 1; yield 2 }\nconst it = g()\nconsole.log('created')\nconsole.log(it.next().value)</code></pre>",
+     "opts": [
+      "<code>start created 1</code>",
+      "<code>created start 1</code>",
+      "<code>created 1</code>",
+      "<code>1 start created</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Calling a generator runs nothing. The body starts at the first next()."
+     ],
+     "exec": "function* g() { console.log('start'); yield 1; yield 2 }\nconst it = g()\nconsole.log('created')\nconsole.log(it.next().value)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function* nat() { let n = 1; while (true) yield n++ }\nconst first3 = []\nfor (const n of nat()) { if (n &gt; 3) break; first3.push(n) }\nconsole.log(first3.join(''))</code></pre>",
+     "opts": [
+      "<code>infinite loop</code>",
+      "<code>1234</code>",
+      "<code>undefined</code>",
+      "<code>123</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "An infinite generator is fine: values are made on demand and break stops it."
+     ],
+     "exec": "function* nat() { let n = 1; while (true) yield n++ }\nconst first3 = []\nfor (const n of nat()) { if (n > 3) break; first3.push(n) }\nconsole.log(first3.join(''))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function* g() { const a = yield 'q1'; const b = yield 'q2'; return a + b }\nconst it = g()\nit.next(); it.next(2)\nconsole.log(it.next(3).value)</code></pre>",
+     "opts": [
+      "<code>5</code>",
+      "<code>5undefined</code>",
+      "<code>NaN</code>",
+      "<code>2</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "The first next() starts it (its argument is ignored). 2 goes into a, 3 into b, return gives 5."
+     ],
+     "exec": "function* g() { const a = yield 'q1'; const b = yield 'q2'; return a + b }\nconst it = g()\nit.next(); it.next(2)\nconsole.log(it.next(3).value)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function* inner() { yield 'a'; yield 'b' }\nfunction* outer() { yield 1; yield* inner(); yield 2 }\nconsole.log([...outer()].join(''))</code></pre>",
+     "opts": [
+      "<code>12</code>",
+      "<code>1inner2</code>",
+      "<code>1ab2</code>",
+      "<code>1[object Generator]2</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "<code>yield*</code> delegates to another iterable."
+     ],
+     "exec": "function* inner() { yield 'a'; yield 'b' }\nfunction* outer() { yield 1; yield* inner(); yield 2 }\nconsole.log([...outer()].join(''))"
+    },
+    {
+     "tag": "Return",
+     "q": "What does a <code>return 9</code> inside a generator do in a for…of loop?",
+     "opts": [
+      "for…of receives 9 as the last item",
+      "It throws",
+      "It restarts the generator",
+      "It ends the generator; for…of ignores the returned value"
+     ],
+     "ans": 3,
+     "why": [
+      "The return value appears only as { value: 9, done: true } from next()."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write a generator <code>flattenDeep(arr)</code> that yields every non-array value of a nested array, in order, at any depth.",
+    "examples": [
+     "[...flattenDeep([1, [2, [3, [4]]]])]  // [1, 2, 3, 4]",
+     "[...flattenDeep([])]  // []"
+    ],
+    "hint": "For each item: if it is an array, <code>yield*</code> flattenDeep(item); else yield it.",
+    "fn": "flattenDeep",
+    "starter": "function* flattenDeep(arr) {\n  // your code\n}",
+    "solution": "function* flattenDeep(arr) {\n  for (const x of arr) {\n    if (Array.isArray(x)) yield* flattenDeep(x)\n    else yield x\n  }\n}",
+    "checks": [
+     {
+      "t": "flattens any depth",
+      "verify": "assert(JSON.stringify([...flattenDeep([1, [2, [3, [4]]]])]) === \"[1,2,3,4]\", \"deep\")"
+     },
+     {
+      "t": "empty arrays vanish",
+      "verify": "assert(JSON.stringify([...flattenDeep([[], [[]], 5])]) === \"[5]\", \"empty\")"
+     },
+     {
+      "t": "it is lazy (a generator)",
+      "verify": "const it = flattenDeep([1, 2]); assert(typeof it.next === \"function\" && it.next().value === 1, \"lazy\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "function* returns a pausable iterator: yield gives a value out, next(v) sends one in, yield* delegates.",
+    "mistakes": [
+     "Expecting the body to run when you call the generator.",
+     "Forgetting that the first next() argument is ignored."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Generate Fibonacci Sequence",
+     "diff": "easy",
+     "lc": "generate-fibonacci-sequence"
+    },
+    {
+     "name": "Nested Array Generator",
+     "diff": "medium",
+     "lc": "nested-array-generator"
+    }
+   ]
+  },
+  {
+   "id": "proxy-reflect",
+   "prereqs": [
+    "generators"
+   ],
+   "dryRun": {
+    "title": "new Proxy(target, { get, set })",
+    "columns": [
+     "operation",
+     "handler trap",
+     "default if no trap"
+    ],
+    "rows": [
+     [
+      "p.name",
+      "get(target, \"name\", receiver)",
+      "target.name"
+     ],
+     [
+      "p.age = 5",
+      "set(target, \"age\", 5, receiver)",
+      "target.age = 5"
+     ],
+     [
+      "\"x\" in p",
+      "has(target, \"x\")",
+      "\"x\" in target"
+     ],
+     [
+      "delete p.x",
+      "deleteProperty(target, \"x\")",
+      "delete target.x"
+     ]
+    ],
+    "hit": 1,
+    "note": "A <b>Proxy</b> intercepts basic operations on an object. <b>Reflect</b> has a method for each trap that does the default behaviour, so a trap can add logic and then forward with <code>Reflect.set(...arguments)</code>. Vue 3 reactivity is built on this."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const p = new Proxy({}, { get: (t, k) =&gt; k in t ? t[k] : 'missing:' + String(k) })\np.a = 1\nconsole.log(p.a, p.b)</code></pre>",
+     "opts": [
+      "<code>1 undefined</code>",
+      "<code>1 missing:b</code>",
+      "<code>undefined undefined</code>",
+      "<code>1 missing:a</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "The get trap returns a default for unknown keys. Set has no trap, so it goes straight to the target."
+     ],
+     "exec": "const p = new Proxy({}, { get: (t, k) => k in t ? t[k] : 'missing:' + String(k) })\np.a = 1\nconsole.log(p.a, p.b)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const log = []\nconst p = new Proxy({}, { set(t, k, v) { log.push(k); return Reflect.set(t, k, v) } })\np.x = 1; p.y = 2\nconsole.log(log.join(), JSON.stringify(p))</code></pre>",
+     "opts": [
+      "<code>x,y {}</code>",
+      "<code>{} {\"x\":1,\"y\":2}</code>",
+      "<code>x,y {\"x\":1,\"y\":2}</code>",
+      "<code> {\"x\":1,\"y\":2}</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "The trap logs and then forwards to Reflect.set, so the values really land on the target."
+     ],
+     "exec": "const log = []\nconst p = new Proxy({}, { set(t, k, v) { log.push(k); return Reflect.set(t, k, v) } })\np.x = 1; p.y = 2\nconsole.log(log.join(), JSON.stringify(p))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>'use strict'\nconst p = new Proxy({}, { set: () =&gt; false })\ntry { p.a = 1 } catch (e) { console.log(e.name) }</code></pre>",
+     "opts": [
+      "<code>TypeError</code>",
+      "<code>undefined</code>",
+      "<code>RangeError</code>",
+      "<code>SyntaxError</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "A set trap returning false means \"refused\". In strict mode that throws a TypeError."
+     ],
+     "exec": "'use strict'\nconst p = new Proxy({}, { set: () => false })\ntry { p.a = 1 } catch (e) { console.log(e.name) }"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const target = { n: 1 }\nconst p = new Proxy(target, {})\np.n = 2\nconsole.log(target.n, p === target)</code></pre>",
+     "opts": [
+      "<code>1 false</code>",
+      "<code>2 true</code>",
+      "<code>2 false</code>",
+      "<code>1 true</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "An empty handler forwards everything to the target. The proxy is a different object."
+     ],
+     "exec": "const target = { n: 1 }\nconst p = new Proxy(target, {})\np.n = 2\nconsole.log(target.n, p === target)"
+    },
+    {
+     "tag": "Use",
+     "q": "Which is a real use of Proxy?",
+     "opts": [
+      "Validation or change tracking on an object without changing the code that uses it",
+      "Making loops faster",
+      "Copying an object deeply",
+      "Running code in a worker"
+     ],
+     "ans": 0,
+     "why": [
+      "Reactivity (Vue), validation, logging, default values, negative array indexes."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>validated(schema)</code>: return a Proxy over an empty object where setting a key not in schema throws <code>Error(\"unknown key\")</code>, and setting a value of the wrong <code>typeof</code> throws <code>TypeError</code>. Valid sets work normally.",
+    "examples": [
+     "const u = validated({ age: \"number\" }); u.age = 3; u.age  // 3",
+     "u.age = \"3\"  // throws TypeError"
+    ],
+    "hint": "In the set trap: check <code>k in schema</code>, then <code>typeof v === schema[k]</code>, then <code>return Reflect.set(t, k, v)</code>.",
+    "fn": "validated",
+    "starter": "function validated(schema) {\n  // your code\n}",
+    "solution": "function validated(schema) {\n  return new Proxy({}, {\n    set(t, k, v) {\n      if (!(k in schema)) throw new Error('unknown key')\n      if (typeof v !== schema[k]) throw new TypeError(`${String(k)} must be ${schema[k]}`)\n      return Reflect.set(t, k, v)\n    },\n  })\n}",
+    "checks": [
+     {
+      "t": "valid sets work",
+      "verify": "const u = validated({ age: \"number\", name: \"string\" }); u.age = 3; u.name = \"a\"; assert(u.age === 3 && u.name === \"a\", \"valid\")"
+     },
+     {
+      "t": "wrong type throws TypeError",
+      "verify": "const u = validated({ age: \"number\" }); let e; try { u.age = \"3\" } catch (x) { e = x }; assert(e instanceof TypeError && u.age === undefined, \"type\")"
+     },
+     {
+      "t": "unknown keys throw",
+      "verify": "const u = validated({ age: \"number\" }); let e; try { u.zzz = 1 } catch (x) { e = x }; assert(e && e.message === \"unknown key\", \"unknown\")"
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Proxy intercepts get/set/has/delete…; Reflect does the default for each. Forward with Reflect inside traps.",
+    "mistakes": [
+     "Forgetting to return true (or Reflect.set) from a set trap.",
+     "Using proxies on hot paths without measuring: they are slower."
+    ]
+   }
+  }
+ ]
+}

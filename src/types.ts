@@ -18,6 +18,8 @@ export interface Lesson {
   qa?: { q: string; a: string }[]
   answer?: string
   kind?: 'problem'
+  /** DSA priority label: must-do / important / optional */
+  tier?: 'must' | 'important' | 'optional'
   diff?: string
 }
 export interface Unit {
