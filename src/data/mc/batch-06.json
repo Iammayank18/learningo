@@ -1,0 +1,1384 @@
+{
+ "problems": [
+  {
+   "id": "mini-redux",
+   "diff": "Hard",
+   "fn": "createStore",
+   "signature": "createStore(reducer, preloadedState, enhancer) / combineReducers(map) / applyMiddleware(...mws)",
+   "learn": {
+    "what": [
+     "Redux keeps the whole app state in one <b>store</b>. You never change it directly: you <code>dispatch</code> an <b>action</b> (<code>{ type: \"todo/add\" }</code>), and a pure <b>reducer</b> <code>(state, action) =&gt; newState</code> computes the next state.",
+     "The store has three methods: <code>getState</code>, <code>dispatch</code> and <code>subscribe</code>. On creation it dispatches an <code>@@INIT</code> action so reducers can return their default state.",
+     "<code>combineReducers</code> splits state by key, one reducer per slice. <code>applyMiddleware</code> wraps <code>dispatch</code> so code can run between \"action sent\" and \"reducer runs\" (logging, async thunks)."
+    ],
+    "how": {
+     "steps": [
+      "<code>createStore</code>: if an enhancer is given, return <code>enhancer(createStore)(reducer, preloadedState)</code>.",
+      "Keep <code>state</code> and a list of listeners. <code>dispatch(action)</code>: check it is a plain object with a <code>type</code>, run the reducer, freeze the new state, call every listener, return the action.",
+      "<code>subscribe(fn)</code> adds a listener and returns an unsubscribe function. Dispatch <code>{ type: \"@@INIT\" }</code> at the end of createStore.",
+      "<code>combineReducers(map)</code>: returns a reducer that calls each slice reducer with <code>state[key]</code> and builds a new object.",
+      "<code>applyMiddleware(...mws)</code>: create the store, give each middleware <code>{ getState, dispatch }</code>, and compose them around the real dispatch: <code>mw(api)(next)(action)</code>."
+     ],
+     "diagram": "dispatch(action)\n  -> logger(next) -> thunk(next) -> real dispatch\n                                       reducer(state, action) -> newState\n                                       notify listeners\nmiddleware shape:  store => next => action => { ...; return next(action) }"
+    },
+    "where": [
+     [
+      "Redux / Redux Toolkit",
+      "This is the core of Redux; RTK adds helpers on top."
+     ],
+     [
+      "Undo / time travel",
+      "Pure reducers + action logs make replay easy."
+     ],
+     [
+      "useReducer",
+      "React's <code>useReducer</code> is the same reducer idea for one component."
+     ],
+     [
+      "Not a fit",
+      "Small apps or server data (use a data-fetching library); a global store adds ceremony."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Concept",
+     "q": "Why must a reducer return a <b>new</b> object instead of changing <code>state</code>?",
+     "opts": [
+      "Subscribers (like React) detect changes with <code>===</code>; mutating keeps the same reference, so nothing updates",
+      "Objects cannot be changed in JS",
+      "It is faster",
+      "Redux deep-clones anyway"
+     ],
+     "ans": 0,
+     "why": [
+      "Change detection compares references. Same object = \"no change\".",
+      "Pure reducers also make testing and time travel possible."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const mw = (name, log) =&gt; () =&gt; (next) =&gt; (action) =&gt; { log.push(name); return next(action) }\nconst log = []\nconst run = [mw(\"A\", log), mw(\"B\", log)].reduceRight((next, m) =&gt; m()(next), () =&gt; log.push(\"reducer\"))\nrun({})\nconsole.log(log.join(\" \"))</code></pre>",
+     "opts": [
+      "<code>B A reducer</code>",
+      "<code>A B reducer</code>",
+      "<code>reducer A B</code>",
+      "<code>A reducer B</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Middlewares are composed from the right, so the first one listed is the outermost: it runs first.",
+      "Each calls <code>next</code> to pass the action on; the real dispatch is last."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "What does a thunk middleware do with <code>dispatch((dispatch) =&gt; …)</code>?",
+     "opts": [
+      "Throws, actions must be objects",
+      "Stores the function in state",
+      "Calls the function with <code>dispatch</code> and <code>getState</code> instead of passing it to the reducer",
+      "Ignores it"
+     ],
+     "ans": 2,
+     "why": [
+      "A thunk lets you dispatch later, after an async call finishes.",
+      "Without the middleware, the store rejects anything that is not a plain object with a <code>type</code>."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "Why dispatch <code>@@INIT</code> when the store is created?",
+     "opts": [
+      "To log the start",
+      "So each reducer runs once and returns its default state (state = initial argument)",
+      "Redux needs at least one action in history",
+      "To freeze the state"
+     ],
+     "ans": 1,
+     "why": [
+      "Reducers usually look like <code>(state = initial, action)</code>. Calling them once with an unknown action fills in those defaults.",
+      "No reducer handles <code>@@INIT</code>, so each just returns its default."
+     ]
+    }
+   ],
+   "pseudo": "createStore(reducer, preloadedState, enhancer):\n  if enhancer: return enhancer(createStore)(reducer, preloadedState)\n  state = preloadedState; listeners = []\n  getState() = state\n  dispatch(action):\n    if action is not a plain object with a type -> throw\n    state = freeze(reducer(state, action))\n    for l of copy of listeners: l()\n    return action\n  subscribe(l): add; return () => remove l\n  dispatch({ type: '@@INIT' })\n  return { getState, dispatch, subscribe }\n\ncombineReducers(map) = (state = {}, action) => { for each key: next[key] = map[key](state[key], action) }\n\napplyMiddleware(...mws) = (create) => (reducer, pre) =>\n  store = create(reducer, pre)\n  api = { getState: store.getState, dispatch: (a) => dispatch(a) }\n  dispatch = mws.map(m => m(api)).reduceRight((next, m) => m(next), store.dispatch)\n  return { ...store, dispatch }",
+   "watch": [
+    "How do reducers get their default state?",
+    "What is the exact shape of a middleware?",
+    "Inside a middleware, which <code>dispatch</code> does <code>api.dispatch</code> call: the raw one or the wrapped one?"
+   ],
+   "build": {
+    "minutes": 45,
+    "problem": "Implement <b>createStore</b>, <b>combineReducers</b> and <b>applyMiddleware</b>.",
+    "reqs": [
+     "<code>createStore(reducer, preloadedState?, enhancer?)</code> returns <code>{ getState, dispatch, subscribe }</code> and dispatches <code>{ type: \"@@INIT\" }</code> at once.",
+     "<code>dispatch</code> accepts only plain objects with a <code>type</code> (else throws), runs the reducer, notifies subscribers and returns the action. State is frozen.",
+     "<code>subscribe</code> returns an unsubscribe function.",
+     "<code>combineReducers</code> gives each reducer its own slice.",
+     "<code>applyMiddleware(...mws)</code> is an enhancer; middleware shape is <code>api =&gt; next =&gt; action</code>, and <code>api.dispatch</code> goes through the whole chain."
+    ],
+    "checks": [
+     {
+      "t": "Initial state from @@INIT or preloadedState",
+      "test": "const counter = (s = 0, a) => (a.type === 'inc' ? s + 1 : s)\nconsole.log(createStore(counter).getState(), createStore(counter, 5).getState()) // expected: 0 5",
+      "verify": "const counter = (s = 0, a) => (a.type === 'inc' ? s + 1 : s); assert(createStore(counter).getState() === 0, 'default state'); assert(createStore(counter, 5).getState() === 5, 'preloaded state'); const seen = []; createStore((s = {}, a) => { seen.push(a.type); return s }); assert(seen[0] === '@@INIT', 'should dispatch @@INIT on creation')",
+      "gap": "Dispatch <code>{ type: \"@@INIT\" }</code> at the end of createStore."
+     },
+     {
+      "t": "dispatch runs the reducer, notifies, returns the action",
+      "test": "const store = createStore((s = 0, a) => (a.type === 'inc' ? s + 1 : s))\nstore.subscribe(() => console.log('now', store.getState()))\nstore.dispatch({ type: 'inc' }) // expected: now 1",
+      "verify": "const store = createStore((s = 0, a) => (a.type === 'inc' ? s + 1 : s)); const seen = []; const off = store.subscribe(() => seen.push(store.getState())); const a = { type: 'inc' }; assert(store.dispatch(a) === a, 'dispatch should return the action'); store.dispatch(a); off(); store.dispatch(a); assert(seen.join() === '1,2', 'listener saw ' + seen.join()); assert(store.getState() === 3, 'state ' + store.getState())",
+      "gap": "After the reducer, call every listener; <code>subscribe</code> returns a function that removes it."
+     },
+     {
+      "t": "Rejects bad actions",
+      "test": "try { store.dispatch('inc') } catch (e) { console.log('error') } // expected: error",
+      "verify": "const store = createStore((s = 0) => s); let a = false; let b = false; try { store.dispatch('inc') } catch (e) { a = true } try { store.dispatch({ foo: 1 }) } catch (e) { b = true } assert(a && b, 'non-objects and actions without type must throw'); assert(store.dispatch({ type: 'ok' }).type === 'ok', 'a good action should still work')",
+      "gap": "Check <code>typeof action === \"object\"</code>, not <code>null</code>, and <code>\"type\" in action</code>."
+     },
+     {
+      "t": "State is frozen",
+      "test": "const store = createStore((s = { n: 0 }) => s)\nconsole.log(Object.isFrozen(store.getState())) // expected: true",
+      "verify": "const store = createStore((s = { n: 0 }, a) => (a.type === 'x' ? { n: s.n + 1 } : s)); assert(Object.isFrozen(store.getState()), 'initial state should be frozen'); store.dispatch({ type: 'x' }); assert(Object.isFrozen(store.getState()) && store.getState().n === 1, 'new state should be frozen')",
+      "gap": "Wrap the reducer result: <code>state = Object.freeze(reducer(state, action))</code> (objects only)."
+     },
+     {
+      "t": "combineReducers splits state by key",
+      "test": "const root = combineReducers({ count: (s = 0, a) => (a.type === 'inc' ? s + 1 : s), user: (s = null, a) => (a.type === 'login' ? a.name : s) })\nconst st = createStore(root); st.dispatch({ type: 'inc' }); st.dispatch({ type: 'login', name: 'Asha' })\nconsole.log(st.getState()) // expected: { count: 1, user: 'Asha' }",
+      "verify": "const root = combineReducers({ count: (s = 0, a) => (a.type === 'inc' ? s + 1 : s), user: (s = null, a) => (a.type === 'login' ? a.name : s) }); const st = createStore(root); assert(JSON.stringify(st.getState()) === '{\"count\":0,\"user\":null}', 'initial ' + JSON.stringify(st.getState())); st.dispatch({ type: 'inc' }); st.dispatch({ type: 'login', name: 'Asha' }); assert(JSON.stringify(st.getState()) === '{\"count\":1,\"user\":\"Asha\"}', 'got ' + JSON.stringify(st.getState()))",
+      "gap": "Return <code>(state = {}, action) =&gt;</code> an object where each key is <code>reducers[key](state[key], action)</code>."
+     },
+     {
+      "t": "applyMiddleware runs middleware in order and supports thunks",
+      "test": "const log = []\nconst logger = () => (next) => (action) => { log.push(typeof action === 'function' ? 'fn' : action.type); return next(action) }\nconst thunk = ({ dispatch, getState }) => (next) => (action) => (typeof action === 'function' ? action(dispatch, getState) : next(action))\nconst st = createStore((s = 0, a) => (a.type === 'inc' ? s + 1 : s), undefined, applyMiddleware(logger, thunk))\nst.dispatch((dispatch) => { dispatch({ type: 'inc' }); dispatch({ type: 'inc' }) })\nconsole.log(st.getState(), log) // expected: 2 ['fn', 'inc', 'inc']",
+      "verify": "const log = []; const logger = () => (next) => (action) => { log.push(typeof action === 'function' ? 'fn' : action.type); return next(action) }; const thunk = ({ dispatch, getState }) => (next) => (action) => (typeof action === 'function' ? action(dispatch, getState) : next(action)); const st = createStore((s = 0, a) => (a.type === 'inc' ? s + 1 : s), undefined, applyMiddleware(logger, thunk)); st.dispatch((dispatch, getState) => { dispatch({ type: 'inc' }); dispatch({ type: 'inc' }); log.push('state ' + getState()) }); assert(st.getState() === 2, 'state ' + st.getState()); assert(log.join() === 'fn,inc,inc,state 2', 'log ' + log.join())",
+      "gap": "Compose with <code>reduceRight</code> around the store's dispatch, and make <code>api.dispatch</code> call the final composed dispatch."
+     }
+    ]
+   },
+   "solution": "function createStore(reducer, preloadedState, enhancer) {\n  if (typeof enhancer === 'function') return enhancer(createStore)(reducer, preloadedState);\n  const freeze = (v) => (v && typeof v === 'object' ? Object.freeze(v) : v);\n  let state = freeze(preloadedState);\n  let listeners = [];\n\n  const getState = () => state;\n  const dispatch = (action) => {\n    if (!action || typeof action !== 'object' || Array.isArray(action) || !('type' in action)) {\n      throw new Error('Actions must be plain objects with a type');\n    }\n    state = freeze(reducer(state, action));\n    for (const l of [...listeners]) l();\n    return action;\n  };\n  const subscribe = (listener) => {\n    listeners.push(listener);\n    return () => { listeners = listeners.filter((l) => l !== listener); };\n  };\n\n  dispatch({ type: '@@INIT' });\n  return { getState, dispatch, subscribe };\n}\n\nfunction combineReducers(reducers) {\n  return (state = {}, action) => {\n    const next = {};\n    for (const key of Object.keys(reducers)) next[key] = reducers[key](state[key], action);\n    return next;\n  };\n}\n\nfunction applyMiddleware(...middlewares) {\n  return (create) => (reducer, preloadedState) => {\n    const store = create(reducer, preloadedState);\n    let dispatch = () => { throw new Error('Dispatching while building middleware'); };\n    const api = { getState: store.getState, dispatch: (action) => dispatch(action) };\n    dispatch = middlewares.map((m) => m(api)).reduceRight((next, m) => m(next), store.dispatch);\n    return { ...store, dispatch };\n  };\n}",
+   "notes": [
+    "The store is tiny: state, a reducer, and a list of listeners.",
+    "<code>@@INIT</code> lets every reducer fill in its default state.",
+    "Freezing the state makes accidental mutation fail loudly (in strict mode) or silently not happen.",
+    "Middleware is function composition: the first listed runs first, the real dispatch runs last.",
+    "<code>api.dispatch</code> points to the composed dispatch, so a thunk's dispatch goes through every middleware again."
+   ],
+   "next": [
+    "Add <code>replaceReducer</code> for code splitting.",
+    "Write a <code>useSelector</code> hook with <code>useSyncExternalStore</code> on top of this store.",
+    "Build <code>createSlice</code>, the Redux Toolkit helper that generates action creators."
+   ]
+  },
+  {
+   "id": "reactive",
+   "diff": "Hard",
+   "fn": "reactive",
+   "signature": "reactive(obj) / watchEffect(fn) / computed(getter)",
+   "learn": {
+    "what": [
+     "In Vue, writing <code>state.count++</code> updates the screen by itself. The trick: <code>reactive(obj)</code> returns a <b>Proxy</b> that notices every read and every write.",
+     "While <code>watchEffect(fn)</code> runs <code>fn</code>, every property <code>fn</code> reads is recorded as a <b>dependency</b>. Later, writing one of those properties re-runs <code>fn</code>. Nothing else does.",
+     "<code>computed(getter)</code> is a lazy, cached value: it recomputes only when one of its dependencies changed and someone reads <code>.value</code>."
+    ],
+    "how": {
+     "steps": [
+      "Keep a global <code>activeEffect</code> and a <code>WeakMap</code>: target → Map(key → Set of effects).",
+      "Proxy <code>get</code>: if an effect is active, add it to the Set for <code>(target, key)</code> (<b>track</b>). If the value is an object, return <code>reactive(value)</code> too.",
+      "Proxy <code>set</code>: if the value really changed, store it and re-run every effect in that Set (<b>trigger</b>).",
+      "<code>watchEffect(fn)</code>: wrap <code>fn</code> in a runner that first removes itself from its old dependency Sets (cleanup), sets <code>activeEffect</code>, runs <code>fn</code>, then restores the previous active effect. Run it once.",
+      "<code>computed(getter)</code>: keep <code>dirty = true</code> and a cached value; an inner effect marks it dirty (and triggers readers of <code>.value</code>) when its dependencies change."
+     ],
+     "diagram": "const s = reactive({ a: 1, b: 2 })\nwatchEffect(() => log(s.a))     // runs, reads s.a -> deps: { s.a: [effect] }\ns.b = 5                         // no effect depends on b -> nothing\ns.a = 3                         // trigger s.a -> effect re-runs -> log(3)"
+    },
+    "where": [
+     [
+      "Vue 3",
+      "<code>reactive</code>, <code>watchEffect</code> and <code>computed</code> are this design."
+     ],
+     [
+      "Signals",
+      "Solid, Preact signals and Angular signals use the same track/trigger idea."
+     ],
+     [
+      "MobX",
+      "Observable state that re-runs reactions automatically."
+     ],
+     [
+      "Not a fit",
+      "Data you replace as a whole (immutable updates, Redux style) gains little from tracking each property."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const p = new Proxy({}, { set(t, k, v) { console.log(\"set\", k); t[k] = v; return true } })\np.x = 1\np.x++</code></pre>How many lines are printed?",
+     "opts": [
+      "<code>1</code>",
+      "<code>2</code>",
+      "<code>3</code>",
+      "<code>0</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "<code>p.x = 1</code> is one set; <code>p.x++</code> reads and then sets again: two sets in total.",
+      "Every write goes through the trap, which is how changes are detected."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "An effect reads <code>s.ok ? s.a : s.b</code>. <code>s.ok</code> becomes <code>false</code>. Should a later change to <code>s.a</code> re-run it?",
+     "opts": [
+      "Yes, it read <code>s.a</code> once",
+      "Only if <code>s.b</code> also changes",
+      "It depends on the order of keys",
+      "No; on every run, old dependencies are cleared and only what this run read (<code>ok</code>, <code>b</code>) is tracked"
+     ],
+     "ans": 3,
+     "why": [
+      "Dependencies must match the <b>last</b> run. Clean up before each run, then track again.",
+      "Without cleanup, effects re-run for values they no longer use."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "<code>s.count = s.count</code> (same value). What should happen?",
+     "opts": [
+      "Nothing: trigger only when the value actually changed (<code>Object.is</code>)",
+      "All effects re-run",
+      "An error",
+      "Only computed values re-run"
+     ],
+     "ans": 0,
+     "why": [
+      "Re-running for a no-op write wastes work and can cause loops.",
+      "Compare old and new with <code>Object.is</code> before triggering."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "Why is <code>computed</code> lazy (it recomputes only when read)?",
+     "opts": [
+      "Proxies cannot run code on write",
+      "If nobody reads it, the work is wasted; marking it dirty is cheap, computing may be expensive",
+      "To avoid using WeakMap",
+      "Because getters cannot be cached"
+     ],
+     "ans": 1,
+     "why": [
+      "Many writes in a row would recompute many times. Dirty-flag plus compute-on-read does it once.",
+      "Reading twice without changes returns the cached value."
+     ]
+    }
+   ],
+   "pseudo": "targetMap = WeakMap(target -> Map(key -> Set(effect)))\nactiveEffect = null\n\ntrack(t, k): if activeEffect: deps(t, k).add(activeEffect); activeEffect.deps.push(that set)\ntrigger(t, k): for e of copy of deps(t, k): e.scheduler ? e.scheduler() : e()\n\nreactive(obj): Proxy(obj, {\n  get(t, k, r): v = Reflect.get(t, k, r); track(t, k); return v is object ? reactive(v) : v\n  set(t, k, v, r): old = t[k]; Reflect.set(t, k, v, r); if !Object.is(old, v): trigger(t, k); return true })\n\nwatchEffect(fn):\n  runner(): remove runner from every set in runner.deps; deps = []\n            prev = activeEffect; activeEffect = runner; try fn() finally activeEffect = prev\n  runner()\n\ncomputed(getter):\n  dirty = true; value\n  runner = effect(getter) with scheduler: () => if !dirty: dirty = true; trigger(obj, 'value')\n  obj = { get value() { track(obj, 'value'); if dirty: value = runner(); dirty = false; return value } }",
+   "watch": [
+    "How does a read know which effect is running right now?",
+    "What do you do with old dependencies before an effect runs again?",
+    "When exactly should a computed value recompute?"
+   ],
+   "build": {
+    "minutes": 45,
+    "problem": "Implement <b>reactive(obj)</b>, <b>watchEffect(fn)</b> and <b>computed(getter)</b> with a Proxy.",
+    "reqs": [
+     "<code>watchEffect(fn)</code> runs <code>fn</code> at once and again whenever a reactive property it read changes.",
+     "Only properties read during the <b>last</b> run are dependencies (clean up before re-running).",
+     "Writing the same value does not trigger anything.",
+     "Nested objects are reactive too.",
+     "<code>computed(getter).value</code> is lazy and cached; it updates after its dependencies change and can be used inside effects."
+    ],
+    "checks": [
+     {
+      "t": "watchEffect runs now and on change",
+      "test": "const s = reactive({ count: 0 })\nwatchEffect(() => console.log('count is', s.count))\ns.count = 1 // expected: count is 0, count is 1",
+      "verify": "const s = reactive({ count: 0 }); const seen = []; watchEffect(() => seen.push(s.count)); s.count = 1; s.count = 2; assert(seen.join() === '0,1,2', 'saw ' + seen.join())",
+      "gap": "Record the running effect on <code>get</code>, and re-run it on <code>set</code>."
+     },
+     {
+      "t": "Only real dependencies trigger; same value does not",
+      "test": "const s = reactive({ a: 1, b: 1 })\nlet runs = 0\nwatchEffect(() => { runs++; s.a })\ns.b = 2; s.a = 1\nconsole.log(runs) // expected: 1",
+      "verify": "const s = reactive({ a: 1, b: 1 }); let runs = 0; watchEffect(() => { runs++; return s.a }); s.b = 2; assert(runs === 1, 'changing b re-ran the effect'); s.a = 1; assert(runs === 1, 'same value re-ran the effect'); s.a = 5; assert(runs === 2, 'changing a should re-run')",
+      "gap": "Track per (object, key), and compare with <code>Object.is(old, value)</code> before triggering."
+     },
+     {
+      "t": "Dependencies follow the latest run",
+      "test": "const s = reactive({ ok: true, a: 1, b: 1 })\nlet runs = 0\nwatchEffect(() => { runs++; s.ok ? s.a : s.b })\ns.ok = false; s.a = 2\nconsole.log(runs) // expected: 2",
+      "verify": "const s = reactive({ ok: true, a: 1, b: 1 }); let runs = 0; watchEffect(() => { runs++; return s.ok ? s.a : s.b }); s.ok = false; assert(runs === 2, 'flag change should re-run'); s.a = 2; assert(runs === 2, 'a is no longer used, should not re-run'); s.b = 3; assert(runs === 3, 'b is used now')",
+      "gap": "Before each run, remove the effect from every dependency Set it was in, then track again."
+     },
+     {
+      "t": "Nested objects are reactive",
+      "test": "const s = reactive({ user: { name: 'A' } })\nwatchEffect(() => console.log(s.user.name))\ns.user.name = 'B' // expected: A, B",
+      "verify": "const s = reactive({ user: { name: 'A' } }); const seen = []; watchEffect(() => seen.push(s.user.name)); s.user.name = 'B'; assert(seen.join() === 'A,B', 'saw ' + seen.join()); s.user = { name: 'C' }; assert(seen.join() === 'A,B,C', 'replacing the object should re-run, saw ' + seen.join())",
+      "gap": "In <code>get</code>, if the value is an object, return <code>reactive(value)</code>."
+     },
+     {
+      "t": "computed is lazy and cached",
+      "test": "const s = reactive({ n: 2 })\nlet calls = 0\nconst double = computed(() => { calls++; return s.n * 2 })\nconsole.log(calls, double.value, double.value, calls) // expected: 0 4 4 1",
+      "verify": "const s = reactive({ n: 2 }); let calls = 0; const double = computed(() => { calls++; return s.n * 2 }); assert(calls === 0, 'should not compute before read'); assert(double.value === 4 && double.value === 4, 'value'); assert(calls === 1, 'should cache, computed ' + calls); s.n = 5; s.n = 6; assert(calls === 1, 'should stay lazy after writes'); assert(double.value === 12, 'got ' + double.value); assert(calls === 2, 'should recompute once')",
+      "gap": "Use a dirty flag: changes set it, reading <code>.value</code> recomputes only when dirty."
+     },
+     {
+      "t": "Effects can depend on computed values",
+      "test": "const s = reactive({ price: 10, qty: 2 })\nconst total = computed(() => s.price * s.qty)\nwatchEffect(() => console.log('total', total.value))\ns.qty = 3 // expected: total 20, total 30",
+      "verify": "const s = reactive({ price: 10, qty: 2 }); const total = computed(() => s.price * s.qty); const seen = []; watchEffect(() => seen.push(total.value)); s.qty = 3; s.price = 1; assert(seen.join() === '20,30,3', 'saw ' + seen.join())",
+      "gap": "Track reads of <code>.value</code>, and trigger them when the computed becomes dirty."
+     }
+    ]
+   },
+   "solution": "const targetMap = new WeakMap();\nconst proxyCache = new WeakMap();\nlet activeEffect = null;\n\nfunction depsFor(target, key) {\n  let byKey = targetMap.get(target);\n  if (!byKey) targetMap.set(target, (byKey = new Map()));\n  let set = byKey.get(key);\n  if (!set) byKey.set(key, (set = new Set()));\n  return set;\n}\n\nfunction track(target, key) {\n  if (!activeEffect) return;\n  const set = depsFor(target, key);\n  set.add(activeEffect);\n  activeEffect.deps.push(set);\n}\n\nfunction trigger(target, key) {\n  const set = targetMap.get(target)?.get(key);\n  if (!set) return;\n  for (const e of [...set]) (e.scheduler ? e.scheduler() : e());\n}\n\nfunction effect(fn, scheduler) {\n  const runner = () => {\n    for (const set of runner.deps) set.delete(runner); // cleanup old deps\n    runner.deps = [];\n    const prev = activeEffect;\n    activeEffect = runner;\n    try { return fn(); } finally { activeEffect = prev; }\n  };\n  runner.deps = [];\n  runner.scheduler = scheduler;\n  return runner;\n}\n\nfunction reactive(obj) {\n  if (proxyCache.has(obj)) return proxyCache.get(obj);\n  const proxy = new Proxy(obj, {\n    get(t, k, r) {\n      const v = Reflect.get(t, k, r);\n      track(t, k);\n      return v !== null && typeof v === 'object' ? reactive(v) : v;\n    },\n    set(t, k, v, r) {\n      const old = t[k];\n      const ok = Reflect.set(t, k, v, r);\n      if (!Object.is(old, v)) trigger(t, k);\n      return ok;\n    },\n  });\n  proxyCache.set(obj, proxy);\n  return proxy;\n}\n\nfunction watchEffect(fn) {\n  const runner = effect(fn);\n  runner();\n  return runner;\n}\n\nfunction computed(getter) {\n  let dirty = true;\n  let value;\n  const holder = {};\n  const runner = effect(getter, () => {\n    if (!dirty) {\n      dirty = true;\n      trigger(holder, 'value');\n    }\n  });\n  Object.defineProperty(holder, 'value', {\n    get() {\n      track(holder, 'value');\n      if (dirty) {\n        value = runner();\n        dirty = false;\n      }\n      return value;\n    },\n  });\n  return holder;\n}",
+   "notes": [
+    "<b>Track</b> on read, <b>trigger</b> on write: the whole system is these two functions plus a Proxy.",
+    "<code>activeEffect</code> is how a read knows who is reading. Restore the previous one after each run (effects can nest).",
+    "Cleanup before each run keeps dependencies equal to what the last run actually read.",
+    "<code>computed</code> = an effect with a scheduler that only marks dirty; it recomputes on read."
+   ],
+   "next": [
+    "Add <code>ref(value)</code> for primitives (an object with a reactive <code>.value</code>).",
+    "Batch updates: run each effect once per microtask, even after several writes.",
+    "Track array <code>length</code> and <code>push</code> correctly."
+   ]
+  },
+  {
+   "id": "virtual-dom",
+   "diff": "Hard",
+   "fn": "h",
+   "signature": "h(type, props, ...children) / renderToString(vnode) / diff(oldNode, newNode) / patch(node, patches)",
+   "learn": {
+    "what": [
+     "A <b>virtual DOM</b> is a plain-object copy of the UI: <code>{ type: \"li\", props: { class: \"done\" }, children: [\"Milk\"] }</code>. Building these objects is cheap; touching the real DOM is not.",
+     "When state changes you build a new tree and <b>diff</b> it against the old one. The diff is a short list of <b>patches</b> (replace this node, change this prop, insert that child), and only those are applied to the real page.",
+     "Here you build the pure core: <code>h</code> to create nodes, <code>renderToString</code>, <code>diff</code> to make patches, and <code>patch</code> to apply them to a tree. Applying the same patches to real DOM nodes is the last small step."
+    ],
+    "how": {
+     "steps": [
+      "<code>h(type, props, ...children)</code>: flatten children, drop <code>null</code>/<code>false</code>/<code>undefined</code>, turn numbers into strings. Text nodes are plain strings.",
+      "<code>diff(a, b, path = [])</code>: if either is a string, or the types differ → one <code>{ type: \"REPLACE\", path, node: b }</code>. Same element type → compare props (one <code>PROPS</code> patch with <code>set</code> and <code>remove</code> if anything changed), then children.",
+      "Children by index: shared indexes → recurse with <code>[...path, i]</code>; extra new children → <code>INSERT</code> at their index; extra old children → <code>REMOVE</code>, highest index first so indexes stay valid.",
+      "<code>patch(node, patches)</code>: work on a deep copy; for each patch walk the path through <code>children</code> and apply it. The result must equal the new tree."
+     ],
+     "diagram": "old: ul [ li \"A\", li \"B\", li \"C\" ]\nnew: ul [ li \"A\", li \"X\" ]\ndiff:\n  { REPLACE, path [1, 0], node \"X\" }     text inside the 2nd li\n  { REMOVE,  path [],     index 2 }      the 3rd li is gone\npatch(old, diff) -> deep-equal to new"
+    },
+    "where": [
+     [
+      "React / Preact / Vue 2",
+      "All diff a virtual tree and patch the real DOM."
+     ],
+     [
+      "Server rendering",
+      "<code>renderToString</code> is how the first HTML is made on the server."
+     ],
+     [
+      "Testing",
+      "Comparing plain trees is easy; comparing real DOM is not."
+     ],
+     [
+      "Not a fit",
+      "Svelte and Solid compile to direct DOM updates and skip the diff entirely."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Concept",
+     "q": "An element changes from <code>div</code> to <code>section</code> with the same children. What does the diff do?",
+     "opts": [
+      "Compares the children one by one",
+      "Only changes the tag name",
+      "Replaces the whole subtree with one REPLACE",
+      "Nothing"
+     ],
+     "ans": 2,
+     "why": [
+      "Different types are assumed to be different things, so React-style diffs replace the whole subtree instead of searching for matches.",
+      "That rule keeps the diff O(n) instead of very slow general tree matching."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "Why emit REMOVE patches from the <b>highest</b> index down?",
+     "opts": [
+      "Removing index 1 first shifts later children left, so \"remove index 3\" would hit the wrong child",
+      "It is faster",
+      "Browsers require it",
+      "To keep keys sorted"
+     ],
+     "ans": 0,
+     "why": [
+      "After a removal, every later child moves one index down.",
+      "Going from the end keeps the earlier indexes valid."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "You insert a new item at the <b>start</b> of a 100-item list. With index-based diffing, roughly how many patches?",
+     "opts": [
+      "1 insert",
+      "100 or so: every position looks changed, plus one insert at the end",
+      "0",
+      "2"
+     ],
+     "ans": 1,
+     "why": [
+      "Index 0 now holds the new item, index 1 holds the old item 0, and so on: everything shifts.",
+      "This is exactly why React asks for <code>key</code>s: they let the diff match children by identity."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const flat = [[\"a\", null], false, 1, [[\"b\"]]].flat(Infinity).filter(c =&gt; c != null &amp;&amp; c !== false).map(String)\nconsole.log(flat.join(\",\"))</code></pre>",
+     "opts": [
+      "<code>a,null,false,1,b</code>",
+      "<code>a,b</code>",
+      "<code>a,1,[b]</code>",
+      "<code>a,1,b</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "This is the cleanup <code>h</code> does on children: flatten, drop empty values, turn numbers into text.",
+      "It lets you write <code>{ok &amp;&amp; &lt;li/&gt;}</code> and <code>{items.map(...)}</code> freely."
+     ]
+    }
+   ],
+   "pseudo": "h(type, props, ...children):\n  kids = children flattened, without null/false/undefined, numbers -> strings\n  return { type, props: props || {}, children: kids }\n\ndiff(a, b, path = []):\n  if a is a string or b is a string or a.type != b.type:\n    return a === b ? [] : [{ type: 'REPLACE', path, node: b }]\n  patches = []\n  set = props in b that are new or different; remove = props of a missing in b\n  if set or remove not empty -> push { type: 'PROPS', path, set, remove }\n  for i < min(lenA, lenB): patches += diff(a.children[i], b.children[i], [...path, i])\n  for i from lenA to lenB - 1: push { type: 'INSERT', path, index: i, node: b.children[i] }\n  for i from lenA - 1 down to lenB: push { type: 'REMOVE', path, index: i }\n  return patches\n\npatch(node, patches): copy = deep copy; apply each patch at its path; return copy",
+   "watch": [
+    "When is replacing a whole subtree the right answer?",
+    "In which order must removals happen?",
+    "What does a path like <code>[1, 0]</code> mean?"
+   ],
+   "build": {
+    "minutes": 45,
+    "problem": "Implement <b>h</b>, <b>renderToString</b>, <b>diff</b> and <b>patch</b> for a minimal virtual DOM.",
+    "reqs": [
+     "<code>h</code> returns <code>{ type, props, children }</code>; children are flattened, empty values dropped, numbers turned into strings.",
+     "<code>renderToString</code> outputs HTML with attributes and escapes text (<code>&amp;</code>, <code>&lt;</code>, <code>&gt;</code>, <code>\"</code>).",
+     "<code>diff</code> returns <code>[]</code> for equal trees; REPLACE for text changes or a different type; one PROPS patch with <code>set</code> / <code>remove</code>; INSERT / REMOVE for extra children (removes from the highest index).",
+     "Paths are arrays of child indexes from the root.",
+     "<code>patch(oldTree, diff(oldTree, newTree))</code> deep-equals <code>newTree</code> and does not change <code>oldTree</code>."
+    ],
+    "checks": [
+     {
+      "t": "h builds clean vnodes",
+      "test": "console.log(JSON.stringify(h('ul', null, [h('li', null, 'A'), null], false, 3)))\n// expected: {\"type\":\"ul\",\"props\":{},\"children\":[{\"type\":\"li\",\"props\":{},\"children\":[\"A\"]},\"3\"]}",
+      "verify": "const v = h('ul', null, [h('li', null, 'A'), null], false, 3); assert(JSON.stringify(v) === '{\"type\":\"ul\",\"props\":{},\"children\":[{\"type\":\"li\",\"props\":{},\"children\":[\"A\"]},\"3\"]}', 'got ' + JSON.stringify(v))",
+      "gap": "Flatten with <code>.flat(Infinity)</code>, filter out <code>null</code>/<code>undefined</code>/<code>false</code>, map numbers to strings, default props to <code>{}</code>."
+     },
+     {
+      "t": "renderToString with attributes and escaping",
+      "test": "console.log(renderToString(h('a', { href: '/x', title: 'say \"hi\"' }, '1 < 2 & 3')))\n// expected: an a tag with href=\"/x\", title=\"say &quot;hi&quot;\" and the text 1 &lt; 2 &amp; 3",
+      "verify": "const out = renderToString(h('a', { href: '/x', title: 'say \"hi\"' }, '1 < 2 & 3')); const want = '<' + 'a href=\"/x\" title=\"say &quot;hi&quot;\">1 &lt; 2 &amp; 3</' + 'a>'; assert(out === want, 'got ' + out); assert(renderToString(h('p', null, h('b', null, 1))) === '<p><b>1</b></p>', 'nested')",
+      "gap": "Escape <code>&amp;</code> first, then <code>&lt;</code>, <code>&gt;</code>, <code>\"</code>; attributes are <code> key=\"value\"</code>."
+     },
+     {
+      "t": "Equal trees give no patches",
+      "test": "console.log(diff(h('p', { id: 1 }, 'a'), h('p', { id: 1 }, 'a'))) // expected: []",
+      "verify": "const r = diff(h('div', { id: 'x' }, h('p', null, 'a')), h('div', { id: 'x' }, h('p', null, 'a'))); assert(Array.isArray(r) && r.length === 0, 'got ' + JSON.stringify(r))",
+      "gap": "Only push patches when something really differs."
+     },
+     {
+      "t": "Text change and type change become REPLACE",
+      "test": "console.log(JSON.stringify(diff(h('ul', null, h('li', null, 'A')), h('ul', null, h('li', null, 'B')))))\n// expected: [{\"type\":\"REPLACE\",\"path\":[0,0],\"node\":\"B\"}]",
+      "verify": "const r = diff(h('ul', null, h('li', null, 'A')), h('ul', null, h('li', null, 'B'))); assert(JSON.stringify(r) === '[{\"type\":\"REPLACE\",\"path\":[0,0],\"node\":\"B\"}]', 'text: ' + JSON.stringify(r)); const t = diff(h('div', null, h('p', null, 'x')), h('div', null, h('span', null, 'x'))); assert(t.length === 1 && t[0].type === 'REPLACE' && t[0].path.join() === '0' && t[0].node.type === 'span', 'type: ' + JSON.stringify(t))",
+      "gap": "Strings or different types → one REPLACE at the current path, and do not look deeper."
+     },
+     {
+      "t": "Prop changes become one PROPS patch",
+      "test": "console.log(JSON.stringify(diff(h('a', { href: '/1', title: 't' }), h('a', { href: '/2', target: '_blank' }))))\n// expected: [{\"type\":\"PROPS\",\"path\":[],\"set\":{\"href\":\"/2\",\"target\":\"_blank\"},\"remove\":[\"title\"]}]",
+      "verify": "const r = diff(h('a', { href: '/1', title: 't' }), h('a', { href: '/2', target: '_blank' })); assert(JSON.stringify(r) === '[{\"type\":\"PROPS\",\"path\":[],\"set\":{\"href\":\"/2\",\"target\":\"_blank\"},\"remove\":[\"title\"]}]', 'got ' + JSON.stringify(r))",
+      "gap": "<code>set</code> = props of the new node that are new or changed; <code>remove</code> = keys of the old node missing in the new one."
+     },
+     {
+      "t": "Inserts and removes children; removes from the end",
+      "test": "console.log(JSON.stringify(diff(h('ul', null, 'a', 'b', 'c', 'd'), h('ul', null, 'a', 'b'))))\n// expected: [{\"type\":\"REMOVE\",\"path\":[],\"index\":3},{\"type\":\"REMOVE\",\"path\":[],\"index\":2}]",
+      "verify": "const r = diff(h('ul', null, 'a', 'b', 'c', 'd'), h('ul', null, 'a', 'b')); assert(JSON.stringify(r) === '[{\"type\":\"REMOVE\",\"path\":[],\"index\":3},{\"type\":\"REMOVE\",\"path\":[],\"index\":2}]', 'remove: ' + JSON.stringify(r)); const i = diff(h('ul', null, 'a'), h('ul', null, 'a', h('li', null, 'b'))); assert(i.length === 1 && i[0].type === 'INSERT' && i[0].index === 1 && i[0].node.type === 'li', 'insert: ' + JSON.stringify(i))",
+      "gap": "Insert for indexes only in the new list; remove for indexes only in the old list, highest first."
+     },
+     {
+      "t": "patch(old, diff(old, new)) equals new, without changing old",
+      "test": "const a = h('div', { id: 'app' }, h('h1', null, 'Hi'), h('ul', null, 'a', 'b', 'c'))\nconst b = h('div', { id: 'main' }, h('h2', null, 'Hi'), h('ul', null, 'a', 'x'), h('p', null, 'new'))\nconsole.log(JSON.stringify(patch(a, diff(a, b))) === JSON.stringify(b)) // expected: true",
+      "verify": "const a = h('div', { id: 'app', cls: 'c' }, h('h1', null, 'Hi'), h('ul', null, 'a', 'b', 'c'), h('i', null, 'gone')); const b = h('div', { id: 'main' }, h('h2', null, 'Hi'), h('ul', { k: 1 }, 'a', 'x')); const before = JSON.stringify(a); const out = patch(a, diff(a, b)); assert(out && out.type === 'div' && JSON.stringify(out) === JSON.stringify(b), 'got ' + JSON.stringify(out)); assert(JSON.stringify(a) === before, 'old tree was changed'); const c = h('div', { id: 'main' }, 'text', h('ul', null, 'a', 'x', 'y'), h('p', null, 'new')); assert(JSON.stringify(patch(b, diff(b, c))) === JSON.stringify(c), 'second round failed')",
+      "gap": "Deep-copy first; walk <code>children</code> by the path; REPLACE at the root returns the new node itself."
+     }
+    ]
+   },
+   "solution": "function h(type, props, ...children) {\n  const kids = children\n    .flat(Infinity)\n    .filter((c) => c !== null && c !== undefined && c !== false)\n    .map((c) => (typeof c === 'object' ? c : String(c)));\n  return { type, props: props || {}, children: kids };\n}\n\nconst esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\"/g, '&quot;');\n\nfunction renderToString(node) {\n  if (typeof node === 'string') return esc(node);\n  const attrs = Object.entries(node.props).map(([k, v]) => ' ' + k + '=\"' + esc(v) + '\"').join('');\n  return '<' + node.type + attrs + '>' + node.children.map(renderToString).join('') + '</' + node.type + '>';\n}\n\nfunction diff(a, b, path = []) {\n  if (typeof a === 'string' || typeof b === 'string' || a.type !== b.type) {\n    return a === b ? [] : [{ type: 'REPLACE', path, node: b }];\n  }\n  const patches = [];\n  const set = {};\n  const remove = [];\n  for (const [k, v] of Object.entries(b.props)) if (a.props[k] !== v) set[k] = v;\n  for (const k of Object.keys(a.props)) if (!(k in b.props)) remove.push(k);\n  if (Object.keys(set).length || remove.length) patches.push({ type: 'PROPS', path, set, remove });\n\n  const la = a.children.length;\n  const lb = b.children.length;\n  for (let i = 0; i < Math.min(la, lb); i++) patches.push(...diff(a.children[i], b.children[i], [...path, i]));\n  for (let i = la; i < lb; i++) patches.push({ type: 'INSERT', path, index: i, node: b.children[i] });\n  for (let i = la - 1; i >= lb; i--) patches.push({ type: 'REMOVE', path, index: i });\n  return patches;\n}\n\nfunction patch(node, patches) {\n  let root = structuredClone(node);\n  for (const p of patches) {\n    if (p.type === 'REPLACE' && p.path.length === 0) { root = structuredClone(p.node); continue; }\n    const steps = p.type === 'REPLACE' ? p.path.slice(0, -1) : p.path;\n    let target = root;\n    for (const i of steps) target = target.children[i];\n    if (p.type === 'REPLACE') target.children[p.path[p.path.length - 1]] = structuredClone(p.node);\n    if (p.type === 'PROPS') {\n      Object.assign(target.props, p.set);\n      for (const k of p.remove) delete target.props[k];\n    }\n    if (p.type === 'INSERT') target.children.splice(p.index, 0, structuredClone(p.node));\n    if (p.type === 'REMOVE') target.children.splice(p.index, 1);\n  }\n  return root;\n}",
+   "notes": [
+    "Text nodes are strings; elements are <code>{ type, props, children }</code>. That is all a virtual DOM is.",
+    "Different type → replace the subtree. This one rule keeps diffing fast.",
+    "Paths of child indexes say exactly where each patch goes.",
+    "Removes go from the highest index down so earlier indexes stay correct.",
+    "In a browser, the same patches map to <code>replaceWith</code>, <code>setAttribute</code>/<code>removeAttribute</code>, <code>insertBefore</code> and <code>remove</code>."
+   ],
+   "next": [
+    "Write <code>applyToDom(domRoot, patches)</code> and try it in a page.",
+    "Add keyed children: match old and new children by <code>props.key</code> before falling back to indexes.",
+    "Support event props like <code>onClick</code> that become listeners instead of attributes."
+   ]
+  },
+  {
+   "id": "observable",
+   "diff": "Hard",
+   "fn": "Observable",
+   "signature": "class Observable(subscribeFn) { subscribe, map, filter, take }",
+   "learn": {
+    "what": [
+     "A promise gives you <b>one</b> value. An <b>observable</b> gives you <b>many</b> values over time (clicks, socket messages, timer ticks), then maybe completes or errors.",
+     "<code>new Observable(subscriber =&gt; { … })</code> stores a function that produces values. Nothing happens until someone calls <code>subscribe({ next, error, complete })</code>, and every subscriber gets its own run (it is <b>lazy</b> and <b>cold</b>).",
+     "The producer may return a <b>teardown</b> function (clear a timer, remove a listener). <code>unsubscribe()</code> runs it and stops all further values. Operators like <code>map</code>, <code>filter</code>, <code>take</code> return new observables."
+    ],
+    "how": {
+     "steps": [
+      "Store <code>subscribeFn</code> in the constructor.",
+      "<code>subscribe(observer)</code>: accept a function (as <code>next</code>) or an object. Create a safe subscriber with a <code>closed</code> flag: <code>next</code> works only while open; <code>error</code>/<code>complete</code> close it and then run the teardown.",
+      "Call <code>subscribeFn(safe)</code> inside <code>try/catch</code> (a throw becomes <code>error</code>). Save what it returns as the teardown.",
+      "Return <code>{ unsubscribe }</code>: close, run the teardown once.",
+      "Operators: <code>map(fn)</code> = new Observable that subscribes to <code>this</code> and forwards <code>fn(v)</code>; <code>filter</code> forwards only matches; <code>take(n)</code> forwards n values, then completes (which also unsubscribes from the source)."
+     ],
+     "diagram": "interval(10).filter(n => n % 2 === 0).map(n => n * 10).take(3)\nsource:  0  1  2  3  4  5 ...\nfilter:  0     2     4\nmap:     0     20    40\ntake(3): 0     20    40  -> complete -> source timer cleared"
+    },
+    "where": [
+     [
+      "RxJS / Angular",
+      "HTTP, forms and routing in Angular are built on observables."
+     ],
+     [
+      "UI events",
+      "Debounced search: keyup stream → debounce → switch to a request."
+     ],
+     [
+      "Real-time data",
+      "WebSocket messages, price tickers, live notifications."
+     ],
+     [
+      "Not a fit",
+      "A single async result: a promise is simpler."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Concept",
+     "q": "Two components subscribe to the same (cold) observable that makes an HTTP request. How many requests?",
+     "opts": [
+      "1, shared",
+      "None until they call next",
+      "2: each subscription runs the producer function again",
+      "It depends on the browser"
+     ],
+     "ans": 2,
+     "why": [
+      "Cold observables run their producer per subscriber. That is lazy and simple, but can duplicate work.",
+      "Sharing needs a multicast operator (a Subject, <code>share()</code>)."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "After <code>complete()</code> is called, the producer calls <code>next(5)</code>. What should the subscriber see?",
+     "opts": [
+      "Nothing: once completed (or errored or unsubscribed) the subscription is closed",
+      "5",
+      "An error",
+      "5, then complete again"
+     ],
+     "ans": 0,
+     "why": [
+      "The contract is: any number of <code>next</code>, then at most one <code>error</code> or <code>complete</code>, then silence.",
+      "A <code>closed</code> flag in the safe subscriber enforces it."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "Why does <code>take(3)</code> unsubscribe from its source after the third value?",
+     "opts": [
+      "To save the values",
+      "Otherwise the source (a timer, a listener) keeps running forever even though nobody needs it",
+      "Because complete must be called twice",
+      "It does not need to"
+     ],
+     "ans": 1,
+     "why": [
+      "Completing downstream does not stop upstream by itself.",
+      "Running the teardown is what clears the interval or removes the event listener."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const out = []\nconst src = { subscribe(fn) { [1, 2, 3, 4].forEach(fn) } }\nsrc.subscribe(v =&gt; { if (v % 2) out.push(v * 10) })\nconsole.log(out.join(\",\"))</code></pre>",
+     "opts": [
+      "<code>10,20,30,40</code>",
+      "<code>20,40</code>",
+      "<code>1,3</code>",
+      "<code>10,30</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Odd values (1 and 3) pass, then are multiplied by 10.",
+      "filter + map operators do the same, as separate reusable steps."
+     ]
+    }
+   ],
+   "pseudo": "class Observable(subscribeFn):\n  subscribe(observer):\n    obs = typeof observer == 'function' ? { next: observer } : observer\n    closed = false; teardown = null\n    close() { if closed return; closed = true; teardown && teardown() }\n    safe = {\n      next(v)     { if !closed: obs.next?.(v) }\n      error(e)    { if !closed: closed... call obs.error?.(e); run teardown }\n      complete()  { if !closed: call obs.complete?.(); run teardown }\n    }\n    try teardown = subscribeFn(safe) catch e -> safe.error(e)\n    if already closed -> run teardown now\n    return { unsubscribe: close }\n\n  map(fn)    = new Observable(s => this.subscribe({ next: v => s.next(fn(v)), error: s.error, complete: s.complete }).unsubscribe)\n  filter(fn) = same, but next only if fn(v)\n  take(n)    = new Observable(s => { count; sub = this.subscribe({ next: v => { s.next(v); if ++count >= n: s.complete(); sub?.unsubscribe() } ... }) ... })",
+   "watch": [
+    "What stops values from arriving after complete, error or unsubscribe?",
+    "When exactly does the teardown run, and how many times?",
+    "Does an operator start anything before someone subscribes to it?"
+   ],
+   "build": {
+    "minutes": 45,
+    "problem": "Build <b>class Observable(subscribeFn)</b> with <code>subscribe</code> and the operators <code>map</code>, <code>filter</code> and <code>take</code>.",
+    "reqs": [
+     "Lazy: <code>subscribeFn</code> runs once per <code>subscribe</code> call, not before.",
+     "<code>subscribe</code> takes an observer object or a <code>next</code> function and returns <code>{ unsubscribe }</code>.",
+     "After <code>complete</code>, <code>error</code> or <code>unsubscribe</code>, nothing more is delivered; the teardown returned by <code>subscribeFn</code> runs exactly once.",
+     "A throw inside <code>subscribeFn</code> is delivered to <code>error</code>.",
+     "<code>map</code>, <code>filter</code>, <code>take(n)</code> return new Observables; <code>take</code> completes after n values and tears down the source."
+    ],
+    "checks": [
+     {
+      "t": "Delivers values and complete; lazy per subscriber",
+      "test": "const o = new Observable((s) => { s.next(1); s.next(2); s.complete() })\no.subscribe({ next: console.log, complete: () => console.log('done') }) // expected: 1 2 done",
+      "verify": "let runs = 0; const o = new Observable((s) => { runs++; s.next(1); s.next(2); s.complete() }); assert(runs === 0, 'should not run before subscribe'); const seen = []; o.subscribe({ next: (v) => seen.push(v), complete: () => seen.push('done') }); o.subscribe((v) => seen.push('fn' + v)); assert(seen.join() === '1,2,done,fn1,fn2', 'saw ' + seen.join()); assert(runs === 2, 'should run once per subscriber')",
+      "gap": "Call <code>subscribeFn</code> inside <code>subscribe</code>, and wrap a plain function as <code>{ next: fn }</code>."
+     },
+     {
+      "t": "Nothing after complete or error",
+      "test": "new Observable((s) => { s.next(1); s.complete(); s.next(2); s.error('x') }).subscribe({ next: console.log, error: console.log })\n// expected: 1",
+      "verify": "const seen = []; new Observable((s) => { s.next(1); s.complete(); s.next(2); s.error('x') }).subscribe({ next: (v) => seen.push(v), error: (e) => seen.push('err'), complete: () => seen.push('c') }); assert(seen.join() === '1,c', 'saw ' + seen.join()); const s2 = []; new Observable((s) => { s.error('bad'); s.next(3); s.complete() }).subscribe({ next: (v) => s2.push(v), error: (e) => s2.push(e), complete: () => s2.push('c') }); assert(s2.join() === 'bad', 'after error saw ' + s2.join())",
+      "gap": "Keep a <code>closed</code> flag; <code>complete</code> and <code>error</code> set it, and every method checks it first."
+     },
+     {
+      "t": "unsubscribe stops values and runs the teardown once",
+      "test": "const o = new Observable((s) => { const id = setInterval(() => s.next('tick'), 5); return () => clearInterval(id) })\nconst sub = o.subscribe(console.log)\nsetTimeout(() => sub.unsubscribe(), 20) // a few ticks, then silence",
+      "verify": "let torn = 0; const o = new Observable((s) => { let n = 0; const id = setInterval(() => s.next(n++), 5); return () => { torn++; clearInterval(id) } }); const seen = []; const sub = o.subscribe((v) => seen.push(v)); await sleep(30); sub.unsubscribe(); sub.unsubscribe(); const count = seen.length; await sleep(30); assert(count >= 2, 'should get some values first'); assert(seen.length === count, 'values after unsubscribe'); assert(torn === 1, 'teardown ran ' + torn + ' times')",
+      "gap": "Save the function returned by <code>subscribeFn</code>; <code>unsubscribe</code> closes and calls it once."
+     },
+     {
+      "t": "A throw in subscribeFn goes to error",
+      "test": "new Observable(() => { throw new Error('boom') }).subscribe({ error: (e) => console.log(e.message) }) // expected: boom",
+      "verify": "let msg; new Observable(() => { throw new Error('boom') }).subscribe({ error: (e) => { msg = e.message } }); assert(msg === 'boom', 'got ' + msg)",
+      "gap": "Wrap the call to <code>subscribeFn</code> in <code>try/catch</code> and call <code>safe.error(e)</code>."
+     },
+     {
+      "t": "map and filter chain",
+      "test": "const nums = new Observable((s) => { [1, 2, 3, 4].forEach((n) => s.next(n)); s.complete() })\nnums.filter((n) => n % 2 === 0).map((n) => n * 10).subscribe(console.log) // expected: 20 40",
+      "verify": "const nums = new Observable((s) => { [1, 2, 3, 4].forEach((n) => s.next(n)); s.complete() }); const seen = []; const m = nums.filter((n) => n % 2 === 0).map((n) => n * 10); assert(m instanceof Observable, 'operators should return Observables'); m.subscribe({ next: (v) => seen.push(v), complete: () => seen.push('done') }); assert(seen.join() === '20,40,done', 'saw ' + seen.join())",
+      "gap": "Each operator returns <code>new Observable(sub =&gt; this.subscribe({ next: …, error: sub.error, complete: sub.complete }))</code>."
+     },
+     {
+      "t": "take(n) completes and tears down the source",
+      "test": "const ticks = new Observable((s) => { let i = 0; const id = setInterval(() => s.next(i++), 5); return () => clearInterval(id) })\nticks.take(3).subscribe({ next: console.log, complete: () => console.log('done') }) // expected: 0 1 2 done",
+      "verify": "let torn = 0; const ticks = new Observable((s) => { let i = 0; const id = setInterval(() => s.next(i++), 5); return () => { torn++; clearInterval(id) } }); const seen = []; ticks.take(3).subscribe({ next: (v) => seen.push(v), complete: () => seen.push('done') }); await sleep(60); assert(seen.join() === '0,1,2,done', 'saw ' + seen.join()); assert(torn === 1, 'source teardown ran ' + torn + ' times'); const sync = []; new Observable((s) => { [1, 2, 3, 4].forEach((n) => s.next(n)) }).take(2).subscribe((v) => sync.push(v)); assert(sync.join() === '1,2', 'sync source: ' + sync.join())",
+      "gap": "Count values; at n, call <code>complete()</code> and unsubscribe from the source (handle a source that emits synchronously too)."
+     }
+    ]
+   },
+   "solution": "class Observable {\n  constructor(subscribeFn) {\n    this.subscribeFn = subscribeFn;\n  }\n\n  subscribe(observer = {}) {\n    const obs = typeof observer === 'function' ? { next: observer } : observer;\n    let closed = false;\n    let teardown = null;\n    const cleanup = () => {\n      if (typeof teardown === 'function') { const t = teardown; teardown = null; t(); }\n    };\n    const safe = {\n      next: (v) => { if (!closed) obs.next?.(v); },\n      error: (e) => { if (closed) return; closed = true; obs.error?.(e); cleanup(); },\n      complete: () => { if (closed) return; closed = true; obs.complete?.(); cleanup(); },\n      get closed() { return closed; },\n    };\n    try {\n      teardown = this.subscribeFn(safe) ?? null;\n    } catch (e) {\n      safe.error(e);\n    }\n    if (closed) cleanup(); // completed during subscribeFn: tear down at once\n    return {\n      unsubscribe() {\n        if (closed) return;\n        closed = true;\n        cleanup();\n      },\n    };\n  }\n\n  map(fn) {\n    return new Observable((s) => this.subscribe({ next: (v) => s.next(fn(v)), error: s.error, complete: s.complete }).unsubscribe);\n  }\n\n  filter(fn) {\n    return new Observable((s) => this.subscribe({ next: (v) => { if (fn(v)) s.next(v); }, error: s.error, complete: s.complete }).unsubscribe);\n  }\n\n  take(n) {\n    return new Observable((s) => {\n      if (n <= 0) { s.complete(); return; }\n      let count = 0;\n      let sub = null;\n      let done = false;\n      sub = this.subscribe({\n        next: (v) => {\n          if (done) return;\n          s.next(v);\n          if (++count >= n) {\n            done = true;\n            s.complete();\n            if (sub) sub.unsubscribe();\n          }\n        },\n        error: s.error,\n        complete: s.complete,\n      });\n      if (done) sub.unsubscribe(); // the source finished n values synchronously\n      return () => sub.unsubscribe();\n    });\n  }\n}",
+   "notes": [
+    "An observable is just a stored function; <code>subscribe</code> calls it. That is why it is lazy and runs once per subscriber.",
+    "The safe subscriber with a <code>closed</code> flag enforces the contract: values, then one end, then silence.",
+    "Teardown is the producer's cleanup; run it exactly once on complete, error or unsubscribe.",
+    "Operators are observables that subscribe to their source: small, composable steps."
+   ],
+   "next": [
+    "Write <code>fromEvent(el, \"click\")</code> and <code>interval(ms)</code> creators.",
+    "Add <code>debounceTime(ms)</code> and <code>switchMap(fn)</code>.",
+    "Build a <code>Subject</code> that multicasts one source to many subscribers."
+   ]
+  },
+  {
+   "id": "scheduler",
+   "diff": "Hard",
+   "fn": "Scheduler",
+   "signature": "class Scheduler({ maxConcurrent }) { schedule(task, priority), run() }",
+   "learn": {
+    "what": [
+     "A <b>scheduler</b> decides which job runs next. Jobs have a priority: <code>high</code>, <code>normal</code> or <code>low</code>. Whenever a slot is free, the oldest <b>high</b> job goes first, then normal, then low.",
+     "At most <code>maxConcurrent</code> jobs run at the same time. A high job added later still jumps ahead of the low jobs that are <b>waiting</b> (it does not stop jobs that are already running).",
+     "<code>schedule(task, priority)</code> returns a promise for that task's result. <code>run()</code> starts processing and resolves when the queues are empty and nothing is running."
+    ],
+    "how": {
+     "steps": [
+      "Three arrays (queues) for high / normal / low, a <code>running</code> count, and a <code>started</code> flag.",
+      "<code>schedule</code>: return a new promise; push <code>{ task, resolve, reject }</code> into its queue; if started, call <code>pump()</code>.",
+      "<code>pump()</code>: while <code>running &lt; maxConcurrent</code> and some queue has a job, take the first job from the highest non-empty queue and start it.",
+      "Starting a job: <code>running++</code>, call <code>task()</code>, resolve or reject the job's promise, then <code>running--</code> and <code>pump()</code> again. If nothing is queued or running, resolve the pending <code>run()</code> promises.",
+      "<code>run()</code>: set <code>started</code>, return a promise that resolves when everything is done, and call <code>pump()</code>."
+     ],
+     "diagram": "maxConcurrent 1\nqueues: high [ ]  normal [N1, N2]  low [L1]\nrun -> N1 starts\nwhile N1 runs: schedule(H1, 'high')  -> high [H1]\nN1 done -> pick high first -> H1, then N2, then L1\norder: N1 H1 N2 L1"
+    },
+    "where": [
+     [
+      "Browsers",
+      "React's scheduler runs urgent updates (typing) before low ones (rendering a big list)."
+     ],
+     [
+      "Job queues",
+      "Payment jobs before email jobs in a worker."
+     ],
+     [
+      "Downloads",
+      "Visible images first, below-the-fold images later."
+     ],
+     [
+      "Not a fit",
+      "If every job matters equally, a plain concurrency limiter is enough."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Trace",
+     "q": "maxConcurrent 1. Before <code>run()</code>: schedule L1 (low), N1 (normal), H1 (high), N2 (normal). What is the run order?",
+     "opts": [
+      "H1 N1 N2 L1",
+      "L1 N1 H1 N2",
+      "H1 N2 N1 L1",
+      "N1 N2 H1 L1"
+     ],
+     "ans": 0,
+     "why": [
+      "High first, then normal in the order they were added (FIFO), then low.",
+      "Inside one priority, the oldest job wins."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "A low job is running. A high job is scheduled. What happens with this design?",
+     "opts": [
+      "The low job is stopped at once",
+      "The low job finishes; the high job runs next, before any other waiting job",
+      "The high job waits for all low jobs",
+      "Both run, ignoring maxConcurrent"
+     ],
+     "ans": 1,
+     "why": [
+      "JavaScript cannot interrupt a running async function from outside.",
+      "Priority decides who starts next. Stopping running work needs cooperation (an AbortSignal)."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "What is the risk if high jobs keep arriving all the time?",
+     "opts": [
+      "Memory leak in Promise",
+      "Too many concurrent jobs",
+      "Nothing",
+      "Low jobs may never run (starvation)"
+     ],
+     "ans": 3,
+     "why": [
+      "Strict priority can starve the lowest queue.",
+      "Fixes: aging (raise a job's priority while it waits) or giving low jobs a share of slots."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const q = { high: [], normal: [\"n1\"], low: [\"l1\"] }\nconst pick = () =&gt; [\"high\", \"normal\", \"low\"].map(p =&gt; q[p]).find(list =&gt; list.length)?.shift()\nq.high.push(\"h1\")\nconsole.log(pick(), pick(), pick(), pick())</code></pre>",
+     "opts": [
+      "<code>n1 l1 h1 undefined</code>",
+      "<code>h1 n1 l1 undefined</code>",
+      "<code>h1 n1 l1 h1</code>",
+      "<code>l1 n1 h1 undefined</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "<code>pick</code> always looks at high first, then normal, then low.",
+      "When all queues are empty, <code>find</code> returns undefined and so does the pick."
+     ]
+    }
+   ],
+   "pseudo": "class Scheduler({ maxConcurrent = 3 }):\n  queues = { high: [], normal: [], low: [] }; running = 0; started = false; waiters = []\n\n  schedule(task, priority = 'normal'):\n    return new Promise((resolve, reject) =>\n      queues[priority].push({ task, resolve, reject })\n      if started: pump())\n\n  pump():\n    while running < maxConcurrent:\n      job = first job of high, else normal, else low; if none: break\n      running++\n      Promise.resolve().then(job.task).then(job.resolve, job.reject).finally(() => { running--; pump() })\n    if running == 0 and all queues empty: resolve every waiter\n\n  run():\n    started = true\n    p = new Promise(r => waiters.push(r)); pump(); return p",
+   "watch": [
+    "How do you pick the next job across three queues?",
+    "Where do you start the next job when one finishes?",
+    "How does <code>run()</code> know that everything is done?"
+   ],
+   "build": {
+    "minutes": 40,
+    "problem": "Build <b>class Scheduler({ maxConcurrent })</b> with <code>schedule(task, priority)</code> and <code>run()</code>.",
+    "reqs": [
+     "Nothing runs before <code>run()</code>; after it, newly scheduled tasks start automatically.",
+     "The next task is always the oldest one in the highest non-empty queue (high, normal, low; default normal).",
+     "Never more than <code>maxConcurrent</code> tasks at once (default 3).",
+     "<code>schedule</code> returns a promise of that task's result; a failing task rejects only its own promise.",
+     "<code>run()</code> resolves when all queues are empty and nothing is running."
+    ],
+    "checks": [
+     {
+      "t": "Nothing runs before run()",
+      "test": "const s = new Scheduler()\nlet ran = false\ns.schedule(async () => { ran = true })\nconsole.log(ran) // expected: false",
+      "verify": "const s = new Scheduler(); let ran = false; const p = s.schedule(async () => { ran = true; return 1 }); assert(p instanceof Promise, 'schedule should return a promise'); await sleep(10); assert(ran === false, 'ran before run()'); await s.run(); assert(ran === true, 'should run after run()'); assert(await p === 1, 'task promise should resolve')",
+      "gap": "Only start tasks when the scheduler has been started."
+     },
+     {
+      "t": "Priority order, FIFO inside a priority",
+      "test": "const s = new Scheduler({ maxConcurrent: 1 })\nconst order = []\nconst job = (n) => async () => { order.push(n) }\ns.schedule(job('L1'), 'low'); s.schedule(job('N1')); s.schedule(job('H1'), 'high'); s.schedule(job('N2'))\nawait s.run(); console.log(order) // expected: ['H1', 'N1', 'N2', 'L1']",
+      "verify": "const s = new Scheduler({ maxConcurrent: 1 }); const order = []; const job = (n) => async () => { order.push(n) }; s.schedule(job('L1'), 'low'); s.schedule(job('N1')); s.schedule(job('H1'), 'high'); s.schedule(job('N2')); s.schedule(job('H2'), 'high'); await s.run(); assert(order.join() === 'H1,H2,N1,N2,L1', 'order ' + order.join())",
+      "gap": "Pick from <code>high</code>, else <code>normal</code>, else <code>low</code>, always with <code>shift()</code> (oldest first)."
+     },
+     {
+      "t": "Respects maxConcurrent",
+      "test": "// 7 tasks with maxConcurrent 2 -> never more than 2 running",
+      "verify": "const s = new Scheduler({ maxConcurrent: 2 }); let running = 0; let max = 0; for (let i = 0; i < 7; i++) s.schedule(async () => { running++; max = Math.max(max, running); await sleep(5); running-- }); await s.run(); assert(max === 2, 'max running was ' + max)",
+      "gap": "Start a new task only while <code>running &lt; maxConcurrent</code>, and try again each time one finishes."
+     },
+     {
+      "t": "A later high task jumps ahead of waiting ones",
+      "test": "// maxConcurrent 1: N1 running, then schedule H1 -> H1 runs before N2 and L1",
+      "verify": "const s = new Scheduler({ maxConcurrent: 1 }); const order = []; const job = (n, ms = 5) => async () => { order.push(n); await sleep(ms) }; s.schedule(job('N1', 20)); s.schedule(job('N2')); s.schedule(job('L1'), 'low'); const done = s.run(); await sleep(5); s.schedule(job('H1'), 'high'); await done; await sleep(5); assert(order.join() === 'N1,H1,N2,L1', 'order ' + order.join())",
+      "gap": "After <code>run()</code>, <code>schedule</code> calls <code>pump()</code>; <code>pump()</code> always checks the high queue first."
+     },
+     {
+      "t": "A failing task rejects only its own promise",
+      "test": "const bad = s.schedule(async () => { throw new Error('x') })\nconst good = s.schedule(async () => 'ok')\nawait s.run() // bad rejects, good resolves, run still resolves",
+      "verify": "const s = new Scheduler(); const bad = s.schedule(async () => { throw new Error('x') }); const good = s.schedule(async () => 'ok'); const caught = bad.catch((e) => 'caught ' + e.message); await s.run(); assert(await caught === 'caught x', 'bad should reject'); assert(await good === 'ok', 'good should resolve')",
+      "gap": "Use <code>.then(job.resolve, job.reject)</code> and keep going in <code>finally</code>."
+     },
+     {
+      "t": "run() resolves only when everything is done",
+      "test": "// run() waits for running tasks and for tasks they schedule",
+      "verify": "const s = new Scheduler({ maxConcurrent: 2 }); const done = []; s.schedule(async () => { await sleep(15); done.push('a'); s.schedule(async () => { await sleep(10); done.push('child') }, 'low') }); s.schedule(async () => { await sleep(5); done.push('b') }); await s.run(); assert(done.join() === 'b,a,child', 'run resolved early: ' + done.join()); const empty = new Scheduler(); await empty.run()",
+      "gap": "Resolve the <code>run()</code> promise only when <code>running === 0</code> and every queue is empty (check after each finish)."
+     }
+    ]
+   },
+   "solution": "class Scheduler {\n  constructor({ maxConcurrent = 3 } = {}) {\n    this.maxConcurrent = maxConcurrent;\n    this.queues = { high: [], normal: [], low: [] };\n    this.running = 0;\n    this.started = false;\n    this.waiters = [];\n  }\n\n  schedule(task, priority = 'normal') {\n    if (!this.queues[priority]) throw new Error('Unknown priority: ' + priority);\n    return new Promise((resolve, reject) => {\n      this.queues[priority].push({ task, resolve, reject });\n      if (this.started) this.pump();\n    });\n  }\n\n  next() {\n    for (const p of ['high', 'normal', 'low']) if (this.queues[p].length) return this.queues[p].shift();\n    return null;\n  }\n\n  pump() {\n    while (this.running < this.maxConcurrent) {\n      const job = this.next();\n      if (!job) break;\n      this.running++;\n      Promise.resolve()\n        .then(job.task)\n        .then(job.resolve, job.reject)\n        .finally(() => {\n          this.running--;\n          this.pump();\n        });\n    }\n    const idle = this.running === 0 && !this.queues.high.length && !this.queues.normal.length && !this.queues.low.length;\n    if (idle) {\n      const ws = this.waiters;\n      this.waiters = [];\n      ws.forEach((w) => w());\n    }\n  }\n\n  run() {\n    this.started = true;\n    const p = new Promise((resolve) => this.waiters.push(resolve));\n    this.pump();\n    return p;\n  }\n}",
+   "notes": [
+    "Three FIFO queues + \"take from the highest non-empty one\" = priority scheduling.",
+    "Every finished task calls <code>pump()</code> again, so free slots are filled at once.",
+    "Each job carries its own <code>resolve</code>/<code>reject</code>, so failures stay isolated.",
+    "<code>run()</code> resolves only when nothing is queued and nothing is running.",
+    "Strict priority can starve low jobs; aging is the usual fix."
+   ],
+   "next": [
+    "Add aging: a waiting job moves up one priority every 500 ms.",
+    "Add <code>cancel(promise)</code> for jobs that have not started yet.",
+    "Support a numeric priority (any number) with a binary heap instead of three arrays."
+   ]
+  },
+  {
+   "id": "di-container",
+   "diff": "Hard",
+   "fn": "Container",
+   "signature": "class Container { register(name, factory), singleton(name, factory), resolve(name) }",
+   "learn": {
+    "what": [
+     "Without <b>dependency injection</b>, a class builds its own helpers: <code>new UserService()</code> calls <code>new Database()</code> inside. That makes it hard to swap the database in tests.",
+     "With a <b>container</b>, you register how to build each thing once (<code>register(\"db\", () =&gt; new Database())</code>), and code asks for it by name (<code>resolve(\"db\")</code>). Factories receive the container, so they can resolve their own dependencies.",
+     "<code>register</code> gives a new instance every time; <code>singleton</code> builds it once and reuses it. A good container also spots <b>circular</b> dependencies (A needs B, B needs A) and explains them instead of overflowing the stack."
+    ],
+    "how": {
+     "steps": [
+      "Store providers in a <code>Map</code>: name → <code>{ factory, singleton, instance }</code>.",
+      "<code>register</code> / <code>singleton</code> just save the provider (re-registering replaces it).",
+      "<code>resolve(name)</code>: unknown name → throw <code>No provider for \"name\"</code>. Singleton already built → return it.",
+      "Keep a <code>resolving</code> stack of names being built. If <code>name</code> is already on it → throw <code>Circular dependency: a -&gt; b -&gt; a</code>.",
+      "Push the name, call <code>factory(this)</code>, pop it in <code>finally</code> (so an error does not leave the stack dirty), cache it if singleton, return it."
+     ],
+     "diagram": "container.singleton('config', () => ({ url: 'db://' }))\ncontainer.singleton('db', (c) => new Db(c.resolve('config')))\ncontainer.register('users', (c) => new UserService(c.resolve('db')))\n\nresolve('users')  stack: [users]\n  resolve('db')   stack: [users, db]\n    resolve('config') -> built once, cached\n  db built, cached\nusers built (new one every time)"
+    },
+    "where": [
+     [
+      "Backends",
+      "NestJS, Angular and InversifyJS are built around DI containers."
+     ],
+     [
+      "Testing",
+      "Register a fake mailer in tests, the real one in production."
+     ],
+     [
+      "Configuration",
+      "One place decides which implementation the app uses."
+     ],
+     [
+      "Not a fit",
+      "Small apps: passing dependencies as function arguments is DI without a container."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Concept",
+     "q": "Why does the factory receive the container as its argument?",
+     "opts": [
+      "So it can resolve its own dependencies without knowing how they are built",
+      "To register more services",
+      "Containers require it for performance",
+      "To make it a singleton"
+     ],
+     "ans": 0,
+     "why": [
+      "<code>(c) =&gt; new UserService(c.resolve(\"db\"))</code> asks for \"db\" by name; the container decides what that is.",
+      "That is the whole decoupling."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "A singleton depends on a non-singleton (<code>register</code>) service. How many instances of that dependency does the singleton ever see?",
+     "opts": [
+      "A new one on every call to the singleton",
+      "Exactly one: the singleton is built once, so its dependency is resolved once",
+      "None",
+      "Two"
+     ],
+     "ans": 1,
+     "why": [
+      "The singleton's factory runs once, so the transient dependency is created once for it.",
+      "This \"captive dependency\" surprise is a classic DI bug."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "A resolve throws in the middle (a factory crashed). What must happen to the <code>resolving</code> stack?",
+     "opts": [
+      "Nothing, it is temporary",
+      "Clear all providers",
+      "Pop the name in <code>finally</code>; otherwise the next resolve of that name wrongly reports a circular dependency",
+      "Mark the service as broken forever"
+     ],
+     "ans": 2,
+     "why": [
+      "Without <code>finally</code>, the failed name stays on the stack.",
+      "The next <code>resolve</code> would see it and throw a false \"Circular dependency\"."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const stack = [\"a\", \"b\"]\nconst name = \"a\"\nconsole.log(\"Circular dependency: \" + [...stack.slice(stack.indexOf(name)), name].join(\" -&gt; \"))</code></pre>",
+     "opts": [
+      "<code>Circular dependency: a -&gt; b</code>",
+      "<code>Circular dependency: b -&gt; a</code>",
+      "<code>Circular dependency: a</code>",
+      "<code>Circular dependency: a -&gt; b -&gt; a</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Slice from where the name first appeared, then add it again to close the loop.",
+      "A message with the full path saves a lot of debugging time."
+     ]
+    }
+   ],
+   "pseudo": "class Container:\n  providers = Map(); resolving = []\n\n  register(name, factory):  providers.set(name, { factory, singleton: false })\n  singleton(name, factory): providers.set(name, { factory, singleton: true, built: false })\n\n  resolve(name):\n    p = providers.get(name); if !p -> throw 'No provider for \"name\"'\n    if p.singleton and p.built -> return p.instance\n    if name in resolving:\n      cycle = [...resolving from name, name].join(' -> ')\n      throw 'Circular dependency: ' + cycle\n    resolving.push(name)\n    try:\n      instance = p.factory(this)\n    finally:\n      resolving.pop()\n    if p.singleton: p.instance = instance; p.built = true\n    return instance",
+   "watch": [
+    "Where do you remember that a singleton was already built (even if it built <code>undefined</code>)?",
+    "How do you detect A → B → A?",
+    "What happens to the resolving stack when a factory throws?"
+   ],
+   "build": {
+    "minutes": 35,
+    "problem": "Build <b>class Container</b> with <code>register</code>, <code>singleton</code> and <code>resolve</code>.",
+    "reqs": [
+     "<code>register(name, factory)</code>: every <code>resolve</code> calls the factory again (new instance).",
+     "<code>singleton(name, factory)</code>: built on first <code>resolve</code>, then the same instance forever.",
+     "Factories get the container, so they can resolve their own dependencies.",
+     "Unknown names throw an error that contains <code>No provider for \"name\"</code>.",
+     "Circular dependencies throw <code>Circular dependency: a -&gt; b -&gt; a</code>, and the container keeps working after any error."
+    ],
+    "checks": [
+     {
+      "t": "register gives a new instance each time",
+      "test": "const c = new Container()\nc.register('id', () => ({ n: Math.random() }))\nconsole.log(c.resolve('id') !== c.resolve('id')) // expected: true",
+      "verify": "const c = new Container(); let made = 0; c.register('thing', () => ({ n: ++made })); const a = c.resolve('thing'); const b = c.resolve('thing'); assert(a && b && a.n === 1 && b.n === 2, 'each resolve should build a new one'); assert(a !== b, 'should not be the same object')",
+      "gap": "For non-singletons, call the factory on every resolve."
+     },
+     {
+      "t": "singleton is built once, lazily",
+      "test": "let built = 0\nc.singleton('db', () => ({ id: ++built }))\nconsole.log(built, c.resolve('db') === c.resolve('db'), built) // expected: 0 true 1",
+      "verify": "const c = new Container(); let built = 0; c.singleton('db', () => ({ id: ++built })); assert(built === 0, 'should not build before resolve'); const a = c.resolve('db'); const b = c.resolve('db'); assert(a && a === b, 'should be the same instance'); assert(built === 1, 'built ' + built + ' times'); let u = 0; c.singleton('nothing', () => { u++; return undefined }); c.resolve('nothing'); c.resolve('nothing'); assert(u === 1, 'a singleton that returns undefined should still be built once')",
+      "gap": "Cache the instance with a <code>built</code> flag (not \"instance is truthy\")."
+     },
+     {
+      "t": "Factories resolve their own dependencies",
+      "test": "c.singleton('config', () => ({ url: 'db://local' }))\nc.singleton('db', (k) => ({ url: k.resolve('config').url }))\nc.register('users', (k) => ({ db: k.resolve('db') }))\nconsole.log(c.resolve('users').db.url) // expected: db://local",
+      "verify": "const c = new Container(); c.singleton('config', () => ({ url: 'db://local' })); c.singleton('db', (k) => ({ url: k.resolve('config').url })); c.register('users', (k) => ({ db: k.resolve('db') })); const u1 = c.resolve('users'); const u2 = c.resolve('users'); assert(u1.db.url === 'db://local', 'got ' + (u1.db && u1.db.url)); assert(u1 !== u2 && u1.db === u2.db, 'users should be new, db shared')",
+      "gap": "Call <code>factory(this)</code>."
+     },
+     {
+      "t": "Unknown names throw a clear error",
+      "test": "try { c.resolve('mailer') } catch (e) { console.log(e.message) } // expected: No provider for \"mailer\"",
+      "verify": "const c = new Container(); let msg = ''; try { c.resolve('mailer') } catch (e) { msg = e.message } assert(msg.includes('No provider for \"mailer\"'), 'message was: ' + msg)",
+      "gap": "Check the Map first and throw <code>new Error('No provider for \"' + name + '\"')</code>."
+     },
+     {
+      "t": "Circular dependencies are detected with the path",
+      "test": "c.register('a', (k) => k.resolve('b'))\nc.register('b', (k) => k.resolve('a'))\ntry { c.resolve('a') } catch (e) { console.log(e.message) } // expected: Circular dependency: a -> b -> a",
+      "verify": "const c = new Container(); c.register('a', (k) => k.resolve('b')); c.register('b', (k) => k.resolve('c')); c.register('c', (k) => k.resolve('a')); let msg = ''; try { c.resolve('a') } catch (e) { msg = e.message } assert(msg.includes('Circular dependency: a -> b -> c -> a'), 'message was: ' + msg)",
+      "gap": "Keep a stack of names being resolved; if the name is already in it, throw with the path from its first position."
+     },
+     {
+      "t": "The container keeps working after an error",
+      "test": "// after a factory throws once, resolving again works (no false \"circular\" error)",
+      "verify": "const c = new Container(); let fail = true; c.register('svc', () => { if (fail) throw new Error('boom'); return 'ok' }); let first = ''; try { c.resolve('svc') } catch (e) { first = e.message } assert(first === 'boom', 'first error should pass through, got ' + first); fail = false; assert(c.resolve('svc') === 'ok', 'second resolve should work')",
+      "gap": "Pop the name from the stack in a <code>finally</code> block."
+     }
+    ]
+   },
+   "solution": "class Container {\n  constructor() {\n    this.providers = new Map();\n    this.resolving = [];\n  }\n\n  register(name, factory) {\n    this.providers.set(name, { factory, singleton: false });\n    return this;\n  }\n\n  singleton(name, factory) {\n    this.providers.set(name, { factory, singleton: true, built: false, instance: undefined });\n    return this;\n  }\n\n  resolve(name) {\n    const p = this.providers.get(name);\n    if (!p) throw new Error('No provider for \"' + name + '\"');\n    if (p.singleton && p.built) return p.instance;\n    if (this.resolving.includes(name)) {\n      const cycle = [...this.resolving.slice(this.resolving.indexOf(name)), name].join(' -> ');\n      throw new Error('Circular dependency: ' + cycle);\n    }\n    this.resolving.push(name);\n    let instance;\n    try {\n      instance = p.factory(this);\n    } finally {\n      this.resolving.pop();\n    }\n    if (p.singleton) {\n      p.instance = instance;\n      p.built = true;\n    }\n    return instance;\n  }\n}",
+   "notes": [
+    "The container is a Map of recipes; <code>resolve</code> cooks one.",
+    "Singletons use a <code>built</code> flag, so even <code>undefined</code> or <code>0</code> results are cached.",
+    "A stack of in-progress names finds cycles and gives a readable path.",
+    "<code>finally</code> keeps the stack clean when a factory throws."
+   ],
+   "next": [
+    "Add <code>value(name, v)</code> for constants and <code>has(name)</code>.",
+    "Support child containers (scopes) that fall back to their parent.",
+    "Auto-wire classes: <code>register(UserService)</code> using a static <code>inject = [\"db\"]</code> list."
+   ]
+  },
+  {
+   "id": "analytics-sdk",
+   "diff": "Hard",
+   "fn": "createAnalytics",
+   "signature": "createAnalytics(options) -> { track, identify, flush, destroy }",
+   "learn": {
+    "what": [
+     "An analytics SDK (like Segment or Mixpanel) records events such as <code>track(\"signup\", { plan: \"pro\" })</code> and sends them to a server. Sending one request per event would be slow and wasteful.",
+     "So events wait in a <b>queue</b> and are sent in <b>batches</b>: when 25 have piled up, or every 10 seconds, whichever comes first. <code>identify(userId)</code> tags later events with the user.",
+     "Networks fail, so a failed send is <b>retried with backoff</b>, and the queue is saved in <b>storage</b> so events survive a page reload or going offline."
+    ],
+    "how": {
+     "steps": [
+      "<code>createAnalytics({ send, batchSize, flushInterval, storage, retries, retryDelay })</code>: load any saved queue from <code>storage</code> (key <code>analytics-queue</code>).",
+      "<code>track(event, props)</code>: push <code>{ id, event, props, userId, timestamp }</code>, save the queue, and flush if the queue reached <code>batchSize</code>.",
+      "<code>flush()</code>: if empty, resolve. Otherwise take a copy of the queue and call <code>send(batch)</code>; on failure wait <code>retryDelay * 2 ** attempt</code> and retry. Only after a success remove those events from the queue and save.",
+      "Start a <code>setInterval(flush, flushInterval)</code>; <code>destroy()</code> clears it. Avoid two flushes at once by reusing the running flush promise."
+     ],
+     "diagram": "track x24      queue: 24  (saved to storage each time)\ntrack #25      queue: 25 -> flush -> send([25 events])\n                      fails -> wait 100 -> retry -> ok -> queue: 0\n...10s later   interval -> flush whatever is queued"
+    },
+    "where": [
+     [
+      "Product analytics",
+      "Segment, Mixpanel, Amplitude, PostHog SDKs all batch and retry."
+     ],
+     [
+      "Logging / errors",
+      "Sentry-like SDKs queue errors and send them in the background."
+     ],
+     [
+      "Offline apps",
+      "Queue actions while offline, send when the network is back."
+     ],
+     [
+      "Not a fit",
+      "Events that must arrive before something else happens (a payment) need a direct request, not a batch."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Concept",
+     "q": "Why remove events from the queue only <b>after</b> <code>send</code> succeeds?",
+     "opts": [
+      "It is faster",
+      "Servers require it",
+      "If the send fails or the page closes mid-request, the events are still there to retry",
+      "To keep them sorted"
+     ],
+     "ans": 2,
+     "why": [
+      "Removing first and failing later loses data.",
+      "The cost is possible duplicates (if a request succeeded but the reply was lost), which is why each event has an <code>id</code> the server can de-duplicate."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "Batch size 25, interval 10 s. A user sends 3 events and then idles. When are they sent?",
+     "opts": [
+      "Within about 10 seconds, by the interval flush",
+      "Never",
+      "Immediately, one by one",
+      "When 22 more events arrive"
+     ],
+     "ans": 0,
+     "why": [
+      "Size triggers flush for busy users; the interval makes sure quiet users' events still go out.",
+      "Real SDKs also flush on <code>pagehide</code> using <code>navigator.sendBeacon</code>."
+     ]
+    },
+    {
+     "tag": "Spot the bug",
+     "q": "The interval fires a flush while another flush is still waiting for a slow <code>send</code>. Both send the whole queue. What is the problem?",
+     "opts": [
+      "Nothing",
+      "The same events are sent twice",
+      "The second flush deletes the queue",
+      "The interval stops"
+     ],
+     "ans": 1,
+     "why": [
+      "Both flushes copied the same events.",
+      "Keep the running flush promise and return it while one is in progress."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const waits = [0, 1, 2].map(a =&gt; 100 * 2 ** a)\nconsole.log(waits.join(\",\"))</code></pre>",
+     "opts": [
+      "<code>100,200,300</code>",
+      "<code>0,100,200</code>",
+      "<code>100,100,100</code>",
+      "<code>100,200,400</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Exponential backoff doubles the wait after each failed attempt.",
+      "It gives a struggling server time to recover instead of hammering it."
+     ]
+    }
+   ],
+   "pseudo": "createAnalytics({ send, batchSize = 25, flushInterval = 10000, storage = null,\n                  retries = 3, retryDelay = 100 }):\n  queue = load(storage, 'analytics-queue') or []\n  userId = null; running = null\n  save() = storage?.setItem('analytics-queue', JSON.stringify(queue))\n\n  track(event, props = {}):\n    queue.push({ id: unique, event, props, userId, timestamp: Date.now() }); save()\n    if queue.length >= batchSize: flush()\n  identify(id): userId = id\n  flush():\n    if running: return running\n    if queue empty: return resolved promise\n    batch = copy of queue\n    running = (async () =>\n      for attempt 0..retries:\n        try: await send(batch); remove batch ids from queue; save(); return\n        catch: if attempt == retries throw; wait retryDelay * 2^attempt\n    )().finally(() => running = null)\n    return running\n  timer = setInterval(() => flush().catch(() => {}), flushInterval)\n  destroy(): clearInterval(timer)",
+   "watch": [
+    "When exactly may an event leave the queue?",
+    "What stops two flushes from sending the same events?",
+    "What is saved to storage, and when?"
+   ],
+   "build": {
+    "minutes": 45,
+    "problem": "Build <b>createAnalytics(options)</b> returning <code>{ track, identify, flush, destroy }</code>.",
+    "reqs": [
+     "Options: <code>send(batch)</code> → Promise, <code>batchSize</code> (25), <code>flushInterval</code> ms (10000), <code>storage</code> ({ getItem, setItem }, optional), <code>retries</code> (3), <code>retryDelay</code> (100).",
+     "<code>track(event, props)</code> queues <code>{ id, event, props, userId, timestamp }</code>; <code>identify(userId)</code> applies to later events.",
+     "<code>flush()</code> sends all queued events in one <code>send</code> call; nothing is sent for an empty queue; concurrent flushes share one request.",
+     "Auto-flush when the queue reaches <code>batchSize</code> and every <code>flushInterval</code> ms; <code>destroy()</code> stops the timer.",
+     "Failed sends retry with exponential backoff; events stay queued until a send succeeds; the queue is saved to and restored from storage key <code>analytics-queue</code>."
+    ],
+    "checks": [
+     {
+      "t": "track queues events; identify tags later ones; flush sends them in one batch",
+      "test": "const sent = []\nconst a = createAnalytics({ send: async (b) => { sent.push(b) }, flushInterval: 100000 })\na.track('open'); a.identify('u1'); a.track('click', { id: 7 })\nawait a.flush(); a.destroy()\nconsole.log(sent.length, sent[0].map((e) => e.event + ':' + e.userId)) // expected: 1 ['open:null', 'click:u1']",
+      "verify": "const sent = []; const a = createAnalytics({ send: async (b) => { sent.push(b) }, flushInterval: 100000 }); a.track('open'); a.identify('u1'); a.track('click', { id: 7 }); await a.flush(); a.destroy(); assert(sent.length === 1, 'should send one batch, sent ' + sent.length); const b = sent[0]; assert(b.map((e) => e.event + ':' + e.userId).join() === 'open:null,click:u1', 'batch ' + JSON.stringify(b)); assert(b[1].props.id === 7 && typeof b[0].timestamp === 'number' && b[0].id && b[0].id !== b[1].id, 'events need props, timestamp and unique ids')",
+      "gap": "Push full event objects; <code>flush</code> calls <code>send</code> once with a copy of the queue."
+     },
+     {
+      "t": "Empty flush sends nothing; the queue empties after success",
+      "test": "await a.flush() // nothing queued -> send is not called",
+      "verify": "let calls = 0; const a = createAnalytics({ send: async () => { calls++ }, flushInterval: 100000 }); await a.flush(); assert(calls === 0, 'empty flush should not send'); a.track('x'); await a.flush(); await a.flush(); a.destroy(); assert(calls === 1, 'sent events should leave the queue, calls ' + calls)",
+      "gap": "Return early when the queue is empty; remove sent events after success."
+     },
+     {
+      "t": "Flushes automatically at batchSize",
+      "test": "// batchSize 3: the third track triggers a send",
+      "verify": "const sent = []; const a = createAnalytics({ send: async (b) => { sent.push(b.length) }, batchSize: 3, flushInterval: 100000 }); a.track('1'); a.track('2'); assert(sent.length === 0, 'too early'); a.track('3'); await sleep(10); a.destroy(); assert(sent.join() === '3', 'sent ' + sent.join())",
+      "gap": "In <code>track</code>, call <code>flush()</code> when <code>queue.length &gt;= batchSize</code>."
+     },
+     {
+      "t": "Flushes on the interval; destroy stops it",
+      "test": "// flushInterval 30ms: queued events go out without calling flush",
+      "verify": "const sent = []; const a = createAnalytics({ send: async (b) => { sent.push(b.length) }, flushInterval: 30 }); a.track('x'); await sleep(60); assert(sent.join() === '1', 'interval flush, sent ' + sent.join()); a.destroy(); a.track('y'); await sleep(70); assert(sent.join() === '1', 'should stop after destroy')",
+      "gap": "<code>setInterval(() =&gt; flush(), flushInterval)</code>; <code>destroy</code> clears it."
+     },
+     {
+      "t": "Retries with backoff; events stay until success",
+      "test": "// send fails twice, then works -> 3 calls, same batch, queue empties",
+      "verify": "let calls = 0; const times = []; const t0 = Date.now(); const a = createAnalytics({ send: async (b) => { calls++; times.push(Date.now() - t0); if (calls < 3) throw new Error('503') }, retries: 3, retryDelay: 20, flushInterval: 100000 }); a.track('x'); await a.flush(); assert(calls === 3, 'send called ' + calls + ' times'); assert(times[2] - times[1] >= 30, 'second wait should be about double: ' + times.join(',')); await a.flush(); assert(calls === 3, 'queue should be empty after success'); const b = createAnalytics({ send: async () => { throw new Error('down') }, retries: 1, retryDelay: 5, flushInterval: 100000 }); b.track('keep'); let failed = false; try { await b.flush() } catch (e) { failed = true } b.destroy(); a.destroy(); assert(failed, 'flush should reject after the last retry')",
+      "gap": "Loop over attempts with <code>await wait(retryDelay * 2 ** attempt)</code>; remove events only after <code>send</code> resolves."
+     },
+     {
+      "t": "Concurrent flushes share one request",
+      "test": "// flush() twice while send is slow -> send called once",
+      "verify": "let calls = 0; const a = createAnalytics({ send: async () => { calls++; await sleep(30) }, flushInterval: 100000 }); a.track('x'); const p1 = a.flush(); const p2 = a.flush(); await Promise.all([p1, p2]); a.destroy(); assert(calls === 1, 'send called ' + calls + ' times')",
+      "gap": "Keep the running flush promise and return it if a flush is already in progress."
+     },
+     {
+      "t": "Queue is saved to storage and restored",
+      "test": "// events tracked with one instance are sent by the next one",
+      "verify": "const mem = {}; const storage = { getItem: (k) => (k in mem ? mem[k] : null), setItem: (k, v) => { mem[k] = v } }; const a = createAnalytics({ send: async () => { throw new Error('offline') }, storage, retries: 0, flushInterval: 100000 }); a.track('saved', { x: 1 }); a.destroy(); assert(JSON.parse(mem['analytics-queue']).length === 1, 'should save the queue'); const sent = []; const b = createAnalytics({ send: async (batch) => { sent.push(...batch) }, storage, flushInterval: 100000 }); await b.flush(); b.destroy(); assert(sent.length === 1 && sent[0].event === 'saved', 'restored ' + JSON.stringify(sent)); assert(JSON.parse(mem['analytics-queue']).length === 0, 'storage should be emptied after success')",
+      "gap": "Read <code>storage.getItem(\"analytics-queue\")</code> at start; call save after every change to the queue."
+     }
+    ]
+   },
+   "solution": "function createAnalytics({ send, batchSize = 25, flushInterval = 10000, storage = null, retries = 3, retryDelay = 100 } = {}) {\n  const KEY = 'analytics-queue';\n  const wait = (ms) => new Promise((r) => setTimeout(r, ms));\n  let queue = [];\n  try { queue = JSON.parse(storage?.getItem(KEY) ?? '[]') || []; } catch { queue = []; }\n  let userId = null;\n  let running = null;\n  let seq = 0;\n  const save = () => storage?.setItem(KEY, JSON.stringify(queue));\n\n  const flush = () => {\n    if (running) return running;\n    if (queue.length === 0) return Promise.resolve();\n    const batch = queue.slice();\n    running = (async () => {\n      for (let attempt = 0; ; attempt++) {\n        try {\n          await send(batch);\n          const sentIds = new Set(batch.map((e) => e.id));\n          queue = queue.filter((e) => !sentIds.has(e.id));\n          save();\n          return;\n        } catch (err) {\n          if (attempt >= retries) throw err;\n          await wait(retryDelay * 2 ** attempt);\n        }\n      }\n    })().finally(() => { running = null; });\n    return running;\n  };\n\n  const track = (event, props = {}) => {\n    queue.push({ id: Date.now().toString(36) + '-' + (seq++), event, props, userId, timestamp: Date.now() });\n    save();\n    if (queue.length >= batchSize) flush().catch(() => {});\n  };\n\n  const identify = (id) => { userId = id; };\n  const timer = setInterval(() => { flush().catch(() => {}); }, flushInterval);\n  const destroy = () => clearInterval(timer);\n\n  return { track, identify, flush, destroy };\n}",
+   "notes": [
+    "Queue, batch, send: fewer requests, and the server gets events in bulk.",
+    "Remove events only after a successful send; give each event an id so the server can drop duplicates.",
+    "One running flush at a time stops double sends.",
+    "Exponential backoff plus a saved queue survives bad networks and reloads.",
+    "Inject <code>send</code> and <code>storage</code>: the SDK stays testable and works in browsers, React Native or Node."
+   ],
+   "next": [
+    "Flush on <code>pagehide</code> with <code>navigator.sendBeacon</code> so the last events are not lost.",
+    "Cap the queue (for example 1000 events) and drop the oldest when offline for a long time.",
+    "Add <code>page()</code> events and a session id that rotates after 30 minutes of inactivity."
+   ]
+  },
+  {
+   "id": "feature-flags",
+   "diff": "Hard",
+   "fn": "FeatureFlagClient",
+   "signature": "class FeatureFlagClient(flags) { getFlag(key, user, fallback), isEnabled(key, user) } / bucket(userId, key)",
+   "learn": {
+    "what": [
+     "A <b>feature flag</b> turns a feature on or off without a new deploy: <code>if (flags.isEnabled(\"new-checkout\", user))</code>. The decision comes from data, not code.",
+     "Each flag has a <b>default</b> value and a list of <b>rules</b> checked in order; the first rule that matches decides. Rules can target an <b>allowlist</b> of users, <b>conditions</b> on user properties (country is \"IN\", age &gt; 18), or a <b>percentage rollout</b>.",
+     "Rollouts must be <b>deterministic</b>: the same user always lands in the same bucket (0–99), from a hash of <code>userId + flagKey</code>. Raising 10% to 30% keeps the first 10% in and adds more."
+    ],
+    "how": {
+     "steps": [
+      "<code>bucket(userId, key)</code>: hash the string <code>userId + \":\" + key</code> to a 32-bit number and take <code>% 100</code>.",
+      "Store flags in a Map by key. <code>getFlag(key, user, fallback)</code>: missing flag → <code>fallback</code>.",
+      "Walk the rules in order. <code>allow</code>: the user id is in the list. <code>if</code>: compare <code>user[attr]</code> with <code>op</code> (<code>eq</code>, <code>neq</code>, <code>in</code>, <code>gt</code>, <code>lt</code>). <code>percent</code>: <code>bucket(user.id, key) &lt; percent</code>.",
+      "First match → return its <code>value</code>. No match → the flag's <code>default</code>.",
+      "<code>isEnabled(key, user)</code> = <code>getFlag(key, user, false) === true</code>."
+     ],
+     "diagram": "flag \"new-checkout\": default false\n  rules:\n   1. allow [\"asha\"]                 -> true    (staff testing)\n   2. if country eq \"US\"             -> false   (legal hold)\n   3. percent 20                     -> true    (20% rollout)\nuser { id: \"bilal\", country: \"IN\" }\n   1 no, 2 no, 3: bucket(\"bilal:new-checkout\") = 13 < 20 -> true"
+    },
+    "where": [
+     [
+      "Safe releases",
+      "Ship code dark, turn it on for 1%, then 10%, then everyone."
+     ],
+     [
+      "A/B tests",
+      "Variant values (<code>\"blue\" | \"green\"</code>) by bucket."
+     ],
+     [
+      "Kill switches",
+      "Turn off a broken feature in seconds."
+     ],
+     [
+      "Not a fit",
+      "Permanent per-plan permissions belong in your auth/billing model, not in flags."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Concept",
+     "q": "Why use <code>hash(userId + key)</code> instead of <code>Math.random() &lt; 0.2</code> for a 20% rollout?",
+     "opts": [
+      "Math.random is slow",
+      "A random check gives the same user a different answer on every page load; a hash always gives the same answer",
+      "Hashes are more secure",
+      "Math.random cannot do percentages"
+     ],
+     "ans": 1,
+     "why": [
+      "Users would see the feature flicker on and off.",
+      "A hash makes the decision stable and needs no stored state."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "Why include the flag key in the hash, not just the user id?",
+     "opts": [
+      "To make the hash longer",
+      "So the same users are not always the first 10% of every rollout; each flag gets its own spread",
+      "It is required by the hash function",
+      "To support allowlists"
+     ],
+     "ans": 1,
+     "why": [
+      "With only the user id, user 13 would be in the first slice of <b>every</b> experiment.",
+      "Mixing in the key gives an independent bucket per flag."
+     ]
+    },
+    {
+     "tag": "Trace",
+     "q": "Rules in order: (1) <code>if country eq \"US\" → false</code>, (2) <code>allow [\"asha\"] → true</code>. Asha is in the US. What does she get?",
+     "opts": [
+      "<code>true</code>, allowlists always win",
+      "The default value",
+      "Both",
+      "<code>false</code>, rule 1 matches first"
+     ],
+     "ans": 3,
+     "why": [
+      "Rules are checked top to bottom and the first match wins.",
+      "Order is part of the flag design: put the allowlist first if staff must always see it."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const inRollout = (b, p) =&gt; b &lt; p\nconsole.log([5, 15, 25].map(b =&gt; [inRollout(b, 10), inRollout(b, 30)].join(\"/\")).join(\" \"))</code></pre>",
+     "opts": [
+      "<code>true/true false/true false/true</code>",
+      "<code>true/false false/true false/false</code>",
+      "<code>false/true true/true true/false</code>",
+      "<code>true/true true/true false/true</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Bucket 5 is in at 10% and still in at 30%. Raising the percentage never removes anyone.",
+      "That is why the bucket must be fixed per user and flag."
+     ]
+    }
+   ],
+   "pseudo": "bucket(userId, key):\n  h = 32-bit hash of (userId + ':' + key)   // FNV-1a + mix\n  return h % 100\n\nclass FeatureFlagClient(flags):\n  map = Map(flag.key -> flag)\n  matches(rule, user, key):\n    if rule.allow   -> rule.allow includes user.id\n    if rule.if      -> compare user[rule.if.attr] with rule.if.value using rule.if.op\n    if rule.percent -> user.id exists and bucket(user.id, key) < rule.percent\n  getFlag(key, user = {}, fallback):\n    flag = map.get(key); if !flag -> return fallback\n    for rule of flag.rules: if matches(rule, user, key) -> return rule.value\n    return flag.default\n  isEnabled(key, user) = getFlag(key, user, false) === true",
+   "watch": [
+    "What makes a user's answer stable across page loads?",
+    "Which rule wins when two rules match?",
+    "What happens for a flag that does not exist?"
+   ],
+   "build": {
+    "minutes": 40,
+    "problem": "Build <b>bucket(userId, key)</b> and <b>class FeatureFlagClient(flags)</b> with <code>getFlag(key, user, fallback)</code> and <code>isEnabled(key, user)</code>.",
+    "reqs": [
+     "A flag is <code>{ key, default, rules }</code>; rules are <code>{ allow: [ids], value }</code>, <code>{ if: { attr, op, value }, value }</code> (ops <code>eq</code>, <code>neq</code>, <code>in</code>, <code>gt</code>, <code>lt</code>) or <code>{ percent, value }</code>.",
+     "Rules are checked in order; the first match wins; no match → the flag's <code>default</code>; unknown flag → <code>fallback</code>.",
+     "<code>bucket(userId, key)</code> is an integer 0–99, the same every time for the same inputs.",
+     "Percent rules use <code>bucket(user.id, flagKey) &lt; percent</code>; a user without an id never matches.",
+     "<code>isEnabled</code> returns <code>true</code> only when the value is exactly <code>true</code>."
+    ],
+    "checks": [
+     {
+      "t": "Unknown flag gives the fallback; no match gives the default",
+      "test": "const ff = new FeatureFlagClient([{ key: 'beta', default: 'off', rules: [] }])\nconsole.log(ff.getFlag('nope', {}, 'fb'), ff.getFlag('beta', { id: 'u1' })) // expected: fb off",
+      "verify": "const ff = new FeatureFlagClient([{ key: 'beta', default: 'off', rules: [] }]); assert(ff.getFlag('nope', {}, 'fb') === 'fb', 'unknown flag'); assert(ff.getFlag('beta', { id: 'u1' }) === 'off', 'default'); assert(ff.getFlag('beta') === 'off', 'missing user should not crash')",
+      "gap": "Look the flag up by key; return <code>fallback</code> if missing, <code>flag.default</code> if no rule matches."
+     },
+     {
+      "t": "Allowlist rules",
+      "test": "const ff = new FeatureFlagClient([{ key: 'x', default: false, rules: [{ allow: ['asha'], value: true }] }])\nconsole.log(ff.getFlag('x', { id: 'asha' }), ff.getFlag('x', { id: 'bilal' })) // expected: true false",
+      "verify": "const ff = new FeatureFlagClient([{ key: 'x', default: false, rules: [{ allow: ['asha'], value: true }] }]); assert(ff.getFlag('x', { id: 'asha' }) === true, 'allowed user'); assert(ff.getFlag('x', { id: 'bilal' }) === false, 'other user')",
+      "gap": "<code>rule.allow.includes(user.id)</code>."
+     },
+     {
+      "t": "Condition rules with every operator",
+      "test": "rules: [{ if: { attr: 'country', op: 'in', value: ['IN', 'NP'] }, value: 'inr' }]",
+      "verify": "const mk = (cond) => new FeatureFlagClient([{ key: 'f', default: 'no', rules: [{ if: cond, value: 'yes' }] }]); const u = { id: 'u', country: 'IN', age: 20 }; assert(mk({ attr: 'country', op: 'eq', value: 'IN' }).getFlag('f', u) === 'yes', 'eq'); assert(mk({ attr: 'country', op: 'neq', value: 'US' }).getFlag('f', u) === 'yes', 'neq'); assert(mk({ attr: 'country', op: 'in', value: ['NP', 'IN'] }).getFlag('f', u) === 'yes', 'in'); assert(mk({ attr: 'age', op: 'gt', value: 18 }).getFlag('f', u) === 'yes', 'gt'); assert(mk({ attr: 'age', op: 'lt', value: 18 }).getFlag('f', u) === 'no', 'lt false'); assert(mk({ attr: 'country', op: 'eq', value: 'US' }).getFlag('f', u) === 'no', 'eq false')",
+      "gap": "Read <code>user[attr]</code> and switch on <code>op</code>."
+     },
+     {
+      "t": "First matching rule wins",
+      "test": "rules: [{ if: { attr: 'country', op: 'eq', value: 'US' }, value: false }, { allow: ['asha'], value: true }]\n// asha in the US -> false",
+      "verify": "const ff = new FeatureFlagClient([{ key: 'k', default: 'd', rules: [{ if: { attr: 'country', op: 'eq', value: 'US' }, value: 'blocked' }, { allow: ['asha'], value: 'staff' }] }]); assert(ff.getFlag('k', { id: 'asha', country: 'US' }) === 'blocked', 'first rule should win'); assert(ff.getFlag('k', { id: 'asha', country: 'IN' }) === 'staff', 'second rule'); assert(ff.getFlag('k', { id: 'zed', country: 'IN' }) === 'd', 'default')",
+      "gap": "Loop over the rules in order and return on the first match."
+     },
+     {
+      "t": "bucket is stable, 0-99, and depends on the flag key",
+      "test": "console.log(bucket('u1', 'beta') === bucket('u1', 'beta')) // expected: true",
+      "verify": "const b = bucket('user-1', 'beta'); assert(Number.isInteger(b) && b >= 0 && b <= 99, 'bucket must be 0-99, got ' + b); assert(bucket('user-1', 'beta') === b, 'not stable'); let diff = 0; for (let i = 0; i < 200; i++) if (bucket('u' + i, 'flag-a') !== bucket('u' + i, 'flag-b')) diff++; assert(diff > 150, 'the key should change the bucket, only ' + diff + ' differ')",
+      "gap": "Hash <code>userId + \":\" + key</code> to an unsigned 32-bit number and take <code>% 100</code>."
+     },
+     {
+      "t": "Percentage rollout is deterministic, sized right and only grows",
+      "test": "// 30% rollout over 2000 users -> about 600 enabled; at 50% all of those are still in",
+      "verify": "const mk = (p) => new FeatureFlagClient([{ key: 'roll', default: false, rules: [{ percent: p, value: true }] }]); const f30 = mk(30); const f50 = mk(50); let on = 0; for (let i = 0; i < 2000; i++) { const u = { id: 'user-' + i }; const a = f30.isEnabled('roll', u); if (a) { on++; assert(f50.isEnabled('roll', u), 'raising the percent removed a user') } assert(f30.isEnabled('roll', u) === a, 'not deterministic') } assert(on > 480 && on < 720, 'expected about 600, got ' + on); assert(f30.getFlag('roll', {}) === false, 'no id should not match a percent rule')",
+      "gap": "Match when <code>user.id</code> exists and <code>bucket(user.id, flag.key) &lt; rule.percent</code>."
+     },
+     {
+      "t": "isEnabled is strictly true",
+      "test": "const ff = new FeatureFlagClient([{ key: 'v', default: 'green', rules: [] }])\nconsole.log(ff.isEnabled('v', { id: 1 })) // expected: false",
+      "verify": "const ff = new FeatureFlagClient([{ key: 'v', default: 'green', rules: [] }, { key: 'on', default: true, rules: [] }]); assert(ff.isEnabled('v', { id: 1 }) === false, 'a non-boolean value is not enabled'); assert(ff.isEnabled('on', { id: 1 }) === true, 'true flag'); assert(ff.isEnabled('missing', { id: 1 }) === false, 'missing flag')",
+      "gap": "<code>return this.getFlag(key, user, false) === true</code>."
+     }
+    ]
+   },
+   "solution": "function hash32(str) {\n  let h = 2166136261;\n  for (let i = 0; i < str.length; i++) {\n    h ^= str.charCodeAt(i);\n    h = Math.imul(h, 16777619);\n  }\n  h ^= h >>> 16;\n  h = Math.imul(h, 0x85ebca6b);\n  h ^= h >>> 13;\n  h = Math.imul(h, 0xc2b2ae35);\n  h ^= h >>> 16;\n  return h >>> 0;\n}\n\nfunction bucket(userId, key) {\n  return hash32(String(userId) + ':' + key) % 100;\n}\n\nconst OPS = {\n  eq: (a, b) => a === b,\n  neq: (a, b) => a !== b,\n  in: (a, b) => Array.isArray(b) && b.includes(a),\n  gt: (a, b) => a > b,\n  lt: (a, b) => a < b,\n};\n\nclass FeatureFlagClient {\n  constructor(flags = []) {\n    this.flags = new Map(flags.map((f) => [f.key, f]));\n  }\n\n  matches(rule, user, key) {\n    if (rule.allow) return user.id !== undefined && rule.allow.includes(user.id);\n    if (rule.if) {\n      const op = OPS[rule.if.op];\n      return !!op && op(user[rule.if.attr], rule.if.value);\n    }\n    if (typeof rule.percent === 'number') {\n      return user.id !== undefined && user.id !== null && bucket(user.id, key) < rule.percent;\n    }\n    return false;\n  }\n\n  getFlag(key, user = {}, fallback) {\n    const flag = this.flags.get(key);\n    if (!flag) return fallback;\n    for (const rule of flag.rules || []) {\n      if (this.matches(rule, user, key)) return rule.value;\n    }\n    return flag.default;\n  }\n\n  isEnabled(key, user) {\n    return this.getFlag(key, user, false) === true;\n  }\n}",
+   "notes": [
+    "Rules in order, first match wins, then the default: easy to reason about and to show in an admin UI.",
+    "A hash of <code>userId:flagKey</code> gives every user a stable bucket per flag, with no storage.",
+    "<code>bucket &lt; percent</code> means raising the percentage only adds users.",
+    "Keep evaluation pure and local; fetch the flag definitions from a server separately."
+   ],
+   "next": [
+    "Add multi-variant rollouts: <code>{ split: [{ value: \"A\", weight: 50 }, { value: \"B\", weight: 50 }] }</code>.",
+    "Fetch flags from an endpoint and refresh them every minute, keeping the last good copy.",
+    "Record an \"exposure\" event the first time a user sees each variant (for A/B analysis)."
+   ]
+  }
+ ]
+}

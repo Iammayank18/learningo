@@ -1,0 +1,1095 @@
+{
+ "course": "react-mastery",
+ "items": [
+  {
+   "id": "keys",
+   "prereqs": [
+    "state-basics"
+   ],
+   "dryRun": {
+    "title": "Prepending \"z\" to [a, b] with key={index}",
+    "columns": [
+     "position",
+     "key",
+     "before",
+     "after (what React thinks)"
+    ],
+    "rows": [
+     [
+      "0",
+      "0",
+      "a (state: note a)",
+      "z — reuses a's state"
+     ],
+     [
+      "1",
+      "1",
+      "b (state: note b)",
+      "a — reuses b's state"
+     ],
+     [
+      "2",
+      "2",
+      "—",
+      "b — new, fresh state"
+     ],
+     [
+      "with key={item}",
+      "a, b, z",
+      "matched by name",
+      "every row keeps its own state"
+     ]
+    ],
+    "hit": 0,
+    "note": "Keys tell React which item is which between renders. With array indexes as keys, inserting at the top shifts every key, so state (and DOM like input text) sticks to the wrong row. Use a stable id from the data."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function Row({ label }) { const [note] = useState('note for ' + label); return &lt;li&gt;{label}: {note}&lt;/li&gt; }\nfunction List({ items }) { return &lt;ul&gt;{items.map((x, i) =&gt; &lt;Row key={i} label={x} /&gt;)}&lt;/ul&gt; }</code></pre>",
+     "opts": [
+      "<code>z: note for z | a: note for a | b: note for b</code>",
+      "<code>a: note for a | b: note for b</code>",
+      "<code>z: note for a | a: note for b | b: note for b</code>",
+      "<code>z: note for z | a: note for a | b: note for a</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Rows are matched by index, so row 0 keeps \"note for a\" while now showing z. State follows the key, not the data."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction Row({ label }) { const [note] = useState('note for ' + label); return <li>{label}: {note}</li> }\nfunction List({ items }) { return <ul>{items.map((x, i) => <Row key={i} label={x} />)}</ul> }\nawait mount(<List items={['a', 'b']} />)\nawait mount(<List items={['z', 'a', 'b']} />)\nconsole.log($$('li').map((li) => li.textContent).join(' | '))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function Row({ label }) { const [note] = useState('note for ' + label); return &lt;li&gt;{label}: {note}&lt;/li&gt; }\nfunction List({ items }) { return &lt;ul&gt;{items.map((x) =&gt; &lt;Row key={x} label={x} /&gt;)}&lt;/ul&gt; }</code></pre>",
+     "opts": [
+      "<code>z: note for z | a: note for a | b: note for b</code>",
+      "<code>z: note for a | a: note for b | b: note for b</code>",
+      "<code>z: note for z | a: note for z | b: note for z</code>",
+      "<code>a: note for a | b: note for b</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "With stable keys React moves the existing rows and creates only z."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction Row({ label }) { const [note] = useState('note for ' + label); return <li>{label}: {note}</li> }\nfunction List({ items }) { return <ul>{items.map((x) => <Row key={x} label={x} />)}</ul> }\nawait mount(<List items={['a', 'b']} />)\nawait mount(<List items={['z', 'a', 'b']} />)\nconsole.log($$('li').map((li) => li.textContent).join(' | '))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function Field({ init }) { const [t] = useState(init); return &lt;i&gt;{t}&lt;/i&gt; }\nfunction Form({ userId }) { return &lt;Field key={userId} init={'user ' + userId} /&gt; }</code></pre>",
+     "opts": [
+      "<code>user 1</code>",
+      "<code>user 1user 2</code>",
+      "<code>undefined</code>",
+      "<code>user 2</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Changing a key forces a brand-new component, so useState starts again with the new init. Without the key, the old state (\"user 1\") would stay. Use key={userId} to reset a form when the user changes."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction Field({ init }) { const [t] = useState(init); return <i>{t}</i> }\nfunction Form({ userId }) { return <Field key={userId} init={'user ' + userId} /> }\nawait mount(<Form userId={1} />)\nawait mount(<Form userId={2} />)\nconsole.log($('i').textContent)"
+    },
+    {
+     "tag": "Pick a key",
+     "q": "Todo items come from the server with ids. Best key?",
+     "opts": [
+      "<code>key={index}</code>",
+      "<code>key={todo.id}</code>",
+      "<code>key={Math.random()}</code>",
+      "<code>key={todo.text}</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Random keys remount everything on each render; text may repeat or change; index breaks on reorder."
+     ]
+    },
+    {
+     "tag": "Scope",
+     "q": "Keys must be unique…",
+     "opts": [
+      "Across the whole app",
+      "Among siblings in the same list only",
+      "Across the whole page including other lists",
+      "Only in development"
+     ],
+     "ans": 1,
+     "why": [
+      "Two different lists can both use id 1."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>TodoList({ initial })</code>: render each todo as <code>&lt;li&gt;</code> with an uncontrolled <code>&lt;input defaultValue={text}&gt;</code> and an \"Add first\" button that prepends <code>{ id: Date.now(), text: \"\" }</code>. Typed text must stay on the right row after prepending.",
+    "examples": [
+     "initial = [{ id: 1, text: \"a\" }, { id: 2, text: \"b\" }]",
+     "type in row \"a\", click Add first → your text is still in the \"a\" row"
+    ],
+    "hint": "useState(initial); setTodos((t) =&gt; [newTodo, ...t]); key={todo.id}.",
+    "fn": "TodoList",
+    "starter": "export function TodoList({ initial }) {\n  return null // your code\n}\n",
+    "solution": "import { useState } from 'react'\n\nlet next = 1000\nexport function TodoList({ initial }) {\n  const [todos, setTodos] = useState(initial)\n  return (\n    <div>\n      <button onClick={() => setTodos((t) => [{ id: next++, text: '' }, ...t])}>Add first</button>\n      <ul>\n        {todos.map((t) => (\n          <li key={t.id}><input aria-label={'todo ' + t.id} defaultValue={t.text} /></li>\n        ))}\n      </ul>\n    </div>\n  )\n}\n",
+    "starterFile": "src/TodoList.jsx",
+    "tests": {
+     "file": "src/TodoList.test.jsx",
+     "run": "npx vitest run TodoList",
+     "code": "import { render, screen, fireEvent } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { TodoList } from './TodoList'\n\nconst start = [{ id: 1, text: 'a' }, { id: 2, text: 'b' }]\n\ntest('renders one input per todo', () => {\n  render(<TodoList initial={start} />)\n  expect(screen.getAllByRole('textbox').map((i) => i.value)).toEqual(['a', 'b'])\n})\n\ntest('prepends a new empty row', () => {\n  render(<TodoList initial={start} />)\n  fireEvent.click(screen.getByText('Add first'))\n  expect(screen.getAllByRole('textbox').map((i) => i.value)).toEqual(['', 'a', 'b'])\n})\n\ntest('typed text stays with its row', () => {\n  render(<TodoList initial={start} />)\n  fireEvent.change(screen.getAllByRole('textbox')[0], { target: { value: 'a edited' } })\n  fireEvent.click(screen.getByText('Add first'))\n  expect(screen.getAllByRole('textbox').map((i) => i.value)).toEqual(['', 'a edited', 'b'])\n})\n"
+    },
+    "checks": [
+     {
+      "t": "renders one input per todo",
+      "verify": ""
+     },
+     {
+      "t": "prepends a new empty row",
+      "verify": ""
+     },
+     {
+      "t": "typed text stays with its row",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Keys identify items across renders. Use stable ids, not indexes, when the list can change order. Change a key to reset a component.",
+    "mistakes": [
+     "Index keys on lists that insert, delete or sort.",
+     "Random keys that remount every render."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Todo App with Filters",
+     "diff": "easy",
+     "mc": "todo-app",
+     "course": "react-machine-coding"
+    }
+   ]
+  },
+  {
+   "id": "controlled-uncontrolled",
+   "prereqs": [
+    "keys"
+   ],
+   "dryRun": {
+    "title": "<input value={text} onChange={e => setText(e.target.value)} />",
+    "columns": [
+     "you type \"a\"",
+     "what happens"
+    ],
+    "rows": [
+     [
+      "browser",
+      "fires an input event"
+     ],
+     [
+      "onChange",
+      "setText(\"a\")"
+     ],
+     [
+      "re-render",
+      "value={text} = \"a\" shown"
+     ],
+     [
+      "without onChange",
+      "React forces value back: read-only field"
+     ],
+     [
+      "uncontrolled",
+      "<input defaultValue=\"x\" ref={r}>: the DOM keeps the value, read r.current.value"
+     ]
+    ],
+    "hit": 3,
+    "note": "<b>Controlled</b>: React state is the single source of truth; you can validate or transform on every keystroke. <b>Uncontrolled</b>: the DOM holds the value and you read it when needed (a ref or FormData). Pick one per input and do not switch."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function F() { const [v, setV] = useState(''); return &lt;&gt;&lt;input value={v} onChange={(e) =&gt; setV(e.target.value.replace(/\\D/g, ''))} /&gt;&lt;p&gt;{v}&lt;/p&gt;&lt;/&gt; }</code></pre>",
+     "opts": [
+      "<code>12ab3</code>",
+      "<code>ab</code>",
+      "<code>(empty)</code>",
+      "<code>123</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "A controlled input lets you transform every change: only digits are kept."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction F() { const [v, setV] = useState(''); return <><input value={v} onChange={(e) => setV(e.target.value.replace(/\\D/g, ''))} /><p>{v}</p></> }\nawait mount(<F />)\nawait type($('input'), '12ab3')\nconsole.log($('input').value)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function F({ d }) { return &lt;input defaultValue={d} /&gt; }</code></pre>",
+     "opts": [
+      "<code>first</code>",
+      "<code>second</code>",
+      "<code>firstsecond</code>",
+      "<code>(empty)</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "defaultValue is only the starting value. Changing it later does nothing; use a key to reset."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction F({ d }) { return <input defaultValue={d} /> }\nawait mount(<F d=\"first\" />)\nawait mount(<F d=\"second\" />)\nconsole.log($('input').value)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function F() { const r = useRef(null); const [out, setOut] = useState(''); return &lt;&gt;&lt;input ref={r} defaultValue=\"hi\" /&gt;&lt;button onClick={() =&gt; setOut(r.current.value)}&gt;read&lt;/button&gt;&lt;p&gt;{out}&lt;/p&gt;&lt;/&gt; }</code></pre>",
+     "opts": [
+      "<code>hi</code>",
+      "<code>(empty)</code>",
+      "<code>typed</code>",
+      "<code>undefined</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Uncontrolled: the DOM keeps what was typed; you read it through the ref when you need it."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction F() { const r = useRef(null); const [out, setOut] = useState(''); return <><input ref={r} defaultValue=\"hi\" /><button onClick={() => setOut(r.current.value)}>read</button><p>{out}</p></> }\nawait mount(<F />)\nawait type($('input'), 'typed')\nawait click($('button'))\nconsole.log($('p').textContent)"
+    },
+    {
+     "tag": "Warning",
+     "q": "React warns \"A component is changing an uncontrolled input to be controlled\". Usual cause?",
+     "opts": [
+      "Missing key",
+      "Using onChange",
+      "Using a ref",
+      "value started as undefined (e.g. user.name before load) and later became a string"
+     ],
+     "ans": 3,
+     "why": [
+      "Start with value=\"\" (or value={x ?? \"\"})."
+     ]
+    },
+    {
+     "tag": "Pick one",
+     "q": "Which input should usually be uncontrolled?",
+     "opts": [
+      "<code>A search box that filters as you type</code>",
+      "<code>&lt;input type=\"file\"&gt;</code>",
+      "<code>A price field that only accepts digits</code>",
+      "<code>A field whose value another field depends on</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "A file input's value can only be set by the user, so it is always uncontrolled."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>PhoneInput({ onValid })</code>: a controlled input that keeps only digits, max 10. When exactly 10 digits are entered, show \"✓ valid\" and call onValid(number) once per change.",
+    "examples": [
+     "type \"98a76 54321\" → value \"9876543210\", \"✓ valid\"",
+     "type \"123\" → no ✓"
+    ],
+    "hint": "value.replace(/\\D/g, \"\").slice(0, 10) inside onChange; call onValid in the handler when length === 10.",
+    "fn": "PhoneInput",
+    "starter": "export function PhoneInput({ onValid }) {\n  return null // your code\n}\n",
+    "solution": "import { useState } from 'react'\n\nexport function PhoneInput({ onValid }) {\n  const [v, setV] = useState('')\n  return (\n    <label>\n      Phone\n      <input\n        value={v}\n        onChange={(e) => {\n          const next = e.target.value.replace(/\\D/g, '').slice(0, 10)\n          setV(next)\n          if (next.length === 10) onValid?.(next)\n        }}\n      />\n      {v.length === 10 && <span>✓ valid</span>}\n    </label>\n  )\n}\n",
+    "starterFile": "src/PhoneInput.jsx",
+    "tests": {
+     "file": "src/PhoneInput.test.jsx",
+     "run": "npx vitest run PhoneInput",
+     "code": "import { render, screen, fireEvent } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { PhoneInput } from './PhoneInput'\n\ntest('keeps digits only, max 10', () => {\n  render(<PhoneInput />)\n  const input = screen.getByLabelText('Phone')\n  fireEvent.change(input, { target: { value: '98a76 543210999' } })\n  expect(input.value).toBe('9876543210')\n})\n\ntest('shows valid and calls onValid at 10 digits', () => {\n  const got = []\n  render(<PhoneInput onValid={(n) => got.push(n)} />)\n  fireEvent.change(screen.getByLabelText('Phone'), { target: { value: '9876543210' } })\n  expect(screen.getByText('✓ valid')).toBeTruthy()\n  expect(got).toEqual(['9876543210'])\n})\n\ntest('no tick for short numbers', () => {\n  render(<PhoneInput onValid={() => {}} />)\n  fireEvent.change(screen.getByLabelText('Phone'), { target: { value: '123' } })\n  expect(screen.getByLabelText('Phone').value).toBe('123')\n  expect(screen.queryByText('✓ valid')).toBeNull()\n})\n"
+    },
+    "checks": [
+     {
+      "t": "keeps digits only, max 10",
+      "verify": ""
+     },
+     {
+      "t": "shows valid and calls onValid at 10 digits",
+      "verify": ""
+     },
+     {
+      "t": "no tick for short numbers",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Controlled = state is the truth (validate/transform on each change). Uncontrolled = DOM is the truth (read via ref or FormData). Never switch between them.",
+    "mistakes": [
+     "value without onChange (read-only input).",
+     "value starting as undefined.",
+     "Expecting defaultValue changes to update the field."
+    ]
+   },
+   "problems": [
+    {
+     "name": "OTP Input Component",
+     "diff": "easy",
+     "mc": "otp-input",
+     "course": "react-machine-coding"
+    }
+   ]
+  },
+  {
+   "id": "react-forms",
+   "prereqs": [
+    "controlled-uncontrolled"
+   ],
+   "dryRun": {
+    "title": "Submitting a signup form",
+    "columns": [
+     "step",
+     "what your code does"
+    ],
+    "rows": [
+     [
+      "submit event",
+      "e.preventDefault() (no page reload)"
+     ],
+     [
+      "validate",
+      "build an errors object from the values"
+     ],
+     [
+      "errors?",
+      "show each next to its field, focus the first"
+     ],
+     [
+      "no errors",
+      "call onSubmit(values), disable the button while saving"
+     ],
+     [
+      "done",
+      "reset or show success"
+     ]
+    ],
+    "hit": 1,
+    "note": "A form is state + validation + submit. Keep validation in one pure function (values → errors) so it is easy to test. Libraries like React Hook Form (uncontrolled, fast) and Zod (schemas) do the same at scale; React 19 also adds form actions."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function F() { const [sent, setSent] = useState(false); return &lt;form onSubmit={(e) =&gt; { e.preventDefault(); setSent(true) }}&gt;&lt;button&gt;Go&lt;/button&gt;{sent &amp;&amp; &lt;p&gt;sent&lt;/p&gt;}&lt;/form&gt; }</code></pre>",
+     "opts": [
+      "<code>undefined</code>",
+      "<code>Go</code>",
+      "<code>sent</code>",
+      "<code>true</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "A button inside a form submits it by default. preventDefault stops the full page reload."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction F() { const [sent, setSent] = useState(false); return <form onSubmit={(e) => { e.preventDefault(); setSent(true) }}><button>Go</button>{sent && <p>sent</p>}</form> }\nawait mount(<F />)\nawait click($('button'))\nconsole.log($('p')?.textContent)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function F() { const [n, setN] = useState(0); return &lt;form onSubmit={(e) =&gt; { e.preventDefault(); setN((x) =&gt; x + 1) }}&gt;&lt;button type=\"button\"&gt;A&lt;/button&gt;&lt;button&gt;B&lt;/button&gt;&lt;p&gt;{n}&lt;/p&gt;&lt;/form&gt; }</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>2</code>",
+      "<code>0</code>",
+      "<code>B</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "type=\"button\" does not submit; a button with no type defaults to \"submit\"."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction F() { const [n, setN] = useState(0); return <form onSubmit={(e) => { e.preventDefault(); setN((x) => x + 1) }}><button type=\"button\">A</button><button>B</button><p>{n}</p></form> }\nawait mount(<F />)\nawait click($$('button')[0])\nawait click($$('button')[1])\nconsole.log($('p').textContent)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function F() { const [data, setData] = useState(''); return &lt;form onSubmit={(e) =&gt; { e.preventDefault(); setData(JSON.stringify(Object.fromEntries(new FormData(e.target)))) }}&gt;&lt;input name=\"email\" defaultValue=\"a@b.c\" /&gt;&lt;input name=\"age\" defaultValue=\"30\" /&gt;&lt;button&gt;save&lt;/button&gt;&lt;p&gt;{data}&lt;/p&gt;&lt;/form&gt; }</code></pre>",
+     "opts": [
+      "<code>{\"email\":\"a@b.c\",\"age\":30}</code>",
+      "<code>{}</code>",
+      "<code>{\"email\":\"a@b.c\",\"age\":\"30\"}</code>",
+      "<code>{email: a@b.c}</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "FormData reads every named field (uncontrolled), always as strings."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction F() { const [data, setData] = useState(''); return <form onSubmit={(e) => { e.preventDefault(); setData(JSON.stringify(Object.fromEntries(new FormData(e.target)))) }}><input name=\"email\" defaultValue=\"a@b.c\" /><input name=\"age\" defaultValue=\"30\" /><button>save</button><p>{data}</p></form> }\nawait mount(<F />)\nawait click($('button'))\nconsole.log($('p').textContent)"
+    },
+    {
+     "tag": "When to validate",
+     "q": "Best default timing for showing a field error?",
+     "opts": [
+      "After the user leaves the field (blur) or submits, then live while they fix it",
+      "On every keystroke from the first letter",
+      "Only after a server round trip",
+      "Never show errors"
+     ],
+     "ans": 0,
+     "why": [
+      "Errors while someone is still typing their email feel hostile."
+     ]
+    },
+    {
+     "tag": "Accessibility",
+     "q": "How should an error be tied to its input?",
+     "opts": [
+      "Red border only",
+      "A browser alert",
+      "A tooltip on hover",
+      "aria-invalid on the input and aria-describedby pointing at the error text"
+     ],
+     "ans": 3,
+     "why": [
+      "Screen readers then announce the error with the field."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>validate(values)</code> (pure: returns an errors object) and <code>SignupForm({ onSubmit })</code>: email must contain \"@\", password at least 8 chars. On submit show errors (<code>role=\"alert\"</code>), else call onSubmit({ email, password }).",
+    "examples": [
+     "validate({ email: \"x\", password: \"123\" })  // { email: \"Enter a valid email\", password: \"At least 8 characters\" }",
+     "valid submit → onSubmit called once"
+    ],
+    "hint": "Controlled inputs with labels \"Email\" and \"Password\"; on submit: const errs = validate(values); setErrors(errs); if no keys, onSubmit(values).",
+    "fn": "SignupForm",
+    "starter": "export function validate(values) {\n  // your code\n}\n\nexport function SignupForm({ onSubmit }) {\n  return null // your code\n}\n",
+    "solution": "import { useState } from 'react'\n\nexport function validate({ email, password }) {\n  const errors = {}\n  if (!email.includes('@')) errors.email = 'Enter a valid email'\n  if (password.length < 8) errors.password = 'At least 8 characters'\n  return errors\n}\n\nexport function SignupForm({ onSubmit }) {\n  const [values, setValues] = useState({ email: '', password: '' })\n  const [errors, setErrors] = useState({})\n  const set = (k) => (e) => setValues((v) => ({ ...v, [k]: e.target.value }))\n  return (\n    <form\n      onSubmit={(e) => {\n        e.preventDefault()\n        const errs = validate(values)\n        setErrors(errs)\n        if (Object.keys(errs).length === 0) onSubmit(values)\n      }}\n    >\n      <label>Email <input value={values.email} onChange={set('email')} aria-invalid={!!errors.email} /></label>\n      {errors.email && <p role=\"alert\">{errors.email}</p>}\n      <label>Password <input type=\"password\" value={values.password} onChange={set('password')} aria-invalid={!!errors.password} /></label>\n      {errors.password && <p role=\"alert\">{errors.password}</p>}\n      <button>Sign up</button>\n    </form>\n  )\n}\n",
+    "starterFile": "src/SignupForm.jsx",
+    "tests": {
+     "file": "src/SignupForm.test.jsx",
+     "run": "npx vitest run SignupForm",
+     "code": "import { render, screen, fireEvent } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { SignupForm, validate } from './SignupForm'\n\ntest('validate returns errors for bad values', () => {\n  expect(validate({ email: 'x', password: '123' })).toEqual({ email: 'Enter a valid email', password: 'At least 8 characters' })\n  expect(validate({ email: 'a@b.c', password: '12345678' })).toEqual({})\n})\n\ntest('shows errors and does not submit', () => {\n  const got = []\n  render(<SignupForm onSubmit={(v) => got.push(v)} />)\n  fireEvent.click(screen.getByText('Sign up'))\n  expect(screen.getAllByRole('alert')).toHaveLength(2)\n  expect(got).toHaveLength(0)\n})\n\ntest('submits valid values', () => {\n  const got = []\n  render(<SignupForm onSubmit={(v) => got.push(v)} />)\n  fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'a@b.c' } })\n  fireEvent.change(screen.getByLabelText('Password'), { target: { value: '12345678' } })\n  fireEvent.click(screen.getByText('Sign up'))\n  expect(got).toEqual([{ email: 'a@b.c', password: '12345678' }])\n  expect(screen.queryByRole('alert')).toBeNull()\n})\n"
+    },
+    "checks": [
+     {
+      "t": "validate returns errors for bad values",
+      "verify": ""
+     },
+     {
+      "t": "shows errors and does not submit",
+      "verify": ""
+     },
+     {
+      "t": "submits valid values",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Form = state + a pure validate(values) + a submit handler with preventDefault. Tie errors to inputs with aria attributes.",
+    "mistakes": [
+     "Forgetting preventDefault.",
+     "Buttons without type=\"button\" submitting the form.",
+     "Validation logic scattered across handlers."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Multi-step Form with Validation",
+     "diff": "medium",
+     "mc": "multistep-form",
+     "course": "react-machine-coding"
+    }
+   ]
+  },
+  {
+   "id": "react-router",
+   "prereqs": [
+    "react-forms"
+   ],
+   "dryRun": {
+    "title": "URL /users/42/posts with routes users/:id → posts",
+    "columns": [
+     "part",
+     "matches",
+     "renders"
+    ],
+    "rows": [
+     [
+      "/",
+      "<Layout> (root route)",
+      "header + <Outlet />"
+     ],
+     [
+      "users/:id",
+      "params.id = \"42\"",
+      "<User> inside Layout's Outlet"
+     ],
+     [
+      "posts (child)",
+      "—",
+      "<UserPosts> inside User's Outlet"
+     ],
+     [
+      "unknown path",
+      "\"*\" route",
+      "<NotFound>"
+     ]
+    ],
+    "hit": 1,
+    "note": "A router maps URL paths to components. Nested routes render inside their parent's <code>&lt;Outlet /&gt;</code>; <code>:id</code> segments become params; <code>&lt;Link&gt;</code> changes the URL without a page reload (history.pushState). Data routers add loaders (fetch before render) and actions (form submits)."
+   },
+   "think": [
+    {
+     "tag": "Link vs a",
+     "q": "Why use <code>&lt;Link to=\"/about\"&gt;</code> instead of <code>&lt;a href=\"/about\"&gt;</code> inside the app?",
+     "opts": [
+      "a tags are not allowed in React",
+      "Link changes the URL with the History API and re-renders, without a full page reload",
+      "Link is faster to type",
+      "Link adds SEO tags"
+     ],
+     "ans": 1,
+     "why": [
+      "A plain a would reload the page and lose all state."
+     ]
+    },
+    {
+     "tag": "Params",
+     "q": "Route path \"products/:slug\", URL /products/blue-shirt. How do you read \"blue-shirt\"?",
+     "opts": [
+      "<code>props.slug</code>",
+      "<code>const { slug } = useParams()</code>",
+      "<code>window.slug</code>",
+      "<code>useLocation().slug</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "useParams returns the dynamic segments of the matched route."
+     ]
+    },
+    {
+     "tag": "Outlet",
+     "q": "A parent route renders a layout but children never appear. What is missing?",
+     "opts": [
+      "<code>A key on the route</code>",
+      "<code>&lt;Router&gt; around each child</code>",
+      "<code>exact on the parent</code>",
+      "<code>&lt;Outlet /&gt; in the parent component</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "The parent decides where its matched child renders."
+     ]
+    },
+    {
+     "tag": "Server",
+     "q": "After deploying a SPA, refreshing /users/42 gives 404 from the server. Fix?",
+     "opts": [
+      "Serve index.html for unknown paths (SPA fallback) so the client router can handle the URL",
+      "Use hash URLs only",
+      "Add more routes",
+      "Disable caching"
+     ],
+     "ans": 0,
+     "why": [
+      "The server has no file /users/42; the router only lives in the browser."
+     ]
+    },
+    {
+     "tag": "Loaders",
+     "q": "What does a route loader give you over fetching in useEffect?",
+     "opts": [
+      "It caches forever",
+      "It runs only on the server",
+      "Data starts loading on navigation, before the component renders, with no loading waterfall inside effects",
+      "It replaces state"
+     ],
+     "ans": 2,
+     "why": [
+      "Effects fetch after render, then children fetch after their render: a waterfall."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>matchPath(pattern, path)</code>: return an object of params when the path matches the pattern, else null. Segments starting with \":\" capture; \"*\" at the end matches the rest (as params[\"*\"]); trailing slashes are ignored.",
+    "examples": [
+     "matchPath(\"/users/:id\", \"/users/42\")  // { id: \"42\" }",
+     "matchPath(\"/files/*\", \"/files/a/b\")  // { \"*\": \"a/b\" }"
+    ],
+    "hint": "Split both on \"/\" (filter empties). Walk the pattern parts; decodeURIComponent captured values.",
+    "fn": "matchPath",
+    "starter": "export function matchPath(pattern, path) {\n  // your code\n}\n",
+    "solution": "export function matchPath(pattern, path) {\n  const p = pattern.split('/').filter(Boolean)\n  const s = path.split('/').filter(Boolean)\n  const params = {}\n  for (let i = 0; i < p.length; i++) {\n    if (p[i] === '*') { params['*'] = s.slice(i).join('/'); return params }\n    if (i >= s.length) return null\n    if (p[i].startsWith(':')) params[p[i].slice(1)] = decodeURIComponent(s[i])\n    else if (p[i] !== s[i]) return null\n  }\n  return p.length === s.length ? params : null\n}\n",
+    "starterFile": "src/matchPath.js",
+    "tests": {
+     "file": "src/matchPath.test.jsx",
+     "run": "npx vitest run matchPath",
+     "code": "import { expect, test } from 'vitest'\nimport { matchPath } from './matchPath'\n\ntest('captures params', () => {\n  expect(matchPath('/users/:id/posts/:postId', '/users/42/posts/7')).toEqual({ id: '42', postId: '7' })\n  expect(matchPath('/a/:x', '/a/hello%20world')).toEqual({ x: 'hello world' })\n})\n\ntest('rejects non-matching paths', () => {\n  expect(matchPath('/users/:id', '/users')).toBeNull()\n  expect(matchPath('/users/:id', '/users/1/extra')).toBeNull()\n  expect(matchPath('/about', '/contact')).toBeNull()\n})\n\ntest('splat and trailing slashes', () => {\n  expect(matchPath('/files/*', '/files/a/b')).toEqual({ '*': 'a/b' })\n  expect(matchPath('/about/', '/about')).toEqual({})\n})\n"
+    },
+    "checks": [
+     {
+      "t": "captures params",
+      "verify": ""
+     },
+     {
+      "t": "rejects non-matching paths",
+      "verify": ""
+     },
+     {
+      "t": "splat and trailing slashes",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Routes map paths to components; nested routes render in &lt;Outlet/&gt;; :params via useParams; Link navigates without reload; loaders fetch before render.",
+    "mistakes": [
+     "Plain a tags for in-app links.",
+     "Forgetting the server SPA fallback."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Build a Mini React Router",
+     "diff": "hard",
+     "mc": "mini-router",
+     "course": "react-machine-coding"
+    }
+   ]
+  },
+  {
+   "id": "strictmode",
+   "prereqs": [
+    "react-router"
+   ],
+   "dryRun": {
+    "title": "<StrictMode><App /></StrictMode> in development",
+    "columns": [
+     "check",
+     "what StrictMode does",
+     "what it catches"
+    ],
+    "rows": [
+     [
+      "render twice",
+      "calls your component function twice",
+      "impure render (side effects, mutations)"
+     ],
+     [
+      "effects twice",
+      "mount → unmount → mount",
+      "missing cleanup"
+     ],
+     [
+      "refs callbacks twice",
+      "attach → detach → attach",
+      "ref cleanup bugs"
+     ],
+     [
+      "production",
+      "none of this",
+      "—"
+     ]
+    ],
+    "hit": 1,
+    "note": "StrictMode is a development-only checker. Running renders and effects twice exposes code that is not pure or does not clean up, before your users find it. It changes nothing in production."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let renders = 0\nfunction App() { renders++; return null }</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>0</code>",
+      "<code>4</code>",
+      "<code>2</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "In development StrictMode calls the component twice to catch impure rendering."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nlet renders = 0\nfunction App() { renders++; return null }\nawait mount(<StrictMode><App /></StrictMode>)\nconsole.log(renders)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function App() { useEffect(() =&gt; { console.log('connect'); return () =&gt; console.log('disconnect') }, []); return null }</code></pre>",
+     "opts": [
+      "<code>connect</code>",
+      "<code>connect disconnect connect</code>",
+      "<code>connect connect</code>",
+      "<code>disconnect connect</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "StrictMode mounts, unmounts, and mounts again. If your cleanup is right, the result is the same as one mount."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction App() { useEffect(() => { console.log('connect'); return () => console.log('disconnect') }, []); return null }\nawait mount(<StrictMode><App /></StrictMode>)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const log = []\nfunction App() { log.push('x'); return &lt;p&gt;{log.length}&lt;/p&gt; }</code></pre>",
+     "opts": [
+      "<code>1 1</code>",
+      "<code>1 0</code>",
+      "<code>2 2</code>",
+      "<code>1 2</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "The second (shown) render saw the mutation from the first: proof that mutating outside state during render is a bug."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nconst log = []\nfunction App() { log.push('x'); return <p>{log.length}</p> }\nawait mount(<StrictMode><App /></StrictMode>)\nconsole.log($('p').textContent, log.length)"
+    },
+    {
+     "tag": "Production",
+     "q": "Does StrictMode double-render in production?",
+     "opts": [
+      "No, only in development",
+      "Yes, always",
+      "Only on mobile",
+      "Only for class components"
+     ],
+     "ans": 0,
+     "why": [
+      "It is a development check with zero production cost."
+     ]
+    },
+    {
+     "tag": "Fix",
+     "q": "An effect logs \"subscribe\" twice in development under StrictMode. Correct response?",
+     "opts": [
+      "Remove StrictMode",
+      "Add a global flag to run once",
+      "Add a cleanup that unsubscribes, so mount → unmount → mount is harmless",
+      "Use an empty deps array"
+     ],
+     "ans": 2,
+     "why": [
+      "The double run is pointing at a missing cleanup."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>useConnection(room, connect)</code>: on mount call <code>connect(room)</code>, which returns a disconnect function; call it on unmount or when room changes. Return nothing. It must behave correctly under StrictMode: after mount there is exactly one open connection.",
+    "examples": [
+     "connect = (r) => { open++; return () => open-- }",
+     "StrictMode mount → open === 1"
+    ],
+    "hint": "useEffect(() =&gt; connect(room), [room, connect]) — the returned function is the cleanup.",
+    "fn": "useConnection",
+    "starter": "export function useConnection(room, connect) {\n  // your code\n}\n",
+    "solution": "import { useEffect } from 'react'\n\nexport function useConnection(room, connect) {\n  useEffect(() => connect(room), [room, connect])\n}\n",
+    "starterFile": "src/useConnection.js",
+    "tests": {
+     "file": "src/useConnection.test.jsx",
+     "run": "npx vitest run useConnection",
+     "code": "import { renderHook } from '@testing-library/react'\nimport { StrictMode } from 'react'\nimport { expect, test } from 'vitest'\nimport { useConnection } from './useConnection'\n\nfunction makeServer() {\n  const s = { open: new Set(), calls: 0 }\n  s.connect = (room) => { s.calls++; s.open.add(room); return () => s.open.delete(room) }\n  return s\n}\n\ntest('one open connection after a StrictMode mount', () => {\n  const s = makeServer()\n  renderHook(() => useConnection('a', s.connect), { wrapper: StrictMode })\n  expect([...s.open]).toEqual(['a'])\n  expect(s.calls).toBe(2)\n})\n\ntest('switching rooms closes the old one', () => {\n  const s = makeServer()\n  const { rerender } = renderHook(({ r }) => useConnection(r, s.connect), { initialProps: { r: 'a' } })\n  rerender({ r: 'b' })\n  expect([...s.open]).toEqual(['b'])\n})\n\ntest('unmount closes it', () => {\n  const s = makeServer()\n  const { unmount } = renderHook(() => useConnection('a', s.connect))\n  expect(s.open.size).toBe(1)\n  unmount()\n  expect(s.open.size).toBe(0)\n})\n"
+    },
+    "checks": [
+     {
+      "t": "one open connection after a StrictMode mount",
+      "verify": ""
+     },
+     {
+      "t": "switching rooms closes the old one",
+      "verify": ""
+     },
+     {
+      "t": "unmount closes it",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "StrictMode (dev only) double-runs renders and effects to expose impure renders and missing cleanups. Fix the cleanup, never the check.",
+    "mistakes": [
+     "Removing StrictMode to \"fix\" double logs.",
+     "Mutating outside variables during render."
+    ]
+   }
+  },
+  {
+   "id": "class-vs-functional",
+   "prereqs": [
+    "strictmode"
+   ],
+   "dryRun": {
+    "title": "Class lifecycle vs hooks",
+    "columns": [
+     "class component",
+     "function component"
+    ],
+    "rows": [
+     [
+      "constructor / this.state",
+      "useState"
+     ],
+     [
+      "componentDidMount",
+      "useEffect(…, [])"
+     ],
+     [
+      "componentDidUpdate",
+      "useEffect(…, [deps])"
+     ],
+     [
+      "componentWillUnmount",
+      "cleanup returned from useEffect"
+     ],
+     [
+      "componentDidCatch",
+      "still class-only (error boundaries)"
+     ]
+    ],
+    "hit": 4,
+    "note": "New code uses function components and hooks. You still meet classes in older code, and error boundaries still need one. The mental shift: classes think in lifecycle moments; hooks think in synchronising with values."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>class A extends Component {\n  constructor(p) { super(p); console.log('constructor') }\n  componentDidMount() { console.log('didMount') }\n  render() { console.log('render'); return null }\n}</code></pre>",
+     "opts": [
+      "<code>constructor render didMount</code>",
+      "<code>render constructor didMount</code>",
+      "<code>constructor didMount render</code>",
+      "<code>didMount constructor render</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Construct, render, then mount after the DOM is updated."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nclass A extends Component {\n  constructor(p) { super(p); console.log('constructor') }\n  componentDidMount() { console.log('didMount') }\n  render() { console.log('render'); return null }\n}\nawait mount(<A />)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>class C extends Component {\n  state = { n: 0 }\n  render() { return &lt;button onClick={() =&gt; { this.setState({ n: this.state.n + 1 }); this.setState({ n: this.state.n + 1 }) }}&gt;{this.state.n}&lt;/button&gt; }\n}</code></pre>",
+     "opts": [
+      "<code>2</code>",
+      "<code>0</code>",
+      "<code>11</code>",
+      "<code>1</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Same batching rule as hooks: both read the old state. Use the updater form setState((s) =&gt; …)."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nclass C extends Component {\n  state = { n: 0 }\n  render() { return <button onClick={() => { this.setState({ n: this.state.n + 1 }); this.setState({ n: this.state.n + 1 }) }}>{this.state.n}</button> }\n}\nawait mount(<C />)\nawait click($('button'))\nconsole.log($('button').textContent)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>class T extends Component {\n  state = { v: 'x' }\n  handle() { return this?.state?.v ?? 'lost this' }\n  render() { const h = this.handle; return &lt;p&gt;{h()}&lt;/p&gt; }\n}</code></pre>",
+     "opts": [
+      "<code>x</code>",
+      "<code>lost this</code>",
+      "<code>undefined</code>",
+      "<code>TypeError</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "A class method called without its object loses this (class bodies are strict). Classes need bind or arrow fields; hooks avoid this entirely."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nclass T extends Component {\n  state = { v: 'x' }\n  handle() { return this?.state?.v ?? 'lost this' }\n  render() { const h = this.handle; return <p>{h()}</p> }\n}\nawait mount(<T />)\nconsole.log($('p').textContent)"
+    },
+    {
+     "tag": "Still needed",
+     "q": "What still requires a class component in React 19?",
+     "opts": [
+      "State",
+      "Error boundaries (componentDidCatch / getDerivedStateFromError)",
+      "Effects",
+      "Refs"
+     ],
+     "ans": 1,
+     "why": [
+      "Everything else has a hook."
+     ]
+    },
+    {
+     "tag": "Migrate",
+     "q": "How do you move componentDidUpdate(prevProps) logic comparing userId to hooks?",
+     "opts": [
+      "<code>useEffect(() =&gt; { … })</code>",
+      "<code>useMemo(() =&gt; { … }, [])</code>",
+      "<code>useLayoutEffect(() =&gt; { … }, [])</code>",
+      "<code>useEffect(() =&gt; { … }, [userId])</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "List the value in deps; React runs the effect when it changes."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Convert this class to a function component with the same behaviour: <code>Clock({ tick = 1000 })</code> shows seconds elapsed in <code>&lt;time&gt;</code> and clears its interval on unmount.",
+    "examples": [
+     "class Clock: componentDidMount → setInterval; componentWillUnmount → clearInterval",
+     "function version: useState + useEffect with cleanup"
+    ],
+    "hint": "useEffect(() =&gt; { const id = setInterval(() =&gt; setS((s) =&gt; s + 1), tick); return () =&gt; clearInterval(id) }, [tick])",
+    "fn": "Clock",
+    "starter": "export function Clock({ tick = 1000 }) {\n  return null // your code\n}\n",
+    "solution": "import { useEffect, useState } from 'react'\n\nexport function Clock({ tick = 1000 }) {\n  const [s, setS] = useState(0)\n  useEffect(() => {\n    const id = setInterval(() => setS((x) => x + 1), tick)\n    return () => clearInterval(id)\n  }, [tick])\n  return <time>{s}</time>\n}\n",
+    "starterFile": "src/Clock.jsx",
+    "tests": {
+     "file": "src/Clock.test.jsx",
+     "run": "npx vitest run Clock",
+     "code": "import { render, act } from '@testing-library/react'\nimport { afterEach, beforeEach, expect, test, vi } from 'vitest'\nimport { Clock } from './Clock'\n\nbeforeEach(() => vi.useFakeTimers())\nafterEach(() => vi.useRealTimers())\n\ntest('starts at 0', () => {\n  const { container } = render(<Clock />)\n  expect(container.querySelector('time').textContent).toBe('0')\n})\n\ntest('counts every tick', () => {\n  const { container } = render(<Clock tick={100} />)\n  act(() => vi.advanceTimersByTime(350))\n  expect(container.querySelector('time').textContent).toBe('3')\n})\n\ntest('clears the interval on unmount', () => {\n  const { container, unmount } = render(<Clock />)\n  expect(container.querySelector('time')).toBeTruthy()\n  unmount()\n  expect(vi.getTimerCount()).toBe(0)\n})\n"
+    },
+    "checks": [
+     {
+      "t": "starts at 0",
+      "verify": ""
+     },
+     {
+      "t": "counts every tick",
+      "verify": ""
+     },
+     {
+      "t": "clears the interval on unmount",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Use function components and hooks; know the class lifecycle to read old code; error boundaries still need a class.",
+    "mistakes": [
+     "Thinking hooks map 1:1 to lifecycle methods.",
+     "Unbound class methods losing this."
+    ]
+   }
+  },
+  {
+   "id": "prop-types-defaults",
+   "prereqs": [
+    "class-vs-functional"
+   ],
+   "dryRun": {
+    "title": "What React 19 changed",
+    "columns": [
+     "feature",
+     "function components",
+     "class components"
+    ],
+    "rows": [
+     [
+      "propTypes",
+      "silently ignored",
+      "silently ignored"
+     ],
+     [
+      "defaultProps",
+      "removed: use default parameters",
+      "still supported"
+     ],
+     [
+      "ref as a prop",
+      "works: no forwardRef needed",
+      "—"
+     ],
+     [
+      "callback ref cleanup",
+      "a ref callback may return a cleanup function",
+      "—"
+     ]
+    ],
+    "hit": 1,
+    "note": "In React 19, <code>propTypes</code> checks are gone and <code>defaultProps</code> no longer works on function components. Use TypeScript (or JSDoc) for prop types and destructuring defaults for values."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function Hi({ name }) { return &lt;p&gt;{name ?? 'no default applied'}&lt;/p&gt; }\nHi.defaultProps = { name: 'Guest' }</code></pre>",
+     "opts": [
+      "<code>no default applied</code>",
+      "<code>Guest</code>",
+      "<code>undefined</code>",
+      "<code>(empty)</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "React 19 removed defaultProps for function components. Use function Hi({ name = \"Guest\" })."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction Hi({ name }) { return <p>{name ?? 'no default applied'}</p> }\nHi.defaultProps = { name: 'Guest' }\nawait mount(<Hi />)\nconsole.log($('p').textContent)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function Hi({ name = 'Guest' }) { return &lt;p&gt;{name}&lt;/p&gt; }</code></pre>",
+     "opts": [
+      "<code>undefined</code>",
+      "<code>(empty)</code>",
+      "<code>Guest</code>",
+      "<code>name</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "A destructuring default is the modern way."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction Hi({ name = 'Guest' }) { return <p>{name}</p> }\nawait mount(<Hi />)\nconsole.log($('p').textContent)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>class Old extends Component { static defaultProps = { size: 'md' }; render() { return &lt;p&gt;{this.props.size}&lt;/p&gt; } }</code></pre>",
+     "opts": [
+      "<code>undefined</code>",
+      "<code>(empty)</code>",
+      "<code>TypeError</code>",
+      "<code>md</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Class components still support defaultProps."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nclass Old extends Component { static defaultProps = { size: 'md' }; render() { return <p>{this.props.size}</p> } }\nawait mount(<Old />)\nconsole.log($('p').textContent)"
+    },
+    {
+     "tag": "Types",
+     "q": "What replaces propTypes in modern React code?",
+     "opts": [
+      "PropTypes 2",
+      "TypeScript types for props (checked at build time)",
+      "defaultProps",
+      "React.checkProps"
+     ],
+     "ans": 1,
+     "why": [
+      "Types catch the mistake before the app runs, for free at runtime."
+     ]
+    },
+    {
+     "tag": "Callback refs",
+     "q": "In React 19 a callback ref <code>ref={(el) =&gt; { …; return () =&gt; … }}</code> can return…",
+     "opts": [
+      "A new element",
+      "A promise",
+      "A cleanup function, called when the element is removed",
+      "Nothing; returns are ignored"
+     ],
+     "ans": 2,
+     "why": [
+      "Before 19, React called the ref with null instead."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Modernise: write <code>Button({ variant = \"primary\", size = \"md\", children, ...rest })</code> that renders a <code>&lt;button&gt;</code> with <code>className={`btn btn-${variant} btn-${size}`}</code>, passing any other props (like onClick or disabled) through.",
+    "examples": [
+     "<Button>Save</Button>  → class \"btn btn-primary btn-md\"",
+     "<Button variant=\"ghost\" disabled>X</Button>"
+    ],
+    "hint": "Destructuring defaults plus a rest spread at the end.",
+    "fn": "Button",
+    "starter": "export function Button(props) {\n  return null // your code\n}\n",
+    "solution": "export function Button({ variant = 'primary', size = 'md', children, ...rest }) {\n  return <button className={`btn btn-${variant} btn-${size}`} {...rest}>{children}</button>\n}\n",
+    "starterFile": "src/Button.jsx",
+    "tests": {
+     "file": "src/Button.test.jsx",
+     "run": "npx vitest run Button",
+     "code": "import { render, screen, fireEvent } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { Button } from './Button'\n\ntest('uses defaults', () => {\n  render(<Button>Save</Button>)\n  expect(screen.getByRole('button', { name: 'Save' }).className).toBe('btn btn-primary btn-md')\n})\n\ntest('custom variant and size', () => {\n  render(<Button variant=\"ghost\" size=\"sm\">X</Button>)\n  expect(screen.getByRole('button').className).toBe('btn btn-ghost btn-sm')\n})\n\ntest('passes other props through', () => {\n  let n = 0\n  render(<Button disabled onClick={() => n++}>D</Button>)\n  const b = screen.getByRole('button')\n  expect(b.disabled).toBe(true)\n  fireEvent.click(b)\n  expect(n).toBe(0)\n})\n"
+    },
+    "checks": [
+     {
+      "t": "uses defaults",
+      "verify": ""
+     },
+     {
+      "t": "custom variant and size",
+      "verify": ""
+     },
+     {
+      "t": "passes other props through",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "React 19: no propTypes checks, no defaultProps on function components. Use TypeScript and destructuring defaults.",
+    "mistakes": [
+     "Relying on defaultProps in function components.",
+     "Expecting propTypes warnings."
+    ]
+   }
+  }
+ ]
+}

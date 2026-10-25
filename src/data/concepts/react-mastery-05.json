@@ -1,0 +1,1219 @@
+{
+ "course": "react-mastery",
+ "items": [
+  {
+   "id": "element-component-instance",
+   "prereqs": [
+    "hoc"
+   ],
+   "dryRun": {
+    "title": "const el = <Greeting name=\"A\" />",
+    "columns": [
+     "term",
+     "what it is",
+     "example"
+    ],
+    "rows": [
+     [
+      "component",
+      "a function (or class) you write",
+      "function Greeting(props)"
+     ],
+     [
+      "element",
+      "a plain object describing what to render",
+      "{ type: Greeting, props: { name: \"A\" } }"
+     ],
+     [
+      "instance / fiber",
+      "React's internal record holding state and effects",
+      "created when the element is mounted"
+     ],
+     [
+      "DOM node",
+      "what the browser shows",
+      "<h1>Hi A</h1>"
+     ]
+    ],
+    "hit": 1,
+    "note": "You write <b>components</b>. JSX creates <b>elements</b>: cheap, immutable objects. React turns elements into internal <b>fibers</b> (where state lives) and then DOM nodes. Creating an element does not call the component."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let calls = 0\nfunction G() { calls++; return null }\nconst el = &lt;G /&gt;\nconst copies = [el, el, el]</code></pre>",
+     "opts": [
+      "<code>3 object true 3</code>",
+      "<code>0 function true 1</code>",
+      "<code>0 object true 3</code>",
+      "<code>1 object false 3</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Creating an element calls nothing. Rendering it three times calls the component three times, once per place it appears."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nlet calls = 0\nfunction G() { calls++; return null }\nconst el = <G />\nconst copies = [el, el, el]\nconsole.log(calls, typeof el, el.type === G)\nawait mount(<>{copies.map((e, i) => <Fragment key={i}>{e}</Fragment>)}</>)\nconsole.log(calls)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const el = &lt;p className=\"x\"&gt;hi&lt;/p&gt;</code></pre>",
+     "opts": [
+      "<code>TypeError</code>",
+      "<code>undefined</code>",
+      "<code>SyntaxError</code>",
+      "<code>y</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Elements (and their props) are frozen in development: they are immutable descriptions."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nconst el = <p className=\"x\">hi</p>\ntry { el.props.className = 'y' } catch (e) { console.log(e.name) }"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function Box({ c }) { const [n] = useState(c); return &lt;i&gt;{n}&lt;/i&gt; }</code></pre>",
+     "opts": [
+      "<code>11</code>",
+      "<code>22</code>",
+      "<code>1</code>",
+      "<code>12</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Same component, two elements → two separate instances, each with its own state."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction Box({ c }) { const [n] = useState(c); return <i>{n}</i> }\nawait mount(<div><Box c={1} /><Box c={2} /></div>)\nconsole.log(container.textContent)"
+    },
+    {
+     "tag": "Name it",
+     "q": "<code>{ type: \"button\", props: { onClick, children: \"Save\" } }</code> is a…",
+     "opts": [
+      "Component",
+      "React element",
+      "Fiber",
+      "DOM node"
+     ],
+     "ans": 1,
+     "why": [
+      "An element describes; a fiber holds state; a DOM node is displayed."
+     ]
+    },
+    {
+     "tag": "Cheap",
+     "q": "Why is creating elements on every render fine?",
+     "opts": [
+      "They are cached forever",
+      "They are small plain objects; React compares them and touches the DOM only where something changed",
+      "They are created once only",
+      "They are created in a worker"
+     ],
+     "ans": 1,
+     "why": [
+      "That is the basis of the virtual DOM idea."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>describe(element)</code> that turns an element tree (without rendering it) into a nested array: <code>[typeName, ...children]</code>. typeName is the tag for DOM elements and the function name for components; strings/numbers stay as they are; null/false/true are skipped.",
+    "examples": [
+     "describe(<div><Hello /> hi</div>)  // [\"div\", [\"Hello\"], \" hi\"]",
+     "describe(<ul>{[<li key=\"a\">a</li>]}</ul>)  // [\"ul\", [\"li\", \"a\"]]"
+    ],
+    "hint": "Children may be a single value or an array (possibly nested): flatten with [children].flat(Infinity).",
+    "fn": "describe",
+    "starter": "export function describe(element) {\n  // your code\n}\n",
+    "solution": "export function describe(el) {\n  if (typeof el === 'string' || typeof el === 'number') return el\n  const name = typeof el.type === 'string' ? el.type : el.type.name\n  const kids = el.props.children === undefined ? [] : [el.props.children].flat(Infinity)\n  return [name, ...kids.filter((k) => k !== null && k !== false && k !== true && k !== undefined).map(describe)]\n}\n",
+    "starterFile": "src/describe.js",
+    "tests": {
+     "file": "src/describe.test.jsx",
+     "run": "npx vitest run describe",
+     "code": "import { expect, test } from 'vitest'\nimport { describe as tree } from './describe'\n\nfunction Hello() { return <b>hi</b> }\n\ntest('DOM elements and components', () => {\n  expect(tree(<div><Hello /> hi</div>)).toEqual(['div', ['Hello'], ' hi'])\n})\n\ntest('arrays and nested children', () => {\n  expect(tree(<ul>{['a', 'b'].map((x) => <li key={x}>{x}</li>)}</ul>)).toEqual(['ul', ['li', 'a'], ['li', 'b']])\n})\n\ntest('skips null and booleans, does not render components', () => {\n  let calls = 0\n  function Count() { calls++; return null }\n  expect(tree(<p>{null}{false}{1}<Count /></p>)).toEqual(['p', 1, ['Count']])\n  expect(calls).toBe(0)\n})\n"
+    },
+    "checks": [
+     {
+      "t": "DOM elements and components",
+      "verify": ""
+     },
+     {
+      "t": "arrays and nested children",
+      "verify": ""
+     },
+     {
+      "t": "skips null and booleans, does not render components",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Component = your function. Element = an immutable object from JSX. Fiber/instance = where React keeps state. Creating elements is cheap and calls nothing.",
+    "mistakes": [
+     "Thinking JSX calls the component immediately.",
+     "Mutating element props."
+    ]
+   }
+  },
+  {
+   "id": "vdom",
+   "prereqs": [
+    "element-component-instance"
+   ],
+   "dryRun": {
+    "title": "setCount(1) on <p>Count: {count}</p>",
+    "columns": [
+     "step",
+     "what happens"
+    ],
+    "rows": [
+     [
+      "render",
+      "component returns a new element tree: <p>Count: 1</p>"
+     ],
+     [
+      "diff",
+      "compare with the previous tree: same <p>, text changed"
+     ],
+     [
+      "commit",
+      "set the text node to \"Count: 1\""
+     ],
+     [
+      "DOM node",
+      "the same <p> node is kept, not recreated"
+     ]
+    ],
+    "hit": 3,
+    "note": "The \"virtual DOM\" is the element tree your components return. On each update React builds a new tree, compares it with the old one, and applies the smallest set of real DOM changes. DOM nodes are reused whenever possible."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function C() { const [n, setN] = useState(0); return &lt;p onClick={() =&gt; setN(n + 1)}&gt;Count: {n}&lt;/p&gt; }</code></pre>",
+     "opts": [
+      "<code>false Count: 1</code>",
+      "<code>true Count: 0</code>",
+      "<code>false Count: 0</code>",
+      "<code>true Count: 1</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Only the text changed; React kept the same &lt;p&gt; element."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction C() { const [n, setN] = useState(0); return <p onClick={() => setN(n + 1)}>Count: {n}</p> }\nawait mount(<C />)\nconst before = $('p')\nawait click(before)\nconsole.log(before === $('p'), $('p').textContent)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function C({ big }) { return big ? &lt;h1&gt;t&lt;/h1&gt; : &lt;h2&gt;t&lt;/h2&gt; }</code></pre>",
+     "opts": [
+      "<code>false H2</code>",
+      "<code>true H2</code>",
+      "<code>true H1</code>",
+      "<code>false H1</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "A different element type means React removes the old node and creates a new one."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction C({ big }) { return big ? <h1>t</h1> : <h2>t</h2> }\nawait mount(<C big />)\nconst before = container.firstChild\nawait mount(<C big={false} />)\nconsole.log(before === container.firstChild, container.firstChild.tagName)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function C({ items }) { return &lt;ul&gt;{items.map((x) =&gt; &lt;li key={x}&gt;{x}&lt;/li&gt;)}&lt;/ul&gt; }</code></pre>",
+     "opts": [
+      "<code>false</code>",
+      "<code>undefined</code>",
+      "<code>true</code>",
+      "<code>TypeError</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "With keys, the \"a\" node was moved, not recreated."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction C({ items }) { return <ul>{items.map((x) => <li key={x}>{x}</li>)}</ul> }\nawait mount(<C items={['a', 'b']} />)\nconst a = $$('li')[0]\nawait mount(<C items={['z', 'a', 'b']} />)\nconsole.log($$('li')[1] === a)"
+    },
+    {
+     "tag": "Myth",
+     "q": "\"The virtual DOM is faster than the DOM.\" Accurate?",
+     "opts": [
+      "Yes, always faster",
+      "No, it is always slower",
+      "It replaces the DOM",
+      "Not exactly: it makes updates simple to write and avoids unnecessary DOM work, but the diff itself costs time"
+     ],
+     "ans": 3,
+     "why": [
+      "Hand-tuned DOM code can beat it; the win is a simple programming model with good enough speed."
+     ]
+    },
+    {
+     "tag": "Who else",
+     "q": "Which frameworks update the DOM without a virtual DOM?",
+     "opts": [
+      "None",
+      "Svelte and Solid compile code that updates exact DOM nodes (fine-grained reactivity)",
+      "Angular only",
+      "jQuery"
+     ],
+     "ans": 1,
+     "why": [
+      "Different trade-offs, same goal."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Build a mini virtual DOM: <code>h(type, props, ...children)</code> returns <code>{ type, props, children }</code>, and <code>renderToString(vnode)</code> returns HTML with attributes (skip functions and null), escaped text, and nested children.",
+    "examples": [
+     "renderToString(h(\"p\", { class: \"x\" }, \"a < b\"))  // '<p class=\"x\">a &lt; b</p>'",
+     "renderToString(h(\"ul\", null, h(\"li\", null, \"1\")))"
+    ],
+    "hint": "Strings/numbers: escape &amp; &lt; &gt;. Elements: open tag + attrs + children + close tag. children.flat() first.",
+    "fn": "vdom",
+    "starter": "export function h(type, props, ...children) {\n  // your code\n}\n\nexport function renderToString(vnode) {\n  // your code\n}\n",
+    "solution": "const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\"/g, '&quot;')\n\nexport function h(type, props, ...children) {\n  return { type, props: props || {}, children: children.flat() }\n}\n\nexport function renderToString(v) {\n  if (v === null || v === false || v === undefined) return ''\n  if (typeof v !== 'object') return esc(v)\n  const attrs = Object.entries(v.props)\n    .filter(([, val]) => val !== null && val !== undefined && typeof val !== 'function')\n    .map(([k, val]) => ` ${k}=\"${esc(val)}\"`)\n    .join('')\n  return `<${v.type}${attrs}>${v.children.map(renderToString).join('')}</${v.type}>`\n}\n",
+    "starterFile": "src/vdom.js",
+    "tests": {
+     "file": "src/vdom.test.jsx",
+     "run": "npx vitest run vdom",
+     "code": "import { expect, test } from 'vitest'\nimport { h, renderToString } from './vdom'\n\ntest('h builds a vnode', () => {\n  expect(h('p', { id: 1 }, 'a', ['b'])).toEqual({ type: 'p', props: { id: 1 }, children: ['a', 'b'] })\n})\n\ntest('renders attributes and escapes text', () => {\n  expect(renderToString(h('p', { class: 'x', onclick: () => {} }, 'a < b'))).toBe('<p class=\"x\">a &lt; b</p>')\n})\n\ntest('nested children and null skipping', () => {\n  expect(renderToString(h('ul', null, h('li', null, 1), null, h('li', null, 2)))).toBe('<ul><li>1</li><li>2</li></ul>')\n})\n"
+    },
+    "checks": [
+     {
+      "t": "h builds a vnode",
+      "verify": ""
+     },
+     {
+      "t": "renders attributes and escapes text",
+      "verify": ""
+     },
+     {
+      "t": "nested children and null skipping",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "React re-renders to a new element tree, diffs it against the old one, and patches only what changed, reusing DOM nodes.",
+    "mistakes": [
+     "Believing the virtual DOM is magic speed.",
+     "Changing element types and losing DOM/state."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Virtual DOM",
+     "diff": "hard",
+     "mc": "virtual-dom"
+    }
+   ]
+  },
+  {
+   "id": "reconciliation",
+   "prereqs": [
+    "vdom"
+   ],
+   "dryRun": {
+    "title": "Two rules that make diffing fast (O(n))",
+    "columns": [
+     "old",
+     "new",
+     "React does"
+    ],
+    "rows": [
+     [
+      "<Counter /> at position 0",
+      "<Counter /> at position 0",
+      "same type → keep state, update props"
+     ],
+     [
+      "<Counter />",
+      "<Timer />",
+      "different type → destroy subtree, mount new"
+     ],
+     [
+      "<div><Counter/></div>",
+      "<section><Counter/></section>",
+      "parent type changed → Counter remounts too"
+     ],
+     [
+      "list with keys",
+      "reordered list",
+      "match by key, move nodes"
+     ],
+     [
+      "list without keys",
+      "reordered list",
+      "match by index"
+     ]
+    ],
+    "hit": 2,
+    "note": "React assumes: different types produce different trees, and keys identify children. So it compares level by level and position by position. State belongs to a <b>position in the tree</b> (type + key), not to the component definition."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function Counter() { const [n, setN] = useState(0); return &lt;button onClick={() =&gt; setN(n + 1)}&gt;{n}&lt;/button&gt; }\nfunction App({ wrap }) { return wrap ? &lt;div&gt;&lt;Counter /&gt;&lt;/div&gt; : &lt;section&gt;&lt;Counter /&gt;&lt;/section&gt; }</code></pre>",
+     "opts": [
+      "<code>2</code>",
+      "<code>1</code>",
+      "<code>0</code>",
+      "<code>undefined</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "The parent changed from div to section, so the whole subtree, Counter included, was remounted."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction Counter() { const [n, setN] = useState(0); return <button onClick={() => setN(n + 1)}>{n}</button> }\nfunction App({ wrap }) { return wrap ? <div><Counter /></div> : <section><Counter /></section> }\nawait mount(<App wrap />)\nawait click($('button')); await click($('button'))\nawait mount(<App wrap={false} />)\nconsole.log($('button').textContent)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function Counter() { const [n, setN] = useState(0); return &lt;button onClick={() =&gt; setN(n + 1)}&gt;{n}&lt;/button&gt; }\nfunction App({ admin }) { return admin ? &lt;Counter /&gt; : &lt;Counter /&gt; }</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>0</code>",
+      "<code>2</code>",
+      "<code>undefined</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Same type at the same position: React sees no difference and keeps the state."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction Counter() { const [n, setN] = useState(0); return <button onClick={() => setN(n + 1)}>{n}</button> }\nfunction App({ admin }) { return admin ? <Counter /> : <Counter /> }\nawait mount(<App admin />)\nawait click($('button'))\nawait mount(<App admin={false} />)\nconsole.log($('button').textContent)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function Counter() { const [n, setN] = useState(0); return &lt;button onClick={() =&gt; setN(n + 1)}&gt;{n}&lt;/button&gt; }\nfunction App({ who }) { return &lt;Counter key={who} /&gt; }</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>2</code>",
+      "<code>0</code>",
+      "<code>undefined</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "A different key at the same position means a different component: fresh state."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction Counter() { const [n, setN] = useState(0); return <button onClick={() => setN(n + 1)}>{n}</button> }\nfunction App({ who }) { return <Counter key={who} /> }\nawait mount(<App who=\"a\" />)\nawait click($('button'))\nawait mount(<App who=\"b\" />)\nconsole.log($('button').textContent)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function Inner() { const [n, setN] = useState(0); return &lt;button onClick={() =&gt; setN(n + 1)}&gt;{n}&lt;/button&gt; }\nfunction App() { const [, f] = useState(0); function Wrapper() { return &lt;Inner /&gt; } return &lt;&gt;&lt;Wrapper /&gt;&lt;i onClick={() =&gt; f((x) =&gt; x + 1)}&gt;r&lt;/i&gt;&lt;/&gt; }</code></pre>",
+     "opts": [
+      "<code>0</code>",
+      "<code>1</code>",
+      "<code>2</code>",
+      "<code>undefined</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Wrapper is defined inside App, so it is a NEW component type on every render: React remounts it and Inner loses its state. Never define components inside components."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction Inner() { const [n, setN] = useState(0); return <button onClick={() => setN(n + 1)}>{n}</button> }\nfunction App() { const [, f] = useState(0); function Wrapper() { return <Inner /> } return <><Wrapper /><i onClick={() => f((x) => x + 1)}>r</i></> }\nawait mount(<App />)\nawait click($('button'))\nawait click($('i'))\nconsole.log($('button').textContent)"
+    },
+    {
+     "tag": "Complexity",
+     "q": "Why does React not compute the minimal tree edit distance?",
+     "opts": [
+      "It does, always",
+      "It cannot compare trees",
+      "Browsers do it",
+      "The general algorithm is O(n³); React's heuristics (types + keys) make it O(n)"
+     ],
+     "ans": 3,
+     "why": [
+      "The heuristics are what make keys and stable types important."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>keyedDiff(oldKeys, newKeys)</code> returning <code>{ removed, added, moved }</code>: keys only in old, keys only in new, and kept keys whose relative order changed (keys not in the longest increasing subsequence of old positions are \"moved\"; a simple version: kept keys whose old index is smaller than the max old index seen so far).",
+    "examples": [
+     "keyedDiff([\"a\",\"b\",\"c\"], [\"c\",\"a\",\"b\"])  // { removed: [], added: [], moved: [\"a\",\"b\"] }",
+     "keyedDiff([\"a\",\"b\"], [\"b\",\"x\"])  // { removed: [\"a\"], added: [\"x\"], moved: [] }"
+    ],
+    "hint": "Map old key → index. Walk new keys; track lastIndex (largest old index placed so far); if a kept key's old index &lt; lastIndex it moved, else lastIndex = its index. (This is the classic React 16 approach.)",
+    "fn": "keyedDiff",
+    "starter": "export function keyedDiff(oldKeys, newKeys) {\n  // your code\n}\n",
+    "solution": "export function keyedDiff(oldKeys, newKeys) {\n  const oldIndex = new Map(oldKeys.map((k, i) => [k, i]))\n  const newSet = new Set(newKeys)\n  const removed = oldKeys.filter((k) => !newSet.has(k))\n  const added = [], moved = []\n  let lastIndex = -1\n  for (const k of newKeys) {\n    if (!oldIndex.has(k)) { added.push(k); continue }\n    const i = oldIndex.get(k)\n    if (i < lastIndex) moved.push(k)\n    else lastIndex = i\n  }\n  return { removed, added, moved }\n}\n",
+    "starterFile": "src/keyedDiff.js",
+    "tests": {
+     "file": "src/keyedDiff.test.jsx",
+     "run": "npx vitest run keyedDiff",
+     "code": "import { expect, test } from 'vitest'\nimport { keyedDiff } from './keyedDiff'\n\ntest('detects removed and added keys', () => {\n  expect(keyedDiff(['a', 'b'], ['b', 'x'])).toEqual({ removed: ['a'], added: ['x'], moved: [] })\n})\n\ntest('moving the last item to the front moves the others', () => {\n  expect(keyedDiff(['a', 'b', 'c'], ['c', 'a', 'b'])).toEqual({ removed: [], added: [], moved: ['a', 'b'] })\n})\n\ntest('appending moves nothing', () => {\n  expect(keyedDiff(['a', 'b'], ['a', 'b', 'c'])).toEqual({ removed: [], added: ['c'], moved: [] })\n  expect(keyedDiff(['a', 'b', 'c'], ['b', 'c', 'a'])).toEqual({ removed: [], added: [], moved: ['a'] })\n})\n"
+    },
+    "checks": [
+     {
+      "t": "detects removed and added keys",
+      "verify": ""
+     },
+     {
+      "t": "moving the last item to the front moves the others",
+      "verify": ""
+     },
+     {
+      "t": "appending moves nothing",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "State lives at a position (type + key). Same type → keep; different type or key → remount. Never define components inside components.",
+    "mistakes": [
+     "Defining a component inside another component's body.",
+     "Changing a wrapper element type and losing child state."
+    ]
+   }
+  },
+  {
+   "id": "render-commit",
+   "prereqs": [
+    "reconciliation"
+   ],
+   "dryRun": {
+    "title": "One update, two phases",
+    "columns": [
+     "phase",
+     "what runs",
+     "can React pause or throw it away?"
+    ],
+    "rows": [
+     [
+      "render",
+      "your component functions, building the new tree",
+      "yes (must be pure)"
+     ],
+     [
+      "commit: mutation",
+      "DOM updates, refs attached",
+      "no"
+     ],
+     [
+      "commit: layout",
+      "useLayoutEffect",
+      "no"
+     ],
+     [
+      "after paint",
+      "useEffect",
+      "—"
+     ]
+    ],
+    "hit": 0,
+    "note": "<b>Render</b> = calling components to compute what the UI should be; it may run more than once or be discarded, so it must be pure. <b>Commit</b> = applying changes to the DOM and running effects; it runs once per update. \"Re-render\" does not mean \"DOM changed\"."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let renders = 0, commits = 0\nfunction C({ v }) { renders++; useLayoutEffect(() =&gt; { commits++ }); return &lt;p&gt;{v}&lt;/p&gt; }</code></pre>",
+     "opts": [
+      "<code>2 1 1</code>",
+      "<code>2 2 1</code>",
+      "<code>1 1 1</code>",
+      "<code>2 0 1</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "React rendered and committed twice (the effect runs every commit), but the DOM text did not change: nothing was patched."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nlet renders = 0, commits = 0\nfunction C({ v }) { renders++; useLayoutEffect(() => { commits++ }); return <p>{v}</p> }\nawait mount(<C v={1} />)\nawait mount(<C v={1} />)\nconsole.log(renders, commits, $('p').textContent)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const log = []\nfunction C() { log.push('render'); useLayoutEffect(() =&gt; { log.push('layout') }); useEffect(() =&gt; { log.push('effect') }); return null }</code></pre>",
+     "opts": [
+      "<code>render effect layout</code>",
+      "<code>render layout effect</code>",
+      "<code>layout render effect</code>",
+      "<code>render effect</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Render first, then the commit (layout effects), then passive effects."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nconst log = []\nfunction C() { log.push('render'); useLayoutEffect(() => { log.push('layout') }); useEffect(() => { log.push('effect') }); return null }\nawait mount(<C />)\nconsole.log(log.join(' '))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let sideEffects = 0\nfunction Impure() { sideEffects++; return null }</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>0</code>",
+      "<code>4</code>",
+      "<code>2</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "React may call render more than once (here StrictMode does it on purpose), so side effects in render run more than you expect."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nlet sideEffects = 0\nfunction Impure() { sideEffects++; return null }\nawait mount(<StrictMode><Impure /></StrictMode>)\nconsole.log(sideEffects)"
+    },
+    {
+     "tag": "Purity",
+     "q": "Which is OK inside a component's render body?",
+     "opts": [
+      "Computing a filtered list from props",
+      "Sending an analytics event",
+      "Mutating a prop array with sort()",
+      "Writing to localStorage"
+     ],
+     "ans": 0,
+     "why": [
+      "Side effects go in event handlers or effects."
+     ]
+    },
+    {
+     "tag": "Profiler",
+     "q": "In the React DevTools profiler a component \"rendered\" but nothing changed on screen. Is that a bug?",
+     "opts": [
+      "Yes, always",
+      "It means the DOM was rebuilt",
+      "Not necessarily: rendering means the function ran; React may find no DOM changes to commit",
+      "It means memo failed"
+     ],
+     "ans": 2,
+     "why": [
+      "Optimise only renders that are actually slow."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Fix an impure component. <code>TopScores({ scores, limit = 3 })</code> must show the top scores, highest first, in <code>&lt;li&gt;</code>s, <b>without</b> mutating the scores prop (the buggy version called scores.sort()).",
+    "examples": [
+     "<TopScores scores={[5, 9, 1, 7]} />  → 9, 7, 5",
+     "the scores array passed in stays [5, 9, 1, 7]"
+    ],
+    "hint": "Copy before sorting: [...scores].sort((a, b) =&gt; b - a).slice(0, limit), or scores.toSorted(...).",
+    "fn": "TopScores",
+    "starter": "export function TopScores({ scores, limit = 3 }) {\n  return null // your code\n}\n",
+    "solution": "export function TopScores({ scores, limit = 3 }) {\n  const top = scores.toSorted((a, b) => b - a).slice(0, limit)\n  return <ol>{top.map((s, i) => <li key={i}>{s}</li>)}</ol>\n}\n",
+    "starterFile": "src/TopScores.jsx",
+    "tests": {
+     "file": "src/TopScores.test.jsx",
+     "run": "npx vitest run TopScores",
+     "code": "import { render, screen, fireEvent } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { TopScores } from './TopScores'\n\nconst items = () => screen.getAllByRole('listitem').map((li) => li.textContent)\n\ntest('shows the top 3, highest first', () => {\n  render(<TopScores scores={[5, 9, 1, 7]} />)\n  expect(items()).toEqual(['9', '7', '5'])\n})\n\ntest('respects limit', () => {\n  render(<TopScores scores={[5, 9, 1, 7]} limit={1} />)\n  expect(items()).toEqual(['9'])\n})\n\ntest('does not mutate the prop (works with frozen arrays)', () => {\n  const scores = Object.freeze([5, 9, 1, 7])\n  render(<TopScores scores={scores} />)\n  expect(scores).toEqual([5, 9, 1, 7])\n  expect(items()).toEqual(['9', '7', '5'])\n})\n"
+    },
+    "checks": [
+     {
+      "t": "shows the top 3, highest first",
+      "verify": ""
+     },
+     {
+      "t": "respects limit",
+      "verify": ""
+     },
+     {
+      "t": "does not mutate the prop (works with frozen arrays)",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Render computes (pure, may repeat or be discarded); commit applies DOM changes and runs effects once. A re-render is not a DOM change.",
+    "mistakes": [
+     "Side effects or mutations during render.",
+     "Treating every re-render as a performance bug."
+    ]
+   }
+  },
+  {
+   "id": "batching",
+   "prereqs": [
+    "render-commit"
+   ],
+   "dryRun": {
+    "title": "One click handler calling setA, setB, setC",
+    "columns": [
+     "React version",
+     "where the updates happen",
+     "renders"
+    ],
+    "rows": [
+     [
+      "17",
+      "in a React event handler",
+      "1"
+     ],
+     [
+      "17",
+      "in setTimeout / a promise",
+      "3"
+     ],
+     [
+      "18+",
+      "anywhere (automatic batching)",
+      "1"
+     ],
+     [
+      "18+ with flushSync(() => setA(1))",
+      "forced immediately",
+      "separate render"
+     ]
+    ],
+    "hit": 2,
+    "note": "React groups state updates made in the same tick into one render. Since React 18 this happens everywhere: event handlers, timeouts, promises, native listeners. Use <code>flushSync</code> only when you must read the DOM right after an update."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let renders = 0\nfunction C() { renders++; const [a, setA] = useState(0); const [b, setB] = useState(0); return &lt;button onClick={() =&gt; { setA(1); setB(1) }}&gt;{a + b}&lt;/button&gt; }</code></pre>",
+     "opts": [
+      "<code>3</code>",
+      "<code>1</code>",
+      "<code>4</code>",
+      "<code>2</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Mount (1) + one batched render for both updates (1) = 2."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nlet renders = 0\nfunction C() { renders++; const [a, setA] = useState(0); const [b, setB] = useState(0); return <button onClick={() => { setA(1); setB(1) }}>{a + b}</button> }\nawait mount(<C />)\nawait click($('button'))\nconsole.log(renders)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let renders = 0\nfunction C() { renders++; const [a, setA] = useState(0); const [b, setB] = useState(0); return &lt;button onClick={() =&gt; setTimeout(() =&gt; { setA(1); setB(1) })}&gt;{a + b}&lt;/button&gt; }</code></pre>",
+     "opts": [
+      "<code>3</code>",
+      "<code>2</code>",
+      "<code>1</code>",
+      "<code>4</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "React 18+ batches inside timeouts too (automatic batching). In React 17 this was 3."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nlet renders = 0\nfunction C() { renders++; const [a, setA] = useState(0); const [b, setB] = useState(0); return <button onClick={() => setTimeout(() => { setA(1); setB(1) })}>{a + b}</button> }\nawait mount(<C />)\nawait click($('button'))\nawait run(() => new Promise((r) => setTimeout(r, 20)))\nconsole.log(renders)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let renders = 0\nfunction C() { renders++; const [a, setA] = useState(0); const [b, setB] = useState(0); return &lt;button onClick={() =&gt; { flushSync(() =&gt; setA(1)); setB(1) }}&gt;{a + b}&lt;/button&gt; }</code></pre>",
+     "opts": [
+      "<code>2</code>",
+      "<code>1</code>",
+      "<code>3</code>",
+      "<code>4</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "flushSync forces its update to render immediately, so the second update renders separately."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nlet renders = 0\nfunction C() { renders++; const [a, setA] = useState(0); const [b, setB] = useState(0); return <button onClick={() => { flushSync(() => setA(1)); setB(1) }}>{a + b}</button> }\nawait mount(<C />)\nawait click($('button'))\nconsole.log(renders)"
+    },
+    {
+     "tag": "Reading",
+     "q": "After <code>setItems(next)</code> you need to scroll the new last item into view in the same handler. What do you use?",
+     "opts": [
+      "<code>flushSync(() =&gt; setItems(next)) then scroll</code>",
+      "<code>await setItems(next)</code>",
+      "<code>setTimeout(scroll, 0)</code>",
+      "<code>useMemo</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "flushSync guarantees the DOM is updated before the next line. Use sparingly."
+     ]
+    },
+    {
+     "tag": "Why",
+     "q": "Why does batching matter?",
+     "opts": [
+      "It makes state async in a dangerous way",
+      "It disables effects",
+      "Fewer renders and no half-updated UI between related state changes",
+      "It is required for SSR"
+     ],
+     "ans": 2,
+     "why": [
+      "Two related updates should appear together."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>Profile({ onRender })</code>: calls onRender() on every render; a \"Load\" button sets three pieces of state (name \"Ada\", age 36, status \"ready\") from inside a <code>setTimeout</code>. Show <code>name (age) – status</code>. With automatic batching, Load must cause exactly one extra render.",
+    "examples": [
+     "before: \" (0) – idle\"",
+     "after Load: \"Ada (36) – ready\" with 1 extra render"
+    ],
+    "hint": "Three useState calls; in the timeout call all three setters. React 18+ batches them.",
+    "fn": "Profile",
+    "starter": "export function Profile({ onRender }) {\n  return null // your code\n}\n",
+    "solution": "import { useState } from 'react'\n\nexport function Profile({ onRender }) {\n  onRender?.()\n  const [name, setName] = useState('')\n  const [age, setAge] = useState(0)\n  const [status, setStatus] = useState('idle')\n  const load = () => setTimeout(() => { setName('Ada'); setAge(36); setStatus('ready') })\n  return (\n    <div>\n      <p>{name} ({age}) – {status}</p>\n      <button onClick={load}>Load</button>\n    </div>\n  )\n}\n",
+    "starterFile": "src/Profile.jsx",
+    "tests": {
+     "file": "src/Profile.test.jsx",
+     "run": "npx vitest run Profile",
+     "code": "import { render, screen, fireEvent, act } from '@testing-library/react'\nimport { afterEach, beforeEach, expect, test, vi } from 'vitest'\nimport { Profile } from './Profile'\n\nbeforeEach(() => vi.useFakeTimers())\nafterEach(() => vi.useRealTimers())\n\ntest('initial state', () => {\n  render(<Profile />)\n  expect(screen.getByText('(0) – idle', { exact: false })).toBeTruthy()\n})\n\ntest('loads all three values', () => {\n  render(<Profile />)\n  fireEvent.click(screen.getByText('Load'))\n  act(() => vi.runAllTimers())\n  expect(screen.getByText('Ada (36) – ready')).toBeTruthy()\n})\n\ntest('three updates in a timeout cause one render', () => {\n  let renders = 0\n  render(<Profile onRender={() => renders++} />)\n  const before = renders\n  fireEvent.click(screen.getByText('Load'))\n  act(() => vi.runAllTimers())\n  expect(renders - before).toBe(1)\n})\n"
+    },
+    "checks": [
+     {
+      "t": "initial state",
+      "verify": ""
+     },
+     {
+      "t": "loads all three values",
+      "verify": ""
+     },
+     {
+      "t": "three updates in a timeout cause one render",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "React 18+ batches all updates in the same tick into one render, everywhere. flushSync forces an immediate render when you must read the DOM.",
+    "mistakes": [
+     "Expecting one render per setState.",
+     "Overusing flushSync."
+    ]
+   }
+  },
+  {
+   "id": "fiber-arch",
+   "prereqs": [
+    "batching"
+   ],
+   "dryRun": {
+    "title": "<App><Header /><List><Item /></List></App> as fibers",
+    "columns": [
+     "fiber",
+     "child",
+     "sibling",
+     "return (parent)"
+    ],
+    "rows": [
+     [
+      "App",
+      "Header",
+      "—",
+      "root"
+     ],
+     [
+      "Header",
+      "—",
+      "List",
+      "App"
+     ],
+     [
+      "List",
+      "Item",
+      "—",
+      "App"
+     ],
+     [
+      "Item",
+      "—",
+      "—",
+      "List"
+     ]
+    ],
+    "hit": 2,
+    "note": "A <b>fiber</b> is React's unit of work: one object per component/element holding type, props, state (memoizedState: the hooks list), effects, and pointers <code>child</code>, <code>sibling</code>, <code>return</code>. Walking that linked list (instead of the JS call stack) lets React pause and resume work."
+   },
+   "think": [
+    {
+     "tag": "Why",
+     "q": "Why did React switch from recursive rendering (stack reconciler) to fibers?",
+     "opts": [
+      "So rendering can be split into units, paused, resumed, prioritised or thrown away",
+      "To reduce bundle size",
+      "To support classes",
+      "To remove the virtual DOM"
+     ],
+     "ans": 0,
+     "why": [
+      "A recursive call stack cannot be paused halfway."
+     ]
+    },
+    {
+     "tag": "Hooks",
+     "q": "Where does a component's useState value live?",
+     "opts": [
+      "In the DOM",
+      "In a global object keyed by name",
+      "In the component function",
+      "On its fiber, in a linked list of hooks (memoizedState)"
+     ],
+     "ans": 3,
+     "why": [
+      "That list is why hook order matters."
+     ]
+    },
+    {
+     "tag": "Double buffering",
+     "q": "What are \"current\" and \"work-in-progress\" trees?",
+     "opts": [
+      "Two copies of the DOM",
+      "The tree on screen, and the one being built for the next commit; they swap at commit",
+      "Server and client trees",
+      "Old and new versions of React"
+     ],
+     "ans": 1,
+     "why": [
+      "The work-in-progress tree can be discarded without touching the screen."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function Leaf({ id }) { console.log('render', id); return null }\nfunction Mid({ id }) { console.log('render', id); return &lt;&gt;&lt;Leaf id={id + '.1'} /&gt;&lt;Leaf id={id + '.2'} /&gt;&lt;/&gt; }</code></pre>",
+     "opts": [
+      "<code>render A render B render A.1 render A.2 render B.1 render B.2</code>",
+      "<code>render A render A.1 render A.2 render B render B.1 render B.2</code>",
+      "<code>render A.1 render A.2 render A render B.1 render B.2 render B</code>",
+      "<code>render A render A.1 render B render A.2 render B.1 render B.2</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Depth-first: go to the child, finish it, then the sibling, then back up through return."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction Leaf({ id }) { console.log('render', id); return null }\nfunction Mid({ id }) { console.log('render', id); return <><Leaf id={id + '.1'} /><Leaf id={id + '.2'} /></> }\nawait mount(<><Mid id=\"A\" /><Mid id=\"B\" /></>)"
+    },
+    {
+     "tag": "Pointers",
+     "q": "From a fiber, how does React get to the next sibling's subtree after finishing a node with no children?",
+     "opts": [
+      "Recursion",
+      "A queue of all nodes",
+      "Sorting by id",
+      "Follow sibling; if none, go up with return until a sibling exists"
+     ],
+     "ans": 3,
+     "why": [
+      "That is the whole traversal: child → sibling → return."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Walk a fiber-like tree without recursion. Nodes are <code>{ name, child, sibling, return }</code>. Write <code>buildFibers(tree)</code> (turn <code>{ name, children: [...] }</code> into linked fibers) and <code>walk(root)</code> returning names in depth-first order using only the pointers and a loop.",
+    "examples": [
+     "walk(buildFibers({ name: \"App\", children: [{ name: \"A\" }, { name: \"B\", children: [{ name: \"C\" }] }] }))",
+     "// [\"App\", \"A\", \"B\", \"C\"]"
+    ],
+    "hint": "walk: node = root; loop: record node; if child go child; else while no sibling go return (stop at root); go sibling.",
+    "fn": "fiberWalk",
+    "starter": "export function buildFibers(tree, parent = null) {\n  // your code\n}\n\nexport function walk(root) {\n  // your code\n}\n",
+    "solution": "export function buildFibers(tree, parent = null) {\n  const fiber = { name: tree.name, child: null, sibling: null, return: parent }\n  let prev = null\n  for (const c of tree.children ?? []) {\n    const f = buildFibers(c, fiber)\n    if (prev) prev.sibling = f\n    else fiber.child = f\n    prev = f\n  }\n  return fiber\n}\n\nexport function walk(root) {\n  const out = []\n  let node = root\n  while (node) {\n    out.push(node.name)\n    if (node.child) { node = node.child; continue }\n    while (node && node !== root && !node.sibling) node = node.return\n    if (!node || node === root) break\n    node = node.sibling\n  }\n  return out\n}\n",
+    "starterFile": "src/fiberWalk.js",
+    "tests": {
+     "file": "src/fiberWalk.test.jsx",
+     "run": "npx vitest run fiberWalk",
+     "code": "import { expect, test } from 'vitest'\nimport { buildFibers, walk } from './fiberWalk'\n\nconst tree = { name: 'App', children: [{ name: 'Header' }, { name: 'List', children: [{ name: 'Item1' }, { name: 'Item2' }] }, { name: 'Footer' }] }\n\ntest('links child, sibling and return', () => {\n  const app = buildFibers(tree)\n  expect(app.child.name).toBe('Header')\n  expect(app.child.sibling.name).toBe('List')\n  expect(app.child.sibling.child.return.name).toBe('List')\n})\n\ntest('walks depth-first', () => {\n  expect(walk(buildFibers(tree))).toEqual(['App', 'Header', 'List', 'Item1', 'Item2', 'Footer'])\n})\n\ntest('single node and deep chains', () => {\n  expect(walk(buildFibers({ name: 'X' }))).toEqual(['X'])\n  const deep = { name: 'a', children: [{ name: 'b', children: [{ name: 'c' }] }] }\n  expect(walk(buildFibers(deep))).toEqual(['a', 'b', 'c'])\n})\n"
+    },
+    "checks": [
+     {
+      "t": "links child, sibling and return",
+      "verify": ""
+     },
+     {
+      "t": "walks depth-first",
+      "verify": ""
+     },
+     {
+      "t": "single node and deep chains",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "A fiber is one unit of work with state and child/sibling/return pointers. Looping over that list lets React pause, resume and prioritise rendering.",
+    "mistakes": [
+     "Thinking fibers are threads.",
+     "Forgetting that hooks live on the fiber in call order."
+    ]
+   }
+  },
+  {
+   "id": "work-loop",
+   "prereqs": [
+    "fiber-arch"
+   ],
+   "dryRun": {
+    "title": "workLoop with a 5 ms budget per slice",
+    "columns": [
+     "slice",
+     "units of work done",
+     "then"
+    ],
+    "rows": [
+     [
+      "1",
+      "~10 fibers",
+      "time is up → yield to the browser"
+     ],
+     [
+      "browser",
+      "handles a click, paints",
+      "—"
+     ],
+     [
+      "2",
+      "next ~10 fibers",
+      "yield"
+     ],
+     [
+      "…",
+      "last fibers",
+      "commit everything at once"
+     ]
+    ],
+    "hit": 1,
+    "note": "In concurrent rendering React processes fibers in a loop and checks <code>shouldYield()</code> between units. When the slice (about 5 ms) is used up it gives control back so input and painting stay smooth, then continues. Only the commit is done in one go."
+   },
+   "think": [
+    {
+     "tag": "Yield",
+     "q": "What does \"yielding\" mean in the work loop?",
+     "opts": [
+      "Stopping after a unit of work so the browser can handle input and paint, then resuming later",
+      "Throwing away all work",
+      "Running work in a worker",
+      "Skipping effects"
+     ],
+     "ans": 0,
+     "why": [
+      "That is what keeps typing responsive during a big render."
+     ]
+    },
+    {
+     "tag": "Commit",
+     "q": "Can the commit phase be split across frames like rendering?",
+     "opts": [
+      "Yes, always",
+      "Only for lists",
+      "No, the commit is synchronous so users never see a half-updated UI",
+      "Only on mobile"
+     ],
+     "ans": 2,
+     "why": [
+      "Only render is interruptible."
+     ]
+    },
+    {
+     "tag": "Which render",
+     "q": "Which updates use the time-sliced, interruptible loop?",
+     "opts": [
+      "All updates always",
+      "Only class components",
+      "Only the first render",
+      "Transitions and other concurrent updates (startTransition, useDeferredValue)"
+     ],
+     "ans": 3,
+     "why": [
+      "Urgent updates like typing still render synchronously."
+     ]
+    },
+    {
+     "tag": "Starvation",
+     "q": "What stops a low-priority render from being postponed forever?",
+     "opts": [
+      "Nothing",
+      "Lanes have expiration: work that waits too long is treated as urgent",
+      "A timeout error",
+      "The user clicking again"
+     ],
+     "ans": 1,
+     "why": [
+      "Starvation protection is part of the scheduler."
+     ]
+    },
+    {
+     "tag": "Browser API",
+     "q": "Which browser API does a similar \"do work while idle\" job?",
+     "opts": [
+      "<code>setInterval</code>",
+      "<code>fetch</code>",
+      "<code>requestIdleCallback</code>",
+      "<code>localStorage</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "React ships its own scheduler (MessageChannel-based) because rIC is not reliable enough."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write a time-sliced runner: <code>createWorkLoop(units, { budget, now })</code> returns <code>{ runSlice() }</code>. Each runSlice processes units (functions) until the budget (ms, measured with the injected now()) is used, and returns <code>{ done, processed }</code> for that slice.",
+    "examples": [
+     "const loop = createWorkLoop(tasks, { budget: 5, now: fakeClock })",
+     "loop.runSlice() → { done: false, processed: 5 }"
+    ],
+    "hint": "In runSlice: const start = now(); while (i &lt; units.length &amp;&amp; now() - start &lt; budget) { units[i++]() }.",
+    "fn": "workLoop",
+    "starter": "export function createWorkLoop(units, { budget, now }) {\n  // your code\n}\n",
+    "solution": "export function createWorkLoop(units, { budget, now }) {\n  let i = 0\n  return {\n    runSlice() {\n      const start = now()\n      let processed = 0\n      while (i < units.length && now() - start < budget) {\n        units[i++]()\n        processed++\n      }\n      return { done: i >= units.length, processed }\n    },\n  }\n}\n",
+    "starterFile": "src/workLoop.js",
+    "tests": {
+     "file": "src/workLoop.test.jsx",
+     "run": "npx vitest run workLoop",
+     "code": "import { expect, test } from 'vitest'\nimport { createWorkLoop } from './workLoop'\n\nfunction setup(n, costPerUnit) {\n  let t = 0\n  const log = []\n  const units = Array.from({ length: n }, (_, k) => () => { t += costPerUnit; log.push(k) })\n  return { units, log, now: () => t }\n}\n\ntest('stops when the budget is used', () => {\n  const { units, now } = setup(20, 1)\n  const loop = createWorkLoop(units, { budget: 5, now })\n  expect(loop.runSlice()).toEqual({ done: false, processed: 5 })\n})\n\ntest('continues where it stopped, in order', () => {\n  const { units, log, now } = setup(12, 1)\n  const loop = createWorkLoop(units, { budget: 5, now })\n  loop.runSlice(); loop.runSlice()\n  expect(loop.runSlice()).toEqual({ done: true, processed: 2 })\n  expect(log).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])\n})\n\ntest('always makes progress even if one unit is slow', () => {\n  const { units, now } = setup(3, 50)\n  const loop = createWorkLoop(units, { budget: 5, now })\n  expect(loop.runSlice().processed).toBe(1)\n})\n"
+    },
+    "checks": [
+     {
+      "t": "stops when the budget is used",
+      "verify": ""
+     },
+     {
+      "t": "continues where it stopped, in order",
+      "verify": ""
+     },
+     {
+      "t": "always makes progress even if one unit is slow",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Concurrent rendering processes fibers in short slices and yields to the browser between them; the commit stays synchronous.",
+    "mistakes": [
+     "Expecting every update to be interruptible.",
+     "Long synchronous work inside one component (it cannot be sliced)."
+    ]
+   }
+  },
+  {
+   "id": "scheduler",
+   "prereqs": [
+    "work-loop"
+   ],
+   "dryRun": {
+    "title": "Updates in the same moment",
+    "columns": [
+     "update",
+     "lane / priority",
+     "handled"
+    ],
+    "rows": [
+     [
+      "typing in an input",
+      "SyncLane / user-blocking",
+      "first"
+     ],
+     [
+      "setState in a click",
+      "DefaultLane / discrete event",
+      "next"
+     ],
+     [
+      "startTransition(setResults)",
+      "TransitionLane",
+      "when urgent work is done; can be interrupted"
+     ],
+     [
+      "offscreen / idle work",
+      "IdleLane",
+      "last"
+     ]
+    ],
+    "hit": 0,
+    "note": "React gives every update a <b>lane</b> (a priority bit). Urgent lanes render first; transition lanes can be interrupted and restarted when something urgent arrives. The scheduler package orders the work using a priority queue."
+   },
+   "think": [
+    {
+     "tag": "Order",
+     "q": "User types while a big filtered list renders inside startTransition. What happens?",
+     "opts": [
+      "The keystroke renders first; the list render is interrupted and restarted with the new input",
+      "The keystroke waits for the list",
+      "Both render at the same time",
+      "The list render is lost forever"
+     ],
+     "ans": 0,
+     "why": [
+      "That is the point of marking non-urgent updates."
+     ]
+    },
+    {
+     "tag": "Lanes",
+     "q": "Why bitmask \"lanes\" instead of one number?",
+     "opts": [
+      "To save memory only",
+      "Browsers require it",
+      "Several priorities can be pending and batched together, checked with fast bit operations",
+      "For SSR"
+     ],
+     "ans": 2,
+     "why": [
+      "A render can handle a set of lanes at once."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function App() {\n  const [text, setText] = useState('')\n  const [results, setResults] = useState('')\n  return &lt;&gt;&lt;input value={text} onChange={(e) =&gt; { setText(e.target.value); startTransition(() =&gt; setResults(e.target.value.toUpperCase())) }} /&gt;&lt;p&gt;{results}&lt;/p&gt;&lt;/&gt;\n}</code></pre>",
+     "opts": [
+      "<code>ab AB</code>",
+      "<code>ab (empty)</code>",
+      "<code>AB AB</code>",
+      "<code>a A</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Once everything settles, both the urgent update and the transition are applied."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction App() {\n  const [text, setText] = useState('')\n  const [results, setResults] = useState('')\n  return <><input value={text} onChange={(e) => { setText(e.target.value); startTransition(() => setResults(e.target.value.toUpperCase())) }} /><p>{results}</p></>\n}\nawait mount(<App />)\nawait type($('input'), 'ab')\nconsole.log($('input').value, $('p').textContent)"
+    },
+    {
+     "tag": "Package",
+     "q": "Is the scheduler tied to React DOM?",
+     "opts": [
+      "Yes, only browsers",
+      "It is part of the browser",
+      "It is in Node only",
+      "No, it is a separate package (scheduler) also used by React Native"
+     ],
+     "ans": 3,
+     "why": [
+      "It is a small priority queue with time slicing."
+     ]
+    },
+    {
+     "tag": "Your role",
+     "q": "How do you, as an app developer, influence priorities?",
+     "opts": [
+      "Set lanes manually",
+      "Mark non-urgent updates with startTransition / useTransition / useDeferredValue",
+      "Call the scheduler directly",
+      "Use setTimeout everywhere"
+     ],
+     "ans": 1,
+     "why": [
+      "React assigns lanes from how the update was triggered."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write a tiny priority scheduler: <code>createScheduler()</code> with <code>schedule(name, priority)</code> (lower number = more urgent) and <code>flush()</code> returning task names in run order: by priority, then first-scheduled first.",
+    "examples": [
+     "schedule(\"render list\", 3); schedule(\"typing\", 1); schedule(\"click\", 2)",
+     "flush()  // [\"typing\", \"click\", \"render list\"]"
+    ],
+    "hint": "Store { name, priority, seq }; sort by priority then seq (or use a heap); clear after flush.",
+    "fn": "scheduler",
+    "starter": "export function createScheduler() {\n  // your code\n}\n",
+    "solution": "export function createScheduler() {\n  let queue = []\n  let seq = 0\n  return {\n    schedule(name, priority) { queue.push({ name, priority, seq: seq++ }) },\n    flush() {\n      const out = queue.sort((a, b) => a.priority - b.priority || a.seq - b.seq).map((t) => t.name)\n      queue = []\n      return out\n    },\n  }\n}\n",
+    "starterFile": "src/scheduler.js",
+    "tests": {
+     "file": "src/scheduler.test.jsx",
+     "run": "npx vitest run scheduler",
+     "code": "import { expect, test } from 'vitest'\nimport { createScheduler } from './scheduler'\n\ntest('runs the most urgent first', () => {\n  const s = createScheduler()\n  s.schedule('render list', 3); s.schedule('typing', 1); s.schedule('click', 2)\n  expect(s.flush()).toEqual(['typing', 'click', 'render list'])\n})\n\ntest('same priority keeps scheduling order', () => {\n  const s = createScheduler()\n  s.schedule('a', 2); s.schedule('b', 2); s.schedule('c', 1); s.schedule('d', 2)\n  expect(s.flush()).toEqual(['c', 'a', 'b', 'd'])\n})\n\ntest('flush empties the queue', () => {\n  const s = createScheduler()\n  s.schedule('x', 1)\n  s.flush()\n  expect(s.flush()).toEqual([])\n})\n"
+    },
+    "checks": [
+     {
+      "t": "runs the most urgent first",
+      "verify": ""
+     },
+     {
+      "t": "same priority keeps scheduling order",
+      "verify": ""
+     },
+     {
+      "t": "flush empties the queue",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Every update gets a lane (priority). Urgent work first; transitions are interruptible. You steer it with startTransition and useDeferredValue.",
+    "mistakes": [
+     "Assuming all updates are equal.",
+     "Trying to control lanes directly."
+    ]
+   }
+  }
+ ]
+}

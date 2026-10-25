@@ -155,6 +155,12 @@ function UnderstandView({ lesson, bl }: { lesson: Lesson; bl: BuildLesson }) {
           <pre className="mc-pre sm"><code>{u.result}</code></pre>
         </div>
       )}
+      {u.contract && u.contract.length > 0 && (
+        <div className="bf-box bf-contract">
+          <h3 className="mc-h3">{t('build.contract')}</h3>
+          <ul>{u.contract.map((r, i) => <li key={i}><H html={r} /></li>)}</ul>
+        </div>
+      )}
       {u.rules.length > 0 && (
         <div className="bf-box">
           <h3 className="mc-h3">{t('build.rules')}</h3>
@@ -219,7 +225,9 @@ function BuildView({ bl, ticks, setTicks }: { bl: BuildLesson; ticks: boolean[];
           {s.code && (
             <>
               {s.file ? <div className="dsa-row"><b className="bf-lbl">{s.file}</b><Copy text={s.code} /></div> : null}
-              <pre className="mc-pre"><code>{s.code}</code></pre>
+              {s.fold
+                ? <div className="mc-peek"><details><summary>{/(^|[/.])test\.[mc]?[jt]sx?$|\.test\./.test(s.file ?? '') ? t('dsa.showTests') : t('build.showCode')}</summary><pre className="mc-pre"><code>{s.code}</code></pre></details></div>
+                : <pre className="mc-pre"><code>{s.code}</code></pre>}
             </>
           )}
           {s.expect && (
@@ -258,7 +266,10 @@ export function BuildRead({ lesson, bl }: { lesson: Lesson; bl: BuildLesson }) {
             <div key={i} className="bf-step">
               <div className="bf-sh"><span className="bf-n">{i + 1}</span><span>{s.title}</span></div>
               {s.run && <pre className="mc-pre sm"><code>{s.run.split('\n').map((l) => '$ ' + l).join('\n')}</code></pre>}
-              {s.code && <pre className="mc-pre"><code>{s.code}</code></pre>}
+              {s.file && <b className="bf-lbl">{s.file}</b>}
+              {s.code && (s.fold
+                ? <div className="mc-peek"><details><summary>{/(^|[/.])test\.[mc]?[jt]sx?$|\.test\./.test(s.file ?? '') ? t('dsa.showTests') : t('build.showCode')}</summary><pre className="mc-pre"><code>{s.code}</code></pre></details></div>
+                : <pre className="mc-pre"><code>{s.code}</code></pre>)}
               {s.expect && <><b className="bf-lbl">{t('build.expect')}</b><pre className="mc-pre sm"><code>{s.expect}</code></pre></>}
             </div>
           ))}

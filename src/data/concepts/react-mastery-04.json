@@ -1,0 +1,1234 @@
+{
+ "course": "react-mastery",
+ "items": [
+  {
+   "id": "error-boundaries",
+   "prereqs": [
+    "custom-hooks"
+   ],
+   "dryRun": {
+    "title": "An error thrown while rendering <Chart> inside <Boundary>",
+    "columns": [
+     "where the error happens",
+     "caught by the boundary?"
+    ],
+    "rows": [
+     [
+      "render of a child",
+      "yes → fallback UI"
+     ],
+     [
+      "a child's useEffect / lifecycle",
+      "yes"
+     ],
+     [
+      "an onClick handler",
+      "no: use try/catch there"
+     ],
+     [
+      "setTimeout / a promise",
+      "no"
+     ],
+     [
+      "the boundary itself",
+      "no: the next boundary up"
+     ]
+    ],
+    "hit": 2,
+    "note": "An error boundary is a class component with <code>static getDerivedStateFromError</code> (and optionally <code>componentDidCatch</code> for logging). It catches errors from rendering and effects in the tree below it and shows a fallback instead of unmounting the whole app."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>class Boundary extends Component {\n  state = { error: null }\n  static getDerivedStateFromError(error) { return { error } }\n  render() { return this.state.error ? &lt;p&gt;fallback: {this.state.error.message}&lt;/p&gt; : this.props.children }\n}\nfunction Bad() { throw new Error('boom') }</code></pre>",
+     "opts": [
+      "<code>rest of page</code>",
+      "<code>fallback: boom</code>",
+      "<code>fallback: boom | rest of page</code>",
+      "<code>(blank page)</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "The boundary shows its fallback; the rest of the page keeps working."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nclass Boundary extends Component {\n  state = { error: null }\n  static getDerivedStateFromError(error) { return { error } }\n  render() { return this.state.error ? <p>fallback: {this.state.error.message}</p> : this.props.children }\n}\nfunction Bad() { throw new Error('boom') }\nconsole.error = () => {}\nawait mount(<div><Boundary><Bad /></Boundary><p>rest of page</p></div>)\nconsole.log($$('p').map((p) => p.textContent).join(' | '))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>class Boundary extends Component {\n  state = { error: null }\n  static getDerivedStateFromError(error) { return { error } }\n  render() { return this.state.error ? &lt;p&gt;fallback: {this.state.error.message}&lt;/p&gt; : this.props.children }\n}\nfunction Btn() { return &lt;button onClick={() =&gt; { throw new Error('click') }}&gt;x&lt;/button&gt; }</code></pre>",
+     "opts": [
+      "<code>button still there</code>",
+      "<code>fallback shown</code>",
+      "<code>blank</code>",
+      "<code>TypeError</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Errors in event handlers are not caught by boundaries; React is not rendering at that moment. Catch them in the handler."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nclass Boundary extends Component {\n  state = { error: null }\n  static getDerivedStateFromError(error) { return { error } }\n  render() { return this.state.error ? <p>fallback: {this.state.error.message}</p> : this.props.children }\n}\nfunction Btn() { return <button onClick={() => { throw new Error('click') }}>x</button> }\nconsole.error = () => {}\nprocess.on('uncaughtException', () => {})\nwindow.addEventListener('error', (e) => e.preventDefault())\nawait mount(<Boundary><Btn /></Boundary>)\ntry { await click($('button')) } catch {}\nconsole.log($('p') ? 'fallback shown' : 'button still there')"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function Bad() { throw new Error('x') }</code></pre>",
+     "opts": [
+      "<code>\"&lt;div&gt;&lt;p&gt;other&lt;/p&gt;&lt;/div&gt;\"</code>",
+      "<code>\"&lt;p&gt;other&lt;/p&gt;\"</code>",
+      "<code>\"x\"</code>",
+      "<code>\"\"</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "With no boundary, an uncaught render error unmounts the whole root: the user sees a blank page."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction Bad() { throw new Error('x') }\nconsole.error = () => {}\ntry { await mount(<div><Bad /><p>other</p></div>) } catch {}\nconsole.log(JSON.stringify(container.innerHTML))"
+    },
+    {
+     "tag": "Placement",
+     "q": "Where should error boundaries go?",
+     "opts": [
+      "Only around the whole app",
+      "Around independent parts (a route, a widget, a chart) so one failure does not blank the page",
+      "Around every single component",
+      "Inside event handlers"
+     ],
+     "ans": 1,
+     "why": [
+      "Granularity decides how much of the UI a failure takes down."
+     ]
+    },
+    {
+     "tag": "Reset",
+     "q": "A boundary shows a fallback for a user's profile. The user navigates to another profile. How do you clear the error?",
+     "opts": [
+      "Reload the page",
+      "Give the boundary key={userId} so it remounts with fresh state",
+      "Call setState from outside",
+      "Errors clear automatically"
+     ],
+     "ans": 1,
+     "why": [
+      "A new key means a new boundary instance."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>ErrorBoundary</code> taking <code>fallback(error, reset)</code> and <code>onError(error)</code> props: show <code>fallback(error, reset)</code> when a child throws while rendering, call onError once, and let reset() try rendering the children again.",
+    "examples": [
+     "<ErrorBoundary fallback={(e, reset) => <button onClick={reset}>retry</button>}>…",
+     "onError(error) for logging"
+    ],
+    "hint": "Class with state { error }, getDerivedStateFromError, componentDidCatch(error) → this.props.onError?.(error), reset = () =&gt; this.setState({ error: null }).",
+    "fn": "ErrorBoundary",
+    "starter": "import { Component } from 'react'\n\nexport class ErrorBoundary extends Component {\n  render() {\n    return null // your code\n  }\n}\n",
+    "solution": "import { Component } from 'react'\n\nexport class ErrorBoundary extends Component {\n  state = { error: null }\n  static getDerivedStateFromError(error) {\n    return { error }\n  }\n  componentDidCatch(error) {\n    this.props.onError?.(error)\n  }\n  reset = () => this.setState({ error: null })\n  render() {\n    if (this.state.error) return this.props.fallback(this.state.error, this.reset)\n    return this.props.children\n  }\n}\n",
+    "starterFile": "src/ErrorBoundary.jsx",
+    "tests": {
+     "file": "src/ErrorBoundary.test.jsx",
+     "run": "npx vitest run ErrorBoundary",
+     "code": "import { render, screen, fireEvent } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { ErrorBoundary } from './ErrorBoundary'\n\nlet shouldThrow = true\nfunction Flaky() {\n  if (shouldThrow) throw new Error('boom')\n  return <p>ok</p>\n}\nconst quiet = (fn) => { const e = console.error; console.error = () => {}; try { fn() } finally { console.error = e } }\n\ntest('renders children when fine', () => {\n  shouldThrow = false\n  render(<ErrorBoundary fallback={() => <p>fallback</p>}><Flaky /></ErrorBoundary>)\n  expect(screen.getByText('ok')).toBeTruthy()\n})\n\ntest('shows the fallback and reports the error', () => {\n  shouldThrow = true\n  const errors = []\n  quiet(() => render(<ErrorBoundary onError={(e) => errors.push(e.message)} fallback={(e) => <p>failed: {e.message}</p>}><Flaky /></ErrorBoundary>))\n  expect(screen.getByText('failed: boom')).toBeTruthy()\n  expect(errors).toEqual(['boom'])\n})\n\ntest('reset renders the children again', () => {\n  shouldThrow = true\n  quiet(() => render(<ErrorBoundary fallback={(e, reset) => <button onClick={reset}>retry</button>}><Flaky /></ErrorBoundary>))\n  shouldThrow = false\n  fireEvent.click(screen.getByText('retry'))\n  expect(screen.getByText('ok')).toBeTruthy()\n})\n"
+    },
+    "checks": [
+     {
+      "t": "renders children when fine",
+      "verify": ""
+     },
+     {
+      "t": "shows the fallback and reports the error",
+      "verify": ""
+     },
+     {
+      "t": "reset renders the children again",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Error boundaries (a class with getDerivedStateFromError) catch render and effect errors below them. Event handlers and async code need try/catch. Reset with a key or a reset callback.",
+    "mistakes": [
+     "One boundary for the whole app only.",
+     "Expecting boundaries to catch click-handler errors."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Error Boundary",
+     "diff": "medium",
+     "mc": "error-boundary",
+     "course": "react-machine-coding"
+    }
+   ]
+  },
+  {
+   "id": "portals",
+   "prereqs": [
+    "error-boundaries"
+   ],
+   "dryRun": {
+    "title": "createPortal(<Modal />, document.body) inside <Card>",
+    "columns": [
+     "question",
+     "answer"
+    ],
+    "rows": [
+     [
+      "where is the DOM?",
+      "in document.body, outside the card"
+     ],
+     [
+      "where is it in the React tree?",
+      "still a child of Card"
+     ],
+     [
+      "context from Card's providers?",
+      "yes"
+     ],
+     [
+      "does a click bubble to Card's onClick?",
+      "yes, through the React tree"
+     ],
+     [
+      "why use it?",
+      "escape overflow:hidden / z-index stacking of parents"
+     ]
+    ],
+    "hit": 3,
+    "note": "A portal renders children into a different DOM node while keeping them in the same place in the <b>React</b> tree. Use it for modals, tooltips and toasts that must escape a parent's overflow or stacking context."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function Card() { return &lt;div className=\"card\"&gt;{createPortal(&lt;p&gt;in portal&lt;/p&gt;, document.body)}&lt;/div&gt; }</code></pre>",
+     "opts": [
+      "<code>\"&lt;div class=\\\"card\\\"&gt;&lt;p&gt;in portal&lt;/p&gt;&lt;/div&gt;\" in portal</code>",
+      "<code>\"\" in portal</code>",
+      "<code>\"&lt;div class=\\\"card\\\"&gt;&lt;/div&gt;\" undefined</code>",
+      "<code>\"&lt;div class=\\\"card\\\"&gt;&lt;/div&gt;\" in portal</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "The card is empty in the DOM; the paragraph lives at the end of body."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction Card() { return <div className=\"card\">{createPortal(<p>in portal</p>, document.body)}</div> }\nawait mount(<Card />)\nconsole.log(JSON.stringify(container.innerHTML), document.body.lastElementChild.textContent)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const Ctx = createContext('none')\nfunction Inner() { return &lt;i&gt;{useContext(Ctx)}&lt;/i&gt; }</code></pre>",
+     "opts": [
+      "<code>from card</code>",
+      "<code>none</code>",
+      "<code>undefined</code>",
+      "<code>(empty)</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Portals keep context, because context follows the React tree, not the DOM."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nconst Ctx = createContext('none')\nfunction Inner() { return <i>{useContext(Ctx)}</i> }\nawait mount(<Ctx value=\"from card\">{createPortal(<Inner />, document.body)}</Ctx>)\nconsole.log(document.body.querySelector('i').textContent)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function App() { const [n, setN] = useState(0); return &lt;div onClick={() =&gt; setN(n + 1)}&gt;&lt;span&gt;{n}&lt;/span&gt;{createPortal(&lt;button&gt;inside portal&lt;/button&gt;, document.body)}&lt;/div&gt; }</code></pre>",
+     "opts": [
+      "<code>0</code>",
+      "<code>undefined</code>",
+      "<code>1</code>",
+      "<code>2</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "React events bubble through the React tree, so the div's onClick fires even though the button is elsewhere in the DOM."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction App() { const [n, setN] = useState(0); return <div onClick={() => setN(n + 1)}><span>{n}</span>{createPortal(<button>inside portal</button>, document.body)}</div> }\nawait mount(<App />)\nawait click(document.body.querySelector('button'))\nconsole.log($('span').textContent)"
+    },
+    {
+     "tag": "Accessibility",
+     "q": "What must a modal rendered in a portal still do?",
+     "opts": [
+      "Nothing: portals handle it",
+      "Disable scrolling only",
+      "Use z-index 9999",
+      "Trap focus inside, close on Escape, return focus to the trigger, and mark the rest inert/aria-hidden"
+     ],
+     "ans": 3,
+     "why": [
+      "The native &lt;dialog&gt; element with showModal() handles much of this."
+     ]
+    },
+    {
+     "tag": "Why",
+     "q": "Why can't a tooltip inside a card with <code>overflow: hidden</code> simply use position: absolute?",
+     "opts": [
+      "absolute is not allowed in React",
+      "It gets clipped by the card; a portal renders it outside that box",
+      "It would be too slow",
+      "Tooltips need canvas"
+     ],
+     "ans": 1,
+     "why": [
+      "Portals escape clipping and stacking contexts."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>Modal({ open, onClose, children })</code>: when open, render via a portal into <code>document.body</code> a <code>&lt;div role=\"dialog\" aria-modal=\"true\"&gt;</code> with the children and a \"Close\" button; pressing Escape also calls onClose. Nothing is rendered when closed.",
+    "examples": [
+     "<Modal open onClose={close}>Saved!</Modal>",
+     "Escape → onClose()"
+    ],
+    "hint": "if (!open) return null; useEffect adds a keydown listener on document while open (with cleanup); createPortal(…, document.body).",
+    "fn": "Modal",
+    "starter": "export function Modal({ open, onClose, children }) {\n  return null // your code\n}\n",
+    "solution": "import { useEffect } from 'react'\nimport { createPortal } from 'react-dom'\n\nexport function Modal({ open, onClose, children }) {\n  useEffect(() => {\n    if (!open) return\n    const onKey = (e) => { if (e.key === 'Escape') onClose() }\n    document.addEventListener('keydown', onKey)\n    return () => document.removeEventListener('keydown', onKey)\n  }, [open, onClose])\n  if (!open) return null\n  return createPortal(\n    <div role=\"dialog\" aria-modal=\"true\">\n      {children}\n      <button onClick={onClose}>Close</button>\n    </div>,\n    document.body,\n  )\n}\n",
+    "starterFile": "src/Modal.jsx",
+    "tests": {
+     "file": "src/Modal.test.jsx",
+     "run": "npx vitest run Modal",
+     "code": "import { render, screen, fireEvent } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { Modal } from './Modal'\n\ntest('renders into body via a portal', () => {\n  const { container } = render(<div className=\"card\"><Modal open onClose={() => {}}>Saved!</Modal></div>)\n  expect(screen.getByRole('dialog').textContent).toContain('Saved!')\n  expect(container.querySelector('[role=dialog]')).toBeNull()\n})\n\ntest('close button and Escape call onClose', () => {\n  let n = 0\n  render(<Modal open onClose={() => n++}>x</Modal>)\n  fireEvent.click(screen.getByText('Close'))\n  fireEvent.keyDown(document, { key: 'Escape' })\n  expect(n).toBe(2)\n})\n\ntest('renders nothing when closed and removes the key listener', () => {\n  let n = 0\n  const { rerender } = render(<Modal open onClose={() => n++}>x</Modal>)\n  rerender(<Modal open={false} onClose={() => n++}>x</Modal>)\n  expect(screen.queryByRole('dialog')).toBeNull()\n  fireEvent.keyDown(document, { key: 'Escape' })\n  expect(n).toBe(0)\n  rerender(<Modal open onClose={() => n++}>x</Modal>)\n  expect(screen.getByRole('dialog')).toBeTruthy()\n})\n"
+    },
+    "checks": [
+     {
+      "t": "renders into body via a portal",
+      "verify": ""
+     },
+     {
+      "t": "close button and Escape call onClose",
+      "verify": ""
+     },
+     {
+      "t": "renders nothing when closed and removes the key listener",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Portals move DOM elsewhere but keep the React tree: context and event bubbling still follow the component tree.",
+    "mistakes": [
+     "Forgetting focus management in portal modals.",
+     "Being surprised that clicks in a portal bubble to React parents."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Modal / Dialog Component",
+     "diff": "easy",
+     "mc": "modal",
+     "course": "react-machine-coding"
+    }
+   ]
+  },
+  {
+   "id": "forwardref",
+   "prereqs": [
+    "portals"
+   ],
+   "dryRun": {
+    "title": "Giving a parent access to a child's <input>",
+    "columns": [
+     "React version",
+     "how"
+    ],
+    "rows": [
+     [
+      "before 19",
+      "forwardRef((props, ref) => <input ref={ref} />)"
+     ],
+     [
+      "19+",
+      "function Input({ ref, ...props }) { return <input ref={ref} {...props} /> }"
+     ],
+     [
+      "expose only some methods",
+      "useImperativeHandle(ref, () => ({ focus, clear }))"
+     ],
+     [
+      "parent",
+      "const r = useRef(); <Input ref={r} />; r.current.focus()"
+     ]
+    ],
+    "hit": 2,
+    "note": "Refs let a parent reach a DOM node or an imperative API of a child. In React 19, <code>ref</code> is a normal prop for function components, so forwardRef is no longer needed. <code>useImperativeHandle</code> exposes a small, deliberate API instead of the whole DOM node."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function Input({ ref, ...p }) { return &lt;input ref={ref} {...p} /&gt; }\nfunction App() { const r = useRef(null); useEffect(() =&gt; console.log(r.current.tagName), []); return &lt;Input ref={r} /&gt; }</code></pre>",
+     "opts": [
+      "<code>undefined</code>",
+      "<code>null</code>",
+      "<code>INPUT</code>",
+      "<code>DIV</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "React 19: ref is passed like any prop, no forwardRef needed."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction Input({ ref, ...p }) { return <input ref={ref} {...p} /> }\nfunction App() { const r = useRef(null); useEffect(() => console.log(r.current.tagName), []); return <Input ref={r} /> }\nawait mount(<App />)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function Field({ ref }) { const inp = useRef(null); useImperativeHandle(ref, () =&gt; ({ clear: () =&gt; { inp.current.value = '' } })); return &lt;input ref={inp} defaultValue=\"text\" /&gt; }\nfunction App() { const r = useRef(null); return &lt;&gt;&lt;Field ref={r} /&gt;&lt;button onClick={() =&gt; { console.log(Object.keys(r.current).join(), typeof r.current.focus); r.current.clear() }}&gt;x&lt;/button&gt;&lt;/&gt; }</code></pre>",
+     "opts": [
+      "<code>clear undefined \"\"</code>",
+      "<code>clear function \"\"</code>",
+      "<code>focus,clear function \"text\"</code>",
+      "<code>clear undefined \"text\"</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "The parent only gets what useImperativeHandle returns: clear, not the input's focus. And clear really emptied the field."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction Field({ ref }) { const inp = useRef(null); useImperativeHandle(ref, () => ({ clear: () => { inp.current.value = '' } })); return <input ref={inp} defaultValue=\"text\" /> }\nfunction App() { const r = useRef(null); return <><Field ref={r} /><button onClick={() => { console.log(Object.keys(r.current).join(), typeof r.current.focus); r.current.clear() }}>x</button></> }\nawait mount(<App />)\nawait click($('button'))\nconsole.log(JSON.stringify($('input').value))"
+    },
+    {
+     "tag": "When",
+     "q": "When is exposing a ref from a component appropriate?",
+     "opts": [
+      "To read or change the child's state",
+      "To replace props",
+      "Focus, scroll, select text, play/pause media: things that are naturally imperative",
+      "For every component"
+     ],
+     "ans": 2,
+     "why": [
+      "Data flows through props; refs are for imperative escape hatches."
+     ]
+    },
+    {
+     "tag": "Old code",
+     "q": "You see <code>forwardRef((props, ref) =&gt; …)</code> in a React 19 codebase. Is it broken?",
+     "opts": [
+      "No, it still works; it is just no longer required and may be deprecated later",
+      "Yes, it throws",
+      "It only works in classes",
+      "It disables refs"
+     ],
+     "ans": 0,
+     "why": [
+      "New components can take ref as a prop."
+     ]
+    },
+    {
+     "tag": "Pick one",
+     "q": "A design-system Button should let parents focus it. Simplest React 19 way?",
+     "opts": [
+      "<code>Store the DOM node in context</code>",
+      "<code>document.querySelector in the parent</code>",
+      "<code>A global variable</code>",
+      "<code>function Button({ ref, ...p }) { return &lt;button ref={ref} {...p} /&gt; }</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Pass the ref straight to the element."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>SearchInput({ ref, ...props })</code> (React 19 style, no forwardRef) exposing only <code>{ focus(), clear() }</code> through useImperativeHandle; clear also calls <code>props.onClear?.()</code>.",
+    "examples": [
+     "const r = useRef(); <SearchInput ref={r} />",
+     "r.current.focus(); r.current.clear()"
+    ],
+    "hint": "Keep an internal input ref; useImperativeHandle(ref, () =&gt; ({ focus: () =&gt; inp.current.focus(), clear: () =&gt; { inp.current.value = \"\"; onClear?.() } })).",
+    "fn": "SearchInput",
+    "starter": "export function SearchInput({ ref, ...props }) {\n  return null // your code\n}\n",
+    "solution": "import { useImperativeHandle, useRef } from 'react'\n\nexport function SearchInput({ ref, onClear, ...props }) {\n  const inp = useRef(null)\n  useImperativeHandle(ref, () => ({\n    focus: () => inp.current.focus(),\n    clear: () => { inp.current.value = ''; onClear?.() },\n  }))\n  return <input ref={inp} aria-label=\"search\" {...props} />\n}\n",
+    "starterFile": "src/SearchInput.jsx",
+    "tests": {
+     "file": "src/SearchInput.test.jsx",
+     "run": "npx vitest run SearchInput",
+     "code": "import { render, screen, fireEvent } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { createRef } from 'react'\nimport { SearchInput } from './SearchInput'\n\ntest('exposes only focus and clear', () => {\n  const ref = createRef()\n  render(<SearchInput ref={ref} />)\n  expect(Object.keys(ref.current).sort()).toEqual(['clear', 'focus'])\n})\n\ntest('focus focuses the input', () => {\n  const ref = createRef()\n  render(<SearchInput ref={ref} />)\n  ref.current.focus()\n  expect(document.activeElement).toBe(screen.getByLabelText('search'))\n})\n\ntest('clear empties it and calls onClear', () => {\n  const ref = createRef()\n  let cleared = 0\n  render(<SearchInput ref={ref} defaultValue=\"abc\" onClear={() => cleared++} />)\n  ref.current.clear()\n  expect(screen.getByLabelText('search').value).toBe('')\n  expect(cleared).toBe(1)\n})\n"
+    },
+    "checks": [
+     {
+      "t": "exposes only focus and clear",
+      "verify": ""
+     },
+     {
+      "t": "focus focuses the input",
+      "verify": ""
+     },
+     {
+      "t": "clear empties it and calls onClear",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "React 19: ref is a regular prop. Expose a small imperative API with useImperativeHandle; keep data in props.",
+    "mistakes": [
+     "Using refs to push data into children.",
+     "Exposing the whole DOM node when two methods are enough."
+    ]
+   }
+  },
+  {
+   "id": "compound-components",
+   "prereqs": [
+    "forwardref"
+   ],
+   "dryRun": {
+    "title": "<Tabs><Tabs.List><Tabs.Tab id=\"a\">A</Tabs.Tab></Tabs.List><Tabs.Panel id=\"a\">…</Tabs.Panel></Tabs>",
+    "columns": [
+     "piece",
+     "knows"
+    ],
+    "rows": [
+     [
+      "Tabs",
+      "the active id (state), shares it through context"
+     ],
+     [
+      "Tabs.Tab",
+      "reads context; sets active on click"
+     ],
+     [
+      "Tabs.Panel",
+      "reads context; renders only if active"
+     ],
+     [
+      "the user of Tabs",
+      "arranges the pieces freely in their own markup"
+     ]
+    ],
+    "hit": 0,
+    "note": "Compound components are a set of components that work together through a shared context, like &lt;select&gt; and &lt;option&gt;. The parent owns the state; the children read it. Users get a flexible API without dozens of props."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const Ctx = createContext(null)\nfunction Tabs({ children, initial }) { const [active, setActive] = useState(initial); return &lt;Ctx value={{ active, setActive }}&gt;{children}&lt;/Ctx&gt; }\nfunction Tab({ id, children }) { const c = useContext(Ctx); return &lt;button onClick={() =&gt; c.setActive(id)}&gt;{children}&lt;/button&gt; }\nfunction Panel({ id, children }) { return useContext(Ctx).active === id ? &lt;p&gt;{children}&lt;/p&gt; : null }</code></pre>",
+     "opts": [
+      "<code>one</code>",
+      "<code>two</code>",
+      "<code>one two</code>",
+      "<code>(nothing)</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "The tab and the panel never talk directly; both read the shared context."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nconst Ctx = createContext(null)\nfunction Tabs({ children, initial }) { const [active, setActive] = useState(initial); return <Ctx value={{ active, setActive }}>{children}</Ctx> }\nfunction Tab({ id, children }) { const c = useContext(Ctx); return <button onClick={() => c.setActive(id)}>{children}</button> }\nfunction Panel({ id, children }) { return useContext(Ctx).active === id ? <p>{children}</p> : null }\nawait mount(<Tabs initial=\"a\"><Tab id=\"a\">A</Tab><Tab id=\"b\">B</Tab><Panel id=\"a\">one</Panel><Panel id=\"b\">two</Panel></Tabs>)\nawait click($$('button')[1])\nconsole.log($('p').textContent)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const Ctx = createContext(null)\nfunction Tab() { const c = useContext(Ctx); return &lt;b&gt;{c ? 'ok' : 'Tab must be inside Tabs'}&lt;/b&gt; }</code></pre>",
+     "opts": [
+      "<code>ok</code>",
+      "<code>Tab must be inside Tabs</code>",
+      "<code>undefined</code>",
+      "<code>TypeError</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Outside the parent the context is null. Check it and throw a clear error in real code."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nconst Ctx = createContext(null)\nfunction Tab() { const c = useContext(Ctx); return <b>{c ? 'ok' : 'Tab must be inside Tabs'}</b> }\nawait mount(<Tab />)\nconsole.log($('b').textContent)"
+    },
+    {
+     "tag": "Why",
+     "q": "Main advantage over <code>&lt;Tabs tabs={[{ label, content }]} /&gt;</code>?",
+     "opts": [
+      "Faster rendering",
+      "Less code inside Tabs",
+      "It works without React",
+      "Users control the markup and order (add icons, wrap tabs, place panels anywhere) without new props"
+     ],
+     "ans": 3,
+     "why": [
+      "Config props grow forever; composition does not."
+     ]
+    },
+    {
+     "tag": "Examples",
+     "q": "Which native HTML pair works like compound components?",
+     "opts": [
+      "<code>&lt;select&gt; and &lt;option&gt;</code>",
+      "<code>&lt;div&gt; and &lt;span&gt;</code>",
+      "<code>&lt;img&gt; and &lt;a&gt;</code>",
+      "<code>&lt;p&gt; and &lt;br&gt;</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "The parent owns the selection; children declare options."
+     ]
+    },
+    {
+     "tag": "Accessibility",
+     "q": "For tabs, what else should the pieces add?",
+     "opts": [
+      "Only colors",
+      "Nothing",
+      "role=\"tablist\" / \"tab\" / \"tabpanel\", aria-selected, and arrow-key navigation",
+      "A key prop"
+     ],
+     "ans": 2,
+     "why": [
+      "Compound components are a good place to centralise a11y."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Build an <code>Accordion</code> with <code>Accordion.Item</code>, <code>Accordion.Header</code> and <code>Accordion.Panel</code>, sharing state through context. Only one item is open at a time; clicking an open header closes it.",
+    "examples": [
+     "<Accordion><Accordion.Item id=\"a\"><Accordion.Header>A</Accordion.Header><Accordion.Panel>…",
+     "Header is a button with aria-expanded"
+    ],
+    "hint": "Accordion holds openId; Item provides its id with a second small context; Header toggles; Panel renders when open.",
+    "fn": "Accordion",
+    "starter": "export function Accordion({ children }) {\n  return null // your code\n}\nAccordion.Item = function Item({ id, children }) { return null }\nAccordion.Header = function Header({ children }) { return null }\nAccordion.Panel = function Panel({ children }) { return null }\n",
+    "solution": "import { createContext, useContext, useState } from 'react'\n\nconst Root = createContext(null)\nconst ItemCtx = createContext(null)\n\nexport function Accordion({ children }) {\n  const [openId, setOpenId] = useState(null)\n  return <Root value={{ openId, setOpenId }}><div>{children}</div></Root>\n}\nAccordion.Item = function Item({ id, children }) {\n  return <ItemCtx value={id}><section>{children}</section></ItemCtx>\n}\nAccordion.Header = function Header({ children }) {\n  const { openId, setOpenId } = useContext(Root)\n  const id = useContext(ItemCtx)\n  const open = openId === id\n  return <button aria-expanded={open} onClick={() => setOpenId(open ? null : id)}>{children}</button>\n}\nAccordion.Panel = function Panel({ children }) {\n  const { openId } = useContext(Root)\n  return openId === useContext(ItemCtx) ? <div role=\"region\">{children}</div> : null\n}\n",
+    "starterFile": "src/Accordion.jsx",
+    "tests": {
+     "file": "src/Accordion.test.jsx",
+     "run": "npx vitest run Accordion",
+     "code": "import { render, screen, fireEvent } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { Accordion } from './Accordion'\n\nconst ui = () => render(\n  <Accordion>\n    <Accordion.Item id=\"a\"><Accordion.Header>A</Accordion.Header><Accordion.Panel>panel a</Accordion.Panel></Accordion.Item>\n    <Accordion.Item id=\"b\"><Accordion.Header>B</Accordion.Header><Accordion.Panel>panel b</Accordion.Panel></Accordion.Item>\n  </Accordion>,\n)\n\ntest('all closed at first', () => {\n  ui()\n  expect(screen.queryAllByRole('region')).toHaveLength(0)\n  expect(screen.getAllByRole('button').map((b) => b.getAttribute('aria-expanded'))).toEqual(['false', 'false'])\n})\n\ntest('opening one closes the other', () => {\n  ui()\n  fireEvent.click(screen.getByText('A'))\n  fireEvent.click(screen.getByText('B'))\n  expect(screen.getAllByRole('region').map((r) => r.textContent)).toEqual(['panel b'])\n})\n\ntest('clicking an open header closes it', () => {\n  ui()\n  fireEvent.click(screen.getByText('A'))\n  fireEvent.click(screen.getByText('A'))\n  expect(screen.queryAllByRole('region')).toHaveLength(0)\n})\n"
+    },
+    "checks": [
+     {
+      "t": "all closed at first",
+      "verify": ""
+     },
+     {
+      "t": "opening one closes the other",
+      "verify": ""
+     },
+     {
+      "t": "clicking an open header closes it",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Compound components share state through context so users compose the pieces freely. Guard against use outside the parent.",
+    "mistakes": [
+     "Prop explosion (tabs={[…]} with 20 options).",
+     "Pieces that crash with an unclear error outside their parent."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Accordion Component",
+     "diff": "easy",
+     "mc": "accordion",
+     "course": "react-machine-coding"
+    }
+   ]
+  },
+  {
+   "id": "provider-pattern",
+   "prereqs": [
+    "compound-components"
+   ],
+   "dryRun": {
+    "title": "<ApiProvider client={realClient}> in the app, <ApiProvider client={fakeClient}> in tests",
+    "columns": [
+     "",
+     "app",
+     "test"
+    ],
+    "rows": [
+     [
+      "who creates the dependency",
+      "main.jsx",
+      "the test"
+     ],
+     [
+      "components ask for it with",
+      "useApi()",
+      "useApi()"
+     ],
+     [
+      "components know which one?",
+      "no",
+      "no"
+     ],
+     [
+      "benefit",
+      "swap implementations without changing components",
+      "no network in tests"
+     ]
+    ],
+    "hit": 3,
+    "note": "The provider pattern is dependency injection through context: something (an API client, a logger, feature flags) is created once at the top and read with a hook below. Components depend on the interface, not on how it was built."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const Api = createContext(null)\nconst useApi = () =&gt; useContext(Api)\nfunction Name() { return &lt;p&gt;{useApi().getUser().name}&lt;/p&gt; }</code></pre>",
+     "opts": [
+      "<code>undefined</code>",
+      "<code>null</code>",
+      "<code>TypeError</code>",
+      "<code>from fake</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "The component uses whatever client the provider gives it."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nconst Api = createContext(null)\nconst useApi = () => useContext(Api)\nfunction Name() { return <p>{useApi().getUser().name}</p> }\nawait mount(<Api value={{ getUser: () => ({ name: 'from fake' }) }}><Name /></Api>)\nconsole.log($('p').textContent)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const Flags = createContext({})\nfunction NewUI() { const f = useContext(Flags); return f.newCheckout ? &lt;b&gt;new&lt;/b&gt; : &lt;i&gt;old&lt;/i&gt; }</code></pre>",
+     "opts": [
+      "<code>newnew</code>",
+      "<code>newold</code>",
+      "<code>oldold</code>",
+      "<code>oldnew</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "The nearest provider wins; outside any provider the default {} applies."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nconst Flags = createContext({})\nfunction NewUI() { const f = useContext(Flags); return f.newCheckout ? <b>new</b> : <i>old</i> }\nawait mount(<div><Flags value={{ newCheckout: true }}><NewUI /></Flags><NewUI /></div>)\nconsole.log(container.textContent)"
+    },
+    {
+     "tag": "Benefit",
+     "q": "Biggest testing benefit of injecting an API client through a provider?",
+     "opts": [
+      "Faster production builds",
+      "No need for tests",
+      "Tests pass a fake client; no network mocking or module patching",
+      "Smaller bundles"
+     ],
+     "ans": 2,
+     "why": [
+      "Swap the dependency at the edge."
+     ]
+    },
+    {
+     "tag": "Many providers",
+     "q": "Ten nested providers in main.jsx feels messy. A reasonable fix?",
+     "opts": [
+      "Compose them in one AppProviders component",
+      "Use global variables",
+      "Put all values in one giant context",
+      "Avoid context entirely"
+     ],
+     "ans": 0,
+     "why": [
+      "One giant context re-renders everything on any change."
+     ]
+    },
+    {
+     "tag": "Stability",
+     "q": "What should the value of a service provider usually be?",
+     "opts": [
+      "A new object every render",
+      "A string",
+      "Created once (module level, useState(() =&gt; …) or useMemo) so its identity is stable",
+      "A promise"
+     ],
+     "ans": 2,
+     "why": [
+      "Unstable values re-render every consumer."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>ApiProvider({ client, children })</code> and <code>useApi()</code> (throws outside the provider), and a component <code>UserName({ id })</code> that loads <code>client.getUser(id)</code> (a promise) in an effect and shows \"Loading…\" then the name.",
+    "examples": [
+     "<ApiProvider client={{ getUser: async (id) => ({ name: \"Ada\" }) }}><UserName id={1} /></ApiProvider>",
+     "→ Loading… then Ada"
+    ],
+    "hint": "createContext(null); in UserName: useState(null) + useEffect with an ignore flag for cleanup.",
+    "fn": "api",
+    "starter": "export function ApiProvider({ client, children }) {\n  return children // your code\n}\nexport function useApi() {\n  // your code\n}\nexport function UserName({ id }) {\n  return null // your code\n}\n",
+    "solution": "import { createContext, useContext, useEffect, useState } from 'react'\n\nconst Api = createContext(null)\n\nexport function ApiProvider({ client, children }) {\n  return <Api value={client}>{children}</Api>\n}\n\nexport function useApi() {\n  const c = useContext(Api)\n  if (!c) throw new Error('useApi must be used inside ApiProvider')\n  return c\n}\n\nexport function UserName({ id }) {\n  const api = useApi()\n  const [user, setUser] = useState(null)\n  useEffect(() => {\n    let ignore = false\n    api.getUser(id).then((u) => { if (!ignore) setUser(u) })\n    return () => { ignore = true }\n  }, [api, id])\n  return <p>{user ? user.name : 'Loading…'}</p>\n}\n",
+    "starterFile": "src/api.jsx",
+    "tests": {
+     "file": "src/api.test.jsx",
+     "run": "npx vitest run api",
+     "code": "import { render, screen, fireEvent } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { ApiProvider, UserName, useApi } from './api'\n\ntest('shows loading then the name from the injected client', async () => {\n  render(<ApiProvider client={{ getUser: async (id) => ({ name: 'Ada ' + id }) }}><UserName id={7} /></ApiProvider>)\n  expect(screen.getByText('Loading…')).toBeTruthy()\n  expect(await screen.findByText('Ada 7')).toBeTruthy()\n})\n\ntest('a different client changes the result without touching the component', async () => {\n  render(<ApiProvider client={{ getUser: async () => ({ name: 'Fake' }) }}><UserName id={1} /></ApiProvider>)\n  expect(await screen.findByText('Fake')).toBeTruthy()\n})\n\ntest('useApi throws outside the provider', () => {\n  function Probe() { useApi(); return null }\n  const e = console.error\n  console.error = () => {}\n  expect(() => render(<Probe />)).toThrow('useApi must be used inside ApiProvider')\n  console.error = e\n})\n"
+    },
+    "checks": [
+     {
+      "t": "shows loading then the name from the injected client",
+      "verify": ""
+     },
+     {
+      "t": "a different client changes the result without touching the component",
+      "verify": ""
+     },
+     {
+      "t": "useApi throws outside the provider",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Provide services (API clients, flags, loggers) once through context and read them with a guarded hook. Swap them in tests.",
+    "mistakes": [
+     "Importing a real client directly inside components.",
+     "Unstable provider values."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Login / Profile Flow with Protected Routes",
+     "diff": "hard",
+     "mc": "auth-flow",
+     "course": "react-machine-coding"
+    }
+   ]
+  },
+  {
+   "id": "container-presentational",
+   "prereqs": [
+    "provider-pattern"
+   ],
+   "dryRun": {
+    "title": "Product list split in two",
+    "columns": [
+     "",
+     "ProductListContainer",
+     "ProductList"
+    ],
+    "rows": [
+     [
+      "knows about",
+      "fetching, URL params, store",
+      "only props"
+     ],
+     [
+      "renders",
+      "<ProductList products loading error />",
+      "the markup"
+     ],
+     [
+      "tests",
+      "integration (with fake API)",
+      "pure render tests, Storybook"
+     ],
+     [
+      "today",
+      "often a custom hook instead",
+      "still a plain component"
+     ]
+    ],
+    "hit": 3,
+    "note": "Separate how things <b>work</b> (data, side effects) from how they <b>look</b> (pure props → markup). Today the \"container\" is usually a custom hook (useProducts) used by a thin component, but the idea is the same: presentational components are easy to reuse and test."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function List({ items, loading }) { if (loading) return &lt;p&gt;loading&lt;/p&gt;; return &lt;ul&gt;{items.map((i) =&gt; &lt;li key={i}&gt;{i}&lt;/li&gt;)}&lt;/ul&gt; }</code></pre>",
+     "opts": [
+      "<code>loading 2</code>",
+      "<code>loading 0</code>",
+      "<code>(empty) 2</code>",
+      "<code>loading undefined</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "A presentational component renders purely from props, so you can show every state just by passing props."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction List({ items, loading }) { if (loading) return <p>loading</p>; return <ul>{items.map((i) => <li key={i}>{i}</li>)}</ul> }\nawait mount(<List items={[]} loading />)\nconsole.log(container.textContent)\nawait mount(<List items={['a', 'b']} loading={false} />)\nconsole.log($$('li').length)"
+    },
+    {
+     "tag": "Benefit",
+     "q": "Why make ProductList presentational?",
+     "opts": [
+      "It loads data faster",
+      "It removes the need for state",
+      "It is required by React",
+      "You can render every state (loading, empty, error, full) in tests or Storybook without a server"
+     ],
+     "ans": 3,
+     "why": [
+      "Pure props → markup is the easiest code to test."
+     ]
+    },
+    {
+     "tag": "Modern form",
+     "q": "What usually replaces the \"container component\" today?",
+     "opts": [
+      "A class component",
+      "A custom hook (useProducts) that returns { data, loading, error }",
+      "A HOC",
+      "Redux only"
+     ],
+     "ans": 1,
+     "why": [
+      "Same separation, less nesting."
+     ]
+    },
+    {
+     "tag": "Over-splitting",
+     "q": "When is this split overkill?",
+     "opts": [
+      "Always",
+      "For a tiny component used once with trivial data",
+      "For lists",
+      "For forms"
+     ],
+     "ans": 1,
+     "why": [
+      "Split when reuse or testing needs it."
+     ]
+    },
+    {
+     "tag": "Where state goes",
+     "q": "A presentational DatePicker has an \"open\" flag for its popup. Is that allowed?",
+     "opts": [
+      "No, presentational means no state at all",
+      "Only with Redux",
+      "Only with useRef",
+      "Yes: UI state that only matters inside the component can stay there"
+     ],
+     "ans": 3,
+     "why": [
+      "\"Presentational\" means no data fetching or app logic, not zero state."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write a pure <code>ProductList({ products, loading, error, onRetry })</code>: \"Loading…\" while loading; an alert with the error and a Retry button; \"No products\" when empty; otherwise a list of <code>name — ₹price</code>.",
+    "examples": [
+     "<ProductList loading /> → Loading…",
+     "<ProductList products={[{ id: 1, name: \"Pen\", price: 20 }]} /> → Pen — ₹20"
+    ],
+    "hint": "Early returns for each state, in order: loading, error, empty, list.",
+    "fn": "ProductList",
+    "starter": "export function ProductList({ products = [], loading, error, onRetry }) {\n  return null // your code\n}\n",
+    "solution": "export function ProductList({ products = [], loading, error, onRetry }) {\n  if (loading) return <p>Loading…</p>\n  if (error) return <div role=\"alert\">{error}<button onClick={onRetry}>Retry</button></div>\n  if (products.length === 0) return <p>No products</p>\n  return <ul>{products.map((p) => <li key={p.id}>{p.name} — ₹{p.price}</li>)}</ul>\n}\n",
+    "starterFile": "src/ProductList.jsx",
+    "tests": {
+     "file": "src/ProductList.test.jsx",
+     "run": "npx vitest run ProductList",
+     "code": "import { render, screen, fireEvent } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { ProductList } from './ProductList'\n\ntest('loading and empty states', () => {\n  const { rerender } = render(<ProductList loading />)\n  expect(screen.getByText('Loading…')).toBeTruthy()\n  rerender(<ProductList products={[]} />)\n  expect(screen.getByText('No products')).toBeTruthy()\n})\n\ntest('error state with retry', () => {\n  let n = 0\n  render(<ProductList error=\"Network down\" onRetry={() => n++} />)\n  expect(screen.getByRole('alert').textContent).toContain('Network down')\n  fireEvent.click(screen.getByText('Retry'))\n  expect(n).toBe(1)\n})\n\ntest('lists products', () => {\n  render(<ProductList products={[{ id: 1, name: 'Pen', price: 20 }, { id: 2, name: 'Ink', price: 5 }]} />)\n  expect(screen.getAllByRole('listitem').map((li) => li.textContent)).toEqual(['Pen — ₹20', 'Ink — ₹5'])\n})\n"
+    },
+    "checks": [
+     {
+      "t": "loading and empty states",
+      "verify": ""
+     },
+     {
+      "t": "error state with retry",
+      "verify": ""
+     },
+     {
+      "t": "lists products",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Keep data logic (container or custom hook) apart from pure, prop-driven UI. Presentational components cover every state through props.",
+    "mistakes": [
+     "Fetching inside deeply nested UI pieces.",
+     "Splitting tiny components for no reason."
+    ]
+   },
+   "problems": [
+    {
+     "name": "eCommerce Product Listing with Filters",
+     "diff": "medium",
+     "mc": "product-listing",
+     "course": "react-machine-coding"
+    }
+   ]
+  },
+  {
+   "id": "render-props",
+   "prereqs": [
+    "container-presentational"
+   ],
+   "dryRun": {
+    "title": "<MouseTracker render={(pos) => <Dot {...pos} />} />",
+    "columns": [
+     "",
+     "MouseTracker",
+     "the caller"
+    ],
+    "rows": [
+     [
+      "owns",
+      "the logic and state (x, y)",
+      "what to show"
+     ],
+     [
+      "passes",
+      "state into the render function",
+      "a function prop"
+     ],
+     [
+      "today",
+      "usually replaced by a custom hook (useMouse)",
+      "—"
+     ],
+     [
+      "still seen in",
+      "libraries (Formik, Downshift, react-table v7)",
+      "—"
+     ]
+    ],
+    "hit": 2,
+    "note": "A render prop is a function prop that a component calls to know what to render, sharing its state with the caller. Hooks replaced most uses, but you still meet the pattern (including children-as-a-function) in libraries."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function Counter({ children }) { const [n, setN] = useState(0); return children(n, () =&gt; setN(n + 1)) }</code></pre>",
+     "opts": [
+      "<code>clicked 1</code>",
+      "<code>clicked 0</code>",
+      "<code>clicked</code>",
+      "<code>(nothing)</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "children is a function here; Counter owns the state and the caller decides the markup."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction Counter({ children }) { const [n, setN] = useState(0); return children(n, () => setN(n + 1)) }\nawait mount(<Counter>{(n, inc) => <button onClick={inc}>clicked {n}</button>}</Counter>)\nawait click($('button'))\nconsole.log($('button').textContent)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function Toggle({ render }) { const [on, setOn] = useState(false); return render({ on, toggle: () =&gt; setOn(!on) }) }</code></pre>",
+     "opts": [
+      "<code>OFF</code>",
+      "<code>true</code>",
+      "<code>ON</code>",
+      "<code>undefined</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Three clicks: ON, OFF, ON."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction Toggle({ render }) { const [on, setOn] = useState(false); return render({ on, toggle: () => setOn(!on) }) }\nawait mount(<Toggle render={({ on, toggle }) => <button onClick={toggle}>{on ? 'ON' : 'OFF'}</button>} />)\nawait click($('button')); await click($('button')); await click($('button'))\nconsole.log($('button').textContent)"
+    },
+    {
+     "tag": "Modern",
+     "q": "What replaced most render props?",
+     "opts": [
+      "HOCs",
+      "Class components",
+      "Context only",
+      "Custom hooks: const { on, toggle } = useToggle()"
+     ],
+     "ans": 3,
+     "why": [
+      "Hooks share logic without extra nesting in JSX."
+     ]
+    },
+    {
+     "tag": "Downside",
+     "q": "Classic downside of many render props?",
+     "opts": [
+      "They cannot use state",
+      "\"Callback hell\" nesting in JSX that is hard to read",
+      "They break keys",
+      "They are slow by design"
+     ],
+     "ans": 1,
+     "why": [
+      "Hooks flatten that nesting."
+     ]
+    },
+    {
+     "tag": "Still useful",
+     "q": "When is a render prop still a good choice?",
+     "opts": [
+      "Never",
+      "For all state sharing",
+      "When the component also controls WHERE the custom content goes (e.g. a list calling renderItem per row)",
+      "Only in class components"
+     ],
+     "ans": 2,
+     "why": [
+      "renderItem in virtualized lists is a render prop."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>List({ items, renderItem, renderEmpty })</code>: renders a <code>&lt;ul&gt;</code> calling <code>renderItem(item, index)</code> for each item (wrapped in <code>&lt;li key&gt;</code>, key = item.id ?? index), or <code>renderEmpty()</code> (default: \"Nothing here\") when empty.",
+    "examples": [
+     "<List items={users} renderItem={(u) => <b>{u.name}</b>} />",
+     "<List items={[]} renderEmpty={() => \"Empty!\"} />"
+    ],
+    "hint": "renderEmpty = () =&gt; \"Nothing here\" as a default parameter.",
+    "fn": "List",
+    "starter": "export function List({ items, renderItem, renderEmpty }) {\n  return null // your code\n}\n",
+    "solution": "export function List({ items, renderItem, renderEmpty = () => 'Nothing here' }) {\n  if (items.length === 0) return <p>{renderEmpty()}</p>\n  return <ul>{items.map((item, i) => <li key={item.id ?? i}>{renderItem(item, i)}</li>)}</ul>\n}\n",
+    "starterFile": "src/List.jsx",
+    "tests": {
+     "file": "src/List.test.jsx",
+     "run": "npx vitest run List",
+     "code": "import { render, screen, fireEvent } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { List } from './List'\n\ntest('calls renderItem for each item', () => {\n  render(<List items={[{ id: 1, n: 'a' }, { id: 2, n: 'b' }]} renderItem={(x, i) => <b>{i}:{x.n}</b>} />)\n  expect(screen.getAllByRole('listitem').map((li) => li.textContent)).toEqual(['0:a', '1:b'])\n})\n\ntest('custom empty state', () => {\n  render(<List items={[]} renderItem={() => null} renderEmpty={() => 'Empty!'} />)\n  expect(screen.getByText('Empty!')).toBeTruthy()\n})\n\ntest('default empty state', () => {\n  render(<List items={[]} renderItem={() => null} />)\n  expect(screen.getByText('Nothing here')).toBeTruthy()\n})\n"
+    },
+    "checks": [
+     {
+      "t": "calls renderItem for each item",
+      "verify": ""
+     },
+     {
+      "t": "custom empty state",
+      "verify": ""
+     },
+     {
+      "t": "default empty state",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "A render prop is a function the component calls to render caller-defined UI with its state. Hooks replaced most uses; renderItem-style props remain useful.",
+    "mistakes": [
+     "Deeply nested render props.",
+     "Forgetting keys on items rendered through a render prop."
+    ]
+   }
+  },
+  {
+   "id": "hoc",
+   "prereqs": [
+    "render-props"
+   ],
+   "dryRun": {
+    "title": "const AdminPage = withAuth(Page, { role: \"admin\" })",
+    "columns": [
+     "step",
+     "what happens"
+    ],
+    "rows": [
+     [
+      "withAuth(Page)",
+      "returns a NEW component"
+     ],
+     [
+      "render <AdminPage />",
+      "the wrapper checks the user"
+     ],
+     [
+      "not allowed",
+      "renders <Login /> instead"
+     ],
+     [
+      "allowed",
+      "renders <Page {...props} />"
+     ],
+     [
+      "problems",
+      "wrapper hell, name clashes, hidden props"
+     ]
+    ],
+    "hit": 4,
+    "note": "A higher-order component is a function that takes a component and returns a new one with extra behaviour (auth checks, logging, injected data). Hooks replaced most HOCs, but you will see them in older code and libraries."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function withUpper(C) { return function Wrapped(props) { return &lt;C {...props} text={props.text.toUpperCase()} /&gt; } }\nfunction Label({ text }) { return &lt;span&gt;{text}&lt;/span&gt; }\nconst Loud = withUpper(Label)</code></pre>",
+     "opts": [
+      "<code>HI</code>",
+      "<code>hi</code>",
+      "<code>Hi</code>",
+      "<code>undefined</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "The HOC wraps Label and changes the prop before passing it on."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction withUpper(C) { return function Wrapped(props) { return <C {...props} text={props.text.toUpperCase()} /> } }\nfunction Label({ text }) { return <span>{text}</span> }\nconst Loud = withUpper(Label)\nawait mount(<Loud text=\"hi\" />)\nconsole.log($('span').textContent)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function withNothing(C) { return function W() { return &lt;C /&gt; } }\nfunction Show({ x }) { return &lt;i&gt;{String(x)}&lt;/i&gt; }\nconst S = withNothing(Show)</code></pre>",
+     "opts": [
+      "<code>5</code>",
+      "<code>null</code>",
+      "<code>undefined</code>",
+      "<code>x</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "The wrapper forgot to pass props through ({...props}), a classic HOC bug."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction withNothing(C) { return function W() { return <C /> } }\nfunction Show({ x }) { return <i>{String(x)}</i> }\nconst S = withNothing(Show)\nawait mount(<S x={5} />)\nconsole.log($('i').textContent)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function withLog(C) { function W(p) { return &lt;C {...p} /&gt; } W.displayName = `withLog(${C.name})`; return W }\nfunction Card() { return null }</code></pre>",
+     "opts": [
+      "<code>withLog(Card)</code>",
+      "<code>W</code>",
+      "<code>Card</code>",
+      "<code>undefined</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Set displayName so DevTools shows something readable."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction withLog(C) { function W(p) { return <C {...p} /> } W.displayName = `withLog(${C.name})`; return W }\nfunction Card() { return null }\nconsole.log(withLog(Card).displayName)"
+    },
+    {
+     "tag": "Rule",
+     "q": "Why must you never call <code>withAuth(Page)</code> inside a component's render?",
+     "opts": [
+      "It is too slow",
+      "It throws",
+      "It skips the auth check",
+      "It creates a new component type every render, so React unmounts and remounts it (state lost)"
+     ],
+     "ans": 3,
+     "why": [
+      "Create HOC-wrapped components once at module level."
+     ]
+    },
+    {
+     "tag": "Modern",
+     "q": "Modern alternative to <code>withUser(Component)</code>?",
+     "opts": [
+      "<code>A class component</code>",
+      "<code>const user = useUser() inside the component</code>",
+      "<code>A global variable</code>",
+      "<code>Prop drilling</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "A hook gives the same data without wrapping."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>withAuth(Component, { role })</code>: returns a component that reads <code>props.user</code>; with no user render <code>&lt;p&gt;Please log in&lt;/p&gt;</code>, with the wrong role <code>&lt;p&gt;Forbidden&lt;/p&gt;</code>, else the Component with all props. Set a displayName.",
+    "examples": [
+     "const AdminPage = withAuth(Page, { role: \"admin\" })",
+     "<AdminPage user={{ role: \"admin\" }} title=\"x\" />"
+    ],
+    "hint": "function Guarded(props) { … return &lt;Component {...props} /&gt; }; Guarded.displayName = `withAuth(${Component.name})`.",
+    "fn": "withAuth",
+    "starter": "export function withAuth(Component, { role } = {}) {\n  // your code\n}\n",
+    "solution": "export function withAuth(Component, { role } = {}) {\n  function Guarded(props) {\n    if (!props.user) return <p>Please log in</p>\n    if (role && props.user.role !== role) return <p>Forbidden</p>\n    return <Component {...props} />\n  }\n  Guarded.displayName = `withAuth(${Component.displayName || Component.name})`\n  return Guarded\n}\n",
+    "starterFile": "src/withAuth.jsx",
+    "tests": {
+     "file": "src/withAuth.test.jsx",
+     "run": "npx vitest run withAuth",
+     "code": "import { render, screen, fireEvent } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { withAuth } from './withAuth'\n\nfunction Page({ title }) { return <h1>{title}</h1> }\nconst AdminPage = withAuth(Page, { role: 'admin' })\n\ntest('asks to log in without a user', () => {\n  render(<AdminPage title=\"x\" />)\n  expect(screen.getByText('Please log in')).toBeTruthy()\n})\n\ntest('forbids the wrong role', () => {\n  render(<AdminPage user={{ role: 'viewer' }} title=\"x\" />)\n  expect(screen.getByText('Forbidden')).toBeTruthy()\n})\n\ntest('renders the page with all props and a display name', () => {\n  render(<AdminPage user={{ role: 'admin' }} title=\"Dashboard\" />)\n  expect(screen.getByRole('heading').textContent).toBe('Dashboard')\n  expect(AdminPage.displayName).toBe('withAuth(Page)')\n})\n"
+    },
+    "checks": [
+     {
+      "t": "asks to log in without a user",
+      "verify": ""
+     },
+     {
+      "t": "forbids the wrong role",
+      "verify": ""
+     },
+     {
+      "t": "renders the page with all props and a display name",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "A HOC takes a component and returns an enhanced one. Pass all props through, set displayName, create it once. Prefer hooks in new code.",
+    "mistakes": [
+     "Calling the HOC inside render.",
+     "Swallowing props in the wrapper."
+    ]
+   }
+  }
+ ]
+}

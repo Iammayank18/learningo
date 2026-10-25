@@ -7,4 +7,6 @@ export interface McProblem {
   pseudo: string; watch: string[]
   build: { minutes: number; problem: string; reqs: string[]; checks: McCheck[] }
   solution: string; notes: string[]; next: string[]
+  /** optional hand-written starter (otherwise built from the solution) */
+  starter?: string
 }

@@ -608,6 +608,7 @@ mark { background: color-mix(in srgb, var(--yellow) 55%, transparent); color: in
 .bf-box .mc-h3 { margin-top: 2px; }
 .bf-box p { margin: 6px 0; }
 .bf-box ul { margin: 4px 0; padding-left: 20px; }
+.bf-contract { border-color: var(--yellow); background: color-mix(in srgb, var(--yellow) 10%, transparent); }
 .bf-timer { display: flex; align-items: center; justify-content: space-between; gap: 10px; border: 2px solid var(--line); border-radius: 16px; padding: 8px 12px; margin: 12px 0; }
 .bf-timer b { font: 800 1.5rem/1 var(--mono); color: var(--head); font-variant-numeric: tabular-nums; }
 .bf-timer b.over { color: var(--red); }

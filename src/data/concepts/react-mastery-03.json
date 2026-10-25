@@ -1,0 +1,1584 @@
+{
+ "course": "react-mastery",
+ "items": [
+  {
+   "id": "rules-of-hooks",
+   "prereqs": [
+    "prop-types-defaults"
+   ],
+   "dryRun": {
+    "title": "How React finds your state: hooks are a list, matched by call order",
+    "columns": [
+     "render",
+     "call 1",
+     "call 2",
+     "call 3"
+    ],
+    "rows": [
+     [
+      "first",
+      "useState → slot 0",
+      "useEffect → slot 1",
+      "useState → slot 2"
+     ],
+     [
+      "next (same order)",
+      "slot 0 ✓",
+      "slot 1 ✓",
+      "slot 2 ✓"
+     ],
+     [
+      "if a hook is skipped by an if",
+      "slot 0",
+      "useState reads slot 1 (an effect!)",
+      "crash / wrong state"
+     ]
+    ],
+    "hit": 2,
+    "note": "React stores hook data in a list per component and matches it by <b>call order</b>. So: call hooks only at the top level of a component or custom hook — never inside if, loops, nested functions or after an early return."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function C({ on }) {\n  const [a] = useState('a')\n  if (on) { useState('b') }\n  return &lt;p&gt;{a}&lt;/p&gt;\n}</code></pre>",
+     "opts": [
+      "<code>false</code>",
+      "<code>undefined</code>",
+      "<code>true</code>",
+      "<code>a</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "The second render calls one more hook than the first, and React detects it: \"Rendered more hooks than during the previous render.\""
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction C({ on }) {\n  const [a] = useState('a')\n  if (on) { useState('b') }\n  return <p>{a}</p>\n}\nawait mount(<C on={false} />)\ntry { await mount(<C on={true} />) } catch (e) { console.log(/more hooks/.test(e.message)) }"
+    },
+    {
+     "tag": "Early return",
+     "q": "<code>if (!user) return null; const [x, setX] = useState(0)</code>. What is wrong?",
+     "opts": [
+      "The hook is skipped on renders that return early, so the hook order changes",
+      "Nothing",
+      "useState cannot take 0",
+      "return null is not allowed"
+     ],
+     "ans": 0,
+     "why": [
+      "Move all hooks above any early return."
+     ]
+    },
+    {
+     "tag": "Where",
+     "q": "Where may you call <code>useState</code>?",
+     "opts": [
+      "Inside an event handler",
+      "Inside a for loop with a fixed count",
+      "Inside a regular helper function",
+      "At the top level of a function component or a custom hook (a function starting with \"use\")"
+     ],
+     "ans": 3,
+     "why": [
+      "The use prefix lets the lint rule check custom hooks too."
+     ]
+    },
+    {
+     "tag": "The exception",
+     "q": "Which hook-like call MAY appear inside an if in React 19?",
+     "opts": [
+      "<code>useState</code>",
+      "<code>use(promiseOrContext)</code>",
+      "<code>useEffect</code>",
+      "<code>useMemo</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "use() is special-cased to be callable conditionally; every other hook is not."
+     ]
+    },
+    {
+     "tag": "Lint",
+     "q": "What catches rule breaks before they run?",
+     "opts": [
+      "TypeScript",
+      "eslint-plugin-react-hooks (rules-of-hooks and exhaustive-deps)",
+      "The browser console only",
+      "Prettier"
+     ],
+     "ans": 1,
+     "why": [
+      "Turn it on in every React project."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write a custom hook <code>useToggle(initial = false)</code> returning <code>[on, toggle, setOn]</code>. toggle must flip the latest value even when called twice in one handler.",
+    "examples": [
+     "const [on, toggle] = useToggle(); toggle() → true",
+     "toggle(); toggle() in one handler → back to false"
+    ],
+    "hint": "Hooks at the top level; toggle uses the updater form.",
+    "fn": "useToggle",
+    "starter": "export function useToggle(initial = false) {\n  // your code\n}\n",
+    "solution": "import { useState } from 'react'\n\nexport function useToggle(initial = false) {\n  const [on, setOn] = useState(initial)\n  const toggle = () => setOn((v) => !v)\n  return [on, toggle, setOn]\n}\n",
+    "starterFile": "src/useToggle.js",
+    "tests": {
+     "file": "src/useToggle.test.jsx",
+     "run": "npx vitest run useToggle",
+     "code": "import { renderHook, act } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { useToggle } from './useToggle'\n\ntest('starts with the initial value', () => {\n  const { result } = renderHook(() => useToggle(true))\n  expect(result.current[0]).toBe(true)\n})\n\ntest('toggle flips', () => {\n  const { result } = renderHook(() => useToggle())\n  act(() => result.current[1]())\n  expect(result.current[0]).toBe(true)\n})\n\ntest('two toggles in one batch cancel out', () => {\n  const { result } = renderHook(() => useToggle())\n  act(() => { result.current[1](); result.current[1]() })\n  expect(result.current[0]).toBe(false)\n  act(() => result.current[2](true))\n  expect(result.current[0]).toBe(true)\n})\n"
+    },
+    "checks": [
+     {
+      "t": "starts with the initial value",
+      "verify": ""
+     },
+     {
+      "t": "toggle flips",
+      "verify": ""
+     },
+     {
+      "t": "two toggles in one batch cancel out",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Hooks are matched by call order: only at the top level of components and custom hooks. Let the lint rule enforce it.",
+    "mistakes": [
+     "Hooks after an early return.",
+     "Hooks inside if or loops."
+    ]
+   }
+  },
+  {
+   "id": "usestate",
+   "prereqs": [
+    "rules-of-hooks"
+   ],
+   "dryRun": {
+    "title": "const [items, setItems] = useState(() => load())",
+    "columns": [
+     "render",
+     "what useState does",
+     "load() called?"
+    ],
+    "rows": [
+     [
+      "first",
+      "runs the initializer, stores the result",
+      "yes"
+     ],
+     [
+      "re-render",
+      "returns the stored value, ignores the argument",
+      "no"
+     ],
+     [
+      "setItems(next)",
+      "stores next if !Object.is(old, next), schedules render",
+      "—"
+     ],
+     [
+      "setItems(same object)",
+      "bails out, no re-render",
+      "—"
+     ]
+    ],
+    "hit": 1,
+    "note": "useState returns the value for this render and a setter. The initial argument is used only once (pass a function for expensive setup). Updates are compared with <code>Object.is</code>: setting the same value (or the same mutated object) does nothing."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let calls = 0\nconst load = () =&gt; (calls++, [1, 2])\nfunction C() { const [x, setX] = useState(load()); const [y, setY] = useState(load); return &lt;button onClick={() =&gt; setX([...x])}&gt;go&lt;/button&gt; }</code></pre>",
+     "opts": [
+      "<code>2</code>",
+      "<code>1</code>",
+      "<code>6</code>",
+      "<code>4</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "useState(load()) calls load on every render (3 renders = 3 calls); useState(load) calls it once. Total 4."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nlet calls = 0\nconst load = () => (calls++, [1, 2])\nfunction C() { const [x, setX] = useState(load()); const [y, setY] = useState(load); return <button onClick={() => setX([...x])}>go</button> }\nawait mount(<C />)\nawait click($('button'))\nawait click($('button'))\nconsole.log(calls)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function C() {\n  const [n, setN] = useState(0)\n  console.log('render', n)\n  return &lt;button onClick={() =&gt; setN(0)}&gt;x&lt;/button&gt;\n}</code></pre>",
+     "opts": [
+      "<code>render 0</code>",
+      "<code>render 0 render 0</code>",
+      "<code>render 0 render 1</code>",
+      "<code>render 1</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Setting the same value bails out: no re-render."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction C() {\n  const [n, setN] = useState(0)\n  console.log('render', n)\n  return <button onClick={() => setN(0)}>x</button>\n}\nawait mount(<C />)\nawait click($('button'))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function C() {\n  const [user, setUser] = useState({ name: 'a' })\n  return &lt;button onClick={() =&gt; setUser({ ...user, name: 'b' })}&gt;{user.name}&lt;/button&gt;\n}</code></pre>",
+     "opts": [
+      "<code>a</code>",
+      "<code>undefined</code>",
+      "<code>b</code>",
+      "<code>ab</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "A new object (spread) is a new reference, so React re-renders with it."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction C() {\n  const [user, setUser] = useState({ name: 'a' })\n  return <button onClick={() => setUser({ ...user, name: 'b' })}>{user.name}</button>\n}\nawait mount(<C />)\nawait click($('button'))\nconsole.log($('button').textContent)"
+    },
+    {
+     "tag": "Async",
+     "q": "Why does <code>setN(n + 1); console.log(n)</code> log the old value?",
+     "opts": [
+      "setState is slow",
+      "console.log runs first",
+      "A bug in React",
+      "n is a constant for this render; the setter only schedules the next render"
+     ],
+     "ans": 3,
+     "why": [
+      "Think of each render as a snapshot."
+     ]
+    },
+    {
+     "tag": "Structure",
+     "q": "A form has 6 related fields that often change together. Better?",
+     "opts": [
+      "Six separate global variables",
+      "One object in useState (or useReducer), updated immutably",
+      "useRef for each",
+      "One useState per character"
+     ],
+     "ans": 1,
+     "why": [
+      "Group state that changes together; split unrelated state."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>useUndoState(initial)</code> returning <code>{ value, set, undo, canUndo }</code>: set pushes the old value to a history, undo restores the previous one.",
+    "examples": [
+     "set(1); set(2); undo() → value 1",
+     "canUndo is false at the start"
+    ],
+    "hint": "Keep { past: [], value } in one useState so both change together.",
+    "fn": "useUndoState",
+    "starter": "export function useUndoState(initial) {\n  // your code\n}\n",
+    "solution": "import { useState } from 'react'\n\nexport function useUndoState(initial) {\n  const [s, setS] = useState({ past: [], value: initial })\n  return {\n    value: s.value,\n    canUndo: s.past.length > 0,\n    set: (v) => setS((p) => ({ past: [...p.past, p.value], value: v })),\n    undo: () => setS((p) => (p.past.length ? { past: p.past.slice(0, -1), value: p.past.at(-1) } : p)),\n  }\n}\n",
+    "starterFile": "src/useUndoState.js",
+    "tests": {
+     "file": "src/useUndoState.test.jsx",
+     "run": "npx vitest run useUndoState",
+     "code": "import { renderHook, act } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { useUndoState } from './useUndoState'\n\ntest('starts with no history', () => {\n  const { result } = renderHook(() => useUndoState('a'))\n  expect(result.current.value).toBe('a')\n  expect(result.current.canUndo).toBe(false)\n})\n\ntest('undo goes back step by step', () => {\n  const { result } = renderHook(() => useUndoState(0))\n  act(() => result.current.set(1))\n  act(() => result.current.set(2))\n  act(() => result.current.undo())\n  expect(result.current.value).toBe(1)\n  act(() => result.current.undo())\n  expect(result.current.value).toBe(0)\n  expect(result.current.canUndo).toBe(false)\n})\n\ntest('two sets in one batch keep both steps', () => {\n  const { result } = renderHook(() => useUndoState(0))\n  act(() => { result.current.set(1); result.current.set(2) })\n  expect(result.current.value).toBe(2)\n  act(() => result.current.undo())\n  expect(result.current.value).toBe(1)\n})\n"
+    },
+    "checks": [
+     {
+      "t": "starts with no history",
+      "verify": ""
+     },
+     {
+      "t": "undo goes back step by step",
+      "verify": ""
+     },
+     {
+      "t": "two sets in one batch keep both steps",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Each render sees a snapshot. Lazy initializer for expensive setup, updater for \"based on previous\", new references for objects and arrays.",
+    "mistakes": [
+     "useState(expensive()) recomputing every render.",
+     "Mutating state objects."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Theme Toggle (Dark/Light)",
+     "diff": "easy",
+     "mc": "theme-toggle",
+     "course": "react-machine-coding"
+    }
+   ]
+  },
+  {
+   "id": "useeffect",
+   "prereqs": [
+    "usestate"
+   ],
+   "dryRun": {
+    "title": "Counter: mount → click → unmount",
+    "columns": [
+     "step",
+     "n",
+     "logged"
+    ],
+    "rows": [
+     [
+      "mount: render",
+      "0",
+      "render 0"
+     ],
+     [
+      "after paint",
+      "0",
+      "effect 0"
+     ],
+     [
+      "click: render",
+      "1",
+      "render 1"
+     ],
+     [
+      "old effect cleans up",
+      "1",
+      "cleanup 0"
+     ],
+     [
+      "new effect",
+      "1",
+      "effect 1"
+     ],
+     [
+      "unmount",
+      "—",
+      "cleanup 1"
+     ]
+    ],
+    "hit": 3,
+    "note": "Effects run <b>after</b> React updates the screen. The cleanup of the previous run happens before the next run and on unmount, and it still sees its own render's values. Effects synchronise with something outside React (timers, subscriptions, the network, the DOM)."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function Child() { console.log('render Child'); useEffect(() =&gt; console.log('effect Child')); return null }\nfunction Parent() { console.log('render Parent'); useEffect(() =&gt; console.log('effect Parent')); return &lt;Child /&gt; }</code></pre>",
+     "opts": [
+      "<code>render Parent effect Parent render Child effect Child</code>",
+      "<code>render Parent render Child effect Parent effect Child</code>",
+      "<code>render Parent render Child effect Child effect Parent</code>",
+      "<code>render Child render Parent effect Parent effect Child</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Render goes top-down, effects run bottom-up: a parent effect can rely on its children being mounted."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction Child() { console.log('render Child'); useEffect(() => console.log('effect Child')); return null }\nfunction Parent() { console.log('render Parent'); useEffect(() => console.log('effect Parent')); return <Child /> }\nawait mount(<Parent />)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function App() { console.log('render'); useEffect(() =&gt; { console.log('effect'); return () =&gt; console.log('cleanup') }, []); return null }</code></pre>",
+     "opts": [
+      "<code>render render effect cleanup effect</code>",
+      "<code>render effect</code>",
+      "<code>render effect cleanup</code>",
+      "<code>render render effect</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "In development StrictMode mounts, unmounts and mounts again to check your cleanup."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction App() { console.log('render'); useEffect(() => { console.log('effect'); return () => console.log('cleanup') }, []); return null }\nawait mount(<StrictMode><App /></StrictMode>)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function Ticker() {\n  const [count, setCount] = useState(0)\n  useEffect(() =&gt; {\n    const id = setInterval(() =&gt; setCount(count + 1), 10)\n    return () =&gt; clearInterval(id)\n  }, [])\n  return &lt;p&gt;{count}&lt;/p&gt;\n}</code></pre>",
+     "opts": [
+      "<code>5</code>",
+      "<code>0</code>",
+      "<code>1</code>",
+      "<code>6</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "With [] deps the interval keeps the first render's count (0), so it sets 1 forever. Use setCount((c) =&gt; c + 1)."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction Ticker() {\n  const [count, setCount] = useState(0)\n  useEffect(() => {\n    const id = setInterval(() => setCount(count + 1), 10)\n    return () => clearInterval(id)\n  }, [])\n  return <p>{count}</p>\n}\nawait mount(<Ticker />)\nawait run(() => new Promise((r) => setTimeout(r, 60)))\nconsole.log($('p').textContent)"
+    },
+    {
+     "tag": "Deps",
+     "q": "An effect fetches results using <code>query</code> and <code>page</code>. Which deps?",
+     "opts": [
+      "<code>[query, page]</code>",
+      "<code>[]</code>",
+      "<code>[query]</code>",
+      "No array"
+     ],
+     "ans": 0,
+     "why": [
+      "List every reactive value the effect reads. The lint rule exhaustive-deps does this for you."
+     ]
+    },
+    {
+     "tag": "Race",
+     "q": "Typing fast fires 3 fetches and an old response arrives last. Fix?",
+     "opts": [
+      "Add a setTimeout",
+      "Use useLayoutEffect",
+      "Remove the deps array",
+      "In cleanup, set an \"ignore\" flag (or abort the request) so a stale response is dropped"
+     ],
+     "ans": 3,
+     "why": [
+      "Each effect run cancels the previous one through its cleanup."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>useDebouncedValue(value, ms)</code>: return value, but only after it has stopped changing for ms. Clean up the timer.",
+    "examples": [
+     "const q = useDebouncedValue(text, 300)",
+     "typing \"a\",\"ab\",\"abc\" quickly → q updates once to \"abc\""
+    ],
+    "hint": "useState(value); useEffect with setTimeout(() =&gt; setDebounced(value), ms) and return () =&gt; clearTimeout(id); deps [value, ms].",
+    "fn": "useDebouncedValue",
+    "starter": "export function useDebouncedValue(value, ms) {\n  // your code\n}\n",
+    "solution": "import { useEffect, useState } from 'react'\n\nexport function useDebouncedValue(value, ms) {\n  const [debounced, setDebounced] = useState(value)\n  useEffect(() => {\n    const id = setTimeout(() => setDebounced(value), ms)\n    return () => clearTimeout(id)\n  }, [value, ms])\n  return debounced\n}\n",
+    "starterFile": "src/useDebouncedValue.js",
+    "tests": {
+     "file": "src/useDebouncedValue.test.jsx",
+     "run": "npx vitest run useDebouncedValue",
+     "code": "import { renderHook, act } from '@testing-library/react'\nimport { afterEach, beforeEach, expect, test, vi } from 'vitest'\nimport { useDebouncedValue } from './useDebouncedValue'\n\nbeforeEach(() => vi.useFakeTimers())\nafterEach(() => vi.useRealTimers())\n\ntest('starts with the first value', () => {\n  const { result } = renderHook(() => useDebouncedValue('a', 300))\n  expect(result.current).toBe('a')\n})\n\ntest('updates only after the delay', () => {\n  const { result, rerender } = renderHook(({ v }) => useDebouncedValue(v, 300), { initialProps: { v: 'a' } })\n  rerender({ v: 'ab' })\n  act(() => vi.advanceTimersByTime(299))\n  expect(result.current).toBe('a')\n  act(() => vi.advanceTimersByTime(1))\n  expect(result.current).toBe('ab')\n})\n\ntest('a new value restarts the timer (cleanup ran)', () => {\n  const { result, rerender } = renderHook(({ v }) => useDebouncedValue(v, 300), { initialProps: { v: 'a' } })\n  rerender({ v: 'ab' })\n  act(() => vi.advanceTimersByTime(200))\n  rerender({ v: 'abc' })\n  act(() => vi.advanceTimersByTime(200))\n  expect(result.current).toBe('a')\n  act(() => vi.advanceTimersByTime(100))\n  expect(result.current).toBe('abc')\n})\n\ntest('no timer left after unmount', () => {\n  const { result, rerender, unmount } = renderHook(({ v }) => useDebouncedValue(v, 300), { initialProps: { v: 'a' } })\n  rerender({ v: 'b' })\n  expect(result.current).toBe('a')\n  unmount()\n  expect(vi.getTimerCount()).toBe(0)\n})\n"
+    },
+    "checks": [
+     {
+      "t": "starts with the first value",
+      "verify": ""
+     },
+     {
+      "t": "updates only after the delay",
+      "verify": ""
+     },
+     {
+      "t": "a new value restarts the timer (cleanup ran)",
+      "verify": ""
+     },
+     {
+      "t": "no timer left after unmount",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Effects run after paint, bottom-up. Cleanup runs before the next run and on unmount. List every value the effect reads in deps; use updaters to avoid stale state.",
+    "mistakes": [
+     "Missing deps → stale values.",
+     "No cleanup → leaking timers, subscriptions and late responses.",
+     "Using an effect to compute something you could compute during render."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Countdown Timer",
+     "diff": "easy",
+     "mc": "countdown",
+     "course": "react-machine-coding"
+    }
+   ]
+  },
+  {
+   "id": "useref",
+   "prereqs": [
+    "useeffect"
+   ],
+   "dryRun": {
+    "title": "const renders = useRef(0); renders.current++",
+    "columns": [
+     "render",
+     "renders.current",
+     "re-render caused?"
+    ],
+    "rows": [
+     [
+      "1",
+      "1",
+      "no"
+     ],
+     [
+      "2",
+      "2",
+      "no"
+     ],
+     [
+      "ref.current = x in a handler",
+      "x",
+      "no"
+     ],
+     [
+      "<input ref={inputRef} />",
+      "the DOM node after commit",
+      "no"
+     ]
+    ],
+    "hit": 2,
+    "note": "useRef gives a mutable box <code>{ current }</code> that survives renders. Changing it does <b>not</b> re-render. Use it for DOM nodes, timer ids, previous values and anything you need to remember but not show."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function C() {\n  const r = useRef(0)\n  const [, force] = useState(0)\n  return &lt;&gt;&lt;button onClick={() =&gt; { r.current++ }}&gt;inc&lt;/button&gt;&lt;button onClick={() =&gt; force((x) =&gt; x + 1)}&gt;show&lt;/button&gt;&lt;p&gt;{r.current}&lt;/p&gt;&lt;/&gt;\n}</code></pre>",
+     "opts": [
+      "<code>2 2</code>",
+      "<code>0 2</code>",
+      "<code>0 0</code>",
+      "<code>1 2</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Changing ref.current does not re-render. The next render (from state) shows the latest value."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction C() {\n  const r = useRef(0)\n  const [, force] = useState(0)\n  return <><button onClick={() => { r.current++ }}>inc</button><button onClick={() => force((x) => x + 1)}>show</button><p>{r.current}</p></>\n}\nawait mount(<C />)\nawait click($$('button')[0]); await click($$('button')[0])\nconsole.log($('p').textContent)\nawait click($$('button')[1])\nconsole.log($('p').textContent)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function C() {\n  const ref = useRef(null)\n  console.log('render', ref.current === null)\n  useEffect(() =&gt; console.log('effect', ref.current.tagName))\n  return &lt;input ref={ref} /&gt;\n}</code></pre>",
+     "opts": [
+      "<code>render false effect INPUT</code>",
+      "<code>render true effect INPUT</code>",
+      "<code>render true effect null</code>",
+      "<code>render true effect undefined</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "During the first render the DOM node does not exist yet; it is attached before effects run."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction C() {\n  const ref = useRef(null)\n  console.log('render', ref.current === null)\n  useEffect(() => console.log('effect', ref.current.tagName))\n  return <input ref={ref} />\n}\nawait mount(<C />)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function usePrevious(v) { const r = useRef(); useEffect(() =&gt; { r.current = v }); return r.current }\nfunction C() { const [n, setN] = useState(1); const prev = usePrevious(n); return &lt;button onClick={() =&gt; setN(n * 10)}&gt;{n}/{String(prev)}&lt;/button&gt; }</code></pre>",
+     "opts": [
+      "<code>10/10</code>",
+      "<code>1/undefined</code>",
+      "<code>10/undefined</code>",
+      "<code>10/1</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "The effect saves the value after render, so during the next render the ref still holds the previous one."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction usePrevious(v) { const r = useRef(); useEffect(() => { r.current = v }); return r.current }\nfunction C() { const [n, setN] = useState(1); const prev = usePrevious(n); return <button onClick={() => setN(n * 10)}>{n}/{String(prev)}</button> }\nawait mount(<C />)\nawait click($('button'))\nconsole.log($('button').textContent)"
+    },
+    {
+     "tag": "Pick one",
+     "q": "Which belongs in a ref, not state?",
+     "opts": [
+      "A setInterval id you need for clearInterval",
+      "The text shown in a heading",
+      "A list of todos",
+      "Whether a modal is open"
+     ],
+     "ans": 0,
+     "why": [
+      "If changing it should not update the screen, a ref is right."
+     ]
+    },
+    {
+     "tag": "Reading during render",
+     "q": "Why should you avoid reading or writing ref.current during render (except for lazy init)?",
+     "opts": [
+      "It throws",
+      "It is slow",
+      "Refs are not tracked: the UI will not update and renders become impure",
+      "It resets the ref"
+     ],
+     "ans": 2,
+     "why": [
+      "Read refs in effects and handlers."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>usePrevious(value)</code> (the value from the previous render, undefined at first) and <code>useRenderCount()</code> (how many times the component has rendered, without causing renders).",
+    "examples": [
+     "usePrevious(n) after n goes 1 → 2 → 3: returns 2",
+     "useRenderCount() after 3 renders: 3"
+    ],
+    "hint": "usePrevious: store in a ref inside useEffect, return ref.current. useRenderCount: increment a ref during render (it never causes a render).",
+    "fn": "refHooks",
+    "starter": "export function usePrevious(value) {\n  // your code\n}\n\nexport function useRenderCount() {\n  // your code\n}\n",
+    "solution": "import { useEffect, useRef } from 'react'\n\nexport function usePrevious(value) {\n  const r = useRef(undefined)\n  useEffect(() => { r.current = value })\n  return r.current\n}\n\nexport function useRenderCount() {\n  const r = useRef(0)\n  r.current++\n  return r.current\n}\n",
+    "starterFile": "src/refHooks.js",
+    "tests": {
+     "file": "src/refHooks.test.jsx",
+     "run": "npx vitest run refHooks",
+     "code": "import { renderHook, act } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { usePrevious, useRenderCount } from './refHooks'\n\ntest('previous is undefined at first', () => {\n  const { result } = renderHook(() => usePrevious(1))\n  expect(result.current).toBeUndefined()\n  const c = renderHook(() => useRenderCount())\n  expect(c.result.current).toBe(1)\n})\n\ntest('previous lags one render behind', () => {\n  const { result, rerender } = renderHook(({ v }) => usePrevious(v), { initialProps: { v: 1 } })\n  rerender({ v: 2 })\n  expect(result.current).toBe(1)\n  rerender({ v: 3 })\n  expect(result.current).toBe(2)\n})\n\ntest('render count goes up with each render', () => {\n  const { result, rerender } = renderHook(() => useRenderCount())\n  rerender()\n  rerender()\n  expect(result.current).toBe(3)\n})\n"
+    },
+    "checks": [
+     {
+      "t": "previous is undefined at first",
+      "verify": ""
+     },
+     {
+      "t": "previous lags one render behind",
+      "verify": ""
+     },
+     {
+      "t": "render count goes up with each render",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "useRef = a box that survives renders and never triggers one. For DOM nodes, ids, previous values; not for anything you show.",
+    "mistakes": [
+     "Expecting the UI to update when ref.current changes.",
+     "Reading a DOM ref during the first render."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Infinite Scroll List",
+     "diff": "medium",
+     "mc": "infinite-scroll",
+     "course": "react-machine-coding"
+    }
+   ]
+  },
+  {
+   "id": "uselayouteffect",
+   "prereqs": [
+    "useref"
+   ],
+   "dryRun": {
+    "title": "Tooltip that must sit above its button",
+    "columns": [
+     "moment",
+     "useEffect",
+     "useLayoutEffect"
+    ],
+    "rows": [
+     [
+      "commit DOM",
+      "✓",
+      "✓"
+     ],
+     [
+      "your code runs",
+      "after the browser paints",
+      "before the browser paints"
+     ],
+     [
+      "first frame the user sees",
+      "tooltip at the wrong place, then jumps",
+      "already in the right place"
+     ],
+     [
+      "cost",
+      "none",
+      "blocks paint while it runs"
+     ]
+    ],
+    "hit": 2,
+    "note": "useLayoutEffect runs after the DOM is updated but <b>before</b> the browser paints, so you can measure and adjust without a visible flicker. It blocks painting, so use it only for measure-then-position work; everything else belongs in useEffect."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function C() {\n  console.log('render')\n  useEffect(() =&gt; console.log('effect'))\n  useLayoutEffect(() =&gt; console.log('layout'))\n  return null\n}</code></pre>",
+     "opts": [
+      "<code>render effect layout</code>",
+      "<code>layout render effect</code>",
+      "<code>render effect</code>",
+      "<code>render layout effect</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Layout effects run first, right after the DOM update; normal effects later."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction C() {\n  console.log('render')\n  useEffect(() => console.log('effect'))\n  useLayoutEffect(() => console.log('layout'))\n  return null\n}\nawait mount(<C />)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function C() {\n  const [w, setW] = useState(0)\n  const log = useRef([])\n  log.current.push(w)\n  useLayoutEffect(() =&gt; { if (w === 0) setW(120) }, [w])\n  useEffect(() =&gt; { if (w === 120) console.log(log.current.join(',')) })\n  return &lt;div style={{ width: w }} /&gt;\n}</code></pre>",
+     "opts": [
+      "<code>120</code>",
+      "<code>0,120</code>",
+      "<code>0</code>",
+      "<code>0,0,120</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "The state set in the layout effect causes a synchronous re-render before paint, so the user never sees width 0."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction C() {\n  const [w, setW] = useState(0)\n  const log = useRef([])\n  log.current.push(w)\n  useLayoutEffect(() => { if (w === 0) setW(120) }, [w])\n  useEffect(() => { if (w === 120) console.log(log.current.join(',')) })\n  return <div style={{ width: w }} />\n}\nawait mount(<C />)"
+    },
+    {
+     "tag": "Pick one",
+     "q": "Which needs useLayoutEffect?",
+     "opts": [
+      "Fetching data",
+      "Logging analytics",
+      "Measuring an element's size to position a popover next to it",
+      "Subscribing to a WebSocket"
+     ],
+     "ans": 2,
+     "why": [
+      "Only DOM measurement that must affect the very first paint."
+     ]
+    },
+    {
+     "tag": "SSR",
+     "q": "What happens with useLayoutEffect during server rendering?",
+     "opts": [
+      "It does not run on the server (there is no layout); React warns in older versions",
+      "It runs twice",
+      "It runs before render",
+      "It crashes the server"
+     ],
+     "ans": 0,
+     "why": [
+      "Do layout work only on the client."
+     ]
+    },
+    {
+     "tag": "Cost",
+     "q": "Why not use useLayoutEffect everywhere?",
+     "opts": [
+      "It is deprecated",
+      "It cannot have cleanup",
+      "It runs synchronously before paint, so slow code there delays what the user sees",
+      "It ignores deps"
+     ],
+     "ans": 2,
+     "why": [
+      "useEffect lets the browser paint first."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>useElementWidth()</code> returning <code>[ref, width]</code>: attach ref to an element and get its <code>getBoundingClientRect().width</code>, measured in a layout effect (before paint).",
+    "examples": [
+     "const [ref, w] = useElementWidth(); <div ref={ref}>…</div>",
+     "in the test, getBoundingClientRect is mocked to 240 → w === 240"
+    ],
+    "hint": "useRef(null) + useState(0); useLayoutEffect(() =&gt; setW(ref.current.getBoundingClientRect().width), []).",
+    "fn": "useElementWidth",
+    "starter": "export function useElementWidth() {\n  // your code\n}\n",
+    "solution": "import { useLayoutEffect, useRef, useState } from 'react'\n\nexport function useElementWidth() {\n  const ref = useRef(null)\n  const [width, setWidth] = useState(0)\n  useLayoutEffect(() => {\n    if (ref.current) setWidth(ref.current.getBoundingClientRect().width)\n  }, [])\n  return [ref, width]\n}\n",
+    "starterFile": "src/useElementWidth.js",
+    "tests": {
+     "file": "src/useElementWidth.test.jsx",
+     "run": "npx vitest run useElementWidth",
+     "code": "import { render, screen, fireEvent } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { useLayoutEffect } from 'react'\nimport { useElementWidth } from './useElementWidth'\n\nfunction Box({ onRender }) {\n  const [ref, w] = useElementWidth()\n  onRender?.(w)\n  return <div ref={ref} data-testid=\"box\">{w}</div>\n}\n\ntest('returns a ref and a number', () => {\n  render(<Box />)\n  expect(screen.getByTestId('box').textContent).toBe('0')\n})\n\ntest('measures the element', () => {\n  const orig = HTMLElement.prototype.getBoundingClientRect\n  HTMLElement.prototype.getBoundingClientRect = () => ({ width: 240 })\n  render(<Box />)\n  HTMLElement.prototype.getBoundingClientRect = orig\n  expect(screen.getByTestId('box').textContent).toBe('240')\n})\n\ntest('the measured width is there before effects (no flicker frame)', () => {\n  const orig = HTMLElement.prototype.getBoundingClientRect\n  HTMLElement.prototype.getBoundingClientRect = () => ({ width: 99 })\n  const seen = []\n  render(<Box onRender={(w) => seen.push(w)} />)\n  HTMLElement.prototype.getBoundingClientRect = orig\n  expect(seen.at(-1)).toBe(99)\n  expect(seen.filter((w) => w === 99).length).toBeGreaterThan(0)\n})\n"
+    },
+    "checks": [
+     {
+      "t": "returns a ref and a number",
+      "verify": ""
+     },
+     {
+      "t": "measures the element",
+      "verify": ""
+     },
+     {
+      "t": "the measured width is there before effects (no flicker frame)",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "useLayoutEffect = measure and adjust the DOM before paint (no flicker). Everything else: useEffect.",
+    "mistakes": [
+     "Using layout effects for data fetching.",
+     "Heavy work in layout effects delaying paint."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Context Menu",
+     "diff": "medium",
+     "mc": "context-menu",
+     "course": "react-machine-coding"
+    }
+   ]
+  },
+  {
+   "id": "usereducer",
+   "prereqs": [
+    "uselayouteffect"
+   ],
+   "dryRun": {
+    "title": "dispatch({ type: \"add\", item }) on a cart",
+    "columns": [
+     "step",
+     "what happens"
+    ],
+    "rows": [
+     [
+      "dispatch(action)",
+      "React queues the action"
+     ],
+     [
+      "next render",
+      "reducer(state, action) is called"
+     ],
+     [
+      "reducer",
+      "returns a NEW state object (pure)"
+     ],
+     [
+      "unknown action",
+      "throw or return state unchanged"
+     ],
+     [
+      "state changed?",
+      "re-render with the new state"
+     ]
+    ],
+    "hit": 2,
+    "note": "useReducer moves update logic into one pure function <code>(state, action) =&gt; newState</code>. Great when several values change together or the next state depends on the previous one in many ways. The reducer is easy to unit-test without React."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function reducer(s, a) { switch (a.type) { case 'inc': return { n: s.n + 1 }; default: return s } }\nfunction C() { const [s, dispatch] = useReducer(reducer, { n: 0 }); return &lt;button onClick={() =&gt; { dispatch({ type: 'inc' }); dispatch({ type: 'inc' }) }}&gt;{s.n}&lt;/button&gt; }</code></pre>",
+     "opts": [
+      "<code>2</code>",
+      "<code>1</code>",
+      "<code>0</code>",
+      "<code>11</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Actions are applied in order to the latest state, like updater functions."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction reducer(s, a) { switch (a.type) { case 'inc': return { n: s.n + 1 }; default: return s } }\nfunction C() { const [s, dispatch] = useReducer(reducer, { n: 0 }); return <button onClick={() => { dispatch({ type: 'inc' }); dispatch({ type: 'inc' }) }}>{s.n}</button> }\nawait mount(<C />)\nawait click($('button'))\nconsole.log($('button').textContent)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let renders = 0\nfunction reducer(s, a) { return a.type === 'noop' ? s : { ...s } }\nfunction C() { renders++; const [s, dispatch] = useReducer(reducer, { v: 1 }); return &lt;button onClick={() =&gt; dispatch({ type: 'noop' })}&gt;x&lt;/button&gt; }</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>0</code>",
+      "<code>3</code>",
+      "<code>2</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "React calls the component once more to run the reducer, sees the same state object, and bails out: no child renders and no DOM update.",
+      "So returning the same state is cheap, but not literally zero work."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nlet renders = 0\nfunction reducer(s, a) { return a.type === 'noop' ? s : { ...s } }\nfunction C() { renders++; const [s, dispatch] = useReducer(reducer, { v: 1 }); return <button onClick={() => dispatch({ type: 'noop' })}>x</button> }\nawait mount(<C />)\nawait click($('button'))\nconsole.log(renders)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function reducer(s, a) { s.items.push(a.item); return s }\nfunction C() { const [s, dispatch] = useReducer(reducer, { items: [] }); return &lt;button onClick={() =&gt; dispatch({ item: 'x' })}&gt;{s.items.length}&lt;/button&gt; }</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>0</code>",
+      "<code>x</code>",
+      "<code>undefined</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Mutating and returning the same object looks like \"no change\", so the screen stays stale."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction reducer(s, a) { s.items.push(a.item); return s }\nfunction C() { const [s, dispatch] = useReducer(reducer, { items: [] }); return <button onClick={() => dispatch({ item: 'x' })}>{s.items.length}</button> }\nawait mount(<C />)\nawait click($('button'))\nconsole.log($('button').textContent)"
+    },
+    {
+     "tag": "When",
+     "q": "When is useReducer a better fit than useState?",
+     "opts": [
+      "Always",
+      "Several pieces of state change together through named events (add, remove, clear)",
+      "For a single boolean",
+      "For DOM refs"
+     ],
+     "ans": 1,
+     "why": [
+      "A reducer documents every way the state can change."
+     ]
+    },
+    {
+     "tag": "Dispatch",
+     "q": "Is <code>dispatch</code> stable between renders?",
+     "opts": [
+      "No, it changes every render",
+      "Only with useCallback",
+      "Only in production",
+      "Yes, it is the same function for the component's whole life"
+     ],
+     "ans": 3,
+     "why": [
+      "That is why it is safe to omit from effect deps and to pass down."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write a pure <code>cartReducer(state, action)</code> with actions add (by id, increase qty if present), remove, setQty (remove at qty 0) and clear, plus a selector <code>cartTotal(state)</code>. State: <code>{ items: [{ id, price, qty }] }</code>.",
+    "examples": [
+     "add {id:\"a\", price: 10} twice → qty 2, total 20",
+     "setQty a 0 → item removed"
+    ],
+    "hint": "switch on action.type; map/filter to create new arrays; default: return state.",
+    "fn": "cartReducer",
+    "starter": "export function cartReducer(state, action) {\n  // your code\n}\n\nexport function cartTotal(state) {\n  // your code\n}\n",
+    "solution": "export function cartReducer(state, action) {\n  switch (action.type) {\n    case 'add': {\n      const found = state.items.find((i) => i.id === action.item.id)\n      if (found) return { items: state.items.map((i) => (i.id === found.id ? { ...i, qty: i.qty + 1 } : i)) }\n      return { items: [...state.items, { ...action.item, qty: 1 }] }\n    }\n    case 'remove':\n      return { items: state.items.filter((i) => i.id !== action.id) }\n    case 'setQty':\n      return { items: state.items.map((i) => (i.id === action.id ? { ...i, qty: action.qty } : i)).filter((i) => i.qty > 0) }\n    case 'clear':\n      return { items: [] }\n    default:\n      return state\n  }\n}\n\nexport function cartTotal(state) {\n  return state.items.reduce((s, i) => s + i.price * i.qty, 0)\n}\n",
+    "starterFile": "src/cartReducer.js",
+    "tests": {
+     "file": "src/cartReducer.test.jsx",
+     "run": "npx vitest run cartReducer",
+     "code": "import { expect, test } from 'vitest'\nimport { cartReducer, cartTotal } from './cartReducer'\n\nconst a = { id: 'a', price: 10 }\n\ntest('add twice increases qty', () => {\n  const s = [{ type: 'add', item: a }, { type: 'add', item: a }].reduce(cartReducer, { items: [] })\n  expect(s.items).toEqual([{ id: 'a', price: 10, qty: 2 }])\n  expect(cartTotal(s)).toBe(20)\n})\n\ntest('setQty 0 removes; remove and clear work', () => {\n  let s = cartReducer({ items: [] }, { type: 'add', item: a })\n  s = cartReducer(s, { type: 'add', item: { id: 'b', price: 5 } })\n  expect(cartReducer(s, { type: 'setQty', id: 'a', qty: 0 }).items.map((i) => i.id)).toEqual(['b'])\n  expect(cartReducer(s, { type: 'remove', id: 'b' }).items.map((i) => i.id)).toEqual(['a'])\n  expect(cartReducer(s, { type: 'clear' }).items).toEqual([])\n})\n\ntest('pure: never mutates, unknown actions return the same state', () => {\n  const s = Object.freeze({ items: Object.freeze([Object.freeze({ id: 'a', price: 10, qty: 1 })]) })\n  expect(() => cartReducer(s, { type: 'add', item: a })).not.toThrow()\n  expect(cartReducer(s, { type: 'nope' })).toBe(s)\n})\n"
+    },
+    "checks": [
+     {
+      "t": "add twice increases qty",
+      "verify": ""
+     },
+     {
+      "t": "setQty 0 removes; remove and clear work",
+      "verify": ""
+     },
+     {
+      "t": "pure: never mutates, unknown actions return the same state",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "useReducer = one pure (state, action) → newState function. Return new objects; return the same state for \"no change\". Test the reducer without React.",
+    "mistakes": [
+     "Mutating state in the reducer.",
+     "Side effects (fetch) inside the reducer."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Shopping Cart",
+     "diff": "medium",
+     "mc": "shopping-cart",
+     "course": "react-machine-coding"
+    }
+   ]
+  },
+  {
+   "id": "usecontext",
+   "prereqs": [
+    "usereducer"
+   ],
+   "dryRun": {
+    "title": "<ThemeContext value={{ theme, toggle }}> around the app",
+    "columns": [
+     "who",
+     "re-renders when the provider re-renders?"
+    ],
+    "rows": [
+     [
+      "every useContext(ThemeContext) consumer",
+      "yes, if the value is a NEW object"
+     ],
+     [
+      "consumers with a memoized value",
+      "only when theme actually changes"
+     ],
+     [
+      "components that do not read the context",
+      "only by normal parent rules"
+     ],
+     [
+      "a consumer wrapped in memo()",
+      "still re-renders: context bypasses memo"
+     ]
+    ],
+    "hit": 0,
+    "note": "Context passes a value deep down without prop drilling. Every component that reads it re-renders when the value changes by <code>Object.is</code>. An object literal is new on every render, so memoize the value (or split contexts)."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const Ctx = createContext('default')\nfunction Show() { return &lt;p&gt;{useContext(Ctx)}&lt;/p&gt; }</code></pre>",
+     "opts": [
+      "<code>default provided</code>",
+      "<code>provided provided</code>",
+      "<code>default default</code>",
+      "<code>undefined provided</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Without a provider above it, a consumer gets the default value. In React 19 you can render &lt;Ctx&gt; directly as the provider."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nconst Ctx = createContext('default')\nfunction Show() { return <p>{useContext(Ctx)}</p> }\nawait mount(<div><Show /><Ctx value=\"provided\"><Show /></Ctx></div>)\nconsole.log($$('p').map((p) => p.textContent).join(' '))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const Ctx = createContext(null)\nlet renders = 0\nconst Reader = memo(function Reader() { useContext(Ctx); renders++; return null })\nfunction App() { const [n, setN] = useState(0); return &lt;Ctx value={{ user: 'a' }}&gt;&lt;Reader /&gt;&lt;button onClick={() =&gt; setN(n + 1)}&gt;x&lt;/button&gt;&lt;/Ctx&gt; }</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>0</code>",
+      "<code>2</code>",
+      "<code>3</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "The value object is new on every App render, so the memo-wrapped reader re-renders anyway."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nconst Ctx = createContext(null)\nlet renders = 0\nconst Reader = memo(function Reader() { useContext(Ctx); renders++; return null })\nfunction App() { const [n, setN] = useState(0); return <Ctx value={{ user: 'a' }}><Reader /><button onClick={() => setN(n + 1)}>x</button></Ctx> }\nawait mount(<App />)\nawait click($('button'))\nconsole.log(renders)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const Ctx = createContext(null)\nlet renders = 0\nconst Reader = memo(function Reader() { useContext(Ctx); renders++; return null })\nfunction App() { const [n, setN] = useState(0); const value = useMemo(() =&gt; ({ user: 'a' }), []); return &lt;Ctx value={value}&gt;&lt;Reader /&gt;&lt;button onClick={() =&gt; setN(n + 1)}&gt;x&lt;/button&gt;&lt;/Ctx&gt; }</code></pre>",
+     "opts": [
+      "<code>2</code>",
+      "<code>0</code>",
+      "<code>3</code>",
+      "<code>1</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "A memoized value keeps its identity, so the reader is skipped."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nconst Ctx = createContext(null)\nlet renders = 0\nconst Reader = memo(function Reader() { useContext(Ctx); renders++; return null })\nfunction App() { const [n, setN] = useState(0); const value = useMemo(() => ({ user: 'a' }), []); return <Ctx value={value}><Reader /><button onClick={() => setN(n + 1)}>x</button></Ctx> }\nawait mount(<App />)\nawait click($('button'))\nconsole.log(renders)"
+    },
+    {
+     "tag": "Pick one",
+     "q": "What is context NOT a good fit for?",
+     "opts": [
+      "Theme",
+      "Fast-changing state read by many components (e.g. mouse position)",
+      "Current user",
+      "Locale"
+     ],
+     "ans": 1,
+     "why": [
+      "Every change re-renders every consumer. Use a store with selectors for hot state."
+     ]
+    },
+    {
+     "tag": "Guard",
+     "q": "Why throw in <code>useTheme()</code> when the context value is null?",
+     "opts": [
+      "Context requires it",
+      "It improves performance",
+      "It turns a missing provider into a clear error instead of a confusing undefined later",
+      "It is needed for SSR"
+     ],
+     "ans": 2,
+     "why": [
+      "A custom hook is the right place for that check."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>ThemeProvider</code> (holds \"light\"/\"dark\", memoizes its value) and <code>useTheme()</code> returning <code>{ theme, toggle }</code>; useTheme must throw <code>Error(\"useTheme must be used inside ThemeProvider\")</code> outside a provider.",
+    "examples": [
+     "<ThemeProvider><App /></ThemeProvider>",
+     "useTheme().toggle() switches light ↔ dark"
+    ],
+    "hint": "createContext(null); useState(\"light\"); useMemo(() =&gt; ({ theme, toggle }), [theme]); in useTheme: if (!ctx) throw.",
+    "fn": "theme",
+    "starter": "export function ThemeProvider({ children }) {\n  return children // your code\n}\n\nexport function useTheme() {\n  // your code\n}\n",
+    "solution": "import { createContext, useContext, useMemo, useState } from 'react'\n\nconst ThemeContext = createContext(null)\n\nexport function ThemeProvider({ children }) {\n  const [theme, setTheme] = useState('light')\n  const value = useMemo(() => ({ theme, toggle: () => setTheme((t) => (t === 'light' ? 'dark' : 'light')) }), [theme])\n  return <ThemeContext value={value}>{children}</ThemeContext>\n}\n\nexport function useTheme() {\n  const ctx = useContext(ThemeContext)\n  if (!ctx) throw new Error('useTheme must be used inside ThemeProvider')\n  return ctx\n}\n",
+    "starterFile": "src/theme.jsx",
+    "tests": {
+     "file": "src/theme.test.jsx",
+     "run": "npx vitest run theme",
+     "code": "import { render, screen, fireEvent } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { ThemeProvider, useTheme } from './theme'\n\nfunction Toggle() {\n  const { theme, toggle } = useTheme()\n  return <button onClick={toggle}>{theme}</button>\n}\n\ntest('provides light by default', () => {\n  render(<ThemeProvider><Toggle /></ThemeProvider>)\n  expect(screen.getByRole('button').textContent).toBe('light')\n})\n\ntest('toggle switches the theme for every consumer', () => {\n  render(<ThemeProvider><Toggle /><Toggle /></ThemeProvider>)\n  fireEvent.click(screen.getAllByRole('button')[0])\n  expect(screen.getAllByRole('button').map((b) => b.textContent)).toEqual(['dark', 'dark'])\n})\n\ntest('throws outside the provider', () => {\n  const err = console.error\n  console.error = () => {}\n  expect(() => render(<Toggle />)).toThrow('useTheme must be used inside ThemeProvider')\n  console.error = err\n})\n"
+    },
+    "checks": [
+     {
+      "t": "provides light by default",
+      "verify": ""
+     },
+     {
+      "t": "toggle switches the theme for every consumer",
+      "verify": ""
+     },
+     {
+      "t": "throws outside the provider",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Context removes prop drilling; every consumer re-renders when the value changes. Memoize the value, wrap it in a guarded custom hook, keep hot state elsewhere.",
+    "mistakes": [
+     "A new object as the value on every render.",
+     "Expecting memo() to block context updates."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Toast Notification System",
+     "diff": "medium",
+     "mc": "toast",
+     "course": "react-machine-coding"
+    }
+   ]
+  },
+  {
+   "id": "usememo",
+   "prereqs": [
+    "usecontext"
+   ],
+   "dryRun": {
+    "title": "const visible = useMemo(() => filter(items, query), [items, query])",
+    "columns": [
+     "render because of",
+     "items/query changed?",
+     "filter runs?"
+    ],
+    "rows": [
+     [
+      "first render",
+      "—",
+      "yes"
+     ],
+     [
+      "typing in another field",
+      "no",
+      "no, cached"
+     ],
+     [
+      "query changed",
+      "yes",
+      "yes"
+     ],
+     [
+      "parent re-created items array",
+      "yes (new reference)",
+      "yes"
+     ]
+    ],
+    "hit": 1,
+    "note": "useMemo caches a computed value until a dependency changes (compared with Object.is). Use it for expensive calculations or to keep an object/array reference stable for memoized children. It is a performance hint, not a guarantee."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let runs = 0\nfunction C() {\n  const [q, setQ] = useState('')\n  const [n, setN] = useState(0)\n  const r = useMemo(() =&gt; { runs++; return q.length }, [q])\n  return &lt;&gt;&lt;button onClick={() =&gt; setN(n + 1)}&gt;n&lt;/button&gt;&lt;button onClick={() =&gt; setQ(q + 'a')}&gt;q&lt;/button&gt;&lt;/&gt;\n}</code></pre>",
+     "opts": [
+      "<code>2</code>",
+      "<code>4</code>",
+      "<code>1</code>",
+      "<code>3</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Runs on mount and when q changes; the two unrelated renders reuse the cached value."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nlet runs = 0\nfunction C() {\n  const [q, setQ] = useState('')\n  const [n, setN] = useState(0)\n  const r = useMemo(() => { runs++; return q.length }, [q])\n  return <><button onClick={() => setN(n + 1)}>n</button><button onClick={() => setQ(q + 'a')}>q</button></>\n}\nawait mount(<C />)\nawait click($$('button')[0]); await click($$('button')[0]); await click($$('button')[1])\nconsole.log(runs)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let runs = 0\nfunction C({ items }) { useMemo(() =&gt; runs++, [items]); return null }</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>0</code>",
+      "<code>2</code>",
+      "<code>3</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "[1] and [1] are different arrays, so the dependency changed and it recomputed."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nlet runs = 0\nfunction C({ items }) { useMemo(() => runs++, [items]); return null }\nawait mount(<C items={[1]} />)\nawait mount(<C items={[1]} />)\nconsole.log(runs)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function C() { const v = useMemo(() =&gt; ({ a: 1 }), []); const r = useRef(v); return &lt;p&gt;{String(r.current === v)}&lt;/p&gt; }</code></pre>",
+     "opts": [
+      "<code>true</code>",
+      "<code>false</code>",
+      "<code>undefined</code>",
+      "<code>null</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "With empty deps the same object is returned on every render."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction C() { const v = useMemo(() => ({ a: 1 }), []); const r = useRef(v); return <p>{String(r.current === v)}</p> }\nawait mount(<C />)\nawait mount(<C />)\nconsole.log($('p').textContent)"
+    },
+    {
+     "tag": "When not",
+     "q": "When is useMemo NOT worth it?",
+     "opts": [
+      "For a 50 ms sort of 20,000 rows",
+      "For an object passed to a memo() child",
+      "For a value used as an effect dependency",
+      "For cheap calculations like adding two numbers or a short filter"
+     ],
+     "ans": 3,
+     "why": [
+      "Memoization itself costs memory and comparisons. Measure first (React DevTools Profiler)."
+     ]
+    },
+    {
+     "tag": "Compiler",
+     "q": "What does the React Compiler change about useMemo?",
+     "opts": [
+      "It forbids useMemo",
+      "It can memoize automatically, so many manual useMemo/useCallback calls become unnecessary",
+      "It makes useMemo run twice",
+      "Nothing"
+     ],
+     "ans": 1,
+     "why": [
+      "Still useful to understand what it does and why."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>FilteredList({ items, query, filterFn })</code> that shows items matching the query in <code>&lt;li&gt;</code>s, computing the list with <code>filterFn(items, query)</code> inside useMemo so unrelated re-renders do not call it again.",
+    "examples": [
+     "<FilteredList items={names} query=\"a\" filterFn={byQuery} />",
+     "re-render with same items and query → filterFn not called again"
+    ],
+    "hint": "useMemo(() =&gt; filterFn(items, query), [items, query, filterFn]).",
+    "fn": "FilteredList",
+    "starter": "export function FilteredList({ items, query, filterFn }) {\n  return null // your code\n}\n",
+    "solution": "import { useMemo } from 'react'\n\nexport function FilteredList({ items, query, filterFn }) {\n  const visible = useMemo(() => filterFn(items, query), [items, query, filterFn])\n  return <ul>{visible.map((x) => <li key={x}>{x}</li>)}</ul>\n}\n",
+    "starterFile": "src/FilteredList.jsx",
+    "tests": {
+     "file": "src/FilteredList.test.jsx",
+     "run": "npx vitest run FilteredList",
+     "code": "import { render, screen, fireEvent } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { FilteredList } from './FilteredList'\n\nconst items = ['apple', 'banana', 'cherry']\nconst makeFilter = () => { const f = (list, q) => { f.calls++; return list.filter((x) => x.includes(q)) }; f.calls = 0; return f }\n\ntest('shows matching items', () => {\n  render(<FilteredList items={items} query=\"an\" filterFn={makeFilter()} />)\n  expect(screen.getAllByRole('listitem').map((li) => li.textContent)).toEqual(['banana'])\n})\n\ntest('does not recompute for the same inputs', () => {\n  const f = makeFilter()\n  const { rerender } = render(<FilteredList items={items} query=\"a\" filterFn={f} />)\n  rerender(<FilteredList items={items} query=\"a\" filterFn={f} />)\n  rerender(<FilteredList items={items} query=\"a\" filterFn={f} />)\n  expect(f.calls).toBe(1)\n})\n\ntest('recomputes when the query changes', () => {\n  const f = makeFilter()\n  const { rerender } = render(<FilteredList items={items} query=\"a\" filterFn={f} />)\n  rerender(<FilteredList items={items} query=\"ch\" filterFn={f} />)\n  expect(f.calls).toBe(2)\n  expect(screen.getAllByRole('listitem').map((li) => li.textContent)).toEqual(['cherry'])\n})\n"
+    },
+    "checks": [
+     {
+      "t": "shows matching items",
+      "verify": ""
+     },
+     {
+      "t": "does not recompute for the same inputs",
+      "verify": ""
+     },
+     {
+      "t": "recomputes when the query changes",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "useMemo caches a value until deps change (by reference). Use it for expensive work or stable references, after measuring.",
+    "mistakes": [
+     "New arrays/objects as deps defeating the cache.",
+     "Memoizing trivial calculations."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Sortable + Filterable Data Table",
+     "diff": "medium",
+     "mc": "data-table",
+     "course": "react-machine-coding"
+    }
+   ]
+  },
+  {
+   "id": "usecallback",
+   "prereqs": [
+    "usememo"
+   ],
+   "dryRun": {
+    "title": "<Row onSelect={handleSelect} /> where Row = memo(...)",
+    "columns": [
+     "parent re-renders",
+     "handleSelect",
+     "Row re-renders?"
+    ],
+    "rows": [
+     [
+      "plain function",
+      "new function every render",
+      "yes (prop changed)"
+     ],
+     [
+      "useCallback(fn, [])",
+      "same function",
+      "no"
+     ],
+     [
+      "useCallback(fn, [id]) and id changed",
+      "new function",
+      "yes"
+     ],
+     [
+      "child not wrapped in memo",
+      "—",
+      "yes anyway"
+     ]
+    ],
+    "hit": 1,
+    "note": "useCallback(fn, deps) is useMemo for functions: it keeps the same function identity until deps change. It only helps when that identity matters: a memo() child, or a function used in an effect's deps."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let rowRenders = 0\nconst Row = memo(function Row({ onPick }) { rowRenders++; return null })\nfunction List() { const [n, setN] = useState(0); const pick = () =&gt; {}; return &lt;&gt;&lt;Row onPick={pick} /&gt;&lt;button onClick={() =&gt; setN(n + 1)}&gt;x&lt;/button&gt;&lt;/&gt; }</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>3</code>",
+      "<code>0</code>",
+      "<code>2</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "A new function each render is a new prop, so memo cannot skip."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nlet rowRenders = 0\nconst Row = memo(function Row({ onPick }) { rowRenders++; return null })\nfunction List() { const [n, setN] = useState(0); const pick = () => {}; return <><Row onPick={pick} /><button onClick={() => setN(n + 1)}>x</button></> }\nawait mount(<List />)\nawait click($('button')); await click($('button'))\nconsole.log(rowRenders)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let rowRenders = 0\nconst Row = memo(function Row({ onPick }) { rowRenders++; return null })\nfunction List() { const [n, setN] = useState(0); const pick = useCallback(() =&gt; {}, []); return &lt;&gt;&lt;Row onPick={pick} /&gt;&lt;button onClick={() =&gt; setN(n + 1)}&gt;x&lt;/button&gt;&lt;/&gt; }</code></pre>",
+     "opts": [
+      "<code>3</code>",
+      "<code>0</code>",
+      "<code>2</code>",
+      "<code>1</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "The same function identity lets memo skip the row."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nlet rowRenders = 0\nconst Row = memo(function Row({ onPick }) { rowRenders++; return null })\nfunction List() { const [n, setN] = useState(0); const pick = useCallback(() => {}, []); return <><Row onPick={pick} /><button onClick={() => setN(n + 1)}>x</button></> }\nawait mount(<List />)\nawait click($('button')); await click($('button'))\nconsole.log(rowRenders)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function C() {\n  const [n, setN] = useState(0)\n  const show = useCallback(() =&gt; console.log('n is', n), [])\n  return &lt;&gt;&lt;button onClick={() =&gt; setN(n + 1)}&gt;inc&lt;/button&gt;&lt;button onClick={show}&gt;show&lt;/button&gt;&lt;/&gt;\n}</code></pre>",
+     "opts": [
+      "<code>n is 0</code>",
+      "<code>n is 2</code>",
+      "<code>n is undefined</code>",
+      "<code>n is 1</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Empty deps freeze the first render's n inside the callback: a stale closure. Add n to deps (or use an updater/ref)."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction C() {\n  const [n, setN] = useState(0)\n  const show = useCallback(() => console.log('n is', n), [])\n  return <><button onClick={() => setN(n + 1)}>inc</button><button onClick={show}>show</button></>\n}\nawait mount(<C />)\nawait click($$('button')[0]); await click($$('button')[0])\nawait click($$('button')[1])"
+    },
+    {
+     "tag": "Useless",
+     "q": "When does useCallback do nothing useful?",
+     "opts": [
+      "When the child is memo()",
+      "When the function is an effect dependency",
+      "When the function is passed to a normal (non-memo) element like a button",
+      "When used with useEffect cleanup"
+     ],
+     "ans": 2,
+     "why": [
+      "A DOM element does not care about function identity."
+     ]
+    },
+    {
+     "tag": "Relation",
+     "q": "<code>useCallback(fn, deps)</code> is the same as…",
+     "opts": [
+      "<code>useMemo(fn, deps)</code>",
+      "<code>useRef(fn)</code>",
+      "<code>useEffect(fn, deps)</code>",
+      "<code>useMemo(() =&gt; fn, deps)</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "useMemo(fn) would CALL fn and cache its result."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>useStableCallback(fn)</code>: return a function whose identity never changes, but which always calls the <b>latest</b> fn (no stale closures).",
+    "examples": [
+     "const onSave = useStableCallback(() => save(draft))",
+     "same identity every render; uses the newest draft"
+    ],
+    "hint": "Keep fn in a ref updated in useLayoutEffect (or useEffect); return useCallback((...a) =&gt; ref.current(...a), []).",
+    "fn": "useStableCallback",
+    "starter": "export function useStableCallback(fn) {\n  // your code\n}\n",
+    "solution": "import { useCallback, useLayoutEffect, useRef } from 'react'\n\nexport function useStableCallback(fn) {\n  const ref = useRef(fn)\n  useLayoutEffect(() => { ref.current = fn })\n  return useCallback((...args) => ref.current(...args), [])\n}\n",
+    "starterFile": "src/useStableCallback.js",
+    "tests": {
+     "file": "src/useStableCallback.test.jsx",
+     "run": "npx vitest run useStableCallback",
+     "code": "import { renderHook, act } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { useStableCallback } from './useStableCallback'\n\ntest('returns a function', () => {\n  const { result } = renderHook(() => useStableCallback(() => 1))\n  expect(result.current()).toBe(1)\n})\n\ntest('identity is stable across renders', () => {\n  const { result, rerender } = renderHook(({ n }) => useStableCallback(() => n), { initialProps: { n: 1 } })\n  const first = result.current\n  expect(typeof first).toBe('function')\n  rerender({ n: 2 })\n  expect(result.current).toBe(first)\n})\n\ntest('always calls the latest function', () => {\n  const { result, rerender } = renderHook(({ n }) => useStableCallback((x) => n + x), { initialProps: { n: 1 } })\n  const first = result.current\n  rerender({ n: 10 })\n  expect(first(5)).toBe(15)\n})\n"
+    },
+    "checks": [
+     {
+      "t": "returns a function",
+      "verify": ""
+     },
+     {
+      "t": "identity is stable across renders",
+      "verify": ""
+     },
+     {
+      "t": "always calls the latest function",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "useCallback keeps a function identity stable until deps change. Only useful for memo children or effect deps; wrong deps create stale closures.",
+    "mistakes": [
+     "useCallback everywhere \"just in case\".",
+     "Empty deps with values read inside → stale data."
+    ]
+   }
+  },
+  {
+   "id": "custom-hooks",
+   "prereqs": [
+    "usecallback"
+   ],
+   "dryRun": {
+    "title": "useLocalStorage(\"theme\", \"light\") in two components",
+    "columns": [
+     "",
+     "component A",
+     "component B"
+    ],
+    "rows": [
+     [
+      "state",
+      "its own useState",
+      "its own useState"
+     ],
+     [
+      "logic",
+      "shared code",
+      "shared code"
+     ],
+     [
+      "writes",
+      "A writes localStorage",
+      "B does not see it until it reads again"
+     ],
+     [
+      "to share STATE",
+      "—",
+      "lift it up or use context/a store"
+     ]
+    ],
+    "hit": 2,
+    "note": "A custom hook is a function starting with \"use\" that calls other hooks. It shares <b>logic</b>, not state: each component that calls it gets its own copy. Name it for what it does (useDebouncedValue, useOnline), return what callers need."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function useCounter() { const [n, setN] = useState(0); return [n, () =&gt; setN((x) =&gt; x + 1)] }\nfunction A() { const [n, inc] = useCounter(); return &lt;button onClick={inc}&gt;{n}&lt;/button&gt; }</code></pre>",
+     "opts": [
+      "<code>1,1</code>",
+      "<code>1,0</code>",
+      "<code>0,0</code>",
+      "<code>1</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Each component has its own state; the hook only shares code."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction useCounter() { const [n, setN] = useState(0); return [n, () => setN((x) => x + 1)] }\nfunction A() { const [n, inc] = useCounter(); return <button onClick={inc}>{n}</button> }\nawait mount(<div><A /><A /></div>)\nawait click($$('button')[0])\nconsole.log($$('button').map((b) => b.textContent).join(','))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function useOnce(fn) { const done = useRef(false); useEffect(() =&gt; { if (!done.current) { done.current = true; fn() } }, []) }\nfunction C() { useOnce(() =&gt; console.log('ran')); return null }</code></pre>",
+     "opts": [
+      "<code>ran ran</code>",
+      "<code>(nothing)</code>",
+      "<code>ran</code>",
+      "<code>ran ran ran</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "The ref survives StrictMode's remount, so the guard keeps it to one call. (Usually a cleanup is the better fix.)"
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction useOnce(fn) { const done = useRef(false); useEffect(() => { if (!done.current) { done.current = true; fn() } }, []) }\nfunction C() { useOnce(() => console.log('ran')); return null }\nawait mount(<StrictMode><C /></StrictMode>)"
+    },
+    {
+     "tag": "Naming",
+     "q": "Why must a custom hook start with \"use\"?",
+     "opts": [
+      "So React and the lint rules know it may call hooks and check the rules inside it",
+      "It is required for exports",
+      "It makes it run faster",
+      "React renames it"
+     ],
+     "ans": 0,
+     "why": [
+      "A function without the prefix that calls hooks hides the rule-breaking."
+     ]
+    },
+    {
+     "tag": "Return shape",
+     "q": "When should a hook return a tuple <code>[value, set]</code> vs an object?",
+     "opts": [
+      "Always tuples",
+      "Always objects",
+      "Tuple for 2 values callers will rename; object when there are more or names matter",
+      "Never return functions"
+     ],
+     "ans": 2,
+     "why": [
+      "useState style vs { data, error, loading }."
+     ]
+    },
+    {
+     "tag": "Test",
+     "q": "How do you test a custom hook on its own?",
+     "opts": [
+      "<code>renderHook(() =&gt; useX()) from Testing Library</code>",
+      "<code>Call useX() directly in the test</code>",
+      "<code>Render it inside an effect</code>",
+      "<code>Only through end-to-end tests</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Calling a hook outside a component throws."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>useLocalStorage(key, initial)</code>: like useState, but reads the initial value from localStorage (JSON) once, writes every change back, and survives corrupt data by falling back to initial.",
+    "examples": [
+     "const [theme, setTheme] = useLocalStorage(\"theme\", \"light\")",
+     "setTheme(\"dark\") → localStorage.theme === \"\\\"dark\\\"\""
+    ],
+    "hint": "useState(() =&gt; { try { const raw = localStorage.getItem(key); return raw === null ? initial : JSON.parse(raw) } catch { return initial } }) and an effect that writes.",
+    "fn": "useLocalStorage",
+    "starter": "export function useLocalStorage(key, initial) {\n  // your code\n}\n",
+    "solution": "import { useEffect, useState } from 'react'\n\nexport function useLocalStorage(key, initial) {\n  const [value, setValue] = useState(() => {\n    try {\n      const raw = localStorage.getItem(key)\n      return raw === null ? initial : JSON.parse(raw)\n    } catch {\n      return initial\n    }\n  })\n  useEffect(() => {\n    localStorage.setItem(key, JSON.stringify(value))\n  }, [key, value])\n  return [value, setValue]\n}\n",
+    "starterFile": "src/useLocalStorage.js",
+    "tests": {
+     "file": "src/useLocalStorage.test.jsx",
+     "run": "npx vitest run useLocalStorage",
+     "code": "import { renderHook, act } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { useLocalStorage } from './useLocalStorage'\n\ntest('uses the initial value when empty', () => {\n  localStorage.clear()\n  const { result } = renderHook(() => useLocalStorage('k', { a: 1 }))\n  expect(result.current[0]).toEqual({ a: 1 })\n})\n\ntest('reads and writes JSON', () => {\n  localStorage.setItem('k', JSON.stringify('dark'))\n  const { result } = renderHook(() => useLocalStorage('k', 'light'))\n  expect(result.current[0]).toBe('dark')\n  act(() => result.current[1]('blue'))\n  expect(localStorage.getItem('k')).toBe('\"blue\"')\n})\n\ntest('survives corrupt data', () => {\n  localStorage.setItem('k', '{oops')\n  const { result } = renderHook(() => useLocalStorage('k', 'light'))\n  expect(result.current[0]).toBe('light')\n})\n"
+    },
+    "checks": [
+     {
+      "t": "uses the initial value when empty",
+      "verify": ""
+     },
+     {
+      "t": "reads and writes JSON",
+      "verify": ""
+     },
+     {
+      "t": "survives corrupt data",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Custom hooks share logic, not state. Prefix with use, keep the rules of hooks inside, test with renderHook.",
+    "mistakes": [
+     "Expecting two components to share state through a custom hook.",
+     "Hooks that do too many unrelated things."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Custom Hooks Library",
+     "diff": "hard",
+     "mc": "custom-hooks",
+     "course": "react-machine-coding"
+    }
+   ]
+  }
+ ]
+}

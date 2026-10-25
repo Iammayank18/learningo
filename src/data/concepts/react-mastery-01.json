@@ -1,0 +1,923 @@
+{
+ "course": "react-mastery",
+ "items": [
+  {
+   "id": "why-react",
+   "prereqs": [],
+   "dryRun": {
+    "title": "Showing \"3 items left\" after a click",
+    "columns": [
+     "",
+     "plain DOM code",
+     "React"
+    ],
+    "rows": [
+     [
+      "you write",
+      "find the element, change its text, add/remove nodes",
+      "what the UI should look like for this state"
+     ],
+     [
+      "on click",
+      "update the variable AND remember every DOM spot that shows it",
+      "update the state"
+     ],
+     [
+      "DOM updates",
+      "by hand, easy to forget one",
+      "React compares and patches for you"
+     ],
+     [
+      "bugs",
+      "screen and data drift apart",
+      "screen always matches state"
+     ]
+    ],
+    "hit": 2,
+    "note": "React's core idea: <b>UI = f(state)</b>. You describe the screen for a given state; when the state changes, React works out the minimal DOM changes. You stop writing \"how to update\" and only write \"what it should be\"."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function Count({ items }) {\n  return &lt;p&gt;{items.filter((i) =&gt; !i.done).length} left&lt;/p&gt;\n}</code></pre>",
+     "opts": [
+      "<code>2 left</code>",
+      "<code>1 left 0 left</code>",
+      "<code>2 left 0 left</code>",
+      "<code>3 left 1 left</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "The same function, given new data, describes a new screen. Rendering again with new props updated the text; you never touched the DOM."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction Count({ items }) {\n  return <p>{items.filter((i) => !i.done).length} left</p>\n}\nawait mount(<Count items={[{ done: false }, { done: true }, { done: false }]} />)\nconsole.log(container.textContent)\nawait mount(<Count items={[{ done: true }]} />)\nconsole.log(container.textContent)"
+    },
+    {
+     "tag": "Idea",
+     "q": "What does \"declarative\" mean in React?",
+     "opts": [
+      "You describe what the UI should be for the current state; React handles the DOM steps",
+      "You write every DOM change step by step",
+      "React needs no JavaScript",
+      "Components cannot have logic"
+     ],
+     "ans": 0,
+     "why": [
+      "The opposite, imperative code, says how: find, change, append, remove."
+     ]
+    },
+    {
+     "tag": "Pick one",
+     "q": "Which problem is React best at solving?",
+     "opts": [
+      "Making a static brochure page load faster",
+      "Replacing the backend",
+      "Styling components",
+      "Keeping a complex, frequently changing UI in sync with data"
+     ],
+     "ans": 3,
+     "why": [
+      "For a mostly static page, plain HTML (or a framework that ships less JS) is often the better fit."
+     ]
+    },
+    {
+     "tag": "Library",
+     "q": "React itself is…",
+     "opts": [
+      "A full framework with routing and a server",
+      "A library for building UI components; routing, data fetching and builds come from other tools or frameworks",
+      "A CSS framework",
+      "A database client"
+     ],
+     "ans": 1,
+     "why": [
+      "That is why Next.js, React Router and TanStack Query exist."
+     ]
+    },
+    {
+     "tag": "One-way",
+     "q": "How does data flow in React?",
+     "opts": [
+      "Both ways automatically, like two-way binding",
+      "Down from parent to child through props; children ask parents to change things through callbacks",
+      "Only through global variables",
+      "From child to parent through props"
+     ],
+     "ans": 1,
+     "why": [
+      "One-way flow makes it easy to find who owns a piece of data."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Feel the idea without React: write <code>renderTodos(todos)</code>, a pure function that returns the HTML string for a list, plus a \"N left\" line. Same input → same output, no DOM access.",
+    "examples": [
+     "renderTodos([{ text: \"a\", done: false }])  // \"<ul><li>a</li></ul><p>1 left</p>\"",
+     "done items get <li class=\"done\">"
+    ],
+    "hint": "map over todos, join, and count the not-done ones. This is exactly what a component does, minus JSX.",
+    "fn": "renderTodos",
+    "starter": "export function renderTodos(todos) {\n  // your code\n}\n",
+    "solution": "export function renderTodos(todos) {\n  const items = todos.map((t) => (t.done ? `<li class=\"done\">${t.text}</li>` : `<li>${t.text}</li>`)).join('')\n  const left = todos.filter((t) => !t.done).length\n  return `<ul>${items}</ul><p>${left} left</p>`\n}\n",
+    "starterFile": "src/renderTodos.js",
+    "tests": {
+     "file": "src/renderTodos.test.jsx",
+     "run": "npx vitest run renderTodos",
+     "code": "import { expect, test } from 'vitest'\nimport { renderTodos } from './renderTodos'\n\ntest('renders items and the count', () => {\n  expect(renderTodos([{ text: 'a', done: false }, { text: 'b', done: false }])).toBe('<ul><li>a</li><li>b</li></ul><p>2 left</p>')\n})\n\ntest('done items get a class and are not counted', () => {\n  expect(renderTodos([{ text: 'a', done: true }, { text: 'b', done: false }])).toBe('<ul><li class=\"done\">a</li><li>b</li></ul><p>1 left</p>')\n})\n\ntest('same input gives the same output', () => {\n  const t = [{ text: 'x', done: false }]\n  expect(renderTodos(t)).toBe(renderTodos(t))\n  expect(renderTodos([])).toBe('<ul></ul><p>0 left</p>')\n})\n"
+    },
+    "checks": [
+     {
+      "t": "renders items and the count",
+      "verify": ""
+     },
+     {
+      "t": "done items get a class and are not counted",
+      "verify": ""
+     },
+     {
+      "t": "same input gives the same output",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "UI = f(state). Describe the screen for the current state; React updates the DOM to match.",
+    "mistakes": [
+     "Thinking React is a full framework.",
+     "Using React for a page that barely changes."
+    ]
+   }
+  },
+  {
+   "id": "setup",
+   "prereqs": [
+    "why-react"
+   ],
+   "dryRun": {
+    "title": "npm create vite@latest react-lab -- --template react",
+    "columns": [
+     "file",
+     "what it is"
+    ],
+    "rows": [
+     [
+      "index.html",
+      "the one HTML page; loads src/main.jsx"
+     ],
+     [
+      "src/main.jsx",
+      "createRoot(document.getElementById(\"root\")).render(<App />)"
+     ],
+     [
+      "src/App.jsx",
+      "your first component"
+     ],
+     [
+      "vite.config.js",
+      "dev server + build; add a test block for Vitest"
+     ],
+     [
+      "package.json",
+      "scripts: dev, build, preview (+ test)"
+     ]
+    ],
+    "hit": 1,
+    "note": "Vite gives you a fast dev server and build. Create React App is deprecated. Add <b>Vitest</b> + <b>React Testing Library</b> once, here; every Try in this course is a test file you run with <code>npx vitest run</code>."
+   },
+   "think": [
+    {
+     "tag": "Pick one",
+     "q": "Which is the recommended way to start a plain React app in 2026?",
+     "opts": [
+      "Create React App",
+      "A script tag with React from a CDN for production",
+      "Webpack by hand",
+      "Vite (or a framework like Next.js when you need a server)"
+     ],
+     "ans": 3,
+     "why": [
+      "CRA was deprecated in 2025. Vite is fast and simple."
+     ]
+    },
+    {
+     "tag": "Entry",
+     "q": "What does <code>createRoot(el).render(&lt;App /&gt;)</code> do?",
+     "opts": [
+      "Makes el the root React manages and renders App into it",
+      "Creates a new HTML page",
+      "Starts a server",
+      "Compiles JSX"
+     ],
+     "ans": 0,
+     "why": [
+      "Everything inside that element now belongs to React."
+     ]
+    },
+    {
+     "tag": "Dev vs build",
+     "q": "Why does <code>npm run build</code> exist when <code>npm run dev</code> already works?",
+     "opts": [
+      "They are the same",
+      "build runs tests",
+      "dev serves unbundled modules with dev checks; build makes small optimised files for production",
+      "dev cannot run JSX"
+     ],
+     "ans": 2,
+     "why": [
+      "Never deploy the dev server."
+     ]
+    },
+    {
+     "tag": "Tests",
+     "q": "In the test config, what does <code>environment: \"jsdom\"</code> give you?",
+     "opts": [
+      "A real Chrome",
+      "Faster builds",
+      "TypeScript support",
+      "A fake browser DOM in Node, so components can render in tests"
+     ],
+     "ans": 3,
+     "why": [
+      "Testing Library renders into that DOM."
+     ]
+    },
+    {
+     "tag": "Env vars",
+     "q": "In a Vite app, which variable is available in the browser?",
+     "opts": [
+      "<code>process.env.API_URL</code>",
+      "<code>import.meta.env.VITE_API_URL</code>",
+      "<code>import.meta.env.SECRET_KEY</code>",
+      "<code>window.env.API_URL</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Only VITE_ prefixed variables are exposed, and anything exposed is public: never put secrets there."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Set up the lab once: create the app, install the test tools, add the test block, then make this first test pass by writing <code>Hello</code>.",
+    "examples": [
+     "npm create vite@latest react-lab -- --template react && cd react-lab",
+     "npm i -D vitest jsdom @testing-library/react @testing-library/dom"
+    ],
+    "hint": "In vite.config.js add <code>test: { environment: \"jsdom\", globals: true }</code> next to plugins. Hello returns an h1.",
+    "fn": "Hello",
+    "starter": "export function Hello({ name }) {\n  return null // your code\n}\n",
+    "solution": "export function Hello({ name }) {\n  return <h1>Hello, {name}!</h1>\n}\n",
+    "starterFile": "src/Hello.jsx",
+    "tests": {
+     "file": "src/Hello.test.jsx",
+     "run": "npx vitest run Hello",
+     "code": "import { render, screen, fireEvent } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { Hello } from './Hello'\n\ntest('greets by name', () => {\n  render(<Hello name=\"Mayank\" />)\n  expect(screen.getByRole('heading').textContent).toBe('Hello, Mayank!')\n})\n\ntest('renders one heading only', () => {\n  render(<Hello name=\"A\" />)\n  expect(screen.getAllByRole('heading')).toHaveLength(1)\n})\n"
+    },
+    "checks": [
+     {
+      "t": "greets by name",
+      "verify": ""
+     },
+     {
+      "t": "renders one heading only",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Vite for the app, Vitest + Testing Library for tests, VITE_ prefix for public env vars.",
+    "mistakes": [
+     "Using Create React App for new projects.",
+     "Putting secrets in VITE_ variables."
+    ]
+   }
+  },
+  {
+   "id": "first-component",
+   "prereqs": [
+    "setup"
+   ],
+   "dryRun": {
+    "title": "<Badge count={120} />",
+    "columns": [
+     "step",
+     "what happens"
+    ],
+    "rows": [
+     [
+      "React calls Badge({ count: 120 })",
+      "your function runs"
+     ],
+     [
+      "count > 99",
+      "returns <span>99+</span>"
+     ],
+     [
+      "React",
+      "turns that into DOM"
+     ],
+     [
+      "<Badge count={0} />",
+      "returns null → nothing rendered"
+     ]
+    ],
+    "hit": 1,
+    "note": "A component is a function that takes <b>props</b> and returns JSX (or null to render nothing). Names start with a capital letter, so JSX knows it is a component and not an HTML tag."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function badge({ n }) { return &lt;b&gt;{n}&lt;/b&gt; }\nfunction Badge({ n }) { return &lt;b&gt;{n}&lt;/b&gt; }</code></pre>",
+     "opts": [
+      "<code>&lt;div&gt;&lt;b&gt;1&lt;/b&gt;&lt;b&gt;2&lt;/b&gt;&lt;/div&gt;</code>",
+      "<code>&lt;div&gt;&lt;badge&gt;1&lt;/badge&gt;&lt;b&gt;2&lt;/b&gt;&lt;/div&gt;</code>",
+      "<code>&lt;div&gt;&lt;badge n=\"1\"&gt;&lt;/badge&gt;&lt;b&gt;2&lt;/b&gt;&lt;/div&gt;</code>",
+      "<code>&lt;div&gt;&lt;b&gt;2&lt;/b&gt;&lt;/div&gt;</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Lowercase JSX tags are treated as HTML elements, so &lt;badge&gt; becomes an unknown DOM element and the function is never called."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction badge({ n }) { return <b>{n}</b> }\nfunction Badge({ n }) { return <b>{n}</b> }\nawait mount(<div><badge n={1} /><Badge n={2} /></div>)\nconsole.log(container.innerHTML)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function Empty() { return null }\nfunction Zero() { return 0 }\nfunction No() { return false }</code></pre>",
+     "opts": [
+      "<code>|0|</code>",
+      "<code>||</code>",
+      "<code>null|0|false</code>",
+      "<code>|false|</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "null and false render nothing; the number 0 is rendered as text."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction Empty() { return null }\nfunction Zero() { return 0 }\nfunction No() { return false }\nawait mount(<p><Empty />|<Zero />|<No /></p>)\nconsole.log(container.textContent)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function Title({ text }) { return &lt;h1&gt;{text.toUpperCase()}&lt;/h1&gt; }</code></pre>",
+     "opts": [
+      "<code>undefined</code>",
+      "<code>SyntaxError</code>",
+      "<code>TypeError</code>",
+      "<code>ReferenceError</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "A missing prop is undefined, and calling a method on it throws during render."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction Title({ text }) { return <h1>{text.toUpperCase()}</h1> }\ntry { await mount(<Title />) } catch (e) { console.log(e.name) }"
+    },
+    {
+     "tag": "Return",
+     "q": "Why can a component not return two sibling elements like <code>&lt;h1/&gt;&lt;p/&gt;</code> directly?",
+     "opts": [
+      "JSX must have one parent; wrap them in a Fragment <code>&lt;&gt;…&lt;/&gt;</code>",
+      "React forbids two elements per component",
+      "Siblings need keys",
+      "Only class components can"
+     ],
+     "ans": 0,
+     "why": [
+      "A component returns one value; a Fragment groups children without adding a DOM node."
+     ]
+    },
+    {
+     "tag": "Purity",
+     "q": "A component should behave like a pure function. What does that mean here?",
+     "opts": [
+      "It must not use props",
+      "It must never re-render",
+      "It cannot have state",
+      "Same props and state → same JSX, with no side effects during render"
+     ],
+     "ans": 3,
+     "why": [
+      "Side effects (fetching, timers, DOM writes) go in event handlers or effects."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>Badge({ count })</code>: render nothing for 0 (or less), the number for 1–99, and \"99+\" above 99, inside <code>&lt;span aria-label=\"notifications\"&gt;</code>.",
+    "examples": [
+     "<Badge count={5} />  → 5",
+     "<Badge count={150} />  → 99+"
+    ],
+    "hint": "Return null early for count &lt;= 0. Use a ternary for the label.",
+    "fn": "Badge",
+    "starter": "export function Badge({ count }) {\n  return null // your code\n}\n",
+    "solution": "export function Badge({ count }) {\n  if (count <= 0) return null\n  return <span aria-label=\"notifications\">{count > 99 ? '99+' : count}</span>\n}\n",
+    "starterFile": "src/Badge.jsx",
+    "tests": {
+     "file": "src/Badge.test.jsx",
+     "run": "npx vitest run Badge",
+     "code": "import { render, screen, fireEvent } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { Badge } from './Badge'\n\ntest('shows the count', () => {\n  render(<Badge count={5} />)\n  expect(screen.getByLabelText('notifications').textContent).toBe('5')\n})\n\ntest('caps at 99+', () => {\n  render(<Badge count={150} />)\n  expect(screen.getByLabelText('notifications').textContent).toBe('99+')\n})\n\ntest('renders nothing for zero', () => {\n  const { container } = render(<Badge count={0} />)\n  expect(container.innerHTML).toBe('')\n  render(<Badge count={1} />)\n  expect(screen.getByLabelText('notifications')).toBeTruthy()\n})\n"
+    },
+    "checks": [
+     {
+      "t": "shows the count",
+      "verify": ""
+     },
+     {
+      "t": "caps at 99+",
+      "verify": ""
+     },
+     {
+      "t": "renders nothing for zero",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "A component is a capitalised function: props in, JSX out. Return null to render nothing; keep render pure.",
+    "mistakes": [
+     "Lowercase component names.",
+     "Rendering a number 0 by accident (count &amp;&amp; …).",
+     "Side effects during render."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Progress Bar Component",
+     "diff": "easy",
+     "mc": "progress-bar",
+     "course": "react-machine-coding"
+    }
+   ]
+  },
+  {
+   "id": "jsx",
+   "prereqs": [
+    "first-component"
+   ],
+   "dryRun": {
+    "title": "<button className=\"primary\" onClick={save}>Save {n}</button>",
+    "columns": [
+     "JSX",
+     "becomes"
+    ],
+    "rows": [
+     [
+      "<button …>",
+      "jsx(\"button\", { className: \"primary\", onClick: save, children: [...] })"
+     ],
+     [
+      "className",
+      "the DOM class attribute (class is a JS keyword)"
+     ],
+     [
+      "{n}",
+      "any JavaScript expression"
+     ],
+     [
+      "onClick={save}",
+      "a function reference, not a string"
+     ],
+     [
+      "result",
+      "a plain object: { type: \"button\", props }"
+     ]
+    ],
+    "hit": 4,
+    "note": "JSX is syntax for function calls that create <b>React elements</b>: plain objects describing UI. Curly braces hold JS expressions (not statements). Attributes are camelCase (<code>className</code>, <code>onClick</code>, <code>htmlFor</code>)."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const el = &lt;a href=\"/x\" className=\"c\"&gt;hi&lt;/a&gt;</code></pre>",
+     "opts": [
+      "<code>A c hi</code>",
+      "<code>a c hi</code>",
+      "<code>a class hi</code>",
+      "<code>a c [object Object]</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "A JSX element is an object: type is the tag, props hold attributes and children."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nconst el = <a href=\"/x\" className=\"c\">hi</a>\nconsole.log(el.type, el.props.className, el.props.children)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function List() { const n = 0; return &lt;p&gt;{n &amp;&amp; 'has items'}&lt;/p&gt; }</code></pre>",
+     "opts": [
+      "<code>\"\"</code>",
+      "<code>\"0\"</code>",
+      "<code>\"has items\"</code>",
+      "<code>\"false\"</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "0 &amp;&amp; … evaluates to 0, and React renders the number 0. Use n &gt; 0 &amp;&amp; … instead."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction List() { const n = 0; return <p>{n && 'has items'}</p> }\nawait mount(<List />)\nconsole.log(JSON.stringify(container.textContent))"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function T() { return &lt;p&gt;{'&lt;b&gt;x&lt;/b&gt;'}&lt;/p&gt; }</code></pre>",
+     "opts": [
+      "<code>&lt;p&gt;&lt;b&gt;x&lt;/b&gt;&lt;/p&gt;</code>",
+      "<code>&lt;p&gt;x&lt;/p&gt;</code>",
+      "<code>&lt;p&gt;{'&lt;b&gt;x&lt;/b&gt;'}&lt;/p&gt;</code>",
+      "<code>&lt;p&gt;&amp;lt;b&amp;gt;x&amp;lt;/b&amp;gt;&lt;/p&gt;</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Strings in JSX are escaped, so injected HTML is shown as text. That is why JSX is safe from XSS by default."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction T() { return <p>{'<b>x</b>'}</p> }\nawait mount(<T />)\nconsole.log(container.innerHTML)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function L() { return &lt;ul&gt;{['a', 'b'].map((x) =&gt; &lt;li key={x}&gt;{x}&lt;/li&gt;)}&lt;/ul&gt; }</code></pre>",
+     "opts": [
+      "<code>2</code>",
+      "<code>0</code>",
+      "<code>1</code>",
+      "<code>undefined</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Arrays of elements render in order; map is how you loop in JSX (with keys)."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction L() { return <ul>{['a', 'b'].map((x) => <li key={x}>{x}</li>)}</ul> }\nawait mount(<L />)\nconsole.log(container.querySelectorAll('li').length)"
+    },
+    {
+     "tag": "Statements",
+     "q": "Why does <code>{ if (ok) &lt;p/&gt; }</code> inside JSX fail?",
+     "opts": [
+      "if is not allowed in components",
+      "JSX needs a key",
+      "Curly braces take expressions only; use a ternary, &amp;&amp;, or compute before the return",
+      "It needs a Fragment"
+     ],
+     "ans": 2,
+     "why": [
+      "Expressions produce a value; if is a statement."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>UserList({ users })</code>: an <code>&lt;ul&gt;</code> of names with each admin marked \" (admin)\", and a <code>&lt;p&gt;No users&lt;/p&gt;</code> when the list is empty (no empty ul).",
+    "examples": [
+     "<UserList users={[{ id: 1, name: \"A\", admin: true }]} />  → <li>A (admin)</li>",
+     "<UserList users={[]} />  → No users"
+    ],
+    "hint": "Early return for the empty case; map with key={u.id}; a ternary or &amp;&amp; for the admin label.",
+    "fn": "UserList",
+    "starter": "export function UserList({ users }) {\n  return null // your code\n}\n",
+    "solution": "export function UserList({ users }) {\n  if (users.length === 0) return <p>No users</p>\n  return (\n    <ul>\n      {users.map((u) => (\n        <li key={u.id}>{u.name}{u.admin && ' (admin)'}</li>\n      ))}\n    </ul>\n  )\n}\n",
+    "starterFile": "src/UserList.jsx",
+    "tests": {
+     "file": "src/UserList.test.jsx",
+     "run": "npx vitest run UserList",
+     "code": "import { render, screen, fireEvent } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { UserList } from './UserList'\n\ntest('lists users and marks admins', () => {\n  render(<UserList users={[{ id: 1, name: 'A', admin: true }, { id: 2, name: 'B', admin: false }]} />)\n  const items = screen.getAllByRole('listitem').map((li) => li.textContent)\n  expect(items).toEqual(['A (admin)', 'B'])\n})\n\ntest('shows a message when empty', () => {\n  render(<UserList users={[]} />)\n  expect(screen.getByText('No users')).toBeTruthy()\n  expect(screen.queryByRole('list')).toBeNull()\n})\n\ntest('escapes names', () => {\n  render(<UserList users={[{ id: 1, name: '<b>x</b>' }]} />)\n  expect(screen.getByRole('listitem').textContent).toBe('<b>x</b>')\n})\n"
+    },
+    "checks": [
+     {
+      "t": "lists users and marks admins",
+      "verify": ""
+     },
+     {
+      "t": "shows a message when empty",
+      "verify": ""
+     },
+     {
+      "t": "escapes names",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "JSX = createElement calls that make plain objects. {} holds expressions; className/onClick are camelCase; text is escaped.",
+    "mistakes": [
+     "{count &amp;&amp; …} rendering 0.",
+     "Writing if statements inside JSX.",
+     "class instead of className."
+    ]
+   }
+  },
+  {
+   "id": "props",
+   "prereqs": [
+    "jsx"
+   ],
+   "dryRun": {
+    "title": "<Avatar name=\"Ada Lovelace\" />",
+    "columns": [
+     "prop",
+     "value inside Avatar"
+    ],
+    "rows": [
+     [
+      "name",
+      "\"Ada Lovelace\""
+     ],
+     [
+      "size (not passed)",
+      "undefined → default 40"
+     ],
+     [
+      "children",
+      "undefined (nothing between tags)"
+     ],
+     [
+      "props object",
+      "frozen in dev: cannot be changed"
+     ]
+    ],
+    "hit": 1,
+    "note": "Props are the inputs of a component, passed by the parent. They are <b>read-only</b>: a component never changes its props, it renders from them. Defaults come from destructuring (<code>{ size = 40 }</code>); <code>children</code> is whatever sits between the tags."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function Card({ title, children }) { return &lt;section&gt;&lt;h2&gt;{title}&lt;/h2&gt;{children}&lt;/section&gt; }</code></pre>",
+     "opts": [
+      "<code>&lt;section&gt;&lt;h2&gt;T&lt;/h2&gt;&lt;/section&gt;</code>",
+      "<code>&lt;section&gt;&lt;h2&gt;T&lt;/h2&gt;body&lt;/section&gt;</code>",
+      "<code>&lt;section&gt;&lt;h2&gt;title&lt;/h2&gt;&lt;p&gt;body&lt;/p&gt;&lt;/section&gt;</code>",
+      "<code>&lt;section&gt;&lt;h2&gt;T&lt;/h2&gt;&lt;p&gt;body&lt;/p&gt;&lt;/section&gt;</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "children is a prop holding whatever you put between the tags."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction Card({ title, children }) { return <section><h2>{title}</h2>{children}</section> }\nawait mount(<Card title=\"T\"><p>body</p></Card>)\nconsole.log(container.innerHTML)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function A({ size = 40 }) { return &lt;i&gt;{size}&lt;/i&gt; }</code></pre>",
+     "opts": [
+      "<code>404040</code>",
+      "<code>4040</code>",
+      "<code>40nullundefined</code>",
+      "<code>40040</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Defaults apply only when the prop is undefined. null is a real value and renders nothing."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction A({ size = 40 }) { return <i>{size}</i> }\nawait mount(<p><A /><A size={null} /><A size={undefined} /></p>)\nconsole.log(container.textContent)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function Mut(props) { try { props.x = 2 } catch (e) { return &lt;b&gt;{e.name}&lt;/b&gt; } return &lt;b&gt;ok&lt;/b&gt; }</code></pre>",
+     "opts": [
+      "<code>ok</code>",
+      "<code>undefined</code>",
+      "<code>TypeError</code>",
+      "<code>RangeError</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "In development React freezes the props object, so assigning to it throws. Props are read-only by design."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction Mut(props) { try { props.x = 2 } catch (e) { return <b>{e.name}</b> } return <b>ok</b> }\nawait mount(<Mut x={1} />)\nconsole.log(container.textContent)"
+    },
+    {
+     "tag": "Callbacks",
+     "q": "How does a child tell its parent that something happened?",
+     "opts": [
+      "The parent passes a function prop (onSelect), and the child calls it",
+      "The child changes the parent's props",
+      "The child sets a global variable",
+      "React does it automatically"
+     ],
+     "ans": 0,
+     "why": [
+      "Data goes down as props; events go up as callback props."
+     ]
+    },
+    {
+     "tag": "Spreading",
+     "q": "What is the risk of <code>&lt;Input {...props} /&gt;</code>?",
+     "opts": [
+      "It is a syntax error",
+      "It copies props deeply",
+      "Unknown props end up on the DOM element (warnings) or override what you set before the spread",
+      "It disables re-renders"
+     ],
+     "ans": 2,
+     "why": [
+      "Destructure what you use and spread the rest deliberately, in the right order."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>Avatar({ name, size = 40, onClick })</code>: a <code>&lt;button&gt;</code> showing the initials of the first and last word (max 2, uppercase), with style width/height = size px, aria-label = name, calling onClick(name) when clicked.",
+    "examples": [
+     "<Avatar name=\"ada lovelace\" />  → \"AL\"",
+     "<Avatar name=\"Cher\" size={24} />  → \"C\", 24px"
+    ],
+    "hint": "name.trim().split(/\\s+/), first letter of the first and the last part.",
+    "fn": "Avatar",
+    "starter": "export function Avatar({ name, size = 40, onClick }) {\n  return null // your code\n}\n",
+    "solution": "export function Avatar({ name, size = 40, onClick }) {\n  const parts = name.trim().split(/\\s+/)\n  const initials = (parts[0][0] + (parts.length > 1 ? parts.at(-1)[0] : '')).toUpperCase()\n  return (\n    <button aria-label={name} style={{ width: size, height: size }} onClick={() => onClick?.(name)}>\n      {initials}\n    </button>\n  )\n}\n",
+    "starterFile": "src/Avatar.jsx",
+    "tests": {
+     "file": "src/Avatar.test.jsx",
+     "run": "npx vitest run Avatar",
+     "code": "import { render, screen, fireEvent } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { Avatar } from './Avatar'\n\ntest('shows initials', () => {\n  render(<Avatar name=\"ada king lovelace\" />)\n  expect(screen.getByRole('button', { name: 'ada king lovelace' }).textContent).toBe('AL')\n})\n\ntest('default and custom size', () => {\n  render(<Avatar name=\"Cher\" />)\n  render(<Avatar name=\"Bo\" size={24} />)\n  expect(screen.getByRole('button', { name: 'Cher' }).style.width).toBe('40px')\n  expect(screen.getByRole('button', { name: 'Bo' }).style.height).toBe('24px')\n})\n\ntest('calls onClick with the name', () => {\n  const got = []\n  render(<Avatar name=\"Ada\" onClick={(n) => got.push(n)} />)\n  fireEvent.click(screen.getByRole('button'))\n  expect(got).toEqual(['Ada'])\n})\n"
+    },
+    "checks": [
+     {
+      "t": "shows initials",
+      "verify": ""
+     },
+     {
+      "t": "default and custom size",
+      "verify": ""
+     },
+     {
+      "t": "calls onClick with the name",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Props are read-only inputs. Defaults via destructuring, children for nested content, callbacks to send events up.",
+    "mistakes": [
+     "Changing props inside the child.",
+     "Expecting a default for null.",
+     "Blind {...props} spreading onto DOM elements."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Star Rating Component",
+     "diff": "easy",
+     "mc": "star-rating",
+     "course": "react-machine-coding"
+    }
+   ]
+  },
+  {
+   "id": "state-basics",
+   "prereqs": [
+    "props"
+   ],
+   "dryRun": {
+    "title": "Clicking \"+2\" which calls setCount(count + 1) twice",
+    "columns": [
+     "moment",
+     "count in this render",
+     "queued update"
+    ],
+    "rows": [
+     [
+      "render",
+      "0",
+      "—"
+     ],
+     [
+      "first setCount(count + 1)",
+      "0",
+      "set to 1"
+     ],
+     [
+      "second setCount(count + 1)",
+      "still 0",
+      "set to 1 again"
+     ],
+     [
+      "re-render",
+      "1",
+      "—"
+     ],
+     [
+      "with setCount(c => c + 1) twice",
+      "0",
+      "0→1→2, renders 2"
+     ]
+    ],
+    "hit": 2,
+    "note": "State is a component's memory. Calling the setter <b>schedules</b> a re-render; the value in the current render does not change. When the next value depends on the previous one, use the <b>updater</b> form: <code>setCount(c =&gt; c + 1)</code>."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function C() {\n  const [n, setN] = useState(0)\n  return &lt;button onClick={() =&gt; { setN(n + 1); setN(n + 1) }}&gt;{n}&lt;/button&gt;\n}</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>2</code>",
+      "<code>0</code>",
+      "<code>3</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Both calls read n from the same render (0), so both set 1."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction C() {\n  const [n, setN] = useState(0)\n  return <button onClick={() => { setN(n + 1); setN(n + 1) }}>{n}</button>\n}\nawait mount(<C />)\nawait run(() => container.querySelector('button').click())\nconsole.log(container.textContent)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function C() {\n  const [n, setN] = useState(0)\n  return &lt;button onClick={() =&gt; { setN((x) =&gt; x + 1); setN((x) =&gt; x + 1) }}&gt;{n}&lt;/button&gt;\n}</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>0</code>",
+      "<code>11</code>",
+      "<code>2</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Updaters are queued and each receives the latest value."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction C() {\n  const [n, setN] = useState(0)\n  return <button onClick={() => { setN((x) => x + 1); setN((x) => x + 1) }}>{n}</button>\n}\nawait mount(<C />)\nawait run(() => container.querySelector('button').click())\nconsole.log(container.textContent)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function C() {\n  const [n, setN] = useState(0)\n  return &lt;button onClick={() =&gt; { setN(n + 5); console.log('inside', n) }}&gt;{n}&lt;/button&gt;\n}</code></pre>",
+     "opts": [
+      "<code>inside 5 screen 5</code>",
+      "<code>inside 0 screen 5</code>",
+      "<code>inside 0 screen 0</code>",
+      "<code>inside 5 screen 0</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "The setter does not change the variable in the running code; the new value appears in the next render."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction C() {\n  const [n, setN] = useState(0)\n  return <button onClick={() => { setN(n + 5); console.log('inside', n) }}>{n}</button>\n}\nawait mount(<C />)\nawait run(() => container.querySelector('button').click())\nconsole.log('screen', container.textContent)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function L() {\n  const [list, setList] = useState(['a'])\n  return &lt;button onClick={() =&gt; { list.push('b'); setList(list) }}&gt;{list.length}&lt;/button&gt;\n}</code></pre>",
+     "opts": [
+      "<code>2</code>",
+      "<code>1</code>",
+      "<code>0</code>",
+      "<code>undefined</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Same array reference → React sees no change and skips the re-render. Always create a new array/object: setList([...list, \"b\"])."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction L() {\n  const [list, setList] = useState(['a'])\n  return <button onClick={() => { list.push('b'); setList(list) }}>{list.length}</button>\n}\nawait mount(<L />)\nawait run(() => container.querySelector('button').click())\nconsole.log(container.textContent)"
+    },
+    {
+     "tag": "Where",
+     "q": "Which data should NOT be state?",
+     "opts": [
+      "A form input's current text",
+      "Whether a menu is open",
+      "The current page number",
+      "A value you can compute from props or other state, like a filtered list"
+     ],
+     "ans": 3,
+     "why": [
+      "Derive it during render; duplicate state drifts out of sync."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>Counter({ step = 1 })</code> with buttons \"−\", \"+\" and \"+ twice\" (adds step two times using the updater form), a \"Reset\" button, and the value in <code>&lt;output&gt;</code>.",
+    "examples": [
+     "<Counter step={5} />: + → 5, + twice → 15",
+     "Reset → 0"
+    ],
+    "hint": "useState(0); setCount(c =&gt; c + step) twice for \"+ twice\".",
+    "fn": "Counter",
+    "starter": "export function Counter({ step = 1 }) {\n  return null // your code\n}\n",
+    "solution": "import { useState } from 'react'\n\nexport function Counter({ step = 1 }) {\n  const [count, setCount] = useState(0)\n  const add = () => setCount((c) => c + step)\n  return (\n    <div>\n      <output>{count}</output>\n      <button onClick={() => setCount((c) => c - step)}>−</button>\n      <button onClick={add}>+</button>\n      <button onClick={() => { add(); add() }}>+ twice</button>\n      <button onClick={() => setCount(0)}>Reset</button>\n    </div>\n  )\n}\n",
+    "starterFile": "src/Counter.jsx",
+    "tests": {
+     "file": "src/Counter.test.jsx",
+     "run": "npx vitest run Counter",
+     "code": "import { render, screen, fireEvent } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { Counter } from './Counter'\n\nconst value = () => screen.getByRole('status').textContent\n\ntest('adds and subtracts by step', () => {\n  render(<Counter step={5} />)\n  fireEvent.click(screen.getByText('+'))\n  fireEvent.click(screen.getByText('+'))\n  fireEvent.click(screen.getByText('−'))\n  expect(value()).toBe('5')\n})\n\ntest('+ twice really adds two steps', () => {\n  render(<Counter step={5} />)\n  fireEvent.click(screen.getByText('+ twice'))\n  expect(value()).toBe('10')\n})\n\ntest('reset goes back to 0', () => {\n  render(<Counter />)\n  fireEvent.click(screen.getByText('+'))\n  fireEvent.click(screen.getByText('Reset'))\n  expect(value()).toBe('0')\n})\n"
+    },
+    "checks": [
+     {
+      "t": "adds and subtracts by step",
+      "verify": ""
+     },
+     {
+      "t": "+ twice really adds two steps",
+      "verify": ""
+     },
+     {
+      "t": "reset goes back to 0",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "setState schedules a re-render; the current value does not change. Use updaters for \"based on previous\", and always replace (never mutate) arrays and objects.",
+    "mistakes": [
+     "Calling setX(x + 1) twice and expecting +2.",
+     "Mutating an array then setting the same reference.",
+     "Storing values you could compute."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Tabs Component",
+     "diff": "easy",
+     "mc": "tabs",
+     "course": "react-machine-coding"
+    }
+   ]
+  }
+ ]
+}

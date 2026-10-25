@@ -1,0 +1,1075 @@
+{
+ "course": "react-mastery",
+ "items": [
+  {
+   "id": "state-decision",
+   "prereqs": [
+    "scheduler"
+   ],
+   "dryRun": {
+    "title": "Where should this piece of state live?",
+    "columns": [
+     "state",
+     "used by",
+     "home"
+    ],
+    "rows": [
+     [
+      "is a dropdown open",
+      "one component",
+      "local useState"
+     ],
+     [
+      "form fields of one form",
+      "that form",
+      "local state / form library"
+     ],
+     [
+      "selected filter shared by list + chart",
+      "two siblings",
+      "lift to their parent"
+     ],
+     [
+      "current user, theme",
+      "many distant components",
+      "context"
+     ],
+     [
+      "data from the server",
+      "many screens",
+      "a server-cache library (TanStack Query)"
+     ],
+     [
+      "shopping cart touched everywhere",
+      "many screens, many updates",
+      "a store (Zustand / Redux)"
+     ]
+    ],
+    "hit": 2,
+    "note": "Start local. Lift state to the closest common parent when siblings need it. Use context for rarely-changing app-wide values, a server-cache library for server data, and a store for complex client state shared widely. Also: never store what you can derive."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>import { useState, useEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, useSyncExternalStore, StrictMode } from 'react'\nfunction Celsius({ c, onC }) { return &lt;input value={c} onChange={(e) =&gt; onC(e.target.value)} /&gt; }\nfunction Show({ c }) { return &lt;p&gt;{c === '' ? '' : (c * 9) / 5 + 32}&lt;/p&gt; }\nfunction App() { const [c, setC] = useState(''); return &lt;&gt;&lt;Celsius c={c} onC={setC} /&gt;&lt;Show c={c} /&gt;&lt;/&gt; }</code></pre>",
+     "opts": [
+      "<code>100</code>",
+      "<code>(empty)</code>",
+      "<code>212</code>",
+      "<code>37.8</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "State lifted to App, passed down to both children: the input writes it, the display reads it."
+     ],
+     "exec": "import { useState, useEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, useSyncExternalStore, StrictMode } from 'react'\nfunction Celsius({ c, onC }) { return <input value={c} onChange={(e) => onC(e.target.value)} /> }\nfunction Show({ c }) { return <p>{c === '' ? '' : (c * 9) / 5 + 32}</p> }\nfunction App() { const [c, setC] = useState(''); return <><Celsius c={c} onC={setC} /><Show c={c} /></> }\nawait mount(<App />)\nawait type($('input'), '100')\nconsole.log($('p').textContent)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>import { useState, useEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, useSyncExternalStore, StrictMode } from 'react'\nfunction List({ items }) { const [count, setCount] = useState(items.length); return &lt;p&gt;{count}&lt;/p&gt; }</code></pre>",
+     "opts": [
+      "<code>2</code>",
+      "<code>3</code>",
+      "<code>undefined</code>",
+      "<code>23</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Copying a prop into state freezes it at the first value. Derive it instead: const count = items.length."
+     ],
+     "exec": "import { useState, useEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, useSyncExternalStore, StrictMode } from 'react'\nfunction List({ items }) { const [count, setCount] = useState(items.length); return <p>{count}</p> }\nawait mount(<List items={[1, 2]} />)\nawait mount(<List items={[1, 2, 3]} />)\nconsole.log($('p').textContent)"
+    },
+    {
+     "tag": "Server state",
+     "q": "Why not keep API data in Redux by default?",
+     "opts": [
+      "Redux cannot hold arrays",
+      "It is too slow",
+      "It breaks SSR",
+      "Server data needs caching, refetching, deduping and invalidation: a server-cache library does that for you"
+     ],
+     "ans": 3,
+     "why": [
+      "Client state and server state are different problems."
+     ]
+    },
+    {
+     "tag": "URL",
+     "q": "Where should \"page 3 of search results for shoes\" live?",
+     "opts": [
+      "localStorage",
+      "In the URL (search params), so it survives reload and can be shared",
+      "A ref",
+      "Context"
+     ],
+     "ans": 1,
+     "why": [
+      "The URL is state too."
+     ]
+    },
+    {
+     "tag": "Derive",
+     "q": "You store <code>items</code> and <code>itemCount</code> in state. Problem?",
+     "opts": [
+      "None",
+      "They can drift apart; compute the count from items during render",
+      "Count must be a ref",
+      "Use two contexts"
+     ],
+     "ans": 1,
+     "why": [
+      "One source of truth, derive the rest."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Lift state up: write <code>Converter()</code> with two inputs labelled \"Celsius\" and \"Fahrenheit\". Typing in either updates the other (round to 1 decimal). Keep ONE piece of state (the last edited value and its scale) and derive the other.",
+    "examples": [
+     "type 100 in Celsius → Fahrenheit shows 212",
+     "type 32 in Fahrenheit → Celsius shows 0"
+    ],
+    "hint": "state = { scale: \"c\" | \"f\", value: string }; derive each input's value; empty input → both empty.",
+    "fn": "Converter",
+    "starter": "export function Converter() {\n  return null // your code\n}\n",
+    "solution": "import { useState } from 'react'\n\nconst round = (n) => String(Math.round(n * 10) / 10)\n\nexport function Converter() {\n  const [s, setS] = useState({ scale: 'c', value: '' })\n  const num = parseFloat(s.value)\n  const valid = s.value !== '' && !Number.isNaN(num)\n  const c = s.scale === 'c' ? s.value : valid ? round(((num - 32) * 5) / 9) : ''\n  const f = s.scale === 'f' ? s.value : valid ? round((num * 9) / 5 + 32) : ''\n  return (\n    <div>\n      <label>Celsius <input value={c} onChange={(e) => setS({ scale: 'c', value: e.target.value })} /></label>\n      <label>Fahrenheit <input value={f} onChange={(e) => setS({ scale: 'f', value: e.target.value })} /></label>\n    </div>\n  )\n}\n",
+    "starterFile": "src/Converter.jsx",
+    "tests": {
+     "file": "src/Converter.test.jsx",
+     "run": "npx vitest run Converter",
+     "code": "import { render, screen, fireEvent, act } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { Converter } from './Converter'\n\nconst C = () => screen.getByLabelText('Celsius')\nconst F = () => screen.getByLabelText('Fahrenheit')\n\ntest('celsius to fahrenheit', () => {\n  render(<Converter />)\n  fireEvent.change(C(), { target: { value: '100' } })\n  expect(F().value).toBe('212')\n})\n\ntest('fahrenheit to celsius, rounded', () => {\n  render(<Converter />)\n  fireEvent.change(F(), { target: { value: '100' } })\n  expect(C().value).toBe('37.8')\n})\n\ntest('clearing one clears the other', () => {\n  render(<Converter />)\n  fireEvent.change(C(), { target: { value: '5' } })\n  fireEvent.change(C(), { target: { value: '' } })\n  expect(F().value).toBe('')\n})\n"
+    },
+    "checks": [
+     {
+      "t": "celsius to fahrenheit",
+      "verify": ""
+     },
+     {
+      "t": "fahrenheit to celsius, rounded",
+      "verify": ""
+     },
+     {
+      "t": "clearing one clears the other",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Keep state as local as possible, lift it to the closest common parent, derive everything you can, and use the right tool for server data and global client state.",
+    "mistakes": [
+     "Copying props into state.",
+     "Global stores for state only one component uses."
+    ]
+   }
+  },
+  {
+   "id": "context-api",
+   "prereqs": [
+    "state-decision"
+   ],
+   "dryRun": {
+    "title": "One context { cart, dispatch } vs two contexts",
+    "columns": [
+     "component",
+     "reads",
+     "re-renders when cart changes?"
+    ],
+    "rows": [
+     [
+      "CartBadge",
+      "cart (one context)",
+      "yes"
+     ],
+     [
+      "AddButton",
+      "dispatch (one context)",
+      "yes: same context value changed"
+     ],
+     [
+      "AddButton",
+      "dispatch (separate DispatchContext)",
+      "no"
+     ],
+     [
+      "CartBadge",
+      "cart (separate StateContext)",
+      "yes"
+     ]
+    ],
+    "hit": 2,
+    "note": "Context is a delivery mechanism, not a state manager. To avoid needless re-renders: memoize the value, split state and dispatch into separate contexts (dispatch never changes), and keep fast-changing values out of widely used contexts."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>import { useState, useEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, useSyncExternalStore, StrictMode } from 'react'\nconst State = createContext(0), Dispatch = createContext(null)\nlet buttonRenders = 0\nconst AddButton = memo(function AddButton() { const d = useContext(Dispatch); buttonRenders++; return &lt;button onClick={() =&gt; d((n) =&gt; n + 1)}&gt;add&lt;/button&gt; })\nfunction Badge() { return &lt;b&gt;{useContext(State)}&lt;/b&gt; }\nfunction App() { const [n, setN] = useState(0); return &lt;Dispatch value={setN}&gt;&lt;State value={n}&gt;&lt;Badge /&gt;&lt;AddButton /&gt;&lt;/State&gt;&lt;/Dispatch&gt; }</code></pre>",
+     "opts": [
+      "<code>2 3</code>",
+      "<code>0 1</code>",
+      "<code>2 2</code>",
+      "<code>2 1</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "The badge updates; the button reads only the stable dispatch context, so it never re-renders."
+     ],
+     "exec": "import { useState, useEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, useSyncExternalStore, StrictMode } from 'react'\nconst State = createContext(0), Dispatch = createContext(null)\nlet buttonRenders = 0\nconst AddButton = memo(function AddButton() { const d = useContext(Dispatch); buttonRenders++; return <button onClick={() => d((n) => n + 1)}>add</button> })\nfunction Badge() { return <b>{useContext(State)}</b> }\nfunction App() { const [n, setN] = useState(0); return <Dispatch value={setN}><State value={n}><Badge /><AddButton /></State></Dispatch> }\nawait mount(<App />)\nawait click($('button')); await click($('button'))\nconsole.log($('b').textContent, buttonRenders)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>import { useState, useEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, useSyncExternalStore, StrictMode } from 'react'\nconst Ctx = createContext(null)\nlet buttonRenders = 0\nconst AddButton = memo(function AddButton() { const { setN } = useContext(Ctx); buttonRenders++; return &lt;button onClick={() =&gt; setN((n) =&gt; n + 1)}&gt;add&lt;/button&gt; })\nfunction App() { const [n, setN] = useState(0); return &lt;Ctx value={{ n, setN }}&gt;&lt;AddButton /&gt;&lt;/Ctx&gt; }</code></pre>",
+     "opts": [
+      "<code>3</code>",
+      "<code>1</code>",
+      "<code>0</code>",
+      "<code>2</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "One combined context: every state change creates a new value, so even the button that only needs setN re-renders."
+     ],
+     "exec": "import { useState, useEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, useSyncExternalStore, StrictMode } from 'react'\nconst Ctx = createContext(null)\nlet buttonRenders = 0\nconst AddButton = memo(function AddButton() { const { setN } = useContext(Ctx); buttonRenders++; return <button onClick={() => setN((n) => n + 1)}>add</button> })\nfunction App() { const [n, setN] = useState(0); return <Ctx value={{ n, setN }}><AddButton /></Ctx> }\nawait mount(<App />)\nawait click($('button')); await click($('button'))\nconsole.log(buttonRenders)"
+    },
+    {
+     "tag": "Not a store",
+     "q": "Why is context alone often not enough for big, frequently changing state?",
+     "opts": [
+      "It cannot hold objects",
+      "It is async",
+      "Every consumer re-renders on every change; there are no selectors",
+      "It only works with classes"
+     ],
+     "ans": 2,
+     "why": [
+      "Stores like Zustand let components subscribe to slices."
+     ]
+    },
+    {
+     "tag": "Good fits",
+     "q": "Which is a great use of context?",
+     "opts": [
+      "Mouse position",
+      "A text input's value on every keystroke",
+      "A 10,000-row table",
+      "Theme, locale, current user, an API client: read often, changed rarely"
+     ],
+     "ans": 3,
+     "why": [
+      "Rarely changing, widely needed."
+     ]
+    },
+    {
+     "tag": "Default",
+     "q": "What does the default value in <code>createContext(defaultValue)</code> do?",
+     "opts": [
+      "Initial state of the provider",
+      "Used only when there is no provider above the consumer",
+      "A fallback when value is null",
+      "Nothing"
+     ],
+     "ans": 1,
+     "why": [
+      "Many teams use null and throw in a custom hook instead."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>CartProvider</code> using useReducer with <b>two</b> contexts, plus hooks <code>useCart()</code> (items array) and <code>useCartDispatch()</code>. Actions: { type: \"add\", item } and { type: \"clear\" }. A component that only uses useCartDispatch must not re-render when items change.",
+    "examples": [
+     "const dispatch = useCartDispatch(); dispatch({ type: \"add\", item: \"pen\" })",
+     "useCart() → [\"pen\"]"
+    ],
+    "hint": "Provide state and dispatch in separate providers; dispatch from useReducer is stable.",
+    "fn": "cart",
+    "starter": "export function CartProvider({ children }) {\n  return children // your code\n}\nexport function useCart() {}\nexport function useCartDispatch() {}\n",
+    "solution": "import { createContext, useContext, useReducer } from 'react'\n\nconst StateCtx = createContext(null)\nconst DispatchCtx = createContext(null)\n\nfunction reducer(items, action) {\n  switch (action.type) {\n    case 'add': return [...items, action.item]\n    case 'clear': return []\n    default: return items\n  }\n}\n\nexport function CartProvider({ children }) {\n  const [items, dispatch] = useReducer(reducer, [])\n  return (\n    <DispatchCtx value={dispatch}>\n      <StateCtx value={items}>{children}</StateCtx>\n    </DispatchCtx>\n  )\n}\nexport const useCart = () => useContext(StateCtx)\nexport const useCartDispatch = () => useContext(DispatchCtx)\n",
+    "starterFile": "src/cart.jsx",
+    "tests": {
+     "file": "src/cart.test.jsx",
+     "run": "npx vitest run cart",
+     "code": "import { render, screen, fireEvent, act } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { memo } from 'react'\nimport { CartProvider, useCart, useCartDispatch } from './cart'\n\nlet addRenders = 0\nconst Add = memo(function Add() { const d = useCartDispatch(); addRenders++; return <button onClick={() => d({ type: 'add', item: 'pen' })}>add</button> })\nconst Clear = memo(function Clear() { const d = useCartDispatch(); return <button onClick={() => d({ type: 'clear' })}>clear</button> })\nfunction Count() { return <output>{useCart().length}</output> }\nconst ui = () => render(<CartProvider><Count /><Add /><Clear /></CartProvider>)\n\ntest('adds items', () => {\n  ui()\n  fireEvent.click(screen.getByText('add')); fireEvent.click(screen.getByText('add'))\n  expect(screen.getByRole('status').textContent).toBe('2')\n})\n\ntest('clears items', () => {\n  ui()\n  fireEvent.click(screen.getByText('add')); fireEvent.click(screen.getByText('clear'))\n  expect(screen.getByRole('status').textContent).toBe('0')\n})\n\ntest('dispatch-only components do not re-render', () => {\n  addRenders = 0\n  ui()\n  fireEvent.click(screen.getByText('add')); fireEvent.click(screen.getByText('add'))\n  expect(addRenders).toBe(1)\n})\n"
+    },
+    "checks": [
+     {
+      "t": "adds items",
+      "verify": ""
+     },
+     {
+      "t": "clears items",
+      "verify": ""
+     },
+     {
+      "t": "dispatch-only components do not re-render",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Context delivers values; it does not optimise. Memoize values, split state from dispatch, keep hot state elsewhere.",
+    "mistakes": [
+     "One giant context for everything.",
+     "A new object value every render."
+    ]
+   }
+  },
+  {
+   "id": "react-query",
+   "prereqs": [
+    "context-api"
+   ],
+   "dryRun": {
+    "title": "useQuery({ queryKey: [\"user\", 1], queryFn, staleTime: 60_000 })",
+    "columns": [
+     "moment",
+     "what happens"
+    ],
+    "rows": [
+     [
+      "first mount",
+      "fetch, status \"pending\" → \"success\", cache under [\"user\", 1]"
+     ],
+     [
+      "second component, same key",
+      "no new request: reads the same cache entry (deduped)"
+     ],
+     [
+      "remount within staleTime",
+      "data shown instantly, no refetch"
+     ],
+     [
+      "after staleTime, window refocus",
+      "shows cached data and refetches in the background"
+     ],
+     [
+      "no observers for gcTime (5 min)",
+      "cache entry garbage-collected"
+     ]
+    ],
+    "hit": 1,
+    "note": "Server state is a cache of something you do not own. TanStack Query handles caching by key, deduping requests, background refetching, retries, and invalidation after mutations. You describe what to fetch; it decides when."
+   },
+   "think": [
+    {
+     "tag": "Keys",
+     "q": "Why include the user id in the query key: <code>[\"user\", id]</code>?",
+     "opts": [
+      "Keys are just labels",
+      "To sort queries",
+      "The key identifies the cached data; a different id must be a different cache entry (and refetch)",
+      "For TypeScript"
+     ],
+     "ans": 2,
+     "why": [
+      "Everything the query depends on goes in the key."
+     ]
+    },
+    {
+     "tag": "staleTime vs gcTime",
+     "q": "What is the difference?",
+     "opts": [
+      "staleTime: how long data counts as fresh (no refetch). gcTime: how long unused data stays in memory",
+      "They are the same",
+      "gcTime is for mutations",
+      "staleTime deletes data"
+     ],
+     "ans": 0,
+     "why": [
+      "Default staleTime is 0, so data is \"stale\" immediately and refetches on mount/focus."
+     ]
+    },
+    {
+     "tag": "After a mutation",
+     "q": "You add a todo via an API. How do you update the list?",
+     "opts": [
+      "<code>Reload the page</code>",
+      "<code>useQuery again with a new name</code>",
+      "<code>queryClient.invalidateQueries({ queryKey: ['todos'] })</code>",
+      "<code>setState in every list</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Invalidation marks it stale and refetches whatever is on screen."
+     ]
+    },
+    {
+     "tag": "Why not useEffect",
+     "q": "What does useEffect + fetch typically miss compared to TanStack Query?",
+     "opts": [
+      "Caching, dedupe, race handling, retries, background refresh, and shared loading state",
+      "Nothing",
+      "JSON parsing",
+      "Error throwing"
+     ],
+     "ans": 0,
+     "why": [
+      "You end up writing a worse version of the library."
+     ]
+    },
+    {
+     "tag": "Dedupe",
+     "q": "Three components mount at once with the same key. How many requests?",
+     "opts": [
+      "Three",
+      "Zero",
+      "Depends on React version",
+      "One; they share the in-flight promise"
+     ],
+     "ans": 3,
+     "why": [
+      "Deduping by key is built in."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write a tiny query cache: <code>createQueryCache({ now })</code> with <code>fetchQuery(key, fn, staleTime)</code> that returns a promise of the data: fresh cached data is reused, in-flight requests for the same key are shared, stale data triggers a new fn() call. Also <code>invalidate(key)</code>.",
+    "examples": [
+     "await cache.fetchQuery(\"user:1\", getUser, 1000)",
+     "two calls at once → getUser called once"
+    ],
+    "hint": "Map key → { data, updatedAt, promise }. If promise in flight return it; if data and now() - updatedAt &lt; staleTime return Promise.resolve(data).",
+    "fn": "queryCache",
+    "starter": "export function createQueryCache({ now = Date.now } = {}) {\n  // your code\n}\n",
+    "solution": "export function createQueryCache({ now = Date.now } = {}) {\n  const map = new Map()\n  return {\n    fetchQuery(key, fn, staleTime = 0) {\n      const e = map.get(key)\n      if (e?.promise) return e.promise\n      if (e && 'data' in e && now() - e.updatedAt < staleTime) return Promise.resolve(e.data)\n      const entry = e ?? {}\n      entry.promise = Promise.resolve().then(fn).then(\n        (data) => { entry.data = data; entry.updatedAt = now(); entry.promise = null; return data },\n        (err) => { entry.promise = null; throw err },\n      )\n      map.set(key, entry)\n      return entry.promise\n    },\n    invalidate(key) { const e = map.get(key); if (e) e.updatedAt = -Infinity },\n  }\n}\n",
+    "starterFile": "src/queryCache.js",
+    "tests": {
+     "file": "src/queryCache.test.jsx",
+     "run": "npx vitest run queryCache",
+     "code": "import { expect, test } from 'vitest'\nimport { createQueryCache } from './queryCache'\n\ntest('dedupes in-flight requests', async () => {\n  let calls = 0\n  const cache = createQueryCache()\n  const fn = async () => { calls++; return 'ada' }\n  const [a, b] = await Promise.all([cache.fetchQuery('u', fn, 1000), cache.fetchQuery('u', fn, 1000)])\n  expect([a, b, calls]).toEqual(['ada', 'ada', 1])\n})\n\ntest('reuses fresh data, refetches stale data', async () => {\n  let t = 0, calls = 0\n  const cache = createQueryCache({ now: () => t })\n  const fn = async () => ++calls\n  await cache.fetchQuery('k', fn, 100)\n  t = 50\n  expect(await cache.fetchQuery('k', fn, 100)).toBe(1)\n  t = 200\n  expect(await cache.fetchQuery('k', fn, 100)).toBe(2)\n})\n\ntest('invalidate forces a refetch, errors are not cached', async () => {\n  let calls = 0\n  const cache = createQueryCache()\n  await cache.fetchQuery('k', async () => ++calls, 1e9)\n  cache.invalidate('k')\n  expect(await cache.fetchQuery('k', async () => ++calls, 1e9)).toBe(2)\n  await expect(cache.fetchQuery('bad', async () => { throw new Error('x') })).rejects.toThrow('x')\n  expect(await cache.fetchQuery('bad', async () => 'ok')).toBe('ok')\n})\n"
+    },
+    "checks": [
+     {
+      "t": "dedupes in-flight requests",
+      "verify": ""
+     },
+     {
+      "t": "reuses fresh data, refetches stale data",
+      "verify": ""
+     },
+     {
+      "t": "invalidate forces a refetch, errors are not cached",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Server state = a cache keyed by query keys: dedupe, staleTime, background refetch, invalidation after mutations. Use TanStack Query instead of hand-written effects.",
+    "mistakes": [
+     "Missing variables in the query key.",
+     "Copying query data into useState."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Build useQuery (mini React Query)",
+     "diff": "hard",
+     "mc": "use-query",
+     "course": "react-machine-coding"
+    }
+   ]
+  },
+  {
+   "id": "redux",
+   "prereqs": [
+    "react-query"
+   ],
+   "dryRun": {
+    "title": "dispatch({ type: \"todos/added\", payload: \"Learn\" })",
+    "columns": [
+     "step",
+     "who",
+     "what"
+    ],
+    "rows": [
+     [
+      "1",
+      "component",
+      "dispatches an action (a plain object)"
+     ],
+     [
+      "2",
+      "middleware (thunk, logger)",
+      "may log, delay, or dispatch more"
+     ],
+     [
+      "3",
+      "root reducer",
+      "(state, action) → new state, pure"
+     ],
+     [
+      "4",
+      "store",
+      "saves the new state, notifies subscribers"
+     ],
+     [
+      "5",
+      "useSelector",
+      "re-renders components whose selected value changed"
+     ]
+    ],
+    "hit": 2,
+    "note": "Redux keeps all global client state in one store, changed only by dispatching actions to pure reducers. That makes changes predictable, loggable and time-travel-debuggable. Middleware handles side effects; selectors read slices."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>import { useState, useEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, useSyncExternalStore, StrictMode } from 'react'\nfunction createStore(reducer, state) { const subs = new Set(); return { getState: () =&gt; state, dispatch: (a) =&gt; { state = reducer(state, a); subs.forEach((s) =&gt; s()) }, subscribe: (s) =&gt; (subs.add(s), () =&gt; subs.delete(s)) } }\nconst store = createStore((s, a) =&gt; (a.type === 'inc' ? s + 1 : s), 0)\nfunction Count() { const n = useSyncExternalStore(store.subscribe, store.getState); return &lt;p&gt;{n}&lt;/p&gt; }</code></pre>",
+     "opts": [
+      "<code>3</code>",
+      "<code>2</code>",
+      "<code>1</code>",
+      "<code>0</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Only \"inc\" changes state; React subscribes to the store with useSyncExternalStore (what react-redux uses)."
+     ],
+     "exec": "import { useState, useEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, useSyncExternalStore, StrictMode } from 'react'\nfunction createStore(reducer, state) { const subs = new Set(); return { getState: () => state, dispatch: (a) => { state = reducer(state, a); subs.forEach((s) => s()) }, subscribe: (s) => (subs.add(s), () => subs.delete(s)) } }\nconst store = createStore((s, a) => (a.type === 'inc' ? s + 1 : s), 0)\nfunction Count() { const n = useSyncExternalStore(store.subscribe, store.getState); return <p>{n}</p> }\nawait mount(<Count />)\nawait run(() => { store.dispatch({ type: 'inc' }); store.dispatch({ type: 'nope' }); store.dispatch({ type: 'inc' }) })\nconsole.log($('p').textContent)"
+    },
+    {
+     "tag": "Pure",
+     "q": "Why must reducers be pure?",
+     "opts": [
+      "For speed",
+      "So the same actions always produce the same state: replay, time travel and tests all depend on it",
+      "Because Redux runs in a worker",
+      "To support classes"
+     ],
+     "ans": 1,
+     "why": [
+      "Side effects go in middleware (thunks, listeners)."
+     ]
+    },
+    {
+     "tag": "Selectors",
+     "q": "<code>useSelector((s) =&gt; s.todos.filter((t) =&gt; t.done))</code> re-renders on every store change. Why?",
+     "opts": [
+      "useSelector is broken",
+      "filter is slow",
+      "The store is mutated",
+      "filter returns a new array each time, so the selected value always looks changed"
+     ],
+     "ans": 3,
+     "why": [
+      "Memoize with createSelector, or select primitive values."
+     ]
+    },
+    {
+     "tag": "Middleware",
+     "q": "Where should an API call triggered by an action go?",
+     "opts": [
+      "In a thunk/listener middleware, not in the reducer",
+      "In the reducer",
+      "In the action object",
+      "In the store constructor"
+     ],
+     "ans": 0,
+     "why": [
+      "Reducers compute; middleware does side effects."
+     ]
+    },
+    {
+     "tag": "When",
+     "q": "When is Redux a good fit today?",
+     "opts": [
+      "Every small app",
+      "For server data caching only",
+      "Large apps with lots of shared client state, many contributors, and a need for strict, traceable updates",
+      "Instead of local state everywhere"
+     ],
+     "ans": 2,
+     "why": [
+      "Many apps need just local state + TanStack Query."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write the core of Redux: <code>createStore(reducer, preloadedState)</code> with getState, dispatch (returns the action), subscribe (returns unsubscribe; listeners added during a dispatch run next time), and <code>combineReducers(map)</code>. Dispatch an init action <code>{ type: \"@@init\" }</code> on creation.",
+    "examples": [
+     "const store = createStore(combineReducers({ count, todos }))",
+     "store.dispatch({ type: \"count/inc\" }); store.getState().count"
+    ],
+    "hint": "combineReducers returns (state = {}, action) =&gt; new object with each key's reducer applied; keep the same object if nothing changed.",
+    "fn": "redux",
+    "starter": "export function createStore(reducer, preloadedState) {\n  // your code\n}\n\nexport function combineReducers(reducers) {\n  // your code\n}\n",
+    "solution": "export function createStore(reducer, preloadedState) {\n  let state = preloadedState\n  let listeners = []\n  const store = {\n    getState: () => state,\n    dispatch(action) {\n      state = reducer(state, action)\n      for (const l of [...listeners]) l()\n      return action\n    },\n    subscribe(l) {\n      listeners.push(l)\n      return () => { listeners = listeners.filter((x) => x !== l) }\n    },\n  }\n  store.dispatch({ type: '@@init' })\n  return store\n}\n\nexport function combineReducers(reducers) {\n  return (state = {}, action) => {\n    let changed = false\n    const next = {}\n    for (const k of Object.keys(reducers)) {\n      next[k] = reducers[k](state[k], action)\n      if (next[k] !== state[k]) changed = true\n    }\n    return changed ? next : state\n  }\n}\n",
+    "starterFile": "src/redux.js",
+    "tests": {
+     "file": "src/redux.test.jsx",
+     "run": "npx vitest run redux",
+     "code": "import { expect, test } from 'vitest'\nimport { combineReducers, createStore } from './redux'\n\nconst count = (s = 0, a) => (a.type === 'count/inc' ? s + 1 : s)\nconst todos = (s = [], a) => (a.type === 'todos/add' ? [...s, a.payload] : s)\n\ntest('initialises from reducer defaults', () => {\n  const store = createStore(combineReducers({ count, todos }))\n  expect(store.getState()).toEqual({ count: 0, todos: [] })\n})\n\ntest('dispatch updates state and notifies until unsubscribed', () => {\n  const store = createStore(combineReducers({ count, todos }))\n  let calls = 0\n  const off = store.subscribe(() => calls++)\n  store.dispatch({ type: 'count/inc' })\n  store.dispatch({ type: 'todos/add', payload: 'learn' })\n  off()\n  store.dispatch({ type: 'count/inc' })\n  expect(store.getState()).toEqual({ count: 2, todos: ['learn'] })\n  expect(calls).toBe(2)\n})\n\ntest('unknown actions keep the same state object', () => {\n  const store = createStore(combineReducers({ count, todos }), { count: 5, todos: [] })\n  const before = store.getState()\n  expect(store.dispatch({ type: 'x' })).toEqual({ type: 'x' })\n  expect(store.getState()).toBe(before)\n})\n"
+    },
+    "checks": [
+     {
+      "t": "initialises from reducer defaults",
+      "verify": ""
+     },
+     {
+      "t": "dispatch updates state and notifies until unsubscribed",
+      "verify": ""
+     },
+     {
+      "t": "unknown actions keep the same state object",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Redux = one store, actions describe what happened, pure reducers compute the next state, middleware does side effects, selectors read slices.",
+    "mistakes": [
+     "Side effects in reducers.",
+     "Selectors that return new objects every time."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Build a Mini Redux",
+     "diff": "hard",
+     "mc": "mini-redux"
+    }
+   ]
+  },
+  {
+   "id": "redux-toolkit",
+   "prereqs": [
+    "redux"
+   ],
+   "dryRun": {
+    "title": "createSlice({ name: \"todos\", initialState: [], reducers: { added(state, action) { state.push(action.payload) } } })",
+    "columns": [
+     "you get",
+     "what it is"
+    ],
+    "rows": [
+     [
+      "todosSlice.reducer",
+      "the reducer for the store"
+     ],
+     [
+      "todosSlice.actions.added(\"x\")",
+      "{ type: \"todos/added\", payload: \"x\" }"
+     ],
+     [
+      "state.push(...) inside",
+      "safe: Immer turns the \"mutation\" into a new immutable state"
+     ],
+     [
+      "configureStore",
+      "store with thunk + dev checks + DevTools, no boilerplate"
+     ]
+    ],
+    "hit": 2,
+    "note": "Redux Toolkit (RTK) is the official, modern way to write Redux. createSlice generates action creators and the reducer; Immer lets you write \"mutating\" code safely; configureStore sets up good defaults; RTK Query adds data fetching."
+   },
+   "think": [
+    {
+     "tag": "Immer",
+     "q": "Inside an RTK reducer, <code>state.items.push(x)</code> is fine. Why?",
+     "opts": [
+      "RTK allows mutation of the real state",
+      "push is special-cased",
+      "It is not fine",
+      "Immer records the changes on a draft and produces a new immutable state"
+     ],
+     "ans": 3,
+     "why": [
+      "Outside createSlice/createReducer it would be a real mutation bug."
+     ]
+    },
+    {
+     "tag": "Return or mutate",
+     "q": "In an RTK case reducer, what must you NOT do?",
+     "opts": [
+      "Mutate the draft",
+      "Mutate the draft AND return a new value in the same reducer",
+      "Return a new value",
+      "Read action.payload"
+     ],
+     "ans": 1,
+     "why": [
+      "Either mutate the draft or return a replacement, not both."
+     ]
+    },
+    {
+     "tag": "Action types",
+     "q": "<code>createSlice({ name: \"cart\", reducers: { removed } })</code>. What is the action type?",
+     "opts": [
+      "<code>\"removed\"</code>",
+      "<code>\"CART_REMOVED\"</code>",
+      "<code>\"cart/removed\"</code>",
+      "<code>\"cart.removed\"</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Types are generated as name/reducerKey."
+     ]
+    },
+    {
+     "tag": "Async",
+     "q": "Where does RTK put async logic like fetching a user?",
+     "opts": [
+      "createAsyncThunk (pending/fulfilled/rejected actions) or RTK Query endpoints",
+      "In the slice reducer",
+      "In useEffect only",
+      "In the action payload"
+     ],
+     "ans": 0,
+     "why": [
+      "RTK Query is the RTK answer to TanStack Query."
+     ]
+    },
+    {
+     "tag": "Legacy",
+     "q": "Is hand-written Redux (switch statements, action type constants) still recommended?",
+     "opts": [
+      "Yes, it is the standard",
+      "Only for big apps",
+      "No, the Redux team recommends RTK for all Redux code",
+      "Only with TypeScript"
+     ],
+     "ans": 2,
+     "why": [
+      "RTK is less code and safer defaults."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write a mini <code>createSlice({ name, initialState, reducers })</code> (without Immer: case reducers return the new state) returning <code>{ name, reducer, actions }</code>. Each action creator makes <code>{ type: `${name}/${key}`, payload }</code>; the reducer handles only its own types and starts from initialState.",
+    "examples": [
+     "const s = createSlice({ name: \"counter\", initialState: 0, reducers: { added: (st, a) => st + a.payload } })",
+     "s.reducer(0, s.actions.added(5))  // 5"
+    ],
+    "hint": "Build a Map from full type to case reducer; reducer = (state = initialState, action) =&gt; case ? case(state, action) : state.",
+    "fn": "createSlice",
+    "starter": "export function createSlice({ name, initialState, reducers }) {\n  // your code\n}\n",
+    "solution": "export function createSlice({ name, initialState, reducers }) {\n  const cases = new Map()\n  const actions = {}\n  for (const [key, fn] of Object.entries(reducers)) {\n    const type = `${name}/${key}`\n    cases.set(type, fn)\n    const creator = (payload) => ({ type, payload })\n    creator.type = type\n    actions[key] = creator\n  }\n  const reducer = (state = initialState, action) => {\n    const fn = cases.get(action.type)\n    return fn ? fn(state, action) : state\n  }\n  return { name, reducer, actions }\n}\n",
+    "starterFile": "src/createSlice.js",
+    "tests": {
+     "file": "src/createSlice.test.jsx",
+     "run": "npx vitest run createSlice",
+     "code": "import { expect, test } from 'vitest'\nimport { createSlice } from './createSlice'\n\nconst counter = createSlice({ name: 'counter', initialState: 0, reducers: { added: (s, a) => s + a.payload, reset: () => 0 } })\n\ntest('action creators build typed actions', () => {\n  expect(counter.actions.added(5)).toEqual({ type: 'counter/added', payload: 5 })\n  expect(counter.actions.added.type).toBe('counter/added')\n})\n\ntest('reducer handles its cases from initialState', () => {\n  let s = counter.reducer(undefined, { type: '@@init' })\n  s = counter.reducer(s, counter.actions.added(5))\n  s = counter.reducer(s, counter.actions.added(2))\n  expect(s).toBe(7)\n  expect(counter.reducer(s, counter.actions.reset())).toBe(0)\n})\n\ntest('ignores other slices\\' actions', () => {\n  const other = createSlice({ name: 'other', initialState: 'x', reducers: { added: () => 'changed' } })\n  expect(counter.reducer(3, other.actions.added(1))).toBe(3)\n})\n"
+    },
+    "checks": [
+     {
+      "t": "action creators build typed actions",
+      "verify": ""
+     },
+     {
+      "t": "reducer handles its cases from initialState",
+      "verify": ""
+     },
+     {
+      "t": "ignores other slices' actions",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "RTK = modern Redux: createSlice (actions + reducer, Immer drafts), configureStore defaults, createAsyncThunk / RTK Query for async.",
+    "mistakes": [
+     "Mutating AND returning in one case reducer.",
+     "Writing old-style Redux boilerplate in new code."
+    ]
+   }
+  },
+  {
+   "id": "zustand",
+   "prereqs": [
+    "redux-toolkit"
+   ],
+   "dryRun": {
+    "title": "const useCart = create((set) => ({ items: [], add: (x) => set((s) => ({ items: [...s.items, x] })) }))",
+    "columns": [
+     "component",
+     "selector",
+     "re-renders when items change?"
+    ],
+    "rows": [
+     [
+      "Badge",
+      "(s) => s.items.length",
+      "yes, when the length changes"
+     ],
+     [
+      "AddButton",
+      "(s) => s.add",
+      "no: the function never changes"
+     ],
+     [
+      "Debug",
+      "(s) => s",
+      "yes, on every change"
+     ],
+     [
+      "outside React",
+      "useCart.getState().add(x)",
+      "—"
+     ]
+    ],
+    "hit": 1,
+    "note": "Zustand is a tiny store: one create() call gives you a hook. Components subscribe through a <b>selector</b> and re-render only when that selected value changes. No providers, no reducers, no boilerplate."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>import { useState, useEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, useSyncExternalStore, StrictMode } from 'react'\nfunction create(init) { let state; const subs = new Set(); const set = (fn) =&gt; { state = { ...state, ...fn(state) }; subs.forEach((l) =&gt; l()) }; state = init(set); const sub = (l) =&gt; (subs.add(l), () =&gt; subs.delete(l)); const useStore = (sel) =&gt; useSyncExternalStore(sub, () =&gt; sel(state)); useStore.getState = () =&gt; state; return useStore }\nconst useStore = create((set) =&gt; ({ count: 0, other: 0, inc: () =&gt; set((s) =&gt; ({ count: s.count + 1 })), bump: () =&gt; set((s) =&gt; ({ other: s.other + 1 })) }))\nlet renders = 0\nfunction Count() { renders++; return &lt;b&gt;{useStore((s) =&gt; s.count)}&lt;/b&gt; }</code></pre>",
+     "opts": [
+      "<code>1 2</code>",
+      "<code>1 4</code>",
+      "<code>0 1</code>",
+      "<code>1 3</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Changing \"other\" does not re-render Count, because its selected value (count) did not change. Only inc did."
+     ],
+     "exec": "import { useState, useEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, useSyncExternalStore, StrictMode } from 'react'\nfunction create(init) { let state; const subs = new Set(); const set = (fn) => { state = { ...state, ...fn(state) }; subs.forEach((l) => l()) }; state = init(set); const sub = (l) => (subs.add(l), () => subs.delete(l)); const useStore = (sel) => useSyncExternalStore(sub, () => sel(state)); useStore.getState = () => state; return useStore }\nconst useStore = create((set) => ({ count: 0, other: 0, inc: () => set((s) => ({ count: s.count + 1 })), bump: () => set((s) => ({ other: s.other + 1 })) }))\nlet renders = 0\nfunction Count() { renders++; return <b>{useStore((s) => s.count)}</b> }\nawait mount(<Count />)\nawait run(() => { useStore.getState().bump(); useStore.getState().bump(); useStore.getState().inc() })\nconsole.log($('b').textContent, renders)"
+    },
+    {
+     "tag": "Selector trap",
+     "q": "<code>const { a, b } = useStore((s) =&gt; ({ a: s.a, b: s.b }))</code> causes a render loop warning or extra renders. Why?",
+     "opts": [
+      "Destructuring is not allowed",
+      "Zustand needs a provider",
+      "a and b must be functions",
+      "The selector returns a new object every time; use useShallow or select separately"
+     ],
+     "ans": 3,
+     "why": [
+      "Selectors should return stable values."
+     ]
+    },
+    {
+     "tag": "Providers",
+     "q": "Does Zustand need a Provider at the top of the app?",
+     "opts": [
+      "Yes, always",
+      "No, the store is a module-level hook (providers are optional, e.g. for SSR or per-test stores)",
+      "Only in production",
+      "Only with TypeScript"
+     ],
+     "ans": 1,
+     "why": [
+      "That is part of why it is so light."
+     ]
+    },
+    {
+     "tag": "Outside React",
+     "q": "How do you read or update a Zustand store outside a component (e.g. in an API helper)?",
+     "opts": [
+      "<code>useStore() in the helper</code>",
+      "<code>useStore.getState() / useStore.setState()</code>",
+      "<code>import the state variable</code>",
+      "<code>dispatch an action</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Hooks only work in components; getState works anywhere."
+     ]
+    },
+    {
+     "tag": "Pick one",
+     "q": "Zustand vs Redux Toolkit for a mid-size app with some shared client state?",
+     "opts": [
+      "Redux is always better",
+      "Zustand cannot handle objects",
+      "They are identical",
+      "Zustand is simpler with less ceremony; RTK gives stricter structure and devtools conventions for larger teams"
+     ],
+     "ans": 3,
+     "why": [
+      "Both are fine; pick based on team and app size."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write a mini <code>create(initializer)</code>: returns a hook <code>useStore(selector = (s) =&gt; s)</code> built on <code>useSyncExternalStore</code>, with <code>useStore.getState()</code> and <code>useStore.setState(partialOrFn)</code> (shallow merge). A component must only re-render when its selected value changes.",
+    "examples": [
+     "const useCounter = create((set) => ({ n: 0, inc: () => set((s) => ({ n: s.n + 1 })) }))",
+     "const n = useCounter((s) => s.n)"
+    ],
+    "hint": "Keep state + a Set of listeners; setState merges and notifies; the hook calls useSyncExternalStore(subscribe, () =&gt; selector(state)).",
+    "fn": "create",
+    "starter": "export function create(initializer) {\n  // your code\n}\n",
+    "solution": "import { useSyncExternalStore } from 'react'\n\nexport function create(initializer) {\n  let state\n  const listeners = new Set()\n  const setState = (partial) => {\n    const next = typeof partial === 'function' ? partial(state) : partial\n    state = { ...state, ...next }\n    listeners.forEach((l) => l())\n  }\n  const getState = () => state\n  const subscribe = (l) => { listeners.add(l); return () => listeners.delete(l) }\n  state = initializer(setState, getState)\n  const useStore = (selector = (s) => s) => useSyncExternalStore(subscribe, () => selector(state))\n  useStore.getState = getState\n  useStore.setState = setState\n  return useStore\n}\n",
+    "starterFile": "src/create.js",
+    "tests": {
+     "file": "src/create.test.jsx",
+     "run": "npx vitest run create",
+     "code": "import { render, screen, fireEvent, act } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { create } from './create'\n\nconst makeStore = () => create((set) => ({ n: 0, other: 0, inc: () => set((s) => ({ n: s.n + 1 })) }))\n\ntest('getState and setState work outside React', () => {\n  const useS = makeStore()\n  useS.getState().inc()\n  useS.setState({ other: 5 })\n  expect(useS.getState()).toMatchObject({ n: 1, other: 5 })\n})\n\ntest('components read and update the store', () => {\n  const useS = makeStore()\n  function C() { const n = useS((s) => s.n); const inc = useS((s) => s.inc); return <button onClick={inc}>{n}</button> }\n  render(<C />)\n  fireEvent.click(screen.getByRole('button'))\n  expect(screen.getByRole('button').textContent).toBe('1')\n})\n\ntest('only re-renders when the selected value changes', () => {\n  const useS = makeStore()\n  let renders = 0\n  function C() { renders++; return <b>{useS((s) => s.n)}</b> }\n  render(<C />)\n  act(() => { useS.setState({ other: 1 }); useS.setState({ other: 2 }) })\n  expect(renders).toBe(1)\n})\n"
+    },
+    "checks": [
+     {
+      "t": "getState and setState work outside React",
+      "verify": ""
+     },
+     {
+      "t": "components read and update the store",
+      "verify": ""
+     },
+     {
+      "t": "only re-renders when the selected value changes",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Zustand: create() gives a hook; subscribe with selectors so components re-render only for what they use. getState/setState work outside React.",
+    "mistakes": [
+     "Selectors returning new objects.",
+     "Putting server data in a client store."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Build a Mini State Management Library",
+     "diff": "hard",
+     "mc": "mini-state-mgmt",
+     "course": "react-machine-coding"
+    }
+   ]
+  },
+  {
+   "id": "atomic-state",
+   "prereqs": [
+    "zustand"
+   ],
+   "dryRun": {
+    "title": "const priceAtom = atom(10); const qtyAtom = atom(2); const totalAtom = atom((get) => get(priceAtom) * get(qtyAtom))",
+    "columns": [
+     "change",
+     "who re-renders"
+    ],
+    "rows": [
+     [
+      "set qtyAtom",
+      "components using qtyAtom or totalAtom"
+     ],
+     [
+      "set priceAtom",
+      "components using priceAtom or totalAtom"
+     ],
+     [
+      "components using an unrelated atom",
+      "nobody else"
+     ],
+     [
+      "totalAtom",
+      "recomputed only when price or qty changed"
+     ]
+    ],
+    "hit": 0,
+    "note": "Atomic state (Jotai, Recoil) builds global state from many tiny atoms. Derived atoms compute from others, and each component subscribes only to the atoms it reads, so updates are precise without writing selectors."
+   },
+   "think": [
+    {
+     "tag": "Model",
+     "q": "How is Jotai's model different from one big store?",
+     "opts": [
+      "State is split into many independent atoms; derived atoms depend on others like a spreadsheet",
+      "It has one reducer",
+      "It stores state in the URL",
+      "It needs Redux"
+     ],
+     "ans": 0,
+     "why": [
+      "Bottom-up instead of top-down."
+     ]
+    },
+    {
+     "tag": "Derived",
+     "q": "A derived atom <code>atom((get) =&gt; get(a) + get(b))</code> recomputes when…",
+     "opts": [
+      "Any atom changes",
+      "Every render",
+      "a or b changes (only its dependencies)",
+      "Never"
+     ],
+     "ans": 2,
+     "why": [
+      "Dependencies are tracked automatically through get."
+     ]
+    },
+    {
+     "tag": "Recoil",
+     "q": "What happened to Recoil?",
+     "opts": [
+      "It merged into React",
+      "It became Redux",
+      "It is the default React API",
+      "It was archived by Meta in 2025; Jotai is the maintained choice for this style"
+     ],
+     "ans": 3,
+     "why": [
+      "Pick maintained libraries."
+     ]
+    },
+    {
+     "tag": "Pick one",
+     "q": "Atomic state is a great fit for…",
+     "opts": [
+      "Server data caching",
+      "Many small independent pieces of shared state, like editor toolbar options",
+      "A single counter in one component",
+      "Form validation only"
+     ],
+     "ans": 1,
+     "why": [
+      "Each piece updates on its own."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>import { useState, useEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, useSyncExternalStore, StrictMode } from 'react'\nfunction atom(v) { const subs = new Set(); return { get: () =&gt; v, set: (n) =&gt; { v = n; subs.forEach((l) =&gt; l()) }, sub: (l) =&gt; (subs.add(l), () =&gt; subs.delete(l)) } }\nconst useAtomValue = (a) =&gt; useSyncExternalStore(a.sub, a.get)\nconst a = atom(1), b = atom(1)\nlet aRenders = 0\nfunction A() { aRenders++; return &lt;i&gt;{useAtomValue(a)}&lt;/i&gt; }\nfunction B() { return &lt;b&gt;{useAtomValue(b)}&lt;/b&gt; }</code></pre>",
+     "opts": [
+      "<code>3 3</code>",
+      "<code>1 1</code>",
+      "<code>3 1</code>",
+      "<code>3 2</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Only components reading atom b re-render; A never noticed."
+     ],
+     "exec": "import { useState, useEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, useSyncExternalStore, StrictMode } from 'react'\nfunction atom(v) { const subs = new Set(); return { get: () => v, set: (n) => { v = n; subs.forEach((l) => l()) }, sub: (l) => (subs.add(l), () => subs.delete(l)) } }\nconst useAtomValue = (a) => useSyncExternalStore(a.sub, a.get)\nconst a = atom(1), b = atom(1)\nlet aRenders = 0\nfunction A() { aRenders++; return <i>{useAtomValue(a)}</i> }\nfunction B() { return <b>{useAtomValue(b)}</b> }\nawait mount(<><A /><B /></>)\nawait run(() => { b.set(2); b.set(3) })\nconsole.log($('b').textContent, aRenders)"
+    }
+   ],
+   "try": {
+    "task": "Write <code>atom(initial)</code>, <code>computed(fn, deps)</code> (a read-only atom recomputed from dependency atoms) and <code>useAtom(a)</code> returning <code>[value, set]</code> (set is undefined for computed atoms), using useSyncExternalStore.",
+    "examples": [
+     "const price = atom(10), qty = atom(2), total = computed(() => price.get() * qty.get(), [price, qty])",
+     "useAtom(total)[0] === 20"
+    ],
+    "hint": "atom: { get, set, subscribe }. computed: cache the value, subscribe to each dep and recompute + notify on change.",
+    "fn": "atoms",
+    "starter": "export function atom(initial) {\n  // your code\n}\nexport function computed(fn, deps) {\n  // your code\n}\nexport function useAtom(a) {\n  // your code\n}\n",
+    "solution": "import { useSyncExternalStore } from 'react'\n\nexport function atom(initial) {\n  let v = initial\n  const subs = new Set()\n  return {\n    get: () => v,\n    set: (n) => { v = typeof n === 'function' ? n(v) : n; subs.forEach((l) => l()) },\n    subscribe: (l) => { subs.add(l); return () => subs.delete(l) },\n  }\n}\n\nexport function computed(fn, deps) {\n  let v = fn()\n  const subs = new Set()\n  for (const d of deps) d.subscribe(() => { v = fn(); subs.forEach((l) => l()) })\n  return { get: () => v, subscribe: (l) => { subs.add(l); return () => subs.delete(l) } }\n}\n\nexport function useAtom(a) {\n  const value = useSyncExternalStore(a.subscribe, a.get)\n  return [value, a.set]\n}\n",
+    "starterFile": "src/atoms.js",
+    "tests": {
+     "file": "src/atoms.test.jsx",
+     "run": "npx vitest run atoms",
+     "code": "import { render, screen, fireEvent, act } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { atom, computed, useAtom } from './atoms'\n\ntest('atom get and set', () => {\n  const a = atom(1)\n  a.set((x) => x + 1)\n  expect(a.get()).toBe(2)\n})\n\ntest('computed follows its dependencies', () => {\n  const price = atom(10), qty = atom(2)\n  const total = computed(() => price.get() * qty.get(), [price, qty])\n  qty.set(3)\n  expect(total.get()).toBe(30)\n})\n\ntest('components re-render only for atoms they read', () => {\n  const a = atom(1), b = atom(1)\n  let aRenders = 0\n  function A() { aRenders++; const [v] = useAtom(a); return <i>{v}</i> }\n  function B() { const [v, set] = useAtom(b); return <button onClick={() => set(v + 1)}>{v}</button> }\n  render(<><A /><B /></>)\n  fireEvent.click(screen.getByRole('button'))\n  expect(screen.getByRole('button').textContent).toBe('2')\n  expect(aRenders).toBe(1)\n})\n"
+    },
+    "checks": [
+     {
+      "t": "atom get and set",
+      "verify": ""
+     },
+     {
+      "t": "computed follows its dependencies",
+      "verify": ""
+     },
+     {
+      "t": "components re-render only for atoms they read",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Atoms are tiny independent pieces of state; derived atoms compute from them; components subscribe to exactly what they read.",
+    "mistakes": [
+     "Using Recoil in new projects.",
+     "One huge atom holding everything."
+    ]
+   }
+  }
+ ]
+}

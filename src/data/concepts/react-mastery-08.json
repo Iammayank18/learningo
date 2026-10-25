@@ -1,0 +1,1068 @@
+{
+ "course": "react-mastery",
+ "items": [
+  {
+   "id": "concurrent-mode",
+   "prereqs": [
+    "profiler"
+   ],
+   "dryRun": {
+    "title": "Typing \"re\" while a 2,000-item list re-renders",
+    "columns": [
+     "",
+     "without concurrency",
+     "with startTransition"
+    ],
+    "rows": [
+     [
+      "keystroke \"r\"",
+      "list render blocks the main thread",
+      "input updates at once (urgent)"
+     ],
+     [
+      "keystroke \"e\" arrives",
+      "waits for the \"r\" list render",
+      "\"r\" list render is interrupted"
+     ],
+     [
+      "list render",
+      "for \"r\", then for \"re\"",
+      "only for \"re\" (latest)"
+     ],
+     [
+      "user feels",
+      "laggy input",
+      "smooth input, list catches up"
+     ]
+    ],
+    "hit": 2,
+    "note": "Concurrent rendering (React 18+) lets React prepare a new UI in the background, pause it for urgent work, and throw away outdated work. It is opt-in per update: urgent updates stay synchronous; transitions and deferred values become interruptible."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function App() {\n  const [tab, setTab] = useState('a')\n  const [isPending, startTransition] = useTransition()\n  return &lt;&gt;&lt;button onClick={() =&gt; startTransition(() =&gt; setTab('b'))}&gt;b&lt;/button&gt;&lt;p&gt;{tab}{isPending ? ' (pending)' : ''}&lt;/p&gt;&lt;/&gt;\n}</code></pre>",
+     "opts": [
+      "<code>a (pending)</code>",
+      "<code>a</code>",
+      "<code>b</code>",
+      "<code>b (pending)</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "After the transition finishes, the new tab shows and isPending is false again."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction App() {\n  const [tab, setTab] = useState('a')\n  const [isPending, startTransition] = useTransition()\n  return <><button onClick={() => startTransition(() => setTab('b'))}>b</button><p>{tab}{isPending ? ' (pending)' : ''}</p></>\n}\nawait mount(<App />)\nawait click($('button'))\nconsole.log($('p').textContent)"
+    },
+    {
+     "tag": "Opt in",
+     "q": "Is all rendering concurrent once you use React 18+?",
+     "opts": [
+      "No, only updates marked as transitions (or deferred values, Suspense) use it",
+      "Yes, everything",
+      "Only class components",
+      "Only on the server"
+     ],
+     "ans": 0,
+     "why": [
+      "createRoot enables the capability; you opt in per update."
+     ]
+    },
+    {
+     "tag": "Interrupt",
+     "q": "What can be interrupted?",
+     "opts": [
+      "The commit phase",
+      "Effects",
+      "Event handlers",
+      "A transition render in progress, when a more urgent update arrives"
+     ],
+     "ans": 3,
+     "why": [
+      "Commits stay atomic."
+     ]
+    },
+    {
+     "tag": "Tearing",
+     "q": "What is \"tearing\" in concurrent rendering?",
+     "opts": [
+      "A memory leak",
+      "Different parts of the UI showing different versions of external data during one render",
+      "CSS flicker",
+      "A failed hydration"
+     ],
+     "ans": 1,
+     "why": [
+      "useSyncExternalStore exists to prevent it for external stores."
+     ]
+    },
+    {
+     "tag": "Not a fix for",
+     "q": "What does concurrency NOT fix?",
+     "opts": [
+      "Slow typing during big list updates",
+      "A single component whose render itself takes 500 ms",
+      "Showing old UI while new data loads",
+      "Prioritising clicks over background work"
+     ],
+     "ans": 1,
+     "why": [
+      "It schedules work; it cannot make one slow function fast."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>Tabs({ tabs })</code> (tabs = [{ id, label, render }]) where switching tabs uses <code>startTransition</code> (from useTransition), the active tab button has <code>aria-pressed=\"true\"</code>, and the content area gets <code>aria-busy=\"true\"</code> while a switch is pending.",
+    "examples": [
+     "<Tabs tabs={[{ id: \"a\", label: \"A\", render: () => <p>A</p> }, …]} />",
+     "click B → aria-pressed moves, content becomes B"
+    ],
+    "hint": "const [isPending, startTransition] = useTransition(); onClick={() =&gt; startTransition(() =&gt; setActive(id))}.",
+    "fn": "Tabs",
+    "starter": "export function Tabs({ tabs }) {\n  return null // your code\n}\n",
+    "solution": "import { useState, useTransition } from 'react'\n\nexport function Tabs({ tabs }) {\n  const [active, setActive] = useState(tabs[0].id)\n  const [isPending, startTransition] = useTransition()\n  const current = tabs.find((t) => t.id === active)\n  return (\n    <div>\n      {tabs.map((t) => (\n        <button key={t.id} aria-pressed={t.id === active} onClick={() => startTransition(() => setActive(t.id))}>{t.label}</button>\n      ))}\n      <section aria-busy={isPending}>{current.render()}</section>\n    </div>\n  )\n}\n",
+    "starterFile": "src/Tabs.jsx",
+    "tests": {
+     "file": "src/Tabs.test.jsx",
+     "run": "npx vitest run Tabs",
+     "code": "import { render, screen, fireEvent, act } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { Tabs } from './Tabs'\n\nconst tabs = [{ id: 'a', label: 'A', render: () => <p>content A</p> }, { id: 'b', label: 'B', render: () => <p>content B</p> }]\n\ntest('first tab is active', () => {\n  render(<Tabs tabs={tabs} />)\n  expect(screen.getByText('content A')).toBeTruthy()\n  expect(screen.getByText('A').getAttribute('aria-pressed')).toBe('true')\n})\n\ntest('switching shows the new tab', async () => {\n  render(<Tabs tabs={tabs} />)\n  await act(async () => { fireEvent.click(screen.getByText('B')) })\n  expect(screen.getByText('content B')).toBeTruthy()\n  expect(screen.getByText('B').getAttribute('aria-pressed')).toBe('true')\n})\n\ntest('not busy once the switch is done', async () => {\n  const { container } = render(<Tabs tabs={tabs} />)\n  await act(async () => { fireEvent.click(screen.getByText('B')) })\n  expect(container.querySelector('section').getAttribute('aria-busy')).toBe('false')\n})\n"
+    },
+    "checks": [
+     {
+      "t": "first tab is active",
+      "verify": ""
+     },
+     {
+      "t": "switching shows the new tab",
+      "verify": ""
+     },
+     {
+      "t": "not busy once the switch is done",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Concurrent rendering is opt-in per update: urgent updates stay instant, transitions can be interrupted and restarted. It schedules work; it does not speed up slow components.",
+    "mistakes": [
+     "Expecting concurrency to fix a slow render.",
+     "Wrapping urgent input updates in transitions."
+    ]
+   }
+  },
+  {
+   "id": "usetransition",
+   "prereqs": [
+    "concurrent-mode"
+   ],
+   "dryRun": {
+    "title": "onChange: setQuery(v); startTransition(() => setFilter(v))",
+    "columns": [
+     "update",
+     "priority",
+     "renders"
+    ],
+    "rows": [
+     [
+      "setQuery(v)",
+      "urgent",
+      "immediately: the input never lags"
+     ],
+     [
+      "setFilter(v)",
+      "transition",
+      "in the background, interruptible"
+     ],
+     [
+      "isPending",
+      "true until the transition commits",
+      "show a subtle \"Updating…\""
+     ],
+     [
+      "new keystroke",
+      "urgent again",
+      "old transition render is thrown away"
+     ]
+    ],
+    "hit": 1,
+    "note": "<code>useTransition</code> returns <code>[isPending, startTransition]</code>. State updates inside startTransition are non-urgent. In React 19 the callback may be async (Actions): isPending stays true until the awaited work finishes."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function App() {\n  const [text, setText] = useState('')\n  const [filter, setFilter] = useState('')\n  const [, startTransition] = useTransition()\n  return &lt;&gt;&lt;input value={text} onChange={(e) =&gt; { setText(e.target.value); startTransition(() =&gt; setFilter(e.target.value)) }} /&gt;&lt;p&gt;{filter.toUpperCase()}&lt;/p&gt;&lt;/&gt;\n}</code></pre>",
+     "opts": [
+      "<code>react (empty)</code>",
+      "<code>REACT REACT</code>",
+      "<code>react react</code>",
+      "<code>react REACT</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Both updates land in the end; the difference is only priority while work is in progress."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction App() {\n  const [text, setText] = useState('')\n  const [filter, setFilter] = useState('')\n  const [, startTransition] = useTransition()\n  return <><input value={text} onChange={(e) => { setText(e.target.value); startTransition(() => setFilter(e.target.value)) }} /><p>{filter.toUpperCase()}</p></>\n}\nawait mount(<App />)\nawait type($('input'), 'react')\nconsole.log($('input').value, $('p').textContent)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function App() {\n  const [isPending, startTransition] = useTransition()\n  const [saved, setSaved] = useState(false)\n  const save = () =&gt; startTransition(async () =&gt; { await new Promise((r) =&gt; setTimeout(r, 20)); startTransition(() =&gt; setSaved(true)) })\n  return &lt;button onClick={save}&gt;{isPending ? 'saving' : saved ? 'saved' : 'save'}&lt;/button&gt;\n}</code></pre>",
+     "opts": [
+      "<code>saving saved</code>",
+      "<code>save saved</code>",
+      "<code>saving saving</code>",
+      "<code>saved saved</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "React 19 Actions: an async transition keeps isPending true until the awaited work is done. Updates after an await need their own startTransition."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction App() {\n  const [isPending, startTransition] = useTransition()\n  const [saved, setSaved] = useState(false)\n  const save = () => startTransition(async () => { await new Promise((r) => setTimeout(r, 20)); startTransition(() => setSaved(true)) })\n  return <button onClick={save}>{isPending ? 'saving' : saved ? 'saved' : 'save'}</button>\n}\nawait mount(<App />)\nawait click($('button'))\nconsole.log($('button').textContent)\nawait run(() => new Promise((r) => setTimeout(r, 50)))\nconsole.log($('button').textContent)"
+    },
+    {
+     "tag": "Controlled input",
+     "q": "Why must the input's own value NOT be updated inside startTransition?",
+     "opts": [
+      "Inputs cannot use state",
+      "It throws",
+      "A transition can lag behind, so the typed text would appear late or jump",
+      "It disables isPending"
+     ],
+     "ans": 2,
+     "why": [
+      "Keep the input urgent; move the expensive derived update into the transition."
+     ]
+    },
+    {
+     "tag": "Pick one",
+     "q": "Which is a good transition?",
+     "opts": [
+      "Typing into an input",
+      "Toggling a checkbox's checked state",
+      "Opening a dropdown",
+      "Switching to a heavy tab or filtering a large list"
+     ],
+     "ans": 3,
+     "why": [
+      "Transitions are for \"can wait a moment\" updates."
+     ]
+    },
+    {
+     "tag": "vs debounce",
+     "q": "How is a transition different from debouncing the filter?",
+     "opts": [
+      "They are identical",
+      "No fixed delay: React starts at once and only drops outdated work; fast devices update immediately",
+      "Transitions always wait 300 ms",
+      "Debounce is interruptible"
+     ],
+     "ans": 1,
+     "why": [
+      "Debounce waits even on a fast machine."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write a hook <code>useFilteredList(items)</code> returning <code>{ query, setQuery, results, isPending }</code>: query updates urgently, results (items containing the query, case-insensitive) are computed from a filter value updated inside a transition.",
+    "examples": [
+     "const { query, setQuery, results } = useFilteredList([\"Apple\", \"Banana\"])",
+     "setQuery(\"an\") → results [\"Banana\"]"
+    ],
+    "hint": "Two states: query and filter. setQuery = (v) =&gt; { setQ(v); startTransition(() =&gt; setFilter(v)) }; results = useMemo(...).",
+    "fn": "useFilteredList",
+    "starter": "export function useFilteredList(items) {\n  // your code\n}\n",
+    "solution": "import { useMemo, useState, useTransition } from 'react'\n\nexport function useFilteredList(items) {\n  const [query, setQ] = useState('')\n  const [filter, setFilter] = useState('')\n  const [isPending, startTransition] = useTransition()\n  const setQuery = (v) => { setQ(v); startTransition(() => setFilter(v)) }\n  const results = useMemo(() => items.filter((i) => i.toLowerCase().includes(filter.toLowerCase())), [items, filter])\n  return { query, setQuery, results, isPending }\n}\n",
+    "starterFile": "src/useFilteredList.js",
+    "tests": {
+     "file": "src/useFilteredList.test.jsx",
+     "run": "npx vitest run useFilteredList",
+     "code": "import { renderHook, act } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { useFilteredList } from './useFilteredList'\n\nconst items = ['Apple', 'Banana', 'Cherry']\n\ntest('all items at first', () => {\n  const { result } = renderHook(() => useFilteredList(items))\n  expect(result.current.results).toEqual(items)\n  expect(result.current.isPending).toBe(false)\n})\n\ntest('filters case-insensitively', async () => {\n  const { result } = renderHook(() => useFilteredList(items))\n  await act(async () => result.current.setQuery('AN'))\n  expect(result.current.query).toBe('AN')\n  expect(result.current.results).toEqual(['Banana'])\n})\n\ntest('not pending after the transition', async () => {\n  const { result } = renderHook(() => useFilteredList(items))\n  await act(async () => result.current.setQuery('ch'))\n  expect(result.current.results).toEqual(['Cherry'])\n  expect(result.current.isPending).toBe(false)\n})\n"
+    },
+    "checks": [
+     {
+      "t": "all items at first",
+      "verify": ""
+     },
+     {
+      "t": "filters case-insensitively",
+      "verify": ""
+     },
+     {
+      "t": "not pending after the transition",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "useTransition marks updates as non-urgent and gives isPending. Keep input state urgent; React 19 transitions can be async Actions.",
+    "mistakes": [
+     "Putting the input value itself in a transition.",
+     "Using transitions for tiny updates."
+    ]
+   }
+  },
+  {
+   "id": "usedeferredvalue",
+   "prereqs": [
+    "usetransition"
+   ],
+   "dryRun": {
+    "title": "const deferred = useDeferredValue(query); <Results query={deferred} />",
+    "columns": [
+     "keystroke",
+     "query",
+     "deferred",
+     "Results shows"
+    ],
+    "rows": [
+     [
+      "\"r\"",
+      "r",
+      "\"\" then r",
+      "old list, then r list"
+     ],
+     [
+      "\"re\" fast",
+      "re",
+      "still r (render for re interrupted…)",
+      "r list (stale)"
+     ],
+     [
+      "idle",
+      "re",
+      "re",
+      "re list"
+     ],
+     [
+      "isStale = query !== deferred",
+      "—",
+      "—",
+      "dim the stale list"
+     ]
+    ],
+    "hit": 1,
+    "note": "<code>useDeferredValue(value)</code> gives a copy of a value that lags behind during urgent updates. Use it when you receive the value as a prop (no access to the setter, so no startTransition). Pair it with a memoized child so the deferred render can be skipped or interrupted."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function Results({ q }) { return &lt;p&gt;{q}&lt;/p&gt; }\nfunction App() {\n  const [q, setQ] = useState('')\n  const d = useDeferredValue(q)\n  return &lt;&gt;&lt;input value={q} onChange={(e) =&gt; setQ(e.target.value)} /&gt;&lt;Results q={d} /&gt;&lt;i&gt;{String(q !== d)}&lt;/i&gt;&lt;/&gt;\n}</code></pre>",
+     "opts": [
+      "<code>(empty) true</code>",
+      "<code>abc true</code>",
+      "<code>abc false</code>",
+      "<code>ab false</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Once React is idle the deferred value catches up, so it is no longer stale."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction Results({ q }) { return <p>{q}</p> }\nfunction App() {\n  const [q, setQ] = useState('')\n  const d = useDeferredValue(q)\n  return <><input value={q} onChange={(e) => setQ(e.target.value)} /><Results q={d} /><i>{String(q !== d)}</i></>\n}\nawait mount(<App />)\nawait type($('input'), 'abc')\nconsole.log($('p').textContent, $('i').textContent)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function App() { const d = useDeferredValue('final', 'initial'); return &lt;p&gt;{d}&lt;/p&gt; }</code></pre>",
+     "opts": [
+      "<code>final</code>",
+      "<code>initial</code>",
+      "<code>(empty)</code>",
+      "<code>undefined</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "React 19 accepts an initial value: the first render uses it, then a background render switches to the real value."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction App() { const d = useDeferredValue('final', 'initial'); return <p>{d}</p> }\nawait mount(<App />)\nconsole.log($('p').textContent)"
+    },
+    {
+     "tag": "vs useTransition",
+     "q": "When choose useDeferredValue over useTransition?",
+     "opts": [
+      "Always",
+      "When you need isPending",
+      "When you only have the value (e.g. a prop), not the code that sets it",
+      "For event handlers"
+     ],
+     "ans": 2,
+     "why": [
+      "Same mechanism, different access point."
+     ]
+    },
+    {
+     "tag": "memo",
+     "q": "Why wrap the slow child in memo() when using a deferred value?",
+     "opts": [
+      "So renders where the deferred value has not changed can skip the slow child entirely",
+      "memo is required by the hook",
+      "To avoid keys",
+      "To enable SSR"
+     ],
+     "ans": 0,
+     "why": [
+      "Without memo the slow child re-renders on every urgent render anyway."
+     ]
+    },
+    {
+     "tag": "Stale UI",
+     "q": "Good way to show results are behind?",
+     "opts": [
+      "A blocking spinner overlay",
+      "Clearing the list",
+      "An alert",
+      "Lower opacity while query !== deferredQuery"
+     ],
+     "ans": 3,
+     "why": [
+      "Users keep seeing useful (slightly old) results."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>SearchPage({ items })</code>: an input, and a memoized <code>Results</code> list that receives <code>useDeferredValue(query)</code>; the list gets <code>style.opacity = 0.5</code> while stale (query !== deferred).",
+    "examples": [
+     "type \"ba\" → list shows items containing \"ba\"",
+     "while stale the list is dimmed"
+    ],
+    "hint": "const deferred = useDeferredValue(query); const Results = memo(…); &lt;div style={{ opacity: stale ? 0.5 : 1 }}&gt;.",
+    "fn": "SearchPage",
+    "starter": "export function SearchPage({ items }) {\n  return null // your code\n}\n",
+    "solution": "import { memo, useDeferredValue, useState } from 'react'\n\nconst Results = memo(function Results({ q, items }) {\n  return <ul>{items.filter((i) => i.includes(q)).map((i) => <li key={i}>{i}</li>)}</ul>\n})\n\nexport function SearchPage({ items }) {\n  const [query, setQuery] = useState('')\n  const deferred = useDeferredValue(query)\n  const stale = query !== deferred\n  return (\n    <div>\n      <input aria-label=\"search\" value={query} onChange={(e) => setQuery(e.target.value)} />\n      <div data-testid=\"results\" style={{ opacity: stale ? 0.5 : 1 }}>\n        <Results q={deferred} items={items} />\n      </div>\n    </div>\n  )\n}\n",
+    "starterFile": "src/SearchPage.jsx",
+    "tests": {
+     "file": "src/SearchPage.test.jsx",
+     "run": "npx vitest run SearchPage",
+     "code": "import { render, screen, fireEvent, act } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { SearchPage } from './SearchPage'\n\nconst items = ['banana', 'bar', 'cherry']\n\ntest('shows everything at first', () => {\n  render(<SearchPage items={items} />)\n  expect(screen.getAllByRole('listitem')).toHaveLength(3)\n})\n\ntest('filters with the (caught-up) deferred value', async () => {\n  render(<SearchPage items={items} />)\n  await act(async () => { fireEvent.change(screen.getByLabelText('search'), { target: { value: 'ba' } }) })\n  expect(screen.getAllByRole('listitem').map((li) => li.textContent)).toEqual(['banana', 'bar'])\n})\n\ntest('not dimmed once caught up', async () => {\n  render(<SearchPage items={items} />)\n  await act(async () => { fireEvent.change(screen.getByLabelText('search'), { target: { value: 'ch' } }) })\n  expect(screen.getByTestId('results').style.opacity).toBe('1')\n})\n"
+    },
+    "checks": [
+     {
+      "t": "shows everything at first",
+      "verify": ""
+     },
+     {
+      "t": "filters with the (caught-up) deferred value",
+      "verify": ""
+     },
+     {
+      "t": "not dimmed once caught up",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "useDeferredValue lets a value lag behind during urgent updates. Combine with memo, show staleness, and use it when you do not own the setter.",
+    "mistakes": [
+     "No memo on the slow child.",
+     "Using it for values that must be exact (form submissions)."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Autocomplete with Debounce + Highlighting",
+     "diff": "medium",
+     "mc": "autocomplete",
+     "course": "react-machine-coding"
+    }
+   ]
+  },
+  {
+   "id": "suspense",
+   "prereqs": [
+    "usedeferredvalue"
+   ],
+   "dryRun": {
+    "title": "<Suspense fallback={<Spinner />}><Profile /><Posts /></Suspense>",
+    "columns": [
+     "moment",
+     "Profile",
+     "Posts",
+     "screen"
+    ],
+    "rows": [
+     [
+      "both loading",
+      "suspended",
+      "suspended",
+      "<Spinner />"
+     ],
+     [
+      "Profile ready",
+      "ready",
+      "suspended",
+      "still <Spinner /> (one boundary)"
+     ],
+     [
+      "both ready",
+      "ready",
+      "ready",
+      "Profile + Posts together"
+     ],
+     [
+      "nested <Suspense> around Posts",
+      "—",
+      "own fallback",
+      "Profile shows first, Posts later"
+     ]
+    ],
+    "hit": 3,
+    "note": "Suspense shows a fallback while something below it is not ready (lazy code, or data read with use()). One boundary = one loading state for everything inside it. Nest boundaries to decide what may appear separately."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function cache(fn) { const m = new Map(); return (k) =&gt; { if (!m.has(k)) m.set(k, fn(k)); return m.get(k) } }\nconst wait = (ms, v) =&gt; new Promise((r) =&gt; setTimeout(() =&gt; r(v), ms))\nconst getUser = cache(() =&gt; wait(100, 'Ada'))\nfunction Name() { return &lt;b&gt;{use(getUser('1'))}&lt;/b&gt; }</code></pre>",
+     "opts": [
+      "<code>Ada Ada</code>",
+      "<code>loading Ada</code>",
+      "<code>loading loading</code>",
+      "<code>(empty) Ada</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "The component suspends on the pending promise, so the fallback shows; then the content replaces it."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction cache(fn) { const m = new Map(); return (k) => { if (!m.has(k)) m.set(k, fn(k)); return m.get(k) } }\nconst wait = (ms, v) => new Promise((r) => setTimeout(() => r(v), ms))\nconst getUser = cache(() => wait(100, 'Ada'))\nfunction Name() { return <b>{use(getUser('1'))}</b> }\nawait mount(<Suspense fallback={<i>loading</i>}><Name /></Suspense>)\nconsole.log(container.textContent)\nawait run(() => wait(150))\nconsole.log(container.textContent)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function cache(fn) { const m = new Map(); return (k) =&gt; { if (!m.has(k)) m.set(k, fn(k)); return m.get(k) } }\nconst wait = (ms, v) =&gt; new Promise((r) =&gt; setTimeout(() =&gt; r(v), ms))\nconst fast = cache(() =&gt; wait(5, 'header')), slow = cache(() =&gt; wait(40, 'posts'))\nfunction H() { return &lt;h1&gt;{use(fast('h'))}&lt;/h1&gt; }\nfunction P() { return &lt;p&gt;{use(slow('p'))}&lt;/p&gt; }</code></pre>",
+     "opts": [
+      "<code>page… headerposts</code>",
+      "<code>headerposts… headerposts</code>",
+      "<code>headerposts headerposts</code>",
+      "<code>page… page…</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "The inner boundary lets the header appear while posts are still loading."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nfunction cache(fn) { const m = new Map(); return (k) => { if (!m.has(k)) m.set(k, fn(k)); return m.get(k) } }\nconst wait = (ms, v) => new Promise((r) => setTimeout(() => r(v), ms))\nconst fast = cache(() => wait(5, 'header')), slow = cache(() => wait(40, 'posts'))\nfunction H() { return <h1>{use(fast('h'))}</h1> }\nfunction P() { return <p>{use(slow('p'))}</p> }\nawait mount(<Suspense fallback={<i>page…</i>}><H /><Suspense fallback={<i>posts…</i>}><P /></Suspense></Suspense>)\nawait run(() => wait(15))\nconsole.log(container.textContent)\nawait run(() => wait(50))\nconsole.log(container.textContent)"
+    },
+    {
+     "tag": "Transitions",
+     "q": "You switch tabs and the new tab suspends. Without a transition the old tab is replaced by a spinner. With startTransition?",
+     "opts": [
+      "The spinner shows twice",
+      "Nothing renders",
+      "It throws",
+      "React keeps showing the old tab until the new one is ready (no jarring spinner)"
+     ],
+     "ans": 3,
+     "why": [
+      "Transitions avoid hiding already-visible content."
+     ]
+    },
+    {
+     "tag": "What can suspend",
+     "q": "Which of these makes a component suspend?",
+     "opts": [
+      "Reading a pending promise with use(), or rendering a lazy() component that has not loaded",
+      "useEffect fetching data",
+      "A slow for loop",
+      "setState"
+     ],
+     "ans": 0,
+     "why": [
+      "Effects run after render; they never trigger Suspense."
+     ]
+    },
+    {
+     "tag": "Errors",
+     "q": "A suspended promise rejects. Who handles it?",
+     "opts": [
+      "The Suspense fallback",
+      "Nobody, it is ignored",
+      "The nearest error boundary",
+      "The browser"
+     ],
+     "ans": 2,
+     "why": [
+      "Suspense = loading; error boundary = failure. Use both."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>ProfilePage({ userPromise, postsPromise })</code>: shows the user name (from userPromise via <code>use()</code>) under one Suspense boundary (\"Loading profile…\") and the posts list under a nested boundary (\"Loading posts…\"), so the name can appear before the posts.",
+    "examples": [
+     "userPromise resolves first → name visible, \"Loading posts…\" still shown",
+     "then the posts appear"
+    ],
+    "hint": "Two small components that call use(promise); ProfilePage wraps them in Suspense boundaries.",
+    "fn": "ProfilePage",
+    "starter": "export function ProfilePage({ userPromise, postsPromise }) {\n  return null // your code\n}\n",
+    "solution": "import { Suspense, use } from 'react'\n\nfunction Name({ userPromise }) {\n  return <h1>{use(userPromise).name}</h1>\n}\n\nfunction Posts({ postsPromise }) {\n  return <ul>{use(postsPromise).map((p) => <li key={p.id}>{p.title}</li>)}</ul>\n}\n\nexport function ProfilePage({ userPromise, postsPromise }) {\n  return (\n    <Suspense fallback={<p>Loading profile…</p>}>\n      <Name userPromise={userPromise} />\n      <Suspense fallback={<p>Loading posts…</p>}>\n        <Posts postsPromise={postsPromise} />\n      </Suspense>\n    </Suspense>\n  )\n}\n",
+    "starterFile": "src/ProfilePage.jsx",
+    "tests": {
+     "file": "src/ProfilePage.test.jsx",
+     "run": "npx vitest run ProfilePage",
+     "code": "import { render, screen, fireEvent, act } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { ProfilePage } from './ProfilePage'\n\nfunction deferred() { let resolve; const promise = new Promise((r) => { resolve = r }); return { promise, resolve } }\n\ntest('shows the profile fallback first', async () => {\n  const u = deferred(), p = deferred()\n  await act(async () => { render(<ProfilePage userPromise={u.promise} postsPromise={p.promise} />) })\n  expect(screen.getByText('Loading profile…')).toBeTruthy()\n})\n\ntest('name appears before posts', async () => {\n  const u = deferred(), p = deferred()\n  await act(async () => { render(<ProfilePage userPromise={u.promise} postsPromise={p.promise} />) })\n  await act(async () => { u.resolve({ name: 'Ada' }) })\n  expect(screen.getByRole('heading').textContent).toBe('Ada')\n  expect(screen.getByText('Loading posts…')).toBeTruthy()\n})\n\ntest('then the posts render', async () => {\n  const u = deferred(), p = deferred()\n  await act(async () => { render(<ProfilePage userPromise={u.promise} postsPromise={p.promise} />) })\n  await act(async () => { u.resolve({ name: 'Ada' }); p.resolve([{ id: 1, title: 'Hello' }]) })\n  expect(screen.getAllByRole('listitem').map((li) => li.textContent)).toEqual(['Hello'])\n})\n"
+    },
+    "checks": [
+     {
+      "t": "shows the profile fallback first",
+      "verify": ""
+     },
+     {
+      "t": "name appears before posts",
+      "verify": ""
+     },
+     {
+      "t": "then the posts render",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Suspense = declarative loading states. One boundary per independently-loading region; pair with error boundaries; transitions keep old UI instead of flashing spinners.",
+    "mistakes": [
+     "One giant boundary for the whole page.",
+     "Expecting useEffect fetches to trigger Suspense."
+    ]
+   }
+  },
+  {
+   "id": "use-hook",
+   "prereqs": [
+    "suspense"
+   ],
+   "dryRun": {
+    "title": "use(resource)",
+    "columns": [
+     "resource",
+     "what use() does"
+    ],
+    "rows": [
+     [
+      "a pending promise",
+      "suspends the component (nearest Suspense shows)"
+     ],
+     [
+      "a resolved promise",
+      "returns its value"
+     ],
+     [
+      "a rejected promise",
+      "throws to the nearest error boundary"
+     ],
+     [
+      "a context",
+      "like useContext, but allowed inside if/loops"
+     ],
+     [
+      "a promise created during render",
+      "new promise every render → suspends forever (do not)"
+     ]
+    ],
+    "hit": 4,
+    "note": "<code>use()</code> (React 19) reads a promise or a context. Unlike other hooks it may be called conditionally. Promises must come from outside the render (a cache, a parent, a Server Component, a library), never be created inside the component that reads them."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const Theme = createContext('light')\nfunction Label({ show }) { if (!show) return &lt;i&gt;hidden&lt;/i&gt;; const t = use(Theme); return &lt;b&gt;{t}&lt;/b&gt; }</code></pre>",
+     "opts": [
+      "<code>light hidden</code>",
+      "<code>darkdark</code>",
+      "<code>hiddendark</code>",
+      "<code>darkhidden</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "use(Context) works after an early return, which useContext would forbid."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nconst Theme = createContext('light')\nfunction Label({ show }) { if (!show) return <i>hidden</i>; const t = use(Theme); return <b>{t}</b> }\nawait mount(<Theme value=\"dark\"><Label show /><Label show={false} /></Theme>)\nconsole.log(container.textContent)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const done = Promise.resolve('ready')\nfunction C() { return &lt;b&gt;{use(done)}&lt;/b&gt; }</code></pre>",
+     "opts": [
+      "<code>…</code>",
+      "<code>ready</code>",
+      "<code>undefined</code>",
+      "<code>(empty)</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "A resolved promise just gives its value (after React has seen it settle)."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nconst done = Promise.resolve('ready')\nfunction C() { return <b>{use(done)}</b> }\nawait mount(<Suspense fallback={<i>…</i>}><C /></Suspense>)\nawait run(() => new Promise((r) => setTimeout(r, 5)))\nconsole.log(container.textContent)"
+    },
+    {
+     "tag": "Bug",
+     "q": "<code>function C() { const data = use(fetch(\"/api\").then((r) =&gt; r.json())) }</code>. What happens?",
+     "opts": [
+      "It works perfectly",
+      "It throws a syntax error",
+      "A new promise is created on every render, so it keeps suspending (and refetching)",
+      "It caches automatically"
+     ],
+     "ans": 2,
+     "why": [
+      "Create or cache the promise outside the component."
+     ]
+    },
+    {
+     "tag": "Server",
+     "q": "Where do promises for use() often come from in Next.js App Router?",
+     "opts": [
+      "A Server Component starts the fetch and passes the promise to a Client Component",
+      "useEffect",
+      "localStorage",
+      "Event handlers"
+     ],
+     "ans": 0,
+     "why": [
+      "The client can render the rest and suspend only where it reads the data."
+     ]
+    },
+    {
+     "tag": "Errors",
+     "q": "How do you handle a rejected promise read with use()?",
+     "opts": [
+      "try/catch around use()",
+      "A .catch on use()",
+      "Wrap the component in an error boundary (try/catch around use() does not work)",
+      "Suspense fallback"
+     ],
+     "ans": 2,
+     "why": [
+      "use() throws to the nearest boundary."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>createCache(fetcher)</code> returning <code>read(key)</code> that always returns the SAME promise for a key (safe to pass to use()), plus <code>Comments({ read, postId })</code> which renders the comment list using <code>use(read(postId))</code>.",
+    "examples": [
+     "const read = createCache((id) => api.comments(id))",
+     "<Suspense><Comments read={read} postId={1} /></Suspense>"
+    ],
+    "hint": "A Map from key to promise; Comments: const list = use(read(postId)).",
+    "fn": "comments",
+    "starter": "export function createCache(fetcher) {\n  // your code\n}\nexport function Comments({ read, postId }) {\n  return null // your code\n}\n",
+    "solution": "import { use } from 'react'\n\nexport function createCache(fetcher) {\n  const map = new Map()\n  return (key) => {\n    if (!map.has(key)) map.set(key, fetcher(key))\n    return map.get(key)\n  }\n}\n\nexport function Comments({ read, postId }) {\n  const list = use(read(postId))\n  return <ul>{list.map((c) => <li key={c.id}>{c.text}</li>)}</ul>\n}\n",
+    "starterFile": "src/comments.jsx",
+    "tests": {
+     "file": "src/comments.test.jsx",
+     "run": "npx vitest run comments",
+     "code": "import { render, screen, fireEvent, act } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { Suspense } from 'react'\nimport { Comments, createCache } from './comments'\n\ntest('same key gives the same promise', () => {\n  let calls = 0\n  const read = createCache(async (id) => { calls++; return id })\n  expect(read(1)).toBe(read(1))\n  expect(calls).toBe(1)\n})\n\ntest('different keys fetch separately', () => {\n  let calls = 0\n  const read = createCache(async () => { calls++ })\n  read(1); read(2)\n  expect(calls).toBe(2)\n})\n\ntest('Comments renders the loaded list', async () => {\n  const read = createCache(async (id) => [{ id: 1, text: 'first on ' + id }])\n  await act(async () => { render(<Suspense fallback={<p>loading</p>}><Comments read={read} postId={7} /></Suspense>) })\n  expect(await screen.findByText('first on 7')).toBeTruthy()\n})\n"
+    },
+    "checks": [
+     {
+      "t": "same key gives the same promise",
+      "verify": ""
+     },
+     {
+      "t": "different keys fetch separately",
+      "verify": ""
+     },
+     {
+      "t": "Comments renders the loaded list",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "use() reads promises (suspends) and context (even conditionally). Promises must be created outside render and cached; errors go to error boundaries.",
+    "mistakes": [
+     "Creating the promise inside the component.",
+     "try/catch around use()."
+    ]
+   }
+  },
+  {
+   "id": "server-components",
+   "prereqs": [
+    "use-hook"
+   ],
+   "dryRun": {
+    "title": "Next.js App Router page",
+    "columns": [
+     "component",
+     "runs where",
+     "can use"
+    ],
+    "rows": [
+     [
+      "page.jsx (default)",
+      "server only",
+      "await db queries, secrets; no state/effects/handlers"
+     ],
+     [
+      "\"use client\" LikeButton",
+      "server (HTML) + browser",
+      "useState, onClick, browser APIs"
+     ],
+     [
+      "data passed server → client",
+      "serialized props",
+      "plain data, promises; not functions"
+     ],
+     [
+      "JS sent to browser",
+      "only client components",
+      "server code adds 0 KB"
+     ]
+    ],
+    "hit": 1,
+    "note": "React Server Components (RSC) run only on the server and send rendered output, not their code, to the browser. Mark interactive parts with <code>\"use client\"</code>; everything imported by that file becomes client code. Push the boundary down to the smallest interactive leaves."
+   },
+   "think": [
+    {
+     "tag": "Can it?",
+     "q": "Which can a Server Component do?",
+     "opts": [
+      "await a database query directly in the component",
+      "useState",
+      "onClick handlers",
+      "read window.localStorage"
+     ],
+     "ans": 0,
+     "why": [
+      "No interactivity or browser APIs on the server."
+     ]
+    },
+    {
+     "tag": "Boundary",
+     "q": "You add \"use client\" to a layout at the top of the app. Consequence?",
+     "opts": [
+      "Nothing",
+      "It becomes faster",
+      "It forbids state",
+      "Everything it imports becomes client code, losing most RSC benefits"
+     ],
+     "ans": 3,
+     "why": [
+      "Keep \"use client\" on small leaves."
+     ]
+    },
+    {
+     "tag": "Props",
+     "q": "Which prop can a Server Component pass to a Client Component?",
+     "opts": [
+      "A function like onSave",
+      "A plain object or array of data (serializable)",
+      "A class instance",
+      "A DOM node"
+     ],
+     "ans": 1,
+     "why": [
+      "Functions cannot be serialized (Server Actions are the exception)."
+     ]
+    },
+    {
+     "tag": "Children",
+     "q": "Can a Client Component render a Server Component?",
+     "opts": [
+      "No, never",
+      "Yes, if the Server Component is passed in as children (or another prop) from a server parent",
+      "Only with useEffect",
+      "Only in production"
+     ],
+     "ans": 1,
+     "why": [
+      "Composition lets server content sit inside client wrappers."
+     ]
+    },
+    {
+     "tag": "vs SSR",
+     "q": "How are Server Components different from classic SSR?",
+     "opts": [
+      "They are the same",
+      "RSC is client-only",
+      "SSR has no HTML",
+      "SSR renders client components to HTML and still ships their JS; RSC never ships the server component's code at all"
+     ],
+     "ans": 3,
+     "why": [
+      "They are often used together."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>classifyComponent(info)</code> that decides where a component must run. info: <code>{ usesState, usesEffects, hasEventHandlers, usesBrowserApi, readsDatabase, usesSecrets }</code>. Return <code>\"client\"</code> if it needs interactivity or browser APIs, <code>\"server\"</code> if it reads a database or secrets (and needs nothing client-side), <code>\"conflict\"</code> if it needs both (split it), else <code>\"either\"</code>.",
+    "examples": [
+     "classifyComponent({ hasEventHandlers: true })  // \"client\"",
+     "classifyComponent({ readsDatabase: true, usesState: true })  // \"conflict\""
+    ],
+    "hint": "needsClient = state || effects || handlers || browser API; needsServer = db || secrets.",
+    "fn": "classifyComponent",
+    "starter": "export function classifyComponent(info) {\n  // your code\n}\n",
+    "solution": "export function classifyComponent({ usesState, usesEffects, hasEventHandlers, usesBrowserApi, readsDatabase, usesSecrets } = {}) {\n  const client = !!(usesState || usesEffects || hasEventHandlers || usesBrowserApi)\n  const server = !!(readsDatabase || usesSecrets)\n  if (client && server) return 'conflict'\n  if (client) return 'client'\n  if (server) return 'server'\n  return 'either'\n}\n",
+    "starterFile": "src/classifyComponent.js",
+    "tests": {
+     "file": "src/classifyComponent.test.jsx",
+     "run": "npx vitest run classifyComponent",
+     "code": "import { expect, test } from 'vitest'\nimport { classifyComponent } from './classifyComponent'\n\ntest('interactive components are client', () => {\n  expect(classifyComponent({ hasEventHandlers: true })).toBe('client')\n  expect(classifyComponent({ usesBrowserApi: true })).toBe('client')\n})\n\ntest('data and secrets stay on the server', () => {\n  expect(classifyComponent({ readsDatabase: true })).toBe('server')\n  expect(classifyComponent({ usesSecrets: true })).toBe('server')\n})\n\ntest('both means split it; nothing means either', () => {\n  expect(classifyComponent({ readsDatabase: true, usesState: true })).toBe('conflict')\n  expect(classifyComponent({})).toBe('either')\n})\n"
+    },
+    "checks": [
+     {
+      "t": "interactive components are client",
+      "verify": ""
+     },
+     {
+      "t": "data and secrets stay on the server",
+      "verify": ""
+     },
+     {
+      "t": "both means split it; nothing means either",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Server Components run only on the server (data, secrets, zero JS); \"use client\" marks interactive leaves. Pass serializable props, compose server content as children.",
+    "mistakes": [
+     "\"use client\" at the top of the tree.",
+     "Passing functions from server to client components."
+    ]
+   }
+  },
+  {
+   "id": "streaming-ssr",
+   "prereqs": [
+    "server-components"
+   ],
+   "dryRun": {
+    "title": "renderToPipeableStream(<App />) with a <Suspense> around Comments",
+    "columns": [
+     "time",
+     "HTML sent",
+     "browser"
+    ],
+    "rows": [
+     [
+      "0 ms",
+      "shell: header, article, comments fallback",
+      "paints immediately"
+     ],
+     [
+      "300 ms",
+      "<template> with comments HTML + tiny script",
+      "swaps fallback for comments"
+     ],
+     [
+      "JS loads",
+      "—",
+      "hydrates; selective hydration prioritises what the user clicks"
+     ],
+     [
+      "hydration mismatch",
+      "—",
+      "React re-renders that part on the client (warning)"
+     ]
+    ],
+    "hit": 1,
+    "note": "Streaming SSR sends HTML in chunks: the shell first, then each Suspense boundary's content as it is ready. Hydration attaches event handlers to the server HTML; it must match what the client renders first, so no Date.now(), Math.random() or window checks in render."
+   },
+   "think": [
+    {
+     "tag": "Benefit",
+     "q": "Main benefit of streaming over classic renderToString?",
+     "opts": [
+      "The user sees the page shell immediately instead of waiting for the slowest data",
+      "Smaller JS bundles",
+      "No hydration needed",
+      "Better caching"
+     ],
+     "ans": 0,
+     "why": [
+      "Slow parts no longer block everything."
+     ]
+    },
+    {
+     "tag": "Mismatch",
+     "q": "Which render code causes a hydration mismatch?",
+     "opts": [
+      "<code>&lt;p&gt;{props.title}&lt;/p&gt;</code>",
+      "<code>&lt;p&gt;{items.length}&lt;/p&gt;</code>",
+      "<code>&lt;p&gt;{new Date().toLocaleTimeString()}&lt;/p&gt;</code>",
+      "<code>&lt;p&gt;Hello&lt;/p&gt;</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Server and client produce different text. Render the time after mount instead."
+     ]
+    },
+    {
+     "tag": "Selective",
+     "q": "What is selective hydration?",
+     "opts": [
+      "Hydrating only CSS",
+      "Skipping hydration",
+      "Hydrating in a worker",
+      "React hydrates Suspense boundaries independently and prioritises the one the user interacts with"
+     ],
+     "ans": 3,
+     "why": [
+      "Clicking a not-yet-hydrated part makes it go first."
+     ]
+    },
+    {
+     "tag": "Fix",
+     "q": "A component must show \"Online\" from navigator.onLine. How do you avoid a mismatch?",
+     "opts": [
+      "Read navigator in render",
+      "Render a neutral value on the server and in the first client render, then update in an effect (or useSyncExternalStore with getServerSnapshot)",
+      "Disable SSR globally",
+      "suppressHydrationWarning everywhere"
+     ],
+     "ans": 1,
+     "why": [
+      "The first client render must match the server HTML."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>import { renderToString } from 'react-dom/server'\nfunction Clock() { const [t, setT] = useState(null); useEffect(() =&gt; setT('12:00'), []); return &lt;p&gt;{t ?? '--:--'}&lt;/p&gt; }</code></pre>",
+     "opts": [
+      "<code>&lt;p&gt;12:00&lt;/p&gt;</code>",
+      "<code>&lt;p&gt;&lt;/p&gt;</code>",
+      "<code>&lt;p&gt;--:--&lt;/p&gt;</code>",
+      "<code>&lt;p&gt;null&lt;/p&gt;</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Effects do not run on the server, so the HTML has the neutral placeholder; the client fills it in after hydration."
+     ],
+     "exec": "import { useState, useEffect } from 'react'\nimport { renderToString } from 'react-dom/server'\nfunction Clock() { const [t, setT] = useState(null); useEffect(() => setT('12:00'), []); return <p>{t ?? '--:--'}</p> }\nconsole.log(renderToString(<Clock />))"
+    }
+   ],
+   "try": {
+    "task": "Write <code>ClientTime({ now })</code> that is hydration-safe: the server HTML and first client render show \"--:--\"; after mount it shows <code>now()</code> formatted as HH:MM (24h, from a Date).",
+    "examples": [
+     "renderToString(<ClientTime now={() => new Date(2026, 0, 1, 9, 5)} />)  // \"<p>--:--</p>\"",
+     "in the browser after mount: 09:05"
+    ],
+    "hint": "useState(null); useEffect(() =&gt; setTime(now()), [now]); format with padStart.",
+    "fn": "ClientTime",
+    "starter": "export function ClientTime({ now }) {\n  return null // your code\n}\n",
+    "solution": "import { useEffect, useState } from 'react'\n\nconst fmt = (d) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`\n\nexport function ClientTime({ now }) {\n  const [time, setTime] = useState(null)\n  useEffect(() => { setTime(now()) }, [now])\n  return <p>{time ? fmt(time) : '--:--'}</p>\n}\n",
+    "starterFile": "src/ClientTime.jsx",
+    "tests": {
+     "file": "src/ClientTime.test.jsx",
+     "run": "npx vitest run ClientTime",
+     "code": "import { render, screen, fireEvent, act } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { renderToString } from 'react-dom/server'\nimport { ClientTime } from './ClientTime'\n\nconst now = () => new Date(2026, 0, 1, 9, 5)\n\ntest('server HTML shows the placeholder', () => {\n  expect(renderToString(<ClientTime now={now} />)).toBe('<p>--:--</p>')\n})\n\ntest('shows the time after mount', () => {\n  render(<ClientTime now={now} />)\n  expect(screen.getByText('09:05')).toBeTruthy()\n})\n\ntest('hydrates without a mismatch', async () => {\n  const { hydrateRoot } = await import('react-dom/client')\n  const el = document.createElement('div')\n  el.innerHTML = renderToString(<ClientTime now={now} />)\n  document.body.appendChild(el)\n  const errors = []\n  const orig = console.error\n  console.error = (...a) => errors.push(a.join(' '))\n  await act(async () => { hydrateRoot(el, <ClientTime now={now} />, { onRecoverableError: (e) => errors.push(String(e)) }) })\n  console.error = orig\n  expect(errors).toEqual([])\n  expect(el.textContent).toBe('09:05')\n})\n"
+    },
+    "checks": [
+     {
+      "t": "server HTML shows the placeholder",
+      "verify": ""
+     },
+     {
+      "t": "shows the time after mount",
+      "verify": ""
+     },
+     {
+      "t": "hydrates without a mismatch",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Streaming sends the shell first and fills Suspense boundaries as data arrives; hydration must match the server HTML, so render browser-only values after mount.",
+    "mistakes": [
+     "Date/random/window in render (mismatches).",
+     "suppressHydrationWarning as a blanket fix."
+    ]
+   }
+  }
+ ]
+}

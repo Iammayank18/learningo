@@ -1,0 +1,1056 @@
+{
+ "course": "react-mastery",
+ "items": [
+  {
+   "id": "rerender-causes",
+   "prereqs": [
+    "atomic-state"
+   ],
+   "dryRun": {
+    "title": "Why did <Row> render?",
+    "columns": [
+     "cause",
+     "re-renders Row?"
+    ],
+    "rows": [
+     [
+      "Row's own state changed",
+      "yes"
+     ],
+     [
+      "its parent re-rendered (props look the same)",
+      "YES, by default"
+     ],
+     [
+      "a context it reads changed",
+      "yes"
+     ],
+     [
+      "a sibling's state changed",
+      "no"
+     ],
+     [
+      "props changed but Row is memo() with equal props",
+      "no"
+     ]
+    ],
+    "hit": 1,
+    "note": "A component re-renders when its state changes, its parent re-renders, or a context it uses changes. Props changing is not required: by default every child of a re-rendering parent renders too. Usually that is fine; optimise only what is measurably slow."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let childRenders = 0\nfunction Child() { childRenders++; return null }\nfunction Parent() { const [n, setN] = useState(0); return &lt;&gt;&lt;button onClick={() =&gt; setN(n + 1)}&gt;x&lt;/button&gt;&lt;Child /&gt;&lt;/&gt; }</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>0</code>",
+      "<code>3</code>",
+      "<code>2</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Child gets no props at all, yet it renders with every parent render."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nlet childRenders = 0\nfunction Child() { childRenders++; return null }\nfunction Parent() { const [n, setN] = useState(0); return <><button onClick={() => setN(n + 1)}>x</button><Child /></> }\nawait mount(<Parent />)\nawait click($('button')); await click($('button'))\nconsole.log(childRenders)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let childRenders = 0\nfunction Child() { childRenders++; return null }\nfunction Counter() { const [n, setN] = useState(0); return &lt;button onClick={() =&gt; setN(n + 1)}&gt;{n}&lt;/button&gt; }\nfunction Parent() { return &lt;&gt;&lt;Counter /&gt;&lt;Child /&gt;&lt;/&gt; }</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>3</code>",
+      "<code>0</code>",
+      "<code>2</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "State moved down into Counter: its updates no longer re-render the sibling."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nlet childRenders = 0\nfunction Child() { childRenders++; return null }\nfunction Counter() { const [n, setN] = useState(0); return <button onClick={() => setN(n + 1)}>{n}</button> }\nfunction Parent() { return <><Counter /><Child /></> }\nawait mount(<Parent />)\nawait click($('button')); await click($('button'))\nconsole.log(childRenders)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let renders = 0\nfunction Child() { renders++; return null }\nfunction Parent({ children }) { const [n, setN] = useState(0); return &lt;&gt;&lt;button onClick={() =&gt; setN(n + 1)}&gt;x&lt;/button&gt;{children}&lt;/&gt; }</code></pre>",
+     "opts": [
+      "<code>3</code>",
+      "<code>0</code>",
+      "<code>2</code>",
+      "<code>1</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "children was created by the caller, not by Parent, so the same element is reused and React skips it."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nlet renders = 0\nfunction Child() { renders++; return null }\nfunction Parent({ children }) { const [n, setN] = useState(0); return <><button onClick={() => setN(n + 1)}>x</button>{children}</> }\nawait mount(<Parent><Child /></Parent>)\nawait click($('button')); await click($('button'))\nconsole.log(renders)"
+    },
+    {
+     "tag": "Myth",
+     "q": "\"A component re-renders only when its props change.\" True?",
+     "opts": [
+      "Yes",
+      "No, by default it re-renders whenever its parent does",
+      "Only for class components",
+      "Only in StrictMode"
+     ],
+     "ans": 1,
+     "why": [
+      "memo() is what adds the props check."
+     ]
+    },
+    {
+     "tag": "Tool",
+     "q": "How do you see why something rendered?",
+     "opts": [
+      "console.log in every component",
+      "React DevTools Profiler with \"Record why each component rendered\" enabled",
+      "The Network tab",
+      "Lighthouse"
+     ],
+     "ans": 1,
+     "why": [
+      "Measure before optimising."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Fix a slow page by moving state down. <code>Page({ onRowRender })</code> renders a search <code>&lt;input&gt;</code> and a <code>&lt;BigList onRender={onRowRender} /&gt;</code> (50 rows that call onRender each time they render). Typing in the search must not re-render the list.",
+    "examples": [
+     "type 3 letters → onRowRender not called again",
+     "the input still shows what you typed"
+    ],
+    "hint": "Move the input and its state into its own SearchBox component; Page itself keeps no state.",
+    "fn": "Page",
+    "starter": "export function BigList({ onRender }) {\n  return null // your code\n}\nexport function Page({ onRowRender }) {\n  return null // your code\n}\n",
+    "solution": "import { useState } from 'react'\n\nexport function BigList({ onRender }) {\n  onRender?.()\n  return <ul>{Array.from({ length: 50 }, (_, i) => <li key={i}>row {i}</li>)}</ul>\n}\n\nfunction SearchBox() {\n  const [q, setQ] = useState('')\n  return <input aria-label=\"search\" value={q} onChange={(e) => setQ(e.target.value)} />\n}\n\nexport function Page({ onRowRender }) {\n  return (\n    <div>\n      <SearchBox />\n      <BigList onRender={onRowRender} />\n    </div>\n  )\n}\n",
+    "starterFile": "src/Page.jsx",
+    "tests": {
+     "file": "src/Page.test.jsx",
+     "run": "npx vitest run Page",
+     "code": "import { render, screen, fireEvent, act } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { Page } from './Page'\n\ntest('renders the list', () => {\n  render(<Page />)\n  expect(screen.getAllByRole('listitem')).toHaveLength(50)\n})\n\ntest('the input works', () => {\n  render(<Page />)\n  fireEvent.change(screen.getByLabelText('search'), { target: { value: 'abc' } })\n  expect(screen.getByLabelText('search').value).toBe('abc')\n})\n\ntest('typing does not re-render the list', () => {\n  let renders = 0\n  render(<Page onRowRender={() => renders++} />)\n  const input = screen.getByLabelText('search')\n  fireEvent.change(input, { target: { value: 'a' } })\n  fireEvent.change(input, { target: { value: 'ab' } })\n  expect(renders).toBe(1)\n})\n"
+    },
+    "checks": [
+     {
+      "t": "renders the list",
+      "verify": ""
+     },
+     {
+      "t": "the input works",
+      "verify": ""
+     },
+     {
+      "t": "typing does not re-render the list",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Components re-render on own state, parent render, or context change. Move state down or pass components as children before reaching for memo.",
+    "mistakes": [
+     "Optimising without measuring.",
+     "Keeping fast-changing state high in the tree."
+    ]
+   }
+  },
+  {
+   "id": "react-memo",
+   "prereqs": [
+    "rerender-causes"
+   ],
+   "dryRun": {
+    "title": "const Row = memo(function Row({ item, onSelect }) {...})",
+    "columns": [
+     "parent re-renders with",
+     "memo compares (Object.is per prop)",
+     "Row renders?"
+    ],
+    "rows": [
+     [
+      "same item object, same onSelect",
+      "all equal",
+      "no"
+     ],
+     [
+      "item={{ ...item }} (new object)",
+      "item differs",
+      "yes"
+     ],
+     [
+      "onSelect={() => …} inline",
+      "onSelect differs",
+      "yes"
+     ],
+     [
+      "children={<b>x</b>}",
+      "new element every time",
+      "yes"
+     ]
+    ],
+    "hit": 2,
+    "note": "memo() skips re-rendering when every prop is equal by <code>Object.is</code> (shallow). It only helps if the props really are stable: inline objects, arrays, functions and JSX children are new on every render."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let renders = 0\nconst Row = memo(function Row({ cfg }) { renders++; return null })\nfunction P() { const [n, setN] = useState(0); return &lt;&gt;&lt;Row cfg={{ dense: true }} /&gt;&lt;button onClick={() =&gt; setN(n + 1)}&gt;x&lt;/button&gt;&lt;/&gt; }</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>0</code>",
+      "<code>2</code>",
+      "<code>3</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "An inline object is a new reference each render, so memo never skips."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nlet renders = 0\nconst Row = memo(function Row({ cfg }) { renders++; return null })\nfunction P() { const [n, setN] = useState(0); return <><Row cfg={{ dense: true }} /><button onClick={() => setN(n + 1)}>x</button></> }\nawait mount(<P />)\nawait click($('button')); await click($('button'))\nconsole.log(renders)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let renders = 0\nconst Row = memo(function Row({ label }) { renders++; return null })\nfunction P() { const [n, setN] = useState(0); return &lt;&gt;&lt;Row label=\"fixed\" /&gt;&lt;button onClick={() =&gt; setN(n + 1)}&gt;x&lt;/button&gt;&lt;/&gt; }</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>3</code>",
+      "<code>0</code>",
+      "<code>2</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Primitive props compare by value, so memo skips both re-renders."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nlet renders = 0\nconst Row = memo(function Row({ label }) { renders++; return null })\nfunction P() { const [n, setN] = useState(0); return <><Row label=\"fixed\" /><button onClick={() => setN(n + 1)}>x</button></> }\nawait mount(<P />)\nawait click($('button')); await click($('button'))\nconsole.log(renders)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let renders = 0\nconst Row = memo(function Row({ user }) { renders++; return null }, (a, b) =&gt; a.user.id === b.user.id)\nfunction P() { const [n, setN] = useState(0); return &lt;&gt;&lt;Row user={{ id: 1, n }} /&gt;&lt;button onClick={() =&gt; setN(n + 1)}&gt;x&lt;/button&gt;&lt;/&gt; }</code></pre>",
+     "opts": [
+      "<code>2</code>",
+      "<code>0</code>",
+      "<code>1</code>",
+      "<code>3</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "A custom compare function returning true means \"equal, skip\". Dangerous: Row now shows stale n."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nlet renders = 0\nconst Row = memo(function Row({ user }) { renders++; return null }, (a, b) => a.user.id === b.user.id)\nfunction P() { const [n, setN] = useState(0); return <><Row user={{ id: 1, n }} /><button onClick={() => setN(n + 1)}>x</button></> }\nawait mount(<P />)\nawait click($('button'))\nconsole.log(renders)"
+    },
+    {
+     "tag": "Cost",
+     "q": "Is wrapping every component in memo() a good default?",
+     "opts": [
+      "Yes, always",
+      "Only for class components",
+      "Yes, the compiler requires it",
+      "No: comparing props costs time too, and most renders are cheap"
+     ],
+     "ans": 3,
+     "why": [
+      "Use it where profiling shows an expensive subtree."
+     ]
+    },
+    {
+     "tag": "Context",
+     "q": "A memo() component reads a context that changes. Does memo stop the re-render?",
+     "opts": [
+      "Yes",
+      "No, context changes always re-render consumers",
+      "Only with a custom compare",
+      "Only in production"
+     ],
+     "ans": 1,
+     "why": [
+      "memo only checks props."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Make a list cheap to update: <code>TodoList({ todos, onToggle, onRowRender })</code> renders a memoized <code>TodoRow</code> per todo (a checkbox calling onToggle(id)). When one todo changes, only that row may re-render.",
+    "examples": [
+     "toggle todo 2 of 3 → onRowRender called once more, for row 2",
+     "the parent passes a stable onToggle (useCallback)"
+    ],
+    "hint": "TodoRow = memo(...); rows get primitive props or the todo object itself (unchanged todos keep their reference); onToggle must be stable.",
+    "fn": "TodoList",
+    "starter": "export const TodoRow = null // your code\nexport function TodoList({ todos, onToggle, onRowRender }) {\n  return null // your code\n}\n",
+    "solution": "import { memo } from 'react'\n\nexport const TodoRow = memo(function TodoRow({ todo, onToggle, onRender }) {\n  onRender?.(todo.id)\n  return (\n    <li>\n      <label><input type=\"checkbox\" checked={todo.done} onChange={() => onToggle(todo.id)} /> {todo.text}</label>\n    </li>\n  )\n})\n\nexport function TodoList({ todos, onToggle, onRowRender }) {\n  return <ul>{todos.map((t) => <TodoRow key={t.id} todo={t} onToggle={onToggle} onRender={onRowRender} />)}</ul>\n}\n",
+    "starterFile": "src/TodoList.jsx",
+    "tests": {
+     "file": "src/TodoList.test.jsx",
+     "run": "npx vitest run TodoList",
+     "code": "import { render, screen, fireEvent, act } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { useCallback, useState } from 'react'\nimport { TodoList } from './TodoList'\n\nfunction App({ log }) {\n  const [todos, setTodos] = useState([{ id: 1, text: 'a', done: false }, { id: 2, text: 'b', done: false }, { id: 3, text: 'c', done: false }])\n  const onToggle = useCallback((id) => setTodos((ts) => ts.map((t) => (t.id === id ? { ...t, done: !t.done } : t))), [])\n  const onRowRender = useCallback((id) => log.push(id), [log])\n  return <TodoList todos={todos} onToggle={onToggle} onRowRender={onRowRender} />\n}\n\ntest('renders all rows', () => {\n  render(<App log={[]} />)\n  expect(screen.getAllByRole('checkbox')).toHaveLength(3)\n})\n\ntest('toggling works', () => {\n  render(<App log={[]} />)\n  fireEvent.click(screen.getAllByRole('checkbox')[1])\n  expect(screen.getAllByRole('checkbox').map((c) => c.checked)).toEqual([false, true, false])\n})\n\ntest('only the changed row re-renders', () => {\n  const log = []\n  render(<App log={log} />)\n  log.length = 0\n  fireEvent.click(screen.getAllByRole('checkbox')[1])\n  expect(log).toEqual([2])\n})\n"
+    },
+    "checks": [
+     {
+      "t": "renders all rows",
+      "verify": ""
+     },
+     {
+      "t": "toggling works",
+      "verify": ""
+     },
+     {
+      "t": "only the changed row re-renders",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "memo() skips renders when all props are Object.is-equal. Keep props stable (primitives, unchanged objects, useCallback), and use it where it measurably helps.",
+    "mistakes": [
+     "Inline objects/functions defeating memo.",
+     "Custom compare functions that hide real changes."
+    ]
+   }
+  },
+  {
+   "id": "memo-usememo-usecallback",
+   "prereqs": [
+    "react-memo"
+   ],
+   "dryRun": {
+    "title": "<Chart data={…} onPoint={…} /> with Chart = memo(...)",
+    "columns": [
+     "setup in the parent",
+     "Chart skips renders?"
+    ],
+    "rows": [
+     [
+      "data={rows.filter(f)}, onPoint={() => …}",
+      "no: both new each render"
+     ],
+     [
+      "data={useMemo(…)}, onPoint={() => …}",
+      "no: onPoint still new"
+     ],
+     [
+      "data={useMemo(…)}, onPoint={useCallback(…)}",
+      "yes"
+     ],
+     [
+      "useMemo + useCallback but Chart NOT memo",
+      "no: nobody compares props"
+     ]
+    ],
+    "hit": 2,
+    "note": "The three work as a team: memo() on the child compares props; useMemo keeps object/array props stable; useCallback keeps function props stable. Any one missing and the whole effort does nothing."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let renders = 0\nconst Chart = memo(function Chart() { renders++; return null })\nfunction P() { const [n, setN] = useState(0); const data = useMemo(() =&gt; [1, 2], []); return &lt;&gt;&lt;Chart data={data} onPoint={() =&gt; {}} /&gt;&lt;button onClick={() =&gt; setN(n + 1)}&gt;x&lt;/button&gt;&lt;/&gt; }</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>0</code>",
+      "<code>2</code>",
+      "<code>3</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "data is stable but the inline onPoint is new each time, so memo still re-renders."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nlet renders = 0\nconst Chart = memo(function Chart() { renders++; return null })\nfunction P() { const [n, setN] = useState(0); const data = useMemo(() => [1, 2], []); return <><Chart data={data} onPoint={() => {}} /><button onClick={() => setN(n + 1)}>x</button></> }\nawait mount(<P />)\nawait click($('button'))\nconsole.log(renders)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let renders = 0\nconst Chart = memo(function Chart() { renders++; return null })\nfunction P() { const [n, setN] = useState(0); const data = useMemo(() =&gt; [1, 2], []); const onPoint = useCallback(() =&gt; {}, []); return &lt;&gt;&lt;Chart data={data} onPoint={onPoint} /&gt;&lt;button onClick={() =&gt; setN(n + 1)}&gt;x&lt;/button&gt;&lt;/&gt; }</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>2</code>",
+      "<code>0</code>",
+      "<code>3</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "All props stable + memo child = the render is skipped."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nlet renders = 0\nconst Chart = memo(function Chart() { renders++; return null })\nfunction P() { const [n, setN] = useState(0); const data = useMemo(() => [1, 2], []); const onPoint = useCallback(() => {}, []); return <><Chart data={data} onPoint={onPoint} /><button onClick={() => setN(n + 1)}>x</button></> }\nawait mount(<P />)\nawait click($('button'))\nconsole.log(renders)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let renders = 0\nfunction Chart() { renders++; return null }\nfunction P() { const [n, setN] = useState(0); const data = useMemo(() =&gt; [1, 2], []); const onPoint = useCallback(() =&gt; {}, []); return &lt;&gt;&lt;Chart data={data} onPoint={onPoint} /&gt;&lt;button onClick={() =&gt; setN(n + 1)}&gt;x&lt;/button&gt;&lt;/&gt; }</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>0</code>",
+      "<code>2</code>",
+      "<code>3</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Without memo() on Chart, nobody compares props: stable props alone change nothing."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nlet renders = 0\nfunction Chart() { renders++; return null }\nfunction P() { const [n, setN] = useState(0); const data = useMemo(() => [1, 2], []); const onPoint = useCallback(() => {}, []); return <><Chart data={data} onPoint={onPoint} /><button onClick={() => setN(n + 1)}>x</button></> }\nawait mount(<P />)\nawait click($('button'))\nconsole.log(renders)"
+    },
+    {
+     "tag": "Compiler",
+     "q": "With the React Compiler enabled, what happens to this triad?",
+     "opts": [
+      "The compiler inserts the memoization automatically, so most manual memo/useMemo/useCallback can go",
+      "Nothing changes",
+      "It forbids memo()",
+      "It makes them run twice"
+     ],
+     "ans": 0,
+     "why": [
+      "Understanding the triad still helps you read code and debug."
+     ]
+    },
+    {
+     "tag": "Order",
+     "q": "Which should you try first for a slow subtree?",
+     "opts": [
+      "Wrap everything in memo",
+      "useMemo every value",
+      "Switch to classes",
+      "Restructure (move state down, pass children) before adding memoization"
+     ],
+     "ans": 3,
+     "why": [
+      "Structure fixes are free; memoization has costs."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>Dashboard({ rows, onChartRender })</code>: holds a <code>theme</code> toggle button and renders a memoized <code>Chart</code> with props <code>points</code> (rows mapped to <code>r.value</code>) and <code>onPick</code>. Toggling the theme must not re-render Chart; Chart calls onChartRender() each render and shows the point count.",
+    "examples": [
+     "toggle theme 3 times → onChartRender called once",
+     "<output> inside Chart shows the number of points"
+    ],
+    "hint": "Chart = memo(...); points = useMemo(() =&gt; rows.map(...), [rows]); onPick = useCallback(...).",
+    "fn": "Dashboard",
+    "starter": "export function Dashboard({ rows, onChartRender }) {\n  return null // your code\n}\n",
+    "solution": "import { memo, useCallback, useMemo, useState } from 'react'\n\nconst Chart = memo(function Chart({ points, onPick, onRender }) {\n  onRender?.()\n  return <output onClick={() => onPick(points[0])}>{points.length}</output>\n})\n\nexport function Dashboard({ rows, onChartRender }) {\n  const [theme, setTheme] = useState('light')\n  const points = useMemo(() => rows.map((r) => r.value), [rows])\n  const onPick = useCallback(() => {}, [])\n  return (\n    <div className={theme}>\n      <button onClick={() => setTheme((t) => (t === 'light' ? 'dark' : 'light'))}>theme</button>\n      <Chart points={points} onPick={onPick} onRender={onChartRender} />\n    </div>\n  )\n}\n",
+    "starterFile": "src/Dashboard.jsx",
+    "tests": {
+     "file": "src/Dashboard.test.jsx",
+     "run": "npx vitest run Dashboard",
+     "code": "import { render, screen, fireEvent, act } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { Dashboard } from './Dashboard'\n\nconst rows = [{ value: 1 }, { value: 2 }, { value: 3 }]\n\ntest('shows the point count', () => {\n  render(<Dashboard rows={rows} />)\n  expect(screen.getByRole('status').textContent).toBe('3')\n})\n\ntest('theme toggles', () => {\n  const { container } = render(<Dashboard rows={rows} />)\n  fireEvent.click(screen.getByText('theme'))\n  expect(container.firstChild.className).toBe('dark')\n})\n\ntest('toggling theme does not re-render the chart', () => {\n  let n = 0\n  const onChartRender = () => n++\n  render(<Dashboard rows={rows} onChartRender={onChartRender} />)\n  fireEvent.click(screen.getByText('theme'))\n  fireEvent.click(screen.getByText('theme'))\n  fireEvent.click(screen.getByText('theme'))\n  expect(n).toBe(1)\n})\n"
+    },
+    "checks": [
+     {
+      "t": "shows the point count",
+      "verify": ""
+     },
+     {
+      "t": "theme toggles",
+      "verify": ""
+     },
+     {
+      "t": "toggling theme does not re-render the chart",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "memo (child) + useMemo (object/array props) + useCallback (function props) only work together. Restructure first; the React Compiler can automate this.",
+    "mistakes": [
+     "Adding useCallback without memo on the child.",
+     "Memoizing everything by habit."
+    ]
+   }
+  },
+  {
+   "id": "composition-perf",
+   "prereqs": [
+    "memo-usememo-usecallback"
+   ],
+   "dryRun": {
+    "title": "<ScrollTracker> that re-renders on every scroll",
+    "columns": [
+     "structure",
+     "what re-renders on scroll"
+    ],
+    "rows": [
+     [
+      "<ScrollTracker> renders <ExpensiveTree /> inside itself",
+      "tracker + ExpensiveTree"
+     ],
+     [
+      "<ScrollTracker>{<ExpensiveTree />}</ScrollTracker>",
+      "tracker only"
+     ],
+     [
+      "state moved into a small <ScrollBadge />",
+      "badge only"
+     ],
+     [
+      "memo() on ExpensiveTree",
+      "tracker; tree skipped (but costs a compare)"
+     ]
+    ],
+    "hit": 1,
+    "note": "Two free optimisations: <b>move state down</b> into the smallest component that needs it, and <b>lift content up</b> by passing expensive parts as children (or other element props). The element is created by the outer component, so it is reused when the inner one re-renders."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let heavy = 0\nfunction Heavy() { heavy++; return null }\nfunction Hover({ children }) { const [on, setOn] = useState(false); return &lt;div onClick={() =&gt; setOn(!on)}&gt;{String(on)}{children}&lt;/div&gt; }</code></pre>",
+     "opts": [
+      "<code>4</code>",
+      "<code>1</code>",
+      "<code>0</code>",
+      "<code>3</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Heavy is passed as children, created outside Hover, so Hover's state changes do not re-render it."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nlet heavy = 0\nfunction Heavy() { heavy++; return null }\nfunction Hover({ children }) { const [on, setOn] = useState(false); return <div onClick={() => setOn(!on)}>{String(on)}{children}</div> }\nawait mount(<Hover><Heavy /></Hover>)\nawait click($('div')); await click($('div')); await click($('div'))\nconsole.log(heavy)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let heavy = 0\nfunction Heavy() { heavy++; return null }\nfunction Hover() { const [on, setOn] = useState(false); return &lt;div onClick={() =&gt; setOn(!on)}&gt;{String(on)}&lt;Heavy /&gt;&lt;/div&gt; }</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>4</code>",
+      "<code>0</code>",
+      "<code>3</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Created inside Hover, Heavy re-renders every time Hover does."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nlet heavy = 0\nfunction Heavy() { heavy++; return null }\nfunction Hover() { const [on, setOn] = useState(false); return <div onClick={() => setOn(!on)}>{String(on)}<Heavy /></div> }\nawait mount(<Hover />)\nawait click($('div')); await click($('div')); await click($('div'))\nconsole.log(heavy)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let sidebar = 0\nfunction Sidebar() { sidebar++; return null }\nfunction Layout({ side, main }) { const [n, setN] = useState(0); return &lt;div&gt;&lt;button onClick={() =&gt; setN(n + 1)}&gt;x&lt;/button&gt;{side}{main}&lt;/div&gt; }</code></pre>",
+     "opts": [
+      "<code>3</code>",
+      "<code>0</code>",
+      "<code>2</code>",
+      "<code>1</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "Any prop holding an element works like children: \"slots\" are a composition tool."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nlet sidebar = 0\nfunction Sidebar() { sidebar++; return null }\nfunction Layout({ side, main }) { const [n, setN] = useState(0); return <div><button onClick={() => setN(n + 1)}>x</button>{side}{main}</div> }\nawait mount(<Layout side={<Sidebar />} main={<p>main</p>} />)\nawait click($('button')); await click($('button'))\nconsole.log(sidebar)"
+    },
+    {
+     "tag": "Why it works",
+     "q": "Why does passing <code>&lt;Heavy /&gt;</code> as children avoid its re-render?",
+     "opts": [
+      "The element object comes from the parent's render; if that render did not run, it is the same object and React skips it",
+      "children are always memoized",
+      "React never renders children",
+      "Because of keys"
+     ],
+     "ans": 0,
+     "why": [
+      "Same element reference = nothing to do."
+     ]
+    },
+    {
+     "tag": "Prefer",
+     "q": "Before reaching for memo(), what should you try?",
+     "opts": [
+      "useLayoutEffect",
+      "Class components",
+      "Moving state down or lifting content up with children/slots",
+      "Disabling StrictMode"
+     ],
+     "ans": 2,
+     "why": [
+      "They are free and make the structure clearer."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>ExpandablePanel({ title, children })</code>: a header button (starts open) toggles open/closed (aria-expanded) and shows a click count; children stay mounted but are hidden with the <code>hidden</code> attribute when closed, and toggling must not re-render the children that were passed in.",
+    "examples": [
+     "<ExpandablePanel title=\"Stats\"><Heavy /></ExpandablePanel>",
+     "toggle twice → Heavy still rendered only once"
+    ],
+    "hint": "Keep the open state in the panel and render &lt;div hidden={!open}&gt;{children}&lt;/div&gt;. Unmounting with {open &amp;&amp; children} would remount them. Children created by the caller keep their identity, so the panel's own re-renders skip them.",
+    "fn": "ExpandablePanel",
+    "starter": "export function ExpandablePanel({ title, children }) {\n  return null // your code\n}\n",
+    "solution": "import { useState } from 'react'\n\nexport function ExpandablePanel({ title, children }) {\n  const [open, setOpen] = useState(true)\n  const [clicks, setClicks] = useState(0)\n  return (\n    <section>\n      <button aria-expanded={open} onClick={() => { setOpen((o) => !o); setClicks((c) => c + 1) }}>{title} ({clicks})</button>\n      <div hidden={!open}>{children}</div>\n    </section>\n  )\n}\n",
+    "starterFile": "src/ExpandablePanel.jsx",
+    "tests": {
+     "file": "src/ExpandablePanel.test.jsx",
+     "run": "npx vitest run ExpandablePanel",
+     "code": "import { render, screen, fireEvent, act } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { ExpandablePanel } from './ExpandablePanel'\n\ntest('shows title and children', () => {\n  render(<ExpandablePanel title=\"Stats\"><p>body</p></ExpandablePanel>)\n  expect(screen.getByRole('button').textContent).toContain('Stats')\n  expect(screen.getByText('body')).toBeTruthy()\n})\n\ntest('toggle updates aria-expanded', () => {\n  render(<ExpandablePanel title=\"S\"><p>b</p></ExpandablePanel>)\n  const before = screen.getByRole('button').getAttribute('aria-expanded')\n  fireEvent.click(screen.getByRole('button'))\n  expect(screen.getByRole('button').getAttribute('aria-expanded')).not.toBe(before)\n})\n\ntest('toggling does not re-render passed-in children', () => {\n  let renders = 0\n  function Heavy() { renders++; return <p>heavy</p> }\n  render(<ExpandablePanel title=\"S\"><Heavy /></ExpandablePanel>)\n  fireEvent.click(screen.getByRole('button'))\n  fireEvent.click(screen.getByRole('button'))\n  expect(renders).toBe(1)\n})\n"
+    },
+    "checks": [
+     {
+      "t": "shows title and children",
+      "verify": ""
+     },
+     {
+      "t": "toggle updates aria-expanded",
+      "verify": ""
+     },
+     {
+      "t": "toggling does not re-render passed-in children",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Move state down and lift content up (children/slots). Elements created by an outer component are reused when an inner one re-renders.",
+    "mistakes": [
+     "Creating expensive children inside a frequently updating component."
+    ]
+   }
+  },
+  {
+   "id": "code-splitting",
+   "prereqs": [
+    "composition-perf"
+   ],
+   "dryRun": {
+    "title": "const Settings = lazy(() => import(\"./Settings\"))",
+    "columns": [
+     "moment",
+     "network",
+     "screen"
+    ],
+    "rows": [
+     [
+      "initial load",
+      "main bundle only",
+      "app without Settings"
+     ],
+     [
+      "user opens Settings",
+      "fetch Settings chunk",
+      "<Suspense fallback> shows \"Loading…\""
+     ],
+     [
+      "chunk loaded",
+      "—",
+      "Settings rendered"
+     ],
+     [
+      "opened again",
+      "cached module",
+      "instant"
+     ]
+    ],
+    "hit": 1,
+    "note": "Code splitting ships code only when it is needed. <code>lazy()</code> + dynamic <code>import()</code> creates a separate chunk; a <code>&lt;Suspense&gt;</code> boundary shows a fallback while it loads. Split by route first, then by heavy, rarely used widgets."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const Panel = lazy(() =&gt; new Promise((r) =&gt; setTimeout(() =&gt; r({ default: () =&gt; &lt;p&gt;panel&lt;/p&gt; }), 20)))\nfunction App() { return &lt;Suspense fallback={&lt;i&gt;loading&lt;/i&gt;}&gt;&lt;Panel /&gt;&lt;/Suspense&gt; }</code></pre>",
+     "opts": [
+      "<code>panel panel</code>",
+      "<code>loading loading</code>",
+      "<code>(empty) panel</code>",
+      "<code>loading panel</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "First the Suspense fallback, then the lazily loaded component."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nconst Panel = lazy(() => new Promise((r) => setTimeout(() => r({ default: () => <p>panel</p> }), 20)))\nfunction App() { return <Suspense fallback={<i>loading</i>}><Panel /></Suspense> }\nawait mount(<App />)\nconsole.log(container.textContent)\nawait run(() => new Promise((r) => setTimeout(r, 50)))\nconsole.log(container.textContent)"
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let loads = 0\nconst Panel = lazy(() =&gt; { loads++; return Promise.resolve({ default: () =&gt; &lt;p&gt;p&lt;/p&gt; }) })\nfunction App({ show }) { return &lt;Suspense fallback={null}&gt;{show &amp;&amp; &lt;Panel /&gt;}&lt;/Suspense&gt; }</code></pre>",
+     "opts": [
+      "<code>1 1</code>",
+      "<code>0 1</code>",
+      "<code>0 2</code>",
+      "<code>1 2</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "The import only starts when the component first renders, and the result is cached."
+     ],
+     "exec": "import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, memo, StrictMode, Fragment, Suspense, useTransition, useDeferredValue, startTransition, use, lazy, forwardRef, useImperativeHandle, Component } from 'react'\nimport { createPortal, flushSync } from 'react-dom'\nlet loads = 0\nconst Panel = lazy(() => { loads++; return Promise.resolve({ default: () => <p>p</p> }) })\nfunction App({ show }) { return <Suspense fallback={null}>{show && <Panel />}</Suspense> }\nawait mount(<App show={false} />)\nconsole.log(loads)\nawait mount(<App show />)\nawait mount(<App show={false} />)\nawait mount(<App show />)\nconsole.log(loads)"
+    },
+    {
+     "tag": "Default export",
+     "q": "lazy(() =&gt; import(\"./Chart\")) fails with \"Element type is invalid\". Likely cause?",
+     "opts": [
+      "Missing key",
+      "Suspense is not allowed",
+      "Chart.jsx has only a named export; lazy needs a module with a default export (or map it: .then(m =&gt; ({ default: m.Chart })))",
+      "The file is too large"
+     ],
+     "ans": 2,
+     "why": [
+      "lazy expects { default: Component }."
+     ]
+    },
+    {
+     "tag": "Where first",
+     "q": "Best first place to code-split a typical app?",
+     "opts": [
+      "Routes: each page becomes its own chunk",
+      "Every button",
+      "Utility functions",
+      "CSS files only"
+     ],
+     "ans": 0,
+     "why": [
+      "Route boundaries give the biggest win for the least complexity."
+     ]
+    },
+    {
+     "tag": "Prefetch",
+     "q": "How can you hide the loading delay of a lazy route?",
+     "opts": [
+      "Remove Suspense",
+      "Use useEffect",
+      "Start the import early (on hover/intent) so the chunk is cached before the click",
+      "Inline all code"
+     ],
+     "ans": 2,
+     "why": [
+      "Calling the import function once warms the cache."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>lazyWithPreload(factory)</code>: like <code>lazy(factory)</code> but the returned component also has a <code>.preload()</code> method that starts loading early; factory must run at most once.",
+    "examples": [
+     "const Settings = lazyWithPreload(() => import(\"./Settings\"))",
+     "onMouseEnter={() => Settings.preload()}"
+    ],
+    "hint": "Cache the promise: let p; const load = () =&gt; (p ??= factory()); const C = lazy(load); C.preload = load.",
+    "fn": "lazyWithPreload",
+    "starter": "export function lazyWithPreload(factory) {\n  // your code\n}\n",
+    "solution": "import { lazy } from 'react'\n\nexport function lazyWithPreload(factory) {\n  let promise\n  const load = () => (promise ??= factory())\n  const Component = lazy(load)\n  Component.preload = load\n  return Component\n}\n",
+    "starterFile": "src/lazyWithPreload.js",
+    "tests": {
+     "file": "src/lazyWithPreload.test.jsx",
+     "run": "npx vitest run lazyWithPreload",
+     "code": "import { render, screen, fireEvent, act } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { Suspense } from 'react'\nimport { lazyWithPreload } from './lazyWithPreload'\n\nconst mod = (text) => Promise.resolve({ default: () => <p>{text}</p> })\n\ntest('renders through Suspense', async () => {\n  const C = lazyWithPreload(() => mod('settings'))\n  render(<Suspense fallback={<i>loading</i>}><C /></Suspense>)\n  expect(await screen.findByText('settings')).toBeTruthy()\n})\n\ntest('preload starts loading before render', () => {\n  let calls = 0\n  const C = lazyWithPreload(() => { calls++; return mod('x') })\n  C.preload()\n  expect(calls).toBe(1)\n})\n\ntest('factory runs only once', async () => {\n  let calls = 0\n  const C = lazyWithPreload(() => { calls++; return mod('once') })\n  C.preload(); C.preload()\n  render(<Suspense fallback={null}><C /></Suspense>)\n  await screen.findByText('once')\n  expect(calls).toBe(1)\n})\n"
+    },
+    "checks": [
+     {
+      "t": "renders through Suspense",
+      "verify": ""
+     },
+     {
+      "t": "preload starts loading before render",
+      "verify": ""
+     },
+     {
+      "t": "factory runs only once",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "lazy() + import() + Suspense = load code on demand. Split routes first, preload on intent, and remember lazy needs a default export.",
+    "mistakes": [
+     "Splitting tiny components (more requests, no gain).",
+     "No Suspense boundary above a lazy component."
+    ]
+   }
+  },
+  {
+   "id": "virtualization",
+   "prereqs": [
+    "code-splitting"
+   ],
+   "dryRun": {
+    "title": "10,000 rows, 40 px each, viewport 400 px, scrollTop 4000",
+    "columns": [
+     "value",
+     "how"
+    ],
+    "rows": [
+     [
+      "first visible index",
+      "floor(4000 / 40) = 100"
+     ],
+     [
+      "visible count",
+      "ceil(400 / 40) = 10"
+     ],
+     [
+      "rendered (overscan 3)",
+      "rows 97 … 112"
+     ],
+     [
+      "spacer height",
+      "10,000 × 40 = 400,000 px"
+     ],
+     [
+      "DOM nodes",
+      "~16 instead of 10,000"
+     ]
+    ],
+    "hit": 2,
+    "note": "Virtualization (windowing) renders only the rows in view (plus a few extra) inside a tall spacer, positioning them with a transform or top offset. DOM size stays tiny no matter how long the list is. Libraries: TanStack Virtual, react-window."
+   },
+   "think": [
+    {
+     "tag": "Why",
+     "q": "What problem does virtualization solve?",
+     "opts": [
+      "Thousands of DOM nodes make rendering, layout and memory slow; only visible rows are rendered",
+      "Network latency",
+      "Bundle size",
+      "State bugs"
+     ],
+     "ans": 0,
+     "why": [
+      "The DOM is the expensive part."
+     ]
+    },
+    {
+     "tag": "Trade-off",
+     "q": "What breaks with naive virtualization?",
+     "opts": [
+      "Scrolling",
+      "Keys",
+      "CSS",
+      "Ctrl+F browser search and anchor links to off-screen rows (they are not in the DOM)"
+     ],
+     "ans": 3,
+     "why": [
+      "Mention this trade-off in interviews."
+     ]
+    },
+    {
+     "tag": "Variable heights",
+     "q": "Rows have different heights. What does a virtualizer need?",
+     "opts": [
+      "Nothing",
+      "Measured or estimated sizes, with a cache of real heights once rendered",
+      "Fixed 40 px rows only",
+      "A canvas"
+     ],
+     "ans": 1,
+     "why": [
+      "TanStack Virtual measures elements as they render."
+     ]
+    },
+    {
+     "tag": "Overscan",
+     "q": "Why render a few extra rows above and below the viewport?",
+     "opts": [
+      "To improve SEO",
+      "So fast scrolling does not flash blank space before new rows render",
+      "For keys",
+      "To reduce memory"
+     ],
+     "ans": 1,
+     "why": [
+      "A small overscan hides the render gap."
+     ]
+    },
+    {
+     "tag": "When",
+     "q": "When is virtualization overkill?",
+     "opts": [
+      "10,000 table rows",
+      "A chat with years of messages",
+      "A log viewer",
+      "A list of 50 simple rows"
+     ],
+     "ans": 3,
+     "why": [
+      "Measure: a few hundred simple rows are usually fine."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write the math of a virtual list: <code>getVirtualRange({ count, itemHeight, viewportHeight, scrollTop, overscan = 3 })</code> returning <code>{ start, end, offsetTop, totalHeight }</code> (end exclusive, clamped to 0…count).",
+    "examples": [
+     "getVirtualRange({ count: 10000, itemHeight: 40, viewportHeight: 400, scrollTop: 4000 })",
+     "// { start: 97, end: 113, offsetTop: 3880, totalHeight: 400000 }"
+    ],
+    "hint": "first = floor(scrollTop / h); visible = ceil(viewport / h); start = max(0, first - overscan); end = min(count, first + visible + overscan); offsetTop = start * h.",
+    "fn": "virtualRange",
+    "starter": "export function getVirtualRange({ count, itemHeight, viewportHeight, scrollTop, overscan = 3 }) {\n  // your code\n}\n",
+    "solution": "export function getVirtualRange({ count, itemHeight, viewportHeight, scrollTop, overscan = 3 }) {\n  const first = Math.floor(scrollTop / itemHeight)\n  const visible = Math.ceil(viewportHeight / itemHeight)\n  const start = Math.max(0, first - overscan)\n  const end = Math.min(count, first + visible + overscan)\n  return { start, end, offsetTop: start * itemHeight, totalHeight: count * itemHeight }\n}\n",
+    "starterFile": "src/virtualRange.js",
+    "tests": {
+     "file": "src/virtualRange.test.jsx",
+     "run": "npx vitest run virtualRange",
+     "code": "import { expect, test } from 'vitest'\nimport { getVirtualRange } from './virtualRange'\n\ntest('middle of a long list', () => {\n  expect(getVirtualRange({ count: 10000, itemHeight: 40, viewportHeight: 400, scrollTop: 4000 })).toEqual({ start: 97, end: 113, offsetTop: 3880, totalHeight: 400000 })\n})\n\ntest('clamped at the top', () => {\n  expect(getVirtualRange({ count: 100, itemHeight: 20, viewportHeight: 100, scrollTop: 0 })).toEqual({ start: 0, end: 8, offsetTop: 0, totalHeight: 2000 })\n})\n\ntest('clamped at the bottom and tiny lists', () => {\n  expect(getVirtualRange({ count: 100, itemHeight: 20, viewportHeight: 100, scrollTop: 1900 }).end).toBe(100)\n  expect(getVirtualRange({ count: 3, itemHeight: 20, viewportHeight: 400, scrollTop: 0 })).toEqual({ start: 0, end: 3, offsetTop: 0, totalHeight: 60 })\n})\n"
+    },
+    "checks": [
+     {
+      "t": "middle of a long list",
+      "verify": ""
+     },
+     {
+      "t": "clamped at the top",
+      "verify": ""
+     },
+     {
+      "t": "clamped at the bottom and tiny lists",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Render only visible rows (plus overscan) inside a full-height spacer. Mind variable heights and the loss of in-page search.",
+    "mistakes": [
+     "Virtualizing short lists.",
+     "No overscan → blank flashes when scrolling."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Virtual Scroll List from Scratch",
+     "diff": "hard",
+     "mc": "virtual-scroll",
+     "course": "react-machine-coding"
+    }
+   ]
+  },
+  {
+   "id": "profiler",
+   "prereqs": [
+    "virtualization"
+   ],
+   "dryRun": {
+    "title": "Profiling a slow \"type in search\" interaction",
+    "columns": [
+     "step",
+     "tool",
+     "look for"
+    ],
+    "rows": [
+     [
+      "1",
+      "DevTools Profiler → Record, type, stop",
+      "commits that take > 16 ms"
+     ],
+     [
+      "2",
+      "Flamegraph",
+      "wide (slow) components"
+     ],
+     [
+      "3",
+      "\"Why did this render?\"",
+      "props/state/context/parent"
+     ],
+     [
+      "4",
+      "Ranked chart",
+      "the top offenders"
+     ],
+     [
+      "5",
+      "fix and re-record",
+      "the same interaction, faster"
+     ]
+    ],
+    "hit": 1,
+    "note": "Measure before you optimise. The React DevTools Profiler records commits and shows how long each component took and why it rendered. The <code>&lt;Profiler&gt;</code> component gives the same timings in code (onRender), e.g. for logging slow screens."
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const log = []\nfunction Slow() { return &lt;p&gt;x&lt;/p&gt; }\nfunction App() { const [n, setN] = useState(0); return &lt;Profiler id=\"list\" onRender={(id, phase) =&gt; log.push(id + ':' + phase)}&gt;&lt;Slow /&gt;&lt;button onClick={() =&gt; setN(n + 1)}&gt;x&lt;/button&gt;&lt;/Profiler&gt; }</code></pre>",
+     "opts": [
+      "<code>list:mount list:update</code>",
+      "<code>list:mount list:mount</code>",
+      "<code>list:update</code>",
+      "<code>mount update</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "onRender fires on every commit of that subtree, with the phase."
+     ],
+     "exec": "import { useState, Profiler } from 'react'\nconst log = []\nfunction Slow() { return <p>x</p> }\nfunction App() { const [n, setN] = useState(0); return <Profiler id=\"list\" onRender={(id, phase) => log.push(id + ':' + phase)}><Slow /><button onClick={() => setN(n + 1)}>x</button></Profiler> }\nawait mount(<App />)\nawait click($('button'))\nconsole.log(log.join(' '))"
+    },
+    {
+     "tag": "Budget",
+     "q": "For 60 fps, how long can one interaction's work take on the main thread?",
+     "opts": [
+      "100 ms",
+      "1 second",
+      "About 16 ms per frame (less, since the browser needs time too)",
+      "1 ms"
+     ],
+     "ans": 2,
+     "why": [
+      "Commits above that budget feel janky."
+     ]
+    },
+    {
+     "tag": "Dev vs prod",
+     "q": "Why profile a production build (or profiling build) before drawing conclusions?",
+     "opts": [
+      "Production cannot be profiled",
+      "Dev mode is faster",
+      "They are identical",
+      "Development mode adds checks and is much slower; numbers can mislead"
+     ],
+     "ans": 3,
+     "why": [
+      "Use react-dom/profiling for real numbers."
+     ]
+    },
+    {
+     "tag": "INP",
+     "q": "Which Core Web Vital measures how quickly the page responds to clicks and typing?",
+     "opts": [
+      "<code>LCP</code>",
+      "<code>INP (Interaction to Next Paint)</code>",
+      "<code>CLS</code>",
+      "<code>TTFB</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Slow React renders show up as poor INP."
+     ]
+    },
+    {
+     "tag": "Not React",
+     "q": "The profiler shows React commits are fast, but typing still lags. Where next?",
+     "opts": [
+      "Add memo everywhere",
+      "Switch frameworks",
+      "The browser Performance panel: long tasks, layout, third-party scripts",
+      "Increase staleTime"
+     ],
+     "ans": 2,
+     "why": [
+      "Not every slowdown is a React render."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>createRenderStats()</code> returning <code>{ onRender, report() }</code>: plug onRender into <code>&lt;Profiler onRender&gt;</code>; report() returns <code>{ [id]: { commits, mounts, totalMs, maxMs } }</code> (round ms to 2 decimals).",
+    "examples": [
+     "const stats = createRenderStats(); <Profiler id=\"list\" onRender={stats.onRender}>",
+     "stats.report().list.commits"
+    ],
+    "hint": "onRender(id, phase, actualDuration) → update an entry per id.",
+    "fn": "renderStats",
+    "starter": "export function createRenderStats() {\n  // your code\n}\n",
+    "solution": "export function createRenderStats() {\n  const data = {}\n  const r = (n) => Math.round(n * 100) / 100\n  return {\n    onRender(id, phase, actualDuration) {\n      const e = (data[id] ??= { commits: 0, mounts: 0, totalMs: 0, maxMs: 0 })\n      e.commits++\n      if (phase === 'mount') e.mounts++\n      e.totalMs = r(e.totalMs + actualDuration)\n      e.maxMs = r(Math.max(e.maxMs, actualDuration))\n    },\n    report: () => data,\n  }\n}\n",
+    "starterFile": "src/renderStats.js",
+    "tests": {
+     "file": "src/renderStats.test.jsx",
+     "run": "npx vitest run renderStats",
+     "code": "import { render, screen, fireEvent, act } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { Profiler, useState } from 'react'\nimport { createRenderStats } from './renderStats'\n\ntest('aggregates calls by id', () => {\n  const s = createRenderStats()\n  s.onRender('a', 'mount', 2.111)\n  s.onRender('a', 'update', 5)\n  s.onRender('b', 'mount', 1)\n  expect(s.report()).toEqual({ a: { commits: 2, mounts: 1, totalMs: 7.11, maxMs: 5 }, b: { commits: 1, mounts: 1, totalMs: 1, maxMs: 1 } })\n})\n\ntest('works with the Profiler component', () => {\n  const s = createRenderStats()\n  function C() { const [n, setN] = useState(0); return <button onClick={() => setN(n + 1)}>{n}</button> }\n  render(<Profiler id=\"btn\" onRender={s.onRender}><C /></Profiler>)\n  fireEvent.click(screen.getByRole('button'))\n  expect(s.report().btn.commits).toBe(2)\n  expect(s.report().btn.mounts).toBe(1)\n})\n\ntest('empty report at first', () => {\n  expect(createRenderStats().report()).toEqual({})\n})\n"
+    },
+    "checks": [
+     {
+      "t": "aggregates calls by id",
+      "verify": ""
+     },
+     {
+      "t": "works with the Profiler component",
+      "verify": ""
+     },
+     {
+      "t": "empty report at first",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Profile first (DevTools Profiler, production build), find slow commits and why they rendered, fix, re-measure.",
+    "mistakes": [
+     "Optimising based on guesses.",
+     "Measuring in development mode only."
+    ]
+   }
+  }
+ ]
+}

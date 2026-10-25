@@ -3,9 +3,13 @@ export interface DsaDryRun { title: string; columns: string[]; rows: string[][];
 export interface DsaTry {
   task: string; examples: string[]; hint: string; fn: string; starter: string; solution: string
   checks: { t: string; verify: string }[]
+  /** React and other courses: a test file the learner copies and runs (e.g. Vitest). Checks are then the test names. */
+  tests?: { file: string; run: string; code: string }
+  /** file name of the starter, e.g. src/useDebouncedValue.jsx */
+  starterFile?: string
 }
 /** A practice problem attached to a non-DSA concept lesson: a LeetCode problem (lc = slug) or a Machine Coding lesson (mc = lesson id). */
-export interface ConceptProblem { name: string; diff: 'easy' | 'medium' | 'hard'; lc?: string; mc?: string }
+export interface ConceptProblem { name: string; diff: 'easy' | 'medium' | 'hard'; lc?: string; mc?: string; course?: string }
 export interface DsaConcept {
   id: string; prereqs: string[]; dryRun: DsaDryRun | null; think: DsaThink[]; try: DsaTry | null
   takeaway: { key: string; mistakes: string[] }

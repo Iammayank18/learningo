@@ -1,0 +1,1669 @@
+{
+ "problems": [
+  {
+   "id": "some-every",
+   "diff": "Easy",
+   "fn": "Array.prototype.mySome",
+   "signature": "arr.mySome(cb, thisArg) / arr.myEvery(cb, thisArg)",
+   "learn": {
+    "what": [
+     "<code>some</code> asks: <b>is there at least one</b> element that passes the test? <code>every</code> asks: <b>do all</b> elements pass?",
+     "Both stop early. <code>some</code> stops at the first pass (the answer is already yes). <code>every</code> stops at the first fail (the answer is already no).",
+     "On an empty array, <code>some</code> is <code>false</code> (nobody passed) and <code>every</code> is <code>true</code> (nobody failed). Think of a teacher asking \"did anyone fail?\" in an empty class: no."
+    ],
+    "how": {
+     "steps": [
+      "Check that the callback is a function; otherwise throw a <code>TypeError</code>.",
+      "Loop over the indexes from 0 to <code>length - 1</code>, skipping holes (<code>i in arr</code> is false for a hole).",
+      "Call <code>cb.call(thisArg, element, index, array)</code>.",
+      "<code>some</code>: return <code>true</code> on the first truthy result. <code>every</code>: return <code>false</code> on the first falsy result.",
+      "After the loop: <code>some</code> returns <code>false</code>, <code>every</code> returns <code>true</code>."
+     ],
+     "diagram": "[3, 8, 1].mySome(x => x > 5)\n  i=0  3 > 5 ? no\n  i=1  8 > 5 ? YES  -> return true   (index 2 is never visited)\n\n[3, 8, 1].myEvery(x => x > 2)\n  i=0  3 > 2 ? yes\n  i=1  8 > 2 ? yes\n  i=2  1 > 2 ? NO   -> return false"
+    },
+    "where": [
+     [
+      "Validation",
+      "<code>fields.every(f =&gt; f.valid)</code> before enabling a Submit button."
+     ],
+     [
+      "Permissions",
+      "<code>user.roles.some(r =&gt; r === \"admin\")</code>."
+     ],
+     [
+      "Search",
+      "Does any item in the cart need shipping?"
+     ],
+     [
+      "Not a fit",
+      "When you need the matching element itself, use <code>find</code>; when you need all matches, use <code>filter</code>."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log([].some(x =&gt; x), [].every(x =&gt; x))</code></pre>",
+     "opts": [
+      "<code>false false</code>",
+      "<code>true true</code>",
+      "<code>false true</code>",
+      "<code>true false</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "<code>some</code> needs one passing element; there are none, so <code>false</code>.",
+      "<code>every</code> fails only when it finds a failing element; there are none, so it is \"vacuously\" <code>true</code>."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "How many times does the callback run?<pre><code>let n = 0\n[1, 2, 3, 4].every(x =&gt; { n++; return x &lt; 2 })\nconsole.log(n)</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>2</code>",
+      "<code>4</code>",
+      "<code>3</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "1 &lt; 2 passes, 2 &lt; 2 fails. <code>every</code> stops right there, so the callback ran 2 times.",
+      "This early exit is why <code>every</code> is better than <code>filter(...).length === arr.length</code>."
+     ]
+    },
+    {
+     "tag": "Spot the bug",
+     "q": "<pre><code>Array.prototype.mySome = function (cb) {\n  let found = false\n  this.forEach(x =&gt; { if (cb(x)) found = true })\n  return found\n}</code></pre>The answers are right. What is still wrong?",
+     "opts": [
+      "It returns the wrong value for empty arrays",
+      "It never stops early, and the callback does not get the index, array or <code>thisArg</code>",
+      "forEach cannot be used on <code>this</code>",
+      "It mutates the array"
+     ],
+     "ans": 1,
+     "why": [
+      "<code>forEach</code> cannot break, so it keeps calling the callback after the answer is known. That wastes work and runs side effects too often.",
+      "The real <code>some</code> calls <code>cb(element, index, array)</code> with <code>this</code> set to <code>thisArg</code>."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let calls = 0\n;[1, , 3].every(() =&gt; { calls++; return true })\nconsole.log(calls)</code></pre>",
+     "opts": [
+      "<code>3</code>",
+      "<code>0</code>",
+      "<code>1</code>",
+      "<code>2</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "<code>[1, , 3]</code> has a hole at index 1. Array methods skip holes, so the callback runs for index 0 and 2 only.",
+      "Use <code>i in arr</code> to detect a hole: it is <code>false</code> for an empty slot."
+     ]
+    }
+   ],
+   "pseudo": "mySome(cb, thisArg):\n  if cb is not a function -> throw TypeError\n  for i from 0 to length - 1:\n    if i is not in the array -> skip (hole)\n    if cb.call(thisArg, this[i], i, this) is truthy -> return true\n  return false\n\nmyEvery(cb, thisArg):\n  same checks and loop\n    if the call is falsy -> return false\n  return true",
+   "watch": [
+    "What should each method return for an empty array?",
+    "How do you stop the loop as soon as the answer is known?",
+    "How do you tell a hole apart from an element that is <code>undefined</code>?"
+   ],
+   "build": {
+    "minutes": 10,
+    "problem": "Implement <b>Array.prototype.mySome</b> and <b>Array.prototype.myEvery</b> without using the built-in versions.",
+    "reqs": [
+     "The callback gets <code>(element, index, array)</code> and runs with <code>this = thisArg</code>.",
+     "<code>mySome</code> stops at the first truthy result; <code>myEvery</code> stops at the first falsy one.",
+     "Empty array: <code>mySome</code> → <code>false</code>, <code>myEvery</code> → <code>true</code>.",
+     "Holes in sparse arrays are skipped.",
+     "A non-function callback throws a <code>TypeError</code>."
+    ],
+    "checks": [
+     {
+      "t": "mySome finds a match and stops early",
+      "test": "let n = 0\nconsole.log([1, 7, 9].mySome(x => { n++; return x > 5 }), n) // expected: true 2",
+      "verify": "let n = 0; const r = [1, 7, 9].mySome((x) => { n++; return x > 5 }); assert(r === true, 'should be true'); assert(n === 2, 'should stop after the first match, ran ' + n)",
+      "gap": "Return <code>true</code> inside the loop as soon as the callback is truthy. Do not use <code>forEach</code>: it cannot stop."
+     },
+     {
+      "t": "myEvery fails fast on the first falsy result",
+      "test": "let n = 0\nconsole.log([2, 1, 4].myEvery(x => { n++; return x > 1 }), n) // expected: false 2",
+      "verify": "let n = 0; const r = [2, 1, 4].myEvery((x) => { n++; return x > 1 }); assert(r === false, 'should be false'); assert(n === 2, 'should stop at the first failure, ran ' + n); assert([2, 3].myEvery((x) => x > 1) === true, 'all pass should be true')",
+      "gap": "Return <code>false</code> at the first falsy result, and <code>true</code> only after the loop finishes."
+     },
+     {
+      "t": "Empty arrays: some is false, every is true",
+      "test": "console.log([].mySome(x => true), [].myEvery(x => false)) // expected: false true",
+      "verify": "assert([].mySome(() => true) === false, 'empty some must be false'); assert([].myEvery(() => false) === true, 'empty every must be true')",
+      "gap": "Your default (after the loop) is backwards. <code>some</code> ends with <code>false</code>, <code>every</code> ends with <code>true</code>."
+     },
+     {
+      "t": "Callback gets element, index, array and thisArg",
+      "test": "const ctx = { min: 2 }\nconsole.log([5].mySome(function (x, i, a) { return this.min < x && i === 0 && a.length === 1 }, ctx)) // expected: true",
+      "verify": "const ctx = { min: 2 }; const seen = []; const r = [5].mySome(function (x, i, a) { seen.push(this === ctx, i, a.length); return this.min < x }, ctx); assert(r === true, 'should be true'); assert(seen.join() === 'true,0,1', 'got ' + seen.join())",
+      "gap": "Call it as <code>cb.call(thisArg, this[i], i, this)</code>."
+     },
+     {
+      "t": "Holes are skipped",
+      "test": "let n = 0\n;[1, , 3].myEvery(() => { n++; return true })\nconsole.log(n) // expected: 2",
+      "verify": "let n = 0; const r = [1, , 3].myEvery(() => { n++; return true }); assert(r === true, 'should be true'); assert(n === 2, 'callback ran ' + n + ' times')",
+      "gap": "Before calling the callback, check <code>if (!(i in this)) continue</code>."
+     },
+     {
+      "t": "A non-function callback throws TypeError",
+      "test": "try { [1].mySome(42) } catch (e) { console.log(e instanceof TypeError) } // expected: true",
+      "verify": "let a = false, b = false; try { [1].mySome(42) } catch (e) { a = e instanceof TypeError } try { [1].myEvery(null) } catch (e) { b = e instanceof TypeError } assert(a && b, 'both must throw TypeError')",
+      "gap": "At the top of each method: <code>if (typeof cb !== \"function\") throw new TypeError(...)</code>."
+     }
+    ]
+   },
+   "solution": "Array.prototype.mySome = function (cb, thisArg) {\n  if (typeof cb !== 'function') throw new TypeError(cb + ' is not a function');\n  for (let i = 0; i < this.length; i++) {\n    if (!(i in this)) continue; // hole\n    if (cb.call(thisArg, this[i], i, this)) return true;\n  }\n  return false;\n};\n\nArray.prototype.myEvery = function (cb, thisArg) {\n  if (typeof cb !== 'function') throw new TypeError(cb + ' is not a function');\n  for (let i = 0; i < this.length; i++) {\n    if (!(i in this)) continue;\n    if (!cb.call(thisArg, this[i], i, this)) return false;\n  }\n  return true;\n};",
+   "notes": [
+    "<b>Early exit</b> is the point of both methods. A <code>for</code> loop with <code>return</code> gives you that.",
+    "The default after the loop is the answer for \"no element decided it\": <code>false</code> for some, <code>true</code> for every.",
+    "<code>i in this</code> separates a hole from a stored <code>undefined</code>.",
+    "<code>cb.call(thisArg, …)</code> passes the optional <code>this</code> exactly like the real methods."
+   ],
+   "next": [
+    "Write <code>none(arr, cb)</code> using <code>mySome</code>.",
+    "Implement <code>findIndex</code>, which also stops early but returns the index.",
+    "Make <code>myEvery</code> work on array-likes: <code>Array.prototype.myEvery.call({ 0: 1, length: 1 }, …)</code>."
+   ]
+  },
+  {
+   "id": "array-map",
+   "diff": "Easy",
+   "fn": "Array.prototype.myMap",
+   "signature": "arr.myMap(cb, thisArg)",
+   "learn": {
+    "what": [
+     "<code>map</code> builds a <b>new array of the same length</b>. Each slot holds what the callback returned for that element. The original array is not changed.",
+     "The callback gets <code>(element, index, array)</code>, and an optional <code>thisArg</code> becomes its <code>this</code>.",
+     "One detail people miss: <b>holes stay holes</b>. <code>[1, , 3].map(x =&gt; x * 2)</code> is <code>[2, , 6]</code>, with an empty slot in the middle, not <code>undefined</code>."
+    ],
+    "how": {
+     "steps": [
+      "Throw a <code>TypeError</code> if the callback is not a function.",
+      "Create the result with the same length: <code>new Array(this.length)</code> (all holes to start).",
+      "Loop over every index; skip holes (<code>!(i in this)</code>), so the result keeps a hole there.",
+      "Store <code>cb.call(thisArg, this[i], i, this)</code> at the same index.",
+      "Return the new array."
+     ],
+     "diagram": "source:   [ 1 ,   , 3 ]      (index 1 is a hole)\ncallback:  x => x * 2\nresult:   [ 2 ,   , 6 ]      same length, hole kept, source unchanged"
+    },
+    "where": [
+     [
+      "Rendering",
+      "<code>users.map(u =&gt; &lt;li key={u.id}&gt;{u.name}&lt;/li&gt;)</code> in React."
+     ],
+     [
+      "Shaping API data",
+      "Turn server objects into the shape your UI needs."
+     ],
+     [
+      "Pure transforms",
+      "Prices with tax, names in upper case, ids from objects."
+     ],
+     [
+      "Not a fit",
+      "Use <code>forEach</code> when you only want side effects and do not need the returned array."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log([\"1\", \"2\", \"3\"].map(parseInt))</code></pre>",
+     "opts": [
+      "<code>[ 1, 2, 3 ]</code>",
+      "<code>[ 1, NaN, NaN ]</code>",
+      "<code>[ NaN, NaN, NaN ]</code>",
+      "<code>[ 1, 1, 1 ]</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "<code>map</code> passes <b>three</b> arguments, so <code>parseInt</code> gets <code>(value, index)</code> and uses the index as the radix: <code>parseInt(\"2\", 1)</code> and <code>parseInt(\"3\", 2)</code> are <code>NaN</code>.",
+      "Fix: <code>.map(s =&gt; parseInt(s, 10))</code> or <code>.map(Number)</code>."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const r = [1, , 3].map(x =&gt; x * 2)\nconsole.log(r.length, 1 in r)</code></pre>",
+     "opts": [
+      "<code>3 true</code>",
+      "<code>2 false</code>",
+      "<code>3 false</code>",
+      "<code>2 true</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "The result has the same length (3), and index 1 is still a hole, so <code>1 in r</code> is <code>false</code>.",
+      "A polyfill that uses <code>push</code> would give length 2, or a stored <code>NaN</code>/<code>undefined</code>: both are wrong."
+     ]
+    },
+    {
+     "tag": "Spot the bug",
+     "q": "<pre><code>Array.prototype.myMap = function (cb) {\n  for (let i = 0; i &lt; this.length; i++) this[i] = cb(this[i], i, this)\n  return this\n}</code></pre>",
+     "opts": [
+      "Nothing, it is a valid map",
+      "It skips the last element",
+      "It changes the original array and returns it, instead of a new array",
+      "It cannot handle strings"
+     ],
+     "ans": 2,
+     "why": [
+      "<code>map</code> must never mutate. Here the caller's array is overwritten, and <code>a.myMap(f) === a</code> is <code>true</code>.",
+      "Build a separate result array and return that."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const out = [1, 2].map(x =&gt; { x * 2 })\nconsole.log(out)</code></pre>",
+     "opts": [
+      "<code>[ 2, 4 ]</code>",
+      "<code>[ undefined, undefined ]</code>",
+      "<code>[]</code>",
+      "<code>[ 1, 2 ]</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "With curly braces, an arrow function needs an explicit <code>return</code>. Without it, each call returns <code>undefined</code>.",
+      "Write <code>x =&gt; x * 2</code> or <code>x =&gt; { return x * 2 }</code>."
+     ]
+    }
+   ],
+   "pseudo": "myMap(cb, thisArg):\n  if cb is not a function -> throw TypeError\n  result = new Array(length)          // same length, all holes\n  for i from 0 to length - 1:\n    if i is not in the array -> continue   (result keeps a hole)\n    result[i] = cb.call(thisArg, this[i], i, this)\n  return result",
+   "watch": [
+    "Does your result have the same length as the source, even with holes?",
+    "Which three arguments does the callback receive?",
+    "Is the original array exactly the same after the call?"
+   ],
+   "build": {
+    "minutes": 10,
+    "problem": "Implement <b>Array.prototype.myMap(cb, thisArg)</b> without using the built-in <code>map</code>.",
+    "reqs": [
+     "Return a <b>new</b> array; do not change the original.",
+     "The callback gets <code>(element, index, array)</code> with <code>this = thisArg</code>.",
+     "The result has the same length; holes stay holes and the callback is not called for them.",
+     "A non-function callback throws a <code>TypeError</code>."
+    ],
+    "checks": [
+     {
+      "t": "Maps every element into a new array",
+      "test": "const a = [1, 2, 3]\nconst b = a.myMap(x => x * 10)\nconsole.log(b, a, a === b) // expected: [10, 20, 30] [1, 2, 3] false",
+      "verify": "const a = [1, 2, 3]; const b = a.myMap((x) => x * 10); assert(b.join() === '10,20,30', 'got ' + b.join()); assert(a.join() === '1,2,3', 'original changed'); assert(a !== b, 'must be a new array')",
+      "gap": "Create a new array and write results into it. Never assign to <code>this[i]</code>."
+     },
+     {
+      "t": "Callback receives element, index and array",
+      "test": "console.log(['a', 'b'].myMap((x, i, arr) => x + i + arr.length)) // expected: ['a02', 'b12']",
+      "verify": "const r = ['a', 'b'].myMap((x, i, arr) => x + i + arr.length); assert(r.join() === 'a02,b12', 'got ' + r.join())",
+      "gap": "Call the callback with three arguments: <code>this[i], i, this</code>."
+     },
+     {
+      "t": "thisArg becomes this inside the callback",
+      "test": "console.log([1, 2].myMap(function (x) { return x * this.k }, { k: 3 })) // expected: [3, 6]",
+      "verify": "const r = [1, 2].myMap(function (x) { return x * this.k }, { k: 3 }); assert(r.join() === '3,6', 'got ' + r.join())",
+      "gap": "Use <code>cb.call(thisArg, …)</code> instead of <code>cb(…)</code>."
+     },
+     {
+      "t": "Holes stay holes and are not visited",
+      "test": "let n = 0\nconst r = [1, , 3].myMap(x => { n++; return x * 2 })\nconsole.log(r.length, 1 in r, n) // expected: 3 false 2",
+      "verify": "let n = 0; const r = [1, , 3].myMap((x) => { n++; return x * 2 }); assert(r.length === 3, 'length ' + r.length); assert(!(1 in r), 'index 1 must stay a hole'); assert(n === 2, 'callback ran ' + n + ' times'); assert(r[2] === 6, 'last value wrong')",
+      "gap": "Start with <code>new Array(this.length)</code> and <code>continue</code> on holes. Do not use <code>push</code>."
+     },
+     {
+      "t": "Non-function callback throws TypeError",
+      "test": "try { [1].myMap('x') } catch (e) { console.log(e instanceof TypeError) } // expected: true",
+      "verify": "let ok = false; try { [1].myMap('x') } catch (e) { ok = e instanceof TypeError } assert(ok, 'must throw TypeError')",
+      "gap": "Check <code>typeof cb !== \"function\"</code> before the loop."
+     }
+    ]
+   },
+   "solution": "Array.prototype.myMap = function (cb, thisArg) {\n  if (typeof cb !== 'function') throw new TypeError(cb + ' is not a function');\n  const result = new Array(this.length);\n  for (let i = 0; i < this.length; i++) {\n    if (!(i in this)) continue; // keep the hole\n    result[i] = cb.call(thisArg, this[i], i, this);\n  }\n  return result;\n};",
+   "notes": [
+    "<code>new Array(n)</code> gives a length-n array of holes, which is exactly what map needs for sparse input.",
+    "Writing by index (not <code>push</code>) keeps every result at its original position.",
+    "Never touch <code>this[i]</code>: map is a pure transform.",
+    "The real map reads the length once at the start; elements added during the loop are not visited."
+   ],
+   "next": [
+    "Implement <code>forEach</code> and explain why it returns <code>undefined</code>.",
+    "Write <code>mapAsync(arr, fn)</code> that awaits each callback and keeps the order.",
+    "Make <code>myMap</code> work on array-likes such as <code>{ 0: \"a\", length: 1 }</code> via <code>call</code>."
+   ]
+  },
+  {
+   "id": "array-filter",
+   "diff": "Easy",
+   "fn": "Array.prototype.myFilter",
+   "signature": "arr.myFilter(cb, thisArg)",
+   "learn": {
+    "what": [
+     "<code>filter</code> returns a <b>new array</b> with only the elements whose callback result is truthy. The original array is untouched.",
+     "Unlike <code>map</code>, the result can be shorter, and it is always <b>dense</b>: holes in the source are skipped, so the result has no holes.",
+     "Think of a sieve: everything goes through the test, only the pieces that pass end up in the bowl, packed together."
+    ],
+    "how": {
+     "steps": [
+      "Throw a <code>TypeError</code> if the callback is not a function.",
+      "Start with an empty result array.",
+      "For each index that is not a hole, call <code>cb.call(thisArg, el, i, arr)</code>.",
+      "If the result is truthy, <code>push</code> the <b>original element</b> (not the callback result).",
+      "Return the result."
+     ],
+     "diagram": "[4, , 9, 2, 7].filter(x => x > 3)\n  4 yes -> [4]\n  hole  -> skip\n  9 yes -> [4, 9]\n  2 no\n  7 yes -> [4, 9, 7]     dense, source unchanged"
+    },
+    "where": [
+     [
+      "Search results",
+      "Keep products whose name contains the query."
+     ],
+     [
+      "Removing items",
+      "<code>todos.filter(t =&gt; t.id !== id)</code> is the standard immutable delete."
+     ],
+     [
+      "Cleaning data",
+      "<code>values.filter(Boolean)</code> drops <code>null</code>, <code>0</code>, <code>\"\"</code> and <code>undefined</code>."
+     ],
+     [
+      "Not a fit",
+      "If you need only the first match, <code>find</code> stops early; filter always walks the whole array."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log([0, 1, \"\", \"a\", null, NaN, []].filter(Boolean).length)</code></pre>",
+     "opts": [
+      "<code>3</code>",
+      "<code>2</code>",
+      "<code>4</code>",
+      "<code>7</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Falsy values: <code>0</code>, <code>\"\"</code>, <code>null</code>, <code>NaN</code>. Kept: <code>1</code>, <code>\"a\"</code> and <code>[]</code>.",
+      "An empty array is an object, and every object is truthy."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const users = [{ n: \"A\", on: true }, { n: \"B\", on: false }]\nconst on = users.filter(u =&gt; u.on)\non[0].n = \"Z\"\nconsole.log(users[0].n)</code></pre>",
+     "opts": [
+      "<code>A</code>",
+      "<code>Z</code>",
+      "<code>undefined</code>",
+      "It throws"
+     ],
+     "ans": 1,
+     "why": [
+      "filter makes a new <b>array</b>, but the elements are the same objects (a shallow copy).",
+      "Changing an object through the filtered array changes it in the original too."
+     ]
+    },
+    {
+     "tag": "Spot the bug",
+     "q": "<pre><code>Array.prototype.myFilter = function (cb) {\n  const out = []\n  for (let i = 0; i &lt; this.length; i++) {\n    const keep = cb(this[i], i, this)\n    if (keep) out.push(keep)\n  }\n  return out\n}</code></pre>What does <code>[\"a\", \"b\"].myFilter(x =&gt; x === \"a\")</code> return?",
+     "opts": [
+      "<code>[\"a\"]</code>",
+      "<code>[true]</code>",
+      "<code>[]</code>",
+      "<code>[\"a\", \"b\"]</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "It pushes the callback's <b>result</b> (<code>true</code>) instead of the element.",
+      "filter decides with the callback, but stores <code>this[i]</code>."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "Why is the result of <code>[1, , 3].filter(() =&gt; true)</code> <code>[1, 3]</code> with length 2?",
+     "opts": [
+      "filter removes <code>undefined</code> values",
+      "It is a bug in V8",
+      "filter sorts the array",
+      "filter skips holes and pushes only visited elements, so the result is dense"
+     ],
+     "ans": 3,
+     "why": [
+      "Holes are never visited, so nothing is pushed for them.",
+      "Compare <code>[1, undefined, 3].filter(() =&gt; true)</code>: that keeps the <code>undefined</code>, because it is a real element."
+     ]
+    }
+   ],
+   "pseudo": "myFilter(cb, thisArg):\n  if cb is not a function -> throw TypeError\n  result = []\n  for i from 0 to length - 1:\n    if i is not in the array -> continue\n    if cb.call(thisArg, this[i], i, this) is truthy:\n      push this[i] (the element, not the callback result)\n  return result",
+   "watch": [
+    "What exactly do you push: the element or the callback result?",
+    "What happens to holes, and why does the result never have them?",
+    "Are the elements copied, or the same values?"
+   ],
+   "build": {
+    "minutes": 10,
+    "problem": "Implement <b>Array.prototype.myFilter(cb, thisArg)</b> without using the built-in <code>filter</code>.",
+    "reqs": [
+     "Return a new array with the elements whose callback result is truthy.",
+     "The callback gets <code>(element, index, array)</code> with <code>this = thisArg</code>.",
+     "Skip holes; the result is always dense.",
+     "Do not change the original array.",
+     "A non-function callback throws a <code>TypeError</code>."
+    ],
+    "checks": [
+     {
+      "t": "Keeps only passing elements, in order",
+      "test": "console.log([4, 9, 2, 7].myFilter(x => x > 3)) // expected: [4, 9, 7]",
+      "verify": "const r = [4, 9, 2, 7].myFilter((x) => x > 3); assert(Array.isArray(r) && r.join() === '4,9,7', 'got ' + r)",
+      "gap": "Push <code>this[i]</code> when the callback returns something truthy."
+     },
+     {
+      "t": "Pushes the element, not the callback result",
+      "test": "console.log(['a', 'b'].myFilter(x => x === 'a')) // expected: ['a']",
+      "verify": "const r = ['a', 'b'].myFilter((x) => x === 'a'); assert(r.length === 1 && r[0] === 'a', 'got ' + JSON.stringify(r))",
+      "gap": "Use the callback only to decide. Store the original element."
+     },
+     {
+      "t": "Returns a new array and leaves the original alone",
+      "test": "const a = [1, 2, 3]\nconst b = a.myFilter(() => true)\nconsole.log(a === b, a) // expected: false [1, 2, 3]",
+      "verify": "const a = [1, 2, 3]; const b = a.myFilter(() => true); assert(Array.isArray(b) && a !== b, 'must be a new array'); assert(a.join() === '1,2,3' && b.join() === '1,2,3', 'values wrong')",
+      "gap": "Build and return a separate <code>result</code> array."
+     },
+     {
+      "t": "Callback gets index, array and thisArg",
+      "test": "console.log([5, 6, 7].myFilter(function (x, i, arr) { return i !== this.skip && arr.length === 3 }, { skip: 1 })) // expected: [5, 7]",
+      "verify": "const r = [5, 6, 7].myFilter(function (x, i, arr) { return i !== this.skip && arr.length === 3 }, { skip: 1 }); assert(r.join() === '5,7', 'got ' + r)",
+      "gap": "Call <code>cb.call(thisArg, this[i], i, this)</code>."
+     },
+     {
+      "t": "Holes are skipped and the result is dense",
+      "test": "let n = 0\nconst r = [1, , 3].myFilter(() => { n++; return true })\nconsole.log(r, n) // expected: [1, 3] 2",
+      "verify": "let n = 0; const r = [1, , 3].myFilter(() => { n++; return true }); assert(r.length === 2 && r[1] === 3, 'got ' + JSON.stringify(r)); assert(n === 2, 'callback ran ' + n + ' times')",
+      "gap": "Add <code>if (!(i in this)) continue</code> before calling the callback."
+     },
+     {
+      "t": "Non-function callback throws TypeError",
+      "test": "try { [1].myFilter() } catch (e) { console.log(e instanceof TypeError) } // expected: true",
+      "verify": "let ok = false; try { [1].myFilter() } catch (e) { ok = e instanceof TypeError } assert(ok, 'must throw TypeError')",
+      "gap": "Check the callback type before the loop."
+     }
+    ]
+   },
+   "solution": "Array.prototype.myFilter = function (cb, thisArg) {\n  if (typeof cb !== 'function') throw new TypeError(cb + ' is not a function');\n  const result = [];\n  for (let i = 0; i < this.length; i++) {\n    if (!(i in this)) continue;\n    if (cb.call(thisArg, this[i], i, this)) result.push(this[i]);\n  }\n  return result;\n};",
+   "notes": [
+    "The callback decides; the <b>element</b> is what gets stored.",
+    "<code>push</code> is right here (unlike map), because the result is meant to be dense.",
+    "filter is a shallow copy: objects inside are shared with the original.",
+    "Truthy means any value except <code>false</code>, <code>0</code>, <code>-0</code>, <code>0n</code>, <code>\"\"</code>, <code>null</code>, <code>undefined</code>, <code>NaN</code>."
+   ],
+   "next": [
+    "Write <code>partition(arr, cb)</code> that returns <code>[passed, failed]</code> in one pass.",
+    "Implement <code>reject(arr, cb)</code>, the opposite of filter.",
+    "Write <code>uniqueBy(arr, key)</code> using filter and a Set."
+   ]
+  },
+  {
+   "id": "array-reduce",
+   "diff": "Medium",
+   "fn": "Array.prototype.myReduce",
+   "signature": "arr.myReduce(cb, initialValue)",
+   "learn": {
+    "what": [
+     "<code>reduce</code> walks the array and carries one value along, the <b>accumulator</b>. Each step returns the new accumulator; the last one is the result.",
+     "With an <code>initialValue</code>, the accumulator starts there and the loop starts at index 0. <b>Without</b> one, the first element becomes the accumulator and the loop starts at the next element.",
+     "Without an initial value on an empty array there is nothing to start from, so it throws a <code>TypeError</code>. Note: passing <code>undefined</code> explicitly still counts as \"given\", so you must look at <code>arguments.length</code>."
+    ],
+    "how": {
+     "steps": [
+      "Throw a <code>TypeError</code> if the callback is not a function.",
+      "If <code>arguments.length &gt;= 2</code>, start with <code>acc = initialValue</code> and <code>i = 0</code>.",
+      "Otherwise find the first index that is not a hole, use that element as <code>acc</code>, and start after it. If there is none, throw a <code>TypeError</code>.",
+      "For each remaining non-hole index: <code>acc = cb(acc, el, i, arr)</code>.",
+      "Return <code>acc</code>."
+     ],
+     "diagram": "[1, 2, 3, 4].reduce((acc, x) => acc + x, 10)\n  acc=10  x=1 -> 11\n  acc=11  x=2 -> 13\n  acc=13  x=3 -> 16\n  acc=16  x=4 -> 20   result 20\n\n[1, 2, 3, 4].reduce((acc, x) => acc + x)\n  acc=1 (first element), start at x=2 -> 3 -> 6 -> 10"
+    },
+    "where": [
+     [
+      "Totals",
+      "Cart total: <code>items.reduce((s, i) =&gt; s + i.price * i.qty, 0)</code>."
+     ],
+     [
+      "Grouping",
+      "Build an object of lists keyed by category."
+     ],
+     [
+      "Pipelines",
+      "<code>fns.reduce((v, f) =&gt; f(v), input)</code> runs functions in order."
+     ],
+     [
+      "Not a fit",
+      "If a <code>map</code> or <code>filter</code> says it more clearly, use that. reduce is the most general and the hardest to read."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>try { [].reduce((a, b) =&gt; a + b) } catch (e) { console.log(e.constructor.name) }\nconsole.log([].reduce((a, b) =&gt; a + b, 0))</code></pre>",
+     "opts": [
+      "<code>0</code> then <code>0</code>",
+      "<code>TypeError</code> then <code>0</code>",
+      "<code>undefined</code> then <code>0</code>",
+      "<code>TypeError</code> then <code>TypeError</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "No initial value and no elements: nothing to start with, so a <code>TypeError</code>.",
+      "With <code>0</code> given, an empty array just returns <code>0</code>. Always passing an initial value avoids this crash."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "How many times does the callback run?<pre><code>let n = 0\n;[5, 6, 7].reduce((a, b) =&gt; { n++; return a + b })\nconsole.log(n)</code></pre>",
+     "opts": [
+      "<code>3</code>",
+      "<code>4</code>",
+      "<code>2</code>",
+      "<code>1</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Without an initial value, 5 becomes the accumulator, so the callback only runs for 6 and 7.",
+      "With an initial value it would run 3 times."
+     ]
+    },
+    {
+     "tag": "Spot the bug",
+     "q": "<pre><code>Array.prototype.myReduce = function (cb, init) {\n  let acc = init === undefined ? this[0] : init\n  let i = init === undefined ? 1 : 0\n  for (; i &lt; this.length; i++) acc = cb(acc, this[i], i, this)\n  return acc\n}</code></pre>What breaks?",
+     "opts": [
+      "Sums are wrong",
+      "Calling with an explicit <code>undefined</code> initial value skips the first element, and empty arrays do not throw",
+      "The callback gets the wrong index",
+      "It mutates the array"
+     ],
+     "ans": 1,
+     "why": [
+      "<code>arr.reduce(f, undefined)</code> must start with <code>acc = undefined</code>; this version treats it as \"no initial value\".",
+      "Use <code>arguments.length &lt; 2</code> to detect a missing argument, and throw on an empty array."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const r = [\"a\", \"b\", \"a\"].reduce((m, x) =&gt; { m[x] = (m[x] || 0) + 1; return m }, {})\nconsole.log(JSON.stringify(r))</code></pre>",
+     "opts": [
+      "<code>{\"a\":2,\"b\":1}</code>",
+      "<code>{\"a\":1,\"b\":1}</code>",
+      "<code>[\"a\",\"b\"]</code>",
+      "<code>3</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "The accumulator is an object that collects counts.",
+      "Forgetting <code>return m</code> is the classic bug: the next step would get <code>undefined</code>."
+     ]
+    }
+   ],
+   "pseudo": "myReduce(cb, initialValue):\n  if cb is not a function -> throw TypeError\n  i = 0\n  if arguments.length >= 2:\n    acc = initialValue\n  else:\n    skip holes until a real element; if none -> throw TypeError\n    acc = this[i]; i++\n  for each remaining index i:\n    if i is a hole -> continue\n    acc = cb(acc, this[i], i, this)\n  return acc",
+   "watch": [
+    "How do you tell \"no initial value\" apart from \"initial value is undefined\"?",
+    "Where does the loop start in each case?",
+    "What should happen on an empty array with no initial value?"
+   ],
+   "build": {
+    "minutes": 20,
+    "problem": "Implement <b>Array.prototype.myReduce(cb, initialValue)</b> without using the built-in <code>reduce</code>.",
+    "reqs": [
+     "The callback gets <code>(accumulator, element, index, array)</code>.",
+     "With an initial value, start from it at index 0.",
+     "Without one, the first element is the accumulator and the loop starts at the next element.",
+     "Empty array and no initial value: throw a <code>TypeError</code>.",
+     "Skip holes; a non-function callback throws a <code>TypeError</code>."
+    ],
+    "checks": [
+     {
+      "t": "Sums with an initial value",
+      "test": "console.log([1, 2, 3, 4].myReduce((a, x) => a + x, 10)) // expected: 20",
+      "verify": "assert([1, 2, 3, 4].myReduce((a, x) => a + x, 10) === 20, 'expected 20')",
+      "gap": "Start <code>acc</code> at the initial value and run the callback for every element."
+     },
+     {
+      "t": "Without an initial value the first element is the start",
+      "test": "let n = 0\nconsole.log([5, 6, 7].myReduce((a, x) => { n++; return a + x }), n) // expected: 18 2",
+      "verify": "let n = 0; const r = [5, 6, 7].myReduce((a, x) => { n++; return a + x }); assert(r === 18, 'expected 18, got ' + r); assert(n === 2, 'callback should run 2 times, ran ' + n)",
+      "gap": "When no initial value is given, use <code>this[0]</code> as the accumulator and start the loop at index 1."
+     },
+     {
+      "t": "An explicit undefined counts as an initial value",
+      "test": "console.log([1, 2].myReduce((a, x) => String(a) + x, undefined)) // expected: undefined12",
+      "verify": "const r = [1, 2].myReduce((a, x) => String(a) + x, undefined); assert(r === 'undefined12', 'got ' + r)",
+      "gap": "Check <code>arguments.length &gt;= 2</code>, not <code>initialValue === undefined</code>."
+     },
+     {
+      "t": "Empty array without an initial value throws; with one it returns it",
+      "test": "try { [].myReduce((a, b) => a + b) } catch (e) { console.log(e instanceof TypeError) } // expected: true\nconsole.log([].myReduce((a, b) => a + b, 7)) // expected: 7",
+      "verify": "let ok = false; try { [].myReduce((a, b) => a + b) } catch (e) { ok = e instanceof TypeError } assert(ok, 'must throw TypeError'); assert([].myReduce((a, b) => a + b, 7) === 7, 'should return the initial value')",
+      "gap": "If there is no initial value and no element to start from, <code>throw new TypeError(…)</code>."
+     },
+     {
+      "t": "Callback gets index and array; holes are skipped",
+      "test": "console.log([, 'a', , 'b'].myReduce((acc, x, i, arr) => acc + x + i + arr.length, '')) // expected: a14b34",
+      "verify": "const r = [, 'a', , 'b'].myReduce((acc, x, i, arr) => acc + x + i + arr.length, ''); assert(r === 'a14b34', 'got ' + r); assert([, 5, , 6].myReduce((a, b) => a + b) === 11, 'without init, the first real element should start')",
+      "gap": "Skip <code>!(i in this)</code>, and when there is no initial value, start from the first index that is not a hole."
+     },
+     {
+      "t": "Non-function callback throws TypeError",
+      "test": "try { [1].myReduce(1) } catch (e) { console.log(e instanceof TypeError) } // expected: true",
+      "verify": "let ok = false; try { [1].myReduce(1) } catch (e) { ok = e instanceof TypeError } assert(ok, 'must throw TypeError')",
+      "gap": "Check <code>typeof cb</code> first."
+     }
+    ]
+   },
+   "solution": "Array.prototype.myReduce = function (cb, initialValue) {\n  if (typeof cb !== 'function') throw new TypeError(cb + ' is not a function');\n  const len = this.length;\n  let i = 0;\n  let acc;\n  if (arguments.length >= 2) {\n    acc = initialValue;\n  } else {\n    while (i < len && !(i in this)) i++; // first real element\n    if (i >= len) throw new TypeError('Reduce of empty array with no initial value');\n    acc = this[i++];\n  }\n  for (; i < len; i++) {\n    if (i in this) acc = cb(acc, this[i], i, this);\n  }\n  return acc;\n};",
+   "notes": [
+    "<code>arguments.length</code> is the only safe way to know whether an initial value was passed.",
+    "Without an initial value, the first <b>real</b> element (not a hole) is the start.",
+    "The empty-array throw is real behaviour; passing an initial value is the usual fix.",
+    "map, filter, some and every can all be written with reduce."
+   ],
+   "next": [
+    "Write <code>myMap</code> and <code>myFilter</code> using only <code>myReduce</code>.",
+    "Implement <code>pipe(...fns)</code> with reduce.",
+    "Write <code>reduceAsync(arr, fn, init)</code> where <code>fn</code> returns a promise."
+   ]
+  },
+  {
+   "id": "array-flat-flatmap",
+   "diff": "Medium",
+   "fn": "Array.prototype.myFlat",
+   "signature": "arr.myFlat(depth) / arr.myFlatMap(cb, thisArg)",
+   "learn": {
+    "what": [
+     "<code>flat(depth)</code> returns a new array where nested arrays are opened up, <code>depth</code> levels deep (default 1). <code>flat(Infinity)</code> opens everything.",
+     "<code>flatMap(cb)</code> is <code>map</code> followed by <code>flat(1)</code>, in one pass: each callback may return an array, and its items are spread into the result.",
+     "Both skip holes, and only real arrays are opened: strings and array-like objects stay as single items."
+    ],
+    "how": {
+     "steps": [
+      "<code>myFlat</code>: create a result array and a recursive helper <code>walk(list, d)</code>.",
+      "For each non-hole item: if it is an array and <code>d &gt; 0</code>, call <code>walk(item, d - 1)</code>; otherwise push the item.",
+      "Start with <code>walk(this, depth)</code> and return the result. Treat a missing depth as 1.",
+      "<code>myFlatMap</code>: for each non-hole index, call <code>cb.call(thisArg, el, i, arr)</code>; if the value is an array, push its items, else push the value."
+     ],
+     "diagram": "[1, [2, [3, [4]]]].flat(2)\n  1          -> push 1\n  [2, [3,[4]]]  depth 2 -> open\n    2        -> push 2\n    [3,[4]]  depth 1 -> open\n      3      -> push 3\n      [4]    depth 0 -> push the array itself\nresult: [1, 2, 3, [4]]"
+    },
+    "where": [
+     [
+      "API data",
+      "Pages of results <code>[[...], [...]]</code> into one list."
+     ],
+     [
+      "flatMap for 0..n results",
+      "<code>sentences.flatMap(s =&gt; s.split(\" \"))</code> gives all words."
+     ],
+     [
+      "Filter and map together",
+      "<code>flatMap(x =&gt; ok(x) ? [f(x)] : [])</code> drops items while mapping."
+     ],
+     [
+      "Not a fit",
+      "Deep cloning: flat copies the structure only one way, and objects stay shared."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log(JSON.stringify([1, [2, [3, [4]]]].flat()))</code></pre>",
+     "opts": [
+      "<code>[1,2,3,4]</code>",
+      "<code>[1,2,[3,[4]]]</code>",
+      "<code>[1,[2,[3,[4]]]]</code>",
+      "<code>[1,2,3,[4]]</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "The default depth is 1, so only the first level of nesting is opened.",
+      "<code>flat(Infinity)</code> would give <code>[1,2,3,4]</code>."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log(JSON.stringify([1, 2].flatMap(x =&gt; [[x, x * 10]])))</code></pre>",
+     "opts": [
+      "<code>[1,10,2,20]</code>",
+      "<code>[[[1,10]],[[2,20]]]</code>",
+      "<code>[[1,10],[2,20]]</code>",
+      "<code>[1,2,10,20]</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "flatMap only flattens <b>one</b> level. Each callback returned <code>[[x, x*10]]</code>, which becomes <code>[x, x*10]</code> in the result.",
+      "To get <code>[1,10,2,20]</code> the callback should return <code>[x, x * 10]</code> (one level of nesting)."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "Why does <code>[\"ab\", \"cd\"].flat()</code> stay <code>[\"ab\", \"cd\"]</code>?",
+     "opts": [
+      "flat only works on numbers",
+      "flat only opens real arrays (<code>Array.isArray</code>), and strings are not arrays",
+      "Strings are immutable",
+      "The depth is 0 by default"
+     ],
+     "ans": 1,
+     "why": [
+      "A string has a length and indexes, but it is not an array, so it is kept as one item.",
+      "Use <code>Array.isArray(item)</code> in your check, not <code>item.length</code>."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log([1, , [2, , 3]].flat().length)</code></pre>",
+     "opts": [
+      "<code>5</code>",
+      "<code>3</code>",
+      "<code>4</code>",
+      "<code>2</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "flat drops holes at every level it opens: the result is <code>[1, 2, 3]</code>.",
+      "Holes are never visited, so nothing is pushed for them."
+     ]
+    }
+   ],
+   "pseudo": "myFlat(depth = 1):\n  result = []\n  walk(list, d):\n    for each index i of list:\n      if i is a hole -> continue\n      item = list[i]\n      if item is an array and d > 0 -> walk(item, d - 1)\n      else push item\n  walk(this, depth)\n  return result\n\nmyFlatMap(cb, thisArg):\n  for each non-hole index i:\n    v = cb.call(thisArg, this[i], i, this)\n    if v is an array -> push all its items\n    else push v",
+   "watch": [
+    "What counts as \"an array to open\": anything with a length, or only real arrays?",
+    "What does <code>depth</code> become at each level?",
+    "How does flatMap differ from <code>map(...).flat(Infinity)</code>?"
+   ],
+   "build": {
+    "minutes": 20,
+    "problem": "Implement <b>Array.prototype.myFlat(depth)</b> and <b>Array.prototype.myFlatMap(cb, thisArg)</b> without the built-in <code>flat</code> / <code>flatMap</code>.",
+    "reqs": [
+     "<code>myFlat</code> opens nested arrays up to <code>depth</code> levels (default 1); <code>Infinity</code> opens all.",
+     "Holes are dropped; only real arrays are opened.",
+     "<code>myFlatMap</code> maps then flattens exactly one level; the callback gets <code>(el, i, arr)</code> and <code>thisArg</code>.",
+     "Both return new arrays and leave the original alone."
+    ],
+    "checks": [
+     {
+      "t": "Default depth is 1",
+      "test": "console.log(JSON.stringify([1, [2, [3, [4]]]].myFlat())) // expected: [1,2,[3,[4]]]",
+      "verify": "const r = [1, [2, [3, [4]]]].myFlat(); assert(JSON.stringify(r) === '[1,2,[3,[4]]]', 'got ' + JSON.stringify(r))",
+      "gap": "When <code>depth</code> is not given, use 1."
+     },
+     {
+      "t": "Custom depth and Infinity",
+      "test": "console.log(JSON.stringify([1, [2, [3, [4]]]].myFlat(2)), JSON.stringify([1, [2, [3, [4]]]].myFlat(Infinity)))\n// expected: [1,2,3,[4]] [1,2,3,4]",
+      "verify": "const a = [1, [2, [3, [4]]]]; assert(JSON.stringify(a.myFlat(2)) === '[1,2,3,[4]]', 'depth 2 got ' + JSON.stringify(a.myFlat(2))); assert(JSON.stringify(a.myFlat(Infinity)) === '[1,2,3,4]', 'Infinity got ' + JSON.stringify(a.myFlat(Infinity))); assert(JSON.stringify(a.myFlat(0)) === JSON.stringify(a), 'depth 0 should copy')",
+      "gap": "Recurse with <code>d - 1</code> and only open an array while <code>d &gt; 0</code>."
+     },
+     {
+      "t": "Drops holes and keeps strings whole",
+      "test": "console.log(JSON.stringify([1, , ['ab', , 3]].myFlat())) // expected: [1,\"ab\",3]",
+      "verify": "const r = [1, , ['ab', , 3]].myFlat(); assert(JSON.stringify(r) === '[1,\"ab\",3]', 'got ' + JSON.stringify(r))",
+      "gap": "Skip <code>!(i in list)</code>, and test with <code>Array.isArray(item)</code>."
+     },
+     {
+      "t": "Returns a new array; the original is unchanged",
+      "test": "const a = [[1], [2]]\nconst b = a.myFlat()\nconsole.log(JSON.stringify(a), a === b) // expected: [[1],[2]] false",
+      "verify": "const a = [[1], [2]]; const b = a.myFlat(); assert(JSON.stringify(b) === '[1,2]', 'got ' + JSON.stringify(b)); assert(a !== b && JSON.stringify(a) === '[[1],[2]]', 'original changed or same array returned')",
+      "gap": "Push into a fresh result array; never splice <code>this</code>."
+     },
+     {
+      "t": "flatMap maps then flattens one level",
+      "test": "console.log(JSON.stringify(['a b', 'c'].myFlatMap(s => s.split(' '))), JSON.stringify([1, 2].myFlatMap(x => [[x]])))\n// expected: [\"a\",\"b\",\"c\"] [[1],[2]]",
+      "verify": "const r = ['a b', 'c'].myFlatMap((s) => s.split(' ')); assert(JSON.stringify(r) === '[\"a\",\"b\",\"c\"]', 'got ' + JSON.stringify(r)); const d = [1, 2].myFlatMap((x) => [[x]]); assert(JSON.stringify(d) === '[[1],[2]]', 'only one level: got ' + JSON.stringify(d)); const p = [1, 2].myFlatMap((x) => x * 2); assert(JSON.stringify(p) === '[2,4]', 'plain values are pushed')",
+      "gap": "For each callback result: if it is an array, push its items one by one; otherwise push the value."
+     },
+     {
+      "t": "flatMap passes index, array and thisArg",
+      "test": "console.log(JSON.stringify([5, 6].myFlatMap(function (x, i, arr) { return [x * this.k, i, arr.length] }, { k: 2 })))\n// expected: [10,0,2,12,1,2]",
+      "verify": "const r = [5, 6].myFlatMap(function (x, i, arr) { return [x * this.k, i, arr.length] }, { k: 2 }); assert(JSON.stringify(r) === '[10,0,2,12,1,2]', 'got ' + JSON.stringify(r))",
+      "gap": "Call <code>cb.call(thisArg, this[i], i, this)</code>."
+     }
+    ]
+   },
+   "solution": "Array.prototype.myFlat = function (depth = 1) {\n  const result = [];\n  const walk = (list, d) => {\n    for (let i = 0; i < list.length; i++) {\n      if (!(i in list)) continue;\n      const item = list[i];\n      if (Array.isArray(item) && d > 0) walk(item, d - 1);\n      else result.push(item);\n    }\n  };\n  walk(this, Number(depth) || 0);\n  return result;\n};\n\nArray.prototype.myFlatMap = function (cb, thisArg) {\n  if (typeof cb !== 'function') throw new TypeError(cb + ' is not a function');\n  const result = [];\n  for (let i = 0; i < this.length; i++) {\n    if (!(i in this)) continue;\n    const v = cb.call(thisArg, this[i], i, this);\n    if (Array.isArray(v)) for (const x of v) result.push(x);\n    else result.push(v);\n  }\n  return result;\n};",
+   "notes": [
+    "Recursion with a depth counter is the clearest flat: open while <code>d &gt; 0</code>.",
+    "<code>Array.isArray</code>, not <code>.length</code>: strings and array-likes stay whole.",
+    "flatMap flattens exactly one level, which is what makes it a safe \"map to 0..n items\".",
+    "For very deep arrays, an explicit stack avoids call-stack overflow."
+   ],
+   "next": [
+    "Write <code>myFlat</code> without recursion, using a stack.",
+    "Flatten a nested object into dot keys: <code>{ a: { b: 1 } }</code> → <code>{ \"a.b\": 1 }</code>.",
+    "Implement <code>chunk(arr, size)</code>, the opposite direction."
+   ]
+  },
+  {
+   "id": "call-apply",
+   "diff": "Medium",
+   "fn": "Function.prototype.myCall",
+   "signature": "fn.myCall(thisArg, ...args) / fn.myApply(thisArg, argsArray)",
+   "learn": {
+    "what": [
+     "<code>call</code> and <code>apply</code> run a function <b>right now</b> with a chosen <code>this</code>. <code>call</code> takes the arguments one by one, <code>apply</code> takes them as an array.",
+     "The trick to build them without the built-ins: a method called as <code>obj.fn()</code> gets <code>this = obj</code>. So put the function on the object for a moment, call it, and remove it again.",
+     "Use a <b>Symbol</b> as the temporary key so you never overwrite or show a real property. <code>null</code>/<code>undefined</code> as <code>thisArg</code> mean <code>globalThis</code>; primitives are boxed with <code>Object(thisArg)</code>."
+    ],
+    "how": {
+     "steps": [
+      "Throw a <code>TypeError</code> if <code>this</code> (the function being called) is not a function.",
+      "Pick the context: <code>thisArg == null ? globalThis : Object(thisArg)</code>.",
+      "Create a unique key <code>Symbol()</code> and set <code>ctx[key] = this</code>.",
+      "Call <code>ctx[key](...args)</code>, remember the result, delete the key (in <code>finally</code>, so it is removed even if the function throws).",
+      "<code>myApply</code>: the same, with <code>argsArray ?? []</code> spread as the arguments."
+     ],
+     "diagram": "greet.myCall(user, 'Hi')\n  ctx = user\n  user[Symbol()] = greet        // borrow\n  user[Symbol()]('Hi')          // called as a method: this = user\n  delete user[Symbol()]         // give it back"
+    },
+    "where": [
+     [
+      "Borrowing methods",
+      "<code>Array.prototype.slice.call(arguments)</code> in older code."
+     ],
+     [
+      "apply with arrays",
+      "<code>Math.max.apply(null, nums)</code> before spread syntax existed."
+     ],
+     [
+      "Inheritance",
+      "Calling a parent constructor: <code>Parent.call(this, name)</code>."
+     ],
+     [
+      "Not a fit",
+      "Arrow functions ignore the <code>this</code> you pass; call/apply only change their arguments."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function f() { return typeof this }\nconsole.log(f.call(5), f.call(\"x\"))</code></pre>",
+     "opts": [
+      "<code>number string</code>",
+      "<code>object object</code>",
+      "<code>undefined undefined</code>",
+      "<code>object string</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "In sloppy mode, primitive <code>this</code> values are boxed into objects (<code>Number</code>, <code>String</code>).",
+      "That is why the polyfill uses <code>Object(thisArg)</code>: you cannot put a property on a primitive."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const nums = [3, 9, 2]\nconsole.log(Math.max.apply(null, nums), Math.max.call(null, nums))</code></pre>",
+     "opts": [
+      "<code>9 NaN</code>",
+      "<code>9 9</code>",
+      "<code>NaN 9</code>",
+      "<code>3 9</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "apply spreads the array into 3 arguments.",
+      "call passes the whole array as <b>one</b> argument; <code>Math.max([3,9,2])</code> is <code>NaN</code>."
+     ]
+    },
+    {
+     "tag": "Spot the bug",
+     "q": "<pre><code>Function.prototype.myCall = function (ctx, ...args) {\n  ctx.fn = this\n  const r = ctx.fn(...args)\n  delete ctx.fn\n  return r\n}</code></pre>Which call breaks?",
+     "opts": [
+      "<code>f.myCall({}, 1)</code>",
+      "<code>f.myCall(obj)</code> where <code>obj</code> already has a property <code>fn</code>, or <code>f.myCall(null)</code>",
+      "Any call with two arguments",
+      "Calls on arrow functions only"
+     ],
+     "ans": 1,
+     "why": [
+      "A fixed name like <code>fn</code> can overwrite (and then delete) a real property of the object. A Symbol key cannot clash.",
+      "<code>null</code> has no properties at all, so it must fall back to <code>globalThis</code>."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "Why delete the temporary key inside <code>finally</code>?",
+     "opts": [
+      "It is faster",
+      "Symbols must be deleted",
+      "If the function throws, the key would otherwise stay on the object forever",
+      "finally is required for return values"
+     ],
+     "ans": 2,
+     "why": [
+      "Code after a throwing call never runs. <code>finally</code> always runs, so the object is always cleaned up.",
+      "The error still propagates to the caller, as it should."
+     ]
+    }
+   ],
+   "pseudo": "myCall(thisArg, ...args):\n  fn = this\n  if fn is not a function -> throw TypeError\n  ctx = (thisArg is null or undefined) ? globalThis : Object(thisArg)\n  key = new Symbol\n  ctx[key] = fn\n  try:\n    return ctx[key](...args)      // called as a method -> this = ctx\n  finally:\n    delete ctx[key]\n\nmyApply(thisArg, argsArray):\n  return this.myCall(thisArg, ...(argsArray or []))",
+   "watch": [
+    "How do you make <code>this</code> inside the function equal <code>thisArg</code> without using call/apply/bind?",
+    "What could go wrong if the temporary property has a normal name?",
+    "What if <code>thisArg</code> is <code>null</code>, or a number?"
+   ],
+   "build": {
+    "minutes": 20,
+    "problem": "Implement <b>Function.prototype.myCall</b> and <b>Function.prototype.myApply</b> without using <code>call</code>, <code>apply</code> or <code>bind</code>.",
+    "reqs": [
+     "Run the function at once with <code>this = thisArg</code> and return its result.",
+     "<code>myCall</code> takes arguments one by one; <code>myApply</code> takes an array (or nothing).",
+     "<code>null</code>/<code>undefined</code> thisArg → <code>globalThis</code>; primitives are boxed.",
+     "Do not leave any extra property on the object, even if the function throws.",
+     "Calling them on a non-function throws a <code>TypeError</code>."
+    ],
+    "checks": [
+     {
+      "t": "myCall sets this and passes arguments",
+      "test": "function intro(greet, end) { return greet + ' ' + this.name + end }\nconsole.log(intro.myCall({ name: 'Asha' }, 'Hi', '!')) // expected: Hi Asha!",
+      "verify": "function intro(greet, end) { return greet + ' ' + this.name + end } assert(intro.myCall({ name: 'Asha' }, 'Hi', '!') === 'Hi Asha!', 'got ' + intro.myCall({ name: 'Asha' }, 'Hi', '!'))",
+      "gap": "Attach the function to the object for a moment and call it as a method."
+     },
+     {
+      "t": "myApply takes an array, or nothing",
+      "test": "function sum(a, b, c) { return this.base + a + b + c }\nconsole.log(sum.myApply({ base: 10 }, [1, 2, 3])) // expected: 16",
+      "verify": "function sum(a, b, c) { return this.base + a + b + c } assert(sum.myApply({ base: 10 }, [1, 2, 3]) === 16, 'got ' + sum.myApply({ base: 10 }, [1, 2, 3])); function k() { return arguments.length } assert(k.myApply({}) === 0, 'missing array should mean no arguments')",
+      "gap": "Spread the array: <code>…(argsArray ?? [])</code>."
+     },
+     {
+      "t": "No property is left on the object, and existing ones survive",
+      "test": "const o = { fn: 'mine' }\nfunction f() { return Object.keys(this).length }\nconsole.log(f.myCall(o), o.fn, Object.getOwnPropertySymbols(o).length) // expected: 1 mine 0",
+      "verify": "const o = { fn: 'mine' }; function f() { return Object.keys(this).length } assert(f.myCall(o) === 1, 'the temporary key must not be enumerable'); assert(o.fn === 'mine', 'existing property was overwritten'); assert(Object.getOwnPropertySymbols(o).length === 0 && Object.keys(o).length === 1, 'temporary key left behind')",
+      "gap": "Use a fresh <code>Symbol()</code> as the key and <code>delete</code> it afterwards."
+     },
+     {
+      "t": "Cleans up even when the function throws",
+      "test": "const o = {}\nfunction bad() { throw new Error('x') }\ntry { bad.myCall(o) } catch (e) {}\nconsole.log(Object.getOwnPropertySymbols(o).length) // expected: 0",
+      "verify": "const o = {}; function bad() { throw new Error('x') } let thrown = false; try { bad.myCall(o) } catch (e) { thrown = e.message === 'x' } assert(thrown, 'the error must reach the caller'); assert(Object.getOwnPropertySymbols(o).length === 0, 'key left after a throw')",
+      "gap": "Put the <code>delete</code> in a <code>finally</code> block."
+     },
+     {
+      "t": "null becomes globalThis; primitives are boxed",
+      "test": "globalThis.label = 'global'\nfunction who() { return this.label }\nfunction kind() { return typeof this }\nconsole.log(who.myCall(null), kind.myCall(5)) // expected: global object",
+      "verify": "globalThis.label = 'global'; function who() { return this.label } function kind() { return typeof this } assert(who.myCall(null) === 'global', 'null should mean globalThis'); assert(kind.myCall(5) === 'object', 'primitives should be boxed'); function len() { return this.length } assert(len.myCall('abc') === 3, 'string this should work')",
+      "gap": "Use <code>thisArg == null ? globalThis : Object(thisArg)</code>."
+     },
+     {
+      "t": "Throws TypeError on a non-function",
+      "test": "try { Function.prototype.myCall.call({}) } catch (e) { console.log(e instanceof TypeError) } // expected: true",
+      "verify": "let a = false; let b = false; try { Function.prototype.myCall.call({}) } catch (e) { a = e instanceof TypeError } try { Function.prototype.myApply.call(1) } catch (e) { b = e instanceof TypeError } assert(a && b, 'must throw TypeError')",
+      "gap": "Check <code>typeof this !== \"function\"</code> at the start of both methods."
+     }
+    ]
+   },
+   "solution": "Function.prototype.myCall = function (thisArg, ...args) {\n  if (typeof this !== 'function') throw new TypeError('myCall must be called on a function');\n  const ctx = thisArg === null || thisArg === undefined ? globalThis : Object(thisArg);\n  const key = Symbol('fn');\n  Object.defineProperty(ctx, key, { value: this, configurable: true }); // not enumerable\n  try {\n    return ctx[key](...args);\n  } finally {\n    delete ctx[key];\n  }\n};\n\nFunction.prototype.myApply = function (thisArg, argsArray) {\n  if (typeof this !== 'function') throw new TypeError('myApply must be called on a function');\n  return this.myCall(thisArg, ...(argsArray ?? []));\n};",
+   "notes": [
+    "A function called as <code>obj.method()</code> gets <code>this = obj</code>. Borrowing the function as a temporary method is the whole trick.",
+    "A Symbol key cannot clash with real properties; <code>defineProperty</code> keeps it out of <code>Object.keys</code> while it exists.",
+    "<code>finally</code> guarantees cleanup even when the function throws.",
+    "<code>Object(thisArg)</code> boxes primitives, matching sloppy-mode behaviour."
+   ],
+   "next": [
+    "Build <code>myBind</code> on top of <code>myApply</code>.",
+    "What should happen with a frozen object as <code>thisArg</code>? Make it work (hint: a wrapper object with the same prototype).",
+    "Write <code>invoke(obj, \"method\", ...args)</code> that calls a method by name safely."
+   ]
+  },
+  {
+   "id": "string-trim",
+   "diff": "Easy",
+   "fn": "String.prototype.myTrim",
+   "signature": "str.myTrim() / str.myTrimStart() / str.myTrimEnd()",
+   "learn": {
+    "what": [
+     "<code>trim</code> removes whitespace from <b>both ends</b> of a string. <code>trimStart</code> removes it only at the start, <code>trimEnd</code> only at the end. Spaces in the middle stay.",
+     "\"Whitespace\" is more than the space key: tabs, new lines (<code>\\n</code>, <code>\\r</code>), form feed, vertical tab, the no-break space (<code>\\u00A0</code>), the BOM (<code>\\uFEFF</code>) and other Unicode spaces.",
+     "Strings are immutable, so all three return a <b>new</b> string."
+    ],
+    "how": {
+     "steps": [
+      "Write <code>isSpace(ch)</code>; the regex <code>/\\s/</code> already matches every whitespace character JavaScript knows (including <code>\\uFEFF</code>).",
+      "<code>trimStart</code>: move an index <code>i</code> forward from 0 while <code>str[i]</code> is space.",
+      "<code>trimEnd</code>: move an index <code>j</code> back from the end while <code>str[j]</code> is space.",
+      "Return <code>str.slice(i)</code>, <code>str.slice(0, j + 1)</code>, or both for <code>trim</code>."
+     ],
+     "diagram": "\"  \\t hi there \\n\"\n   i ->  ^           ^  <- j\n         first non-space   last non-space\ntrim()  = slice(i, j + 1) = \"hi there\""
+    },
+    "where": [
+     [
+      "Forms",
+      "Clean user input before saving: <code>email.trim()</code>."
+     ],
+     [
+      "Validation",
+      "Treat <code>\"   \"</code> as empty: <code>!name.trim()</code>."
+     ],
+     [
+      "Parsing",
+      "Clean each line of a CSV or a config file."
+     ],
+     [
+      "Not a fit",
+      "Collapsing spaces <b>inside</b> the text needs <code>replace(/\\s+/g, \" \")</code>, not trim."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log(JSON.stringify(\"\\u00A0\\t a b \\n\".trim()))</code></pre>",
+     "opts": [
+      "<code>\"a b\"</code>",
+      "<code>\"\\u00A0\\t a b\"</code>",
+      "<code>\"ab\"</code>",
+      "<code>\" a b \"</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "The no-break space, tab and new line all count as whitespace, so they are removed at both ends.",
+      "The single space between <code>a</code> and <code>b</code> is in the middle, so it stays."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const s = \"  x  \"\ns.trim()\nconsole.log(s.length)</code></pre>",
+     "opts": [
+      "<code>1</code>",
+      "<code>3</code>",
+      "<code>5</code>",
+      "<code>0</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Strings never change. <code>trim()</code> returns a new string, and here it is thrown away.",
+      "Write <code>s = s.trim()</code> (with <code>let</code>) to keep the result."
+     ]
+    },
+    {
+     "tag": "Spot the bug",
+     "q": "<pre><code>String.prototype.myTrim = function () {\n  return this.split(\" \").join(\"\")\n}</code></pre>",
+     "opts": [
+      "Nothing, it trims correctly",
+      "It removes the spaces in the middle too, and leaves tabs and new lines",
+      "It only works for one space",
+      "It changes the original string"
+     ],
+     "ans": 1,
+     "why": [
+      "Splitting on <code>\" \"</code> deletes <b>every</b> space, so <code>\"hi there\"</code> becomes <code>\"hithere\"</code>.",
+      "It also ignores tabs and line breaks. Trim must only look at the two ends."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "Which regex trims both ends correctly?",
+     "opts": [
+      "<code>s.replace(/\\s/g, \"\")</code>",
+      "<code>s.replace(/^\\s+|\\s+$/g, \"\")</code>",
+      "<code>s.replace(/ +/, \"\")</code>",
+      "<code>s.replace(/^\\s+$/, \"\")</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "<code>^\\s+</code> matches the leading run and <code>\\s+$</code> the trailing run; the <code>g</code> flag removes both.",
+      "The first option removes all whitespace, including the middle."
+     ]
+    }
+   ],
+   "pseudo": "isSpace(ch) = /\\s/.test(ch)\n\nmyTrimStart():\n  i = 0\n  while i < length and isSpace(this[i]): i++\n  return slice(i)\n\nmyTrimEnd():\n  j = length - 1\n  while j >= 0 and isSpace(this[j]): j--\n  return slice(0, j + 1)\n\nmyTrim():\n  return myTrimEnd of (myTrimStart of this)",
+   "watch": [
+    "Which characters count as whitespace? Only <code>\" \"</code>?",
+    "What happens with a string that is all spaces, or empty?",
+    "Are you returning a new string, or trying to change the old one?"
+   ],
+   "build": {
+    "minutes": 10,
+    "problem": "Implement <b>String.prototype.myTrim</b>, <b>myTrimStart</b> and <b>myTrimEnd</b> without the built-in trim methods.",
+    "reqs": [
+     "<code>myTrim</code> removes whitespace from both ends; the middle is kept.",
+     "<code>myTrimStart</code> / <code>myTrimEnd</code> remove it from one end only.",
+     "Whitespace includes spaces, tabs, <code>\\n</code>, <code>\\r</code>, no-break space and other Unicode spaces.",
+     "A string that is all whitespace becomes <code>\"\"</code>.",
+     "Return new strings (strings cannot be changed)."
+    ],
+    "checks": [
+     {
+      "t": "Trims both ends and keeps the middle",
+      "test": "console.log(JSON.stringify('   hello world  '.myTrim())) // expected: \"hello world\"",
+      "verify": "assert('   hello world  '.myTrim() === 'hello world', 'got ' + JSON.stringify('   hello world  '.myTrim()))",
+      "gap": "Only move inward from the two ends. Do not remove characters in the middle."
+     },
+     {
+      "t": "Handles tabs, new lines and the no-break space",
+      "test": "console.log(JSON.stringify('\\t\\n\\u00A0 x \\r\\n'.myTrim())) // expected: \"x\"",
+      "verify": "assert('\\t\\n\\u00A0 x \\r\\n'.myTrim() === 'x', 'got ' + JSON.stringify('\\t\\n\\u00A0 x \\r\\n'.myTrim()))",
+      "gap": "Use <code>/\\s/.test(ch)</code> to decide what is whitespace, not <code>ch === \" \"</code>."
+     },
+     {
+      "t": "trimStart and trimEnd only touch one side",
+      "test": "console.log(JSON.stringify('  a  '.myTrimStart()), JSON.stringify('  a  '.myTrimEnd())) // expected: \"a  \" \"  a\"",
+      "verify": "assert('  a  '.myTrimStart() === 'a  ', 'trimStart got ' + JSON.stringify('  a  '.myTrimStart())); assert('  a  '.myTrimEnd() === '  a', 'trimEnd got ' + JSON.stringify('  a  '.myTrimEnd()))",
+      "gap": "trimStart only moves the start index; trimEnd only moves the end index."
+     },
+     {
+      "t": "All whitespace or empty gives \"\"",
+      "test": "console.log(JSON.stringify(' \\t\\n '.myTrim()), JSON.stringify(''.myTrim())) // expected: \"\" \"\"",
+      "verify": "assert(' \\t\\n '.myTrim() === '', 'all-space string should be empty'); assert(''.myTrim() === '', 'empty string should stay empty'); assert(' \\t '.myTrimEnd() === '' && ' \\t '.myTrimStart() === '', 'one-sided trims of spaces should be empty')",
+      "gap": "Check your loop bounds: stop when the index runs off the string."
+     },
+     {
+      "t": "Returns a string primitive, the original stays the same",
+      "test": "const s = ' z '\nconsole.log(typeof s.myTrim(), JSON.stringify(s)) // expected: string \" z \"",
+      "verify": "const s = ' z '; const r = s.myTrim(); assert(typeof r === 'string' && r === 'z', 'must return the string \"z\", got ' + typeof r); assert(s === ' z ', 'original changed')",
+      "gap": "Return <code>this.slice(…)</code> (or <code>String(this)</code>), not <code>this</code>: inside a method <code>this</code> is a String object."
+     }
+    ]
+   },
+   "solution": "const isSpace = (ch) => /\\s/.test(ch);\n\nString.prototype.myTrimStart = function () {\n  const s = String(this);\n  let i = 0;\n  while (i < s.length && isSpace(s[i])) i++;\n  return s.slice(i);\n};\n\nString.prototype.myTrimEnd = function () {\n  const s = String(this);\n  let j = s.length - 1;\n  while (j >= 0 && isSpace(s[j])) j--;\n  return s.slice(0, j + 1);\n};\n\nString.prototype.myTrim = function () {\n  return this.myTrimStart().myTrimEnd();\n};",
+   "notes": [
+    "Two pointers from the ends: no regex needed, and it stops as soon as real text starts.",
+    "<code>/\\s/</code> already knows every whitespace JavaScript uses, including Unicode spaces and <code>\\uFEFF</code>.",
+    "Inside a method <code>this</code> is a String <b>object</b>; <code>String(this)</code> turns it into a normal string.",
+    "Strings are immutable: every method returns a new string."
+   ],
+   "next": [
+    "Write <code>myTrim(chars)</code> that removes any of the given characters, like <code>trim(\"/\")</code> for paths.",
+    "Implement <code>padStart(length, fill)</code>.",
+    "Write <code>squish(s)</code>: trim plus collapse inner runs of whitespace to one space."
+   ]
+  },
+  {
+   "id": "array-sort",
+   "diff": "Medium",
+   "fn": "Array.prototype.mySort",
+   "signature": "arr.mySort(compareFn)",
+   "learn": {
+    "what": [
+     "<code>sort</code> orders the array <b>in place</b> and returns the same array. Without a compare function it turns elements into <b>strings</b> and compares those, so <code>[10, 9, 1].sort()</code> gives <code>[1, 10, 9]</code>.",
+     "With <code>compareFn(a, b)</code>: a negative result puts <code>a</code> first, positive puts <code>b</code> first, zero keeps their order. Modern engines must keep equal items in their original order (<b>stable</b> sort).",
+     "<code>undefined</code> values always go to the end, and holes come after them."
+    ],
+    "how": {
+     "steps": [
+      "Collect the real values (skip holes) into a list; count the <code>undefined</code>s and holes separately.",
+      "Pick the comparator: the given <code>compareFn</code>, or the default that compares <code>String(a)</code> with <code>String(b)</code>.",
+      "Sort the list with a <b>stable</b> algorithm: merge sort (split in halves, sort each, merge taking from the left half on ties).",
+      "Write back into <code>this</code>: the sorted values, then the <code>undefined</code>s, then delete the remaining indexes (holes).",
+      "Return <code>this</code>."
+     ],
+     "diagram": "merge sort  [5, 2, 4, 1]\nsplit       [5, 2]        [4, 1]\nsort        [2, 5]        [1, 4]\nmerge       compare heads: 2 vs 1 -> 1, 2 vs 4 -> 2, 5 vs 4 -> 4, then 5\nresult      [1, 2, 4, 5]     (on a tie, take from the LEFT half: stable)"
+    },
+    "where": [
+     [
+      "Tables",
+      "Sort rows by a column, keeping earlier ordering for ties (stable)."
+     ],
+     [
+      "Leaderboards",
+      "<code>players.sort((a, b) =&gt; b.score - a.score)</code>."
+     ],
+     [
+      "Names",
+      "<code>names.sort((a, b) =&gt; a.localeCompare(b))</code> for real alphabetical order."
+     ],
+     [
+      "Not a fit",
+      "When you must keep the original: use <code>toSorted()</code> or copy first with <code>[...arr].sort()</code>."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log([10, 9, 1, 100].sort())</code></pre>",
+     "opts": [
+      "<code>[ 1, 9, 10, 100 ]</code>",
+      "<code>[ 1, 10, 100, 9 ]</code>",
+      "<code>[ 100, 10, 9, 1 ]</code>",
+      "<code>[ 10, 100, 1, 9 ]</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "The default sort compares strings: <code>\"1\" &lt; \"10\" &lt; \"100\" &lt; \"9\"</code>, character by character.",
+      "For numbers always pass <code>(a, b) =&gt; a - b</code>."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const a = [3, 1, 2]\nconst b = a.sort()\nconsole.log(a === b, a)</code></pre>",
+     "opts": [
+      "<code>false [ 3, 1, 2 ]</code>",
+      "<code>true [ 3, 1, 2 ]</code>",
+      "<code>false [ 1, 2, 3 ]</code>",
+      "<code>true [ 1, 2, 3 ]</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "sort changes the array itself and returns the same array.",
+      "React state bug: <code>setList(list.sort())</code> passes the same reference, so React may not re-render."
+     ]
+    },
+    {
+     "tag": "Spot the bug",
+     "q": "<pre><code>users.sort((a, b) =&gt; a.age &gt; b.age)</code></pre>Why is this wrong?",
+     "opts": [
+      "It sorts descending",
+      "The comparator returns <code>true</code>/<code>false</code> (1/0), never a negative number, so the result is not reliable",
+      "You cannot compare ages",
+      "sort needs <code>localeCompare</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "A boolean comparator never says \"a comes first\", so engines may leave elements out of order.",
+      "Return a number: <code>a.age - b.age</code>."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const r = [{ n: \"A\", x: 1 }, { n: \"B\", x: 0 }, { n: \"C\", x: 1 }].sort((p, q) =&gt; q.x - p.x)\nconsole.log(r.map(o =&gt; o.n).join(\"\"))</code></pre>",
+     "opts": [
+      "<code>ACB</code>",
+      "<code>CAB</code>",
+      "<code>BAC</code>",
+      "<code>ABC</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "A and C tie (x = 1). A stable sort keeps their original order: A before C.",
+      "Stability lets you sort by a second key first, then by the main key."
+     ]
+    }
+   ],
+   "pseudo": "mySort(compareFn):\n  cmp = compareFn or ((a, b) => String(a) vs String(b): -1 / 0 / 1)\n  values = real elements that are not undefined\n  undefCount = number of undefined elements\n  sorted = mergeSort(values, cmp)\nmergeSort(list):\n  if list has 0 or 1 item -> return it\n  left = mergeSort(first half), right = mergeSort(second half)\n  merge: take left[i] if cmp(left[i], right[j]) <= 0 (ties -> left), else right[j]\nwrite back: sorted values, then undefCount undefineds, then delete the rest (holes)\nreturn this",
+   "watch": [
+    "How does the default comparator treat numbers?",
+    "Which half do you take from when the comparator returns 0?",
+    "Where do <code>undefined</code> values and holes end up?"
+   ],
+   "build": {
+    "minutes": 30,
+    "problem": "Implement <b>Array.prototype.mySort(compareFn)</b> without using the built-in <code>sort</code> / <code>toSorted</code>.",
+    "reqs": [
+     "Sort in place and return the same array.",
+     "Without <code>compareFn</code>, compare elements as strings.",
+     "With <code>compareFn(a, b)</code>: negative → a first, positive → b first.",
+     "The sort is stable: equal elements keep their original order.",
+     "<code>undefined</code> values go to the end, holes after them."
+    ],
+    "checks": [
+     {
+      "t": "Default sort compares as strings",
+      "test": "console.log([10, 9, 1, 100].mySort()) // expected: [1, 10, 100, 9]",
+      "verify": "const r = [10, 9, 1, 100].mySort(); assert(r.join() === '1,10,100,9', 'got ' + r.join()); assert(['b', 'a', 'c'].mySort().join('') === 'abc', 'strings')",
+      "gap": "The default comparator compares <code>String(a)</code> and <code>String(b)</code>, not numbers."
+     },
+     {
+      "t": "Uses compareFn for numbers",
+      "test": "console.log([10, 9, 1, 100].mySort((a, b) => a - b)) // expected: [1, 9, 10, 100]",
+      "verify": "assert([10, 9, 1, 100].mySort((a, b) => a - b).join() === '1,9,10,100', 'ascending'); assert([3, 1, 2].mySort((a, b) => b - a).join() === '3,2,1', 'descending')",
+      "gap": "Call <code>compareFn(a, b)</code> and use the sign of the result."
+     },
+     {
+      "t": "Sorts in place and returns the same array",
+      "test": "const a = [3, 1, 2]\nconsole.log(a.mySort() === a, a) // expected: true [1, 2, 3]",
+      "verify": "const a = [3, 1, 2]; const b = a.mySort(); assert(b === a, 'must return the same array'); assert(a.join() === '1,2,3', 'the array itself must be sorted')",
+      "gap": "Write the sorted values back into <code>this[i]</code> and return <code>this</code>."
+     },
+     {
+      "t": "Stable for equal keys",
+      "test": "const r = [{ n: 'A', x: 1 }, { n: 'B', x: 0 }, { n: 'C', x: 1 }, { n: 'D', x: 0 }].mySort((p, q) => p.x - q.x)\nconsole.log(r.map(o => o.n).join('')) // expected: BDAC",
+      "verify": "const r = [{ n: 'A', x: 1 }, { n: 'B', x: 0 }, { n: 'C', x: 1 }, { n: 'D', x: 0 }].mySort((p, q) => p.x - q.x); assert(r.map((o) => o.n).join('') === 'BDAC', 'got ' + r.map((o) => o.n).join('')); const big = Array.from({ length: 50 }, (_, i) => ({ k: i % 3, i })); big.mySort((a, b) => a.k - b.k); assert(big.every((o, j) => j === 0 || big[j - 1].k < o.k || big[j - 1].i < o.i), 'not stable on a bigger input')",
+      "gap": "Use merge sort and take from the <b>left</b> half when the comparator returns 0."
+     },
+     {
+      "t": "undefined goes to the end, then holes",
+      "test": "const a = [3, undefined, , 1]\na.mySort()\nconsole.log(a.length, a[0], a[1], a[2], 3 in a) // expected: 4 1 3 undefined false",
+      "verify": "const a = [3, undefined, , 1]; a.mySort(); assert(a.length === 4, 'length changed'); assert(a[0] === 1 && a[1] === 3, 'values first, got ' + a[0] + ',' + a[1]); assert(2 in a && a[2] === undefined, 'undefined third'); assert(!(3 in a), 'hole last')",
+      "gap": "Sort only the defined values, then write the <code>undefined</code>s, then <code>delete</code> the remaining indexes."
+     }
+    ]
+   },
+   "solution": "Array.prototype.mySort = function (compareFn) {\n  if (compareFn !== undefined && typeof compareFn !== 'function') throw new TypeError('compareFn must be a function');\n  const cmp = compareFn || ((a, b) => {\n    const x = String(a);\n    const y = String(b);\n    return x < y ? -1 : x > y ? 1 : 0;\n  });\n\n  const values = [];\n  let undefs = 0;\n  for (let i = 0; i < this.length; i++) {\n    if (!(i in this)) continue;\n    if (this[i] === undefined) undefs++;\n    else values.push(this[i]);\n  }\n\n  const mergeSort = (list) => {\n    if (list.length <= 1) return list;\n    const mid = Math.floor(list.length / 2);\n    const left = mergeSort(list.slice(0, mid));\n    const right = mergeSort(list.slice(mid));\n    const out = [];\n    let i = 0;\n    let j = 0;\n    while (i < left.length && j < right.length) {\n      if (cmp(left[i], right[j]) <= 0) out.push(left[i++]); // ties: left first = stable\n      else out.push(right[j++]);\n    }\n    while (i < left.length) out.push(left[i++]);\n    while (j < right.length) out.push(right[j++]);\n    return out;\n  };\n\n  const sorted = mergeSort(values);\n  let k = 0;\n  for (const v of sorted) this[k++] = v;\n  for (let u = 0; u < undefs; u++) this[k++] = undefined;\n  for (; k < this.length; k++) delete this[k];\n  return this;\n};",
+   "notes": [
+    "The default comparator compares <b>strings</b>; that is the source of the famous <code>[1, 10, 9]</code> surprise.",
+    "Merge sort is O(n log n) and stable when ties take from the left half.",
+    "Sort in place: write results back into <code>this</code> and return it.",
+    "<code>undefined</code> never reaches the comparator; holes are moved to the end."
+   ],
+   "next": [
+    "Implement <code>toSorted</code>, which returns a sorted copy.",
+    "Write <code>sortBy(arr, ...keys)</code> for multi-key sorting with a direction per key.",
+    "Implement quick sort and explain why it is not stable."
+   ]
+  },
+  {
+   "id": "promise-static",
+   "diff": "Easy",
+   "fn": "Promise.myResolve",
+   "signature": "Promise.myResolve(value) / Promise.myReject(reason)",
+   "learn": {
+    "what": [
+     "<code>Promise.resolve(value)</code> turns any value into a promise. If the value is already a real promise, you get <b>that same promise</b> back. If it is a <b>thenable</b> (any object with a <code>then</code> method), it is <b>unwrapped</b>: the new promise follows it.",
+     "<code>Promise.reject(reason)</code> always returns a new rejected promise. It does <b>not</b> unwrap: if the reason is a promise, that promise itself becomes the rejection reason.",
+     "They are the \"on-ramps\" to promise land: an API can always say <code>return Promise.resolve(cache.get(key))</code> and callers can always <code>.then</code>."
+    ],
+    "how": {
+     "steps": [
+      "<code>myResolve</code>: if <code>value instanceof Promise</code>, return it as is.",
+      "Otherwise return <code>new Promise((res, rej) =&gt; …)</code>.",
+      "Inside: if the value is an object or function with a <code>then</code> method, call <code>value.then(res, rej)</code>, so the new promise follows it. Otherwise <code>res(value)</code>.",
+      "If reading or calling <code>then</code> throws, reject with that error.",
+      "<code>myReject</code>: return <code>new Promise((_, rej) =&gt; rej(reason))</code>, nothing else."
+     ],
+     "diagram": "myResolve(42)            -> new promise, fulfilled with 42\nmyResolve(p)  (a Promise) -> p itself (same object)\nmyResolve({ then(ok) { ok(7) } })\n                          -> new promise that follows the thenable -> 7\nmyReject(p)               -> new promise rejected WITH p as the reason"
+    },
+    "where": [
+     [
+      "Uniform APIs",
+      "A function that sometimes has a cached value and sometimes fetches can always return a promise."
+     ],
+     [
+      "Old libraries",
+      "Wrap jQuery deferreds or other thenables into real promises."
+     ],
+     [
+      "Tests",
+      "<code>vi.fn(() =&gt; Promise.reject(new Error(\"500\")))</code> to fake failures."
+     ],
+     [
+      "Not a fit",
+      "For work that is not finished yet (timers, callbacks), you need <code>new Promise(executor)</code>."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const p = Promise.resolve(1)\nconsole.log(Promise.resolve(p) === p, Promise.reject(p) === p)</code></pre>",
+     "opts": [
+      "<code>true true</code>",
+      "<code>false false</code>",
+      "<code>true false</code>",
+      "<code>false true</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "<code>resolve</code> returns a real promise unchanged.",
+      "<code>reject</code> always makes a new rejected promise; here its reason is <code>p</code> itself."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const thenable = { then(ok) { ok(\"done\") } }\nPromise.resolve(thenable).then(v =&gt; console.log(v))</code></pre>",
+     "opts": [
+      "<code>{ then: [Function: then] }</code>",
+      "<code>done</code>",
+      "Nothing is printed",
+      "<code>undefined</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Anything with a <code>then</code> method is treated like a promise and followed.",
+      "That is how promises from different libraries work together."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>Promise.reject(Promise.resolve(5)).catch(e =&gt; console.log(e instanceof Promise))</code></pre>",
+     "opts": [
+      "<code>false</code>",
+      "<code>5</code>",
+      "<code>true</code>",
+      "It prints nothing"
+     ],
+     "ans": 2,
+     "why": [
+      "<code>reject</code> never unwraps. The rejection reason is the promise object itself, not 5.",
+      "This is a real difference from <code>resolve</code>."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "A thenable calls both <code>ok(1)</code> and then <code>ok(2)</code>. What does <code>Promise.resolve(thenable)</code> settle with?",
+     "opts": [
+      "<code>2</code>, the last call wins",
+      "<code>1</code>; a promise settles only once and later calls are ignored",
+      "<code>[1, 2]</code>",
+      "It throws an error"
+     ],
+     "ans": 1,
+     "why": [
+      "The <code>resolve</code> and <code>reject</code> functions given to an executor work only the first time.",
+      "Using <code>new Promise</code> inside your polyfill gets you this guarantee for free."
+     ]
+    }
+   ],
+   "pseudo": "myResolve(value):\n  if value is a real Promise -> return value\n  return new Promise((res, rej) =>\n    try:\n      then = value is object/function ? value.then : undefined\n      if then is a function -> call then with this = value, args (res, rej)\n      else -> res(value)\n    catch err -> rej(err)\n  )\n\nmyReject(reason):\n  return new Promise((_, rej) => rej(reason))   // no unwrapping",
+   "watch": [
+    "When should <code>myResolve</code> return the very same object?",
+    "How do you detect a thenable that is not a real Promise?",
+    "Why must <code>myReject</code> not unwrap its argument?"
+   ],
+   "build": {
+    "minutes": 10,
+    "problem": "Implement <b>Promise.myResolve(value)</b> and <b>Promise.myReject(reason)</b>.",
+    "reqs": [
+     "<code>myResolve</code> returns a fulfilled promise for plain values.",
+     "A real Promise passed to <code>myResolve</code> is returned unchanged.",
+     "Thenables are followed (fulfil or reject like the thenable does).",
+     "If reading or calling <code>then</code> throws, the promise rejects with that error.",
+     "<code>myReject</code> returns a new promise rejected with exactly the given reason (no unwrapping)."
+    ],
+    "checks": [
+     {
+      "t": "Plain values become fulfilled promises",
+      "test": "Promise.myResolve(42).then(v => console.log(v)) // expected: 42",
+      "verify": "const p = Promise.myResolve(42); assert(p instanceof Promise, 'must return a Promise'); assert(await p === 42, 'should fulfil with 42')",
+      "gap": "Return <code>new Promise((res) =&gt; res(value))</code> for normal values."
+     },
+     {
+      "t": "A real Promise comes back unchanged",
+      "test": "const p = Promise.resolve(1)\nconsole.log(Promise.myResolve(p) === p) // expected: true",
+      "verify": "const p = Promise.resolve(1); assert(Promise.myResolve(p) === p, 'must return the same promise')",
+      "gap": "Start with <code>if (value instanceof Promise) return value</code>."
+     },
+     {
+      "t": "Thenables are followed, both ways",
+      "test": "Promise.myResolve({ then(ok) { ok('yes') } }).then(console.log) // expected: yes",
+      "verify": "assert(await Promise.myResolve({ then(ok) { ok('yes') } }) === 'yes', 'should follow a fulfilling thenable'); let e; try { await Promise.myResolve({ then(_, no) { no('bad') } }) } catch (x) { e = x } assert(e === 'bad', 'should follow a rejecting thenable')",
+      "gap": "If <code>value.then</code> is a function, call <code>value.then(res, rej)</code> inside the executor."
+     },
+     {
+      "t": "A throwing then makes the promise reject",
+      "test": "Promise.myResolve({ then() { throw new Error('boom') } }).catch(e => console.log(e.message)) // expected: boom",
+      "verify": "let msg; try { await Promise.myResolve({ then() { throw new Error('boom') } }) } catch (e) { msg = e.message } assert(msg === 'boom', 'should reject with the thrown error')",
+      "gap": "Wrap the thenable handling in <code>try / catch</code> and call <code>rej(err)</code>."
+     },
+     {
+      "t": "myReject rejects with the exact reason, never unwrapping",
+      "test": "const inner = Promise.resolve(5)\nPromise.myReject(inner).catch(e => console.log(e === inner)) // expected: true",
+      "verify": "const inner = Promise.resolve(5); const r = Promise.myReject(inner); assert(r instanceof Promise && r !== inner, 'must be a new promise'); let got; try { await r } catch (e) { got = e } assert(got === inner, 'reason must be the promise itself'); let m; try { await Promise.myReject('x') } catch (e) { m = e } assert(m === 'x', 'plain reason')",
+      "gap": "<code>myReject</code> is one line: <code>new Promise((_, rej) =&gt; rej(reason))</code>. Do not check for thenables."
+     }
+    ]
+   },
+   "solution": "Promise.myResolve = function (value) {\n  if (value instanceof Promise) return value;\n  return new Promise((resolve, reject) => {\n    try {\n      const then = value !== null && (typeof value === 'object' || typeof value === 'function') ? value.then : undefined;\n      if (typeof then === 'function') then.call(value, resolve, reject);\n      else resolve(value);\n    } catch (err) {\n      reject(err);\n    }\n  });\n};\n\nPromise.myReject = function (reason) {\n  return new Promise((_, reject) => reject(reason));\n};",
+   "notes": [
+    "Real promise → same object. Thenable → followed. Anything else → wrapped.",
+    "Read <code>then</code> once and call it with <code>this = value</code>; reading a getter twice could give different results.",
+    "The executor's <code>resolve</code>/<code>reject</code> work only once, so a badly-behaved thenable cannot settle twice.",
+    "<code>reject</code> deliberately does not unwrap: a rejection reason is data, not something to follow."
+   ],
+   "next": [
+    "Implement <code>Promise.myTry(fn)</code>: run <code>fn</code> and turn both return values and throws into a promise.",
+    "Write <code>promisify(fn)</code> for Node-style <code>(err, value)</code> callbacks.",
+    "Build the full <code>MyPromise</code> class (see the Promise from Scratch lesson)."
+   ]
+  },
+  {
+   "id": "reduce-right",
+   "diff": "Medium",
+   "fn": "Array.prototype.myReduceRight",
+   "signature": "arr.myReduceRight(cb, initialValue)",
+   "learn": {
+    "what": [
+     "<code>reduceRight</code> is <code>reduce</code> walking <b>from the last element to the first</b>. Everything else is the same: an accumulator, an optional initial value, and a <code>TypeError</code> for an empty array without one.",
+     "Without an initial value, the <b>last</b> element becomes the accumulator and the loop starts at the one before it.",
+     "It matters when the order of combining matters: building a string, nesting function calls (<code>compose</code>), or folding a list from the end."
+    ],
+    "how": {
+     "steps": [
+      "Throw a <code>TypeError</code> if the callback is not a function.",
+      "Start <code>i</code> at <code>length - 1</code>.",
+      "If an initial value was passed (<code>arguments.length &gt;= 2</code>), use it. Otherwise move <code>i</code> down past holes, take <code>this[i]</code> as the accumulator and step down once more; throw if there was nothing.",
+      "While <code>i &gt;= 0</code>: if index <code>i</code> is not a hole, <code>acc = cb(acc, this[i], i, this)</code>; then <code>i--</code>.",
+      "Return <code>acc</code>."
+     ],
+     "diagram": "['a', 'b', 'c'].reduceRight((acc, x) => acc + x)\n  acc = 'c' (last element), start at index 1\n  i=1  'c' + 'b' = 'cb'\n  i=0  'cb' + 'a' = 'cba'"
+    },
+    "where": [
+     [
+      "compose",
+      "<code>compose(f, g, h)(x)</code> = <code>f(g(h(x)))</code>: reduceRight applies <code>h</code> first."
+     ],
+     [
+      "Middleware",
+      "Wrap handlers from the inside out (Redux <code>applyMiddleware</code>)."
+     ],
+     [
+      "Right folds",
+      "Building nested structures from the end of a list."
+     ],
+     [
+      "Not a fit",
+      "For sums and counts the direction does not matter; plain <code>reduce</code> reads better."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log([1, 2, 3].reduceRight((acc, x) =&gt; acc + \"-\" + x))</code></pre>",
+     "opts": [
+      "<code>1-2-3</code>",
+      "<code>3-2-1</code>",
+      "<code>6</code>",
+      "<code>-3-2-1</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "The last element (3) is the start, then 2, then 1.",
+      "There is no leading <code>-</code> because no initial value was given."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const compose = (...fns) =&gt; (x) =&gt; fns.reduceRight((v, f) =&gt; f(v), x)\nconst add1 = (n) =&gt; n + 1\nconst double = (n) =&gt; n * 2\nconsole.log(compose(add1, double)(5))</code></pre>",
+     "opts": [
+      "<code>12</code>",
+      "<code>11</code>",
+      "<code>10</code>",
+      "<code>7</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "compose runs the <b>last</b> function first: <code>double(5) = 10</code>, then <code>add1(10) = 11</code>.",
+      "With <code>reduce</code> (left to right) it would be <code>double(add1(5)) = 12</code>."
+     ]
+    },
+    {
+     "tag": "Spot the bug",
+     "q": "<pre><code>Array.prototype.myReduceRight = function (cb, init) {\n  return this.reverse().reduce(cb, init)\n}</code></pre>",
+     "opts": [
+      "It reverses the caller's array in place, and the callback gets the wrong indexes",
+      "reduce cannot take an initial value",
+      "It returns the wrong type",
+      "Nothing, it is a valid shortcut"
+     ],
+     "ans": 0,
+     "why": [
+      "<code>reverse()</code> mutates. After one call the original array is backwards.",
+      "Indexes are also flipped: the callback sees 0 for the real last element."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log([[1, 2], [3]].reduceRight((acc, arr) =&gt; acc.concat(arr), []))</code></pre>",
+     "opts": [
+      "<code>[ 1, 2, 3 ]</code>",
+      "<code>[ [ 3 ], [ 1, 2 ] ]</code>",
+      "<code>[ 3, 1, 2 ]</code>",
+      "<code>[ 2, 1, 3 ]</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "<code>[3]</code> is concatenated first, then <code>[1, 2]</code>.",
+      "Inner arrays keep their own order; only the outer walk is reversed."
+     ]
+    }
+   ],
+   "pseudo": "myReduceRight(cb, initialValue):\n  if cb is not a function -> throw TypeError\n  i = length - 1\n  if arguments.length >= 2:\n    acc = initialValue\n  else:\n    while i >= 0 and i is a hole: i--\n    if i < 0 -> throw TypeError\n    acc = this[i]; i--\n  while i >= 0:\n    if i is not a hole: acc = cb(acc, this[i], i, this)\n    i--\n  return acc",
+   "watch": [
+    "Where does the loop start, and where does it stop?",
+    "Without an initial value, which element starts?",
+    "Does your version change the original array?"
+   ],
+   "build": {
+    "minutes": 20,
+    "problem": "Implement <b>Array.prototype.myReduceRight(cb, initialValue)</b> without <code>reduceRight</code>, <code>reduce</code> or <code>reverse</code>.",
+    "reqs": [
+     "Walk from the last index down to 0; the callback gets <code>(acc, element, index, array)</code>.",
+     "With an initial value, start from it; without one, the last real element starts.",
+     "Empty array and no initial value: throw a <code>TypeError</code>.",
+     "Skip holes, and do not change the original array."
+    ],
+    "checks": [
+     {
+      "t": "Walks from right to left",
+      "test": "console.log(['a', 'b', 'c'].myReduceRight((acc, x) => acc + x, '')) // expected: cba",
+      "verify": "assert(['a', 'b', 'c'].myReduceRight((acc, x) => acc + x, '') === 'cba', 'got ' + ['a', 'b', 'c'].myReduceRight((acc, x) => acc + x, ''))",
+      "gap": "Loop with <code>i = length - 1</code> down to <code>0</code>."
+     },
+     {
+      "t": "Without an initial value the last element starts",
+      "test": "let n = 0\nconsole.log([1, 2, 3].myReduceRight((acc, x) => { n++; return acc + '-' + x }), n) // expected: 3-2-1 2",
+      "verify": "let n = 0; const r = [1, 2, 3].myReduceRight((acc, x) => { n++; return acc + '-' + x }); assert(r === '3-2-1', 'got ' + r); assert(n === 2, 'callback ran ' + n + ' times')",
+      "gap": "Take <code>this[length - 1]</code> as the accumulator, then start at <code>length - 2</code>."
+     },
+     {
+      "t": "Indexes are the real positions",
+      "test": "console.log(['x', 'y'].myReduceRight((acc, v, i, arr) => acc + i + arr.length, '')) // expected: 1202",
+      "verify": "const r = ['x', 'y'].myReduceRight((acc, v, i, arr) => acc + i + arr.length, ''); assert(r === '1202', 'got ' + r)",
+      "gap": "Pass the real index <code>i</code> and the original array, not a reversed copy."
+     },
+     {
+      "t": "Empty array: throws without init, returns init with one",
+      "test": "try { [].myReduceRight((a, b) => a) } catch (e) { console.log(e instanceof TypeError) } // expected: true",
+      "verify": "let ok = false; try { [].myReduceRight((a, b) => a) } catch (e) { ok = e instanceof TypeError } assert(ok, 'must throw TypeError'); assert([].myReduceRight((a) => a, 'z') === 'z', 'should return the initial value')",
+      "gap": "If no initial value and no real element is found, throw a <code>TypeError</code>."
+     },
+     {
+      "t": "The original array is unchanged; holes skipped",
+      "test": "const a = [1, , 3]\nconsole.log(a.myReduceRight((s, x) => s + x), a) // expected: 4 [1, <1 empty item>, 3]",
+      "verify": "const a = [1, , 3]; const r = a.myReduceRight((s, x) => s + x); assert(r === 4, 'got ' + r); assert(a[0] === 1 && a[2] === 3 && !(1 in a), 'the array was changed'); const b = [, , 9]; assert(b.myReduceRight((s, x) => s + x) === 9, 'single real element')",
+      "gap": "Never call <code>reverse()</code> on <code>this</code>; skip holes with <code>i in this</code>."
+     }
+    ]
+   },
+   "solution": "Array.prototype.myReduceRight = function (cb, initialValue) {\n  if (typeof cb !== 'function') throw new TypeError(cb + ' is not a function');\n  let i = this.length - 1;\n  let acc;\n  if (arguments.length >= 2) {\n    acc = initialValue;\n  } else {\n    while (i >= 0 && !(i in this)) i--;\n    if (i < 0) throw new TypeError('Reduce of empty array with no initial value');\n    acc = this[i--];\n  }\n  for (; i >= 0; i--) {\n    if (i in this) acc = cb(acc, this[i], i, this);\n  }\n  return acc;\n};",
+   "notes": [
+    "Same shape as reduce, mirrored: start at the end, step down.",
+    "Use <code>arguments.length</code> to know whether an initial value was passed.",
+    "Never use <code>reverse()</code> on the caller's array: it mutates and breaks the indexes.",
+    "<code>compose</code> is the classic real use of reduceRight."
+   ],
+   "next": [
+    "Write <code>compose(...fns)</code> and <code>pipe(...fns)</code> and show how they differ.",
+    "Implement <code>findLast</code>, which also walks from the right.",
+    "Write <code>myReduceRight</code> for strings via <code>Array.prototype.myReduceRight.call(\"abc\", …)</code>."
+   ]
+  }
+ ]
+}

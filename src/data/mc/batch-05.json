@@ -1,0 +1,2055 @@
+{
+ "problems": [
+  {
+   "id": "eventemitter",
+   "diff": "Medium",
+   "fn": "EventEmitter",
+   "signature": "class EventEmitter { on, off, once, emit, removeAllListeners }",
+   "learn": {
+    "what": [
+     "An <b>event emitter</b> lets parts of a program talk without knowing each other. One side says \"tell me when <code>login</code> happens\" (<code>on</code>); another side says \"<code>login</code> happened, here is the user\" (<code>emit</code>).",
+     "You can remove a listener (<code>off</code>), listen only once (<code>once</code>), or clear everything (<code>removeAllListeners</code>). <code>emit</code> returns whether anyone was listening.",
+     "It is the observer pattern; Node's <code>EventEmitter</code>, the DOM's <code>addEventListener</code> and most pub/sub libraries are this idea."
+    ],
+    "how": {
+     "steps": [
+      "Keep a <code>Map</code> from event name to an array of listeners.",
+      "<code>on(name, fn)</code>: push <code>fn</code>; return <code>this</code> so calls can be chained.",
+      "<code>emit(name, ...args)</code>: copy the list first, then call each listener with the args; return <code>true</code> if there was at least one.",
+      "<code>off(name, fn)</code>: remove one occurrence of that exact function.",
+      "<code>once(name, fn)</code>: register a wrapper that calls <code>off</code> on itself, then calls <code>fn</code>. Keep a link to <code>fn</code> so <code>off(name, fn)</code> still finds the wrapper."
+     ],
+     "diagram": "events: Map\n  'login' -> [logUser, showToast, (once) sendWelcome]\nemit('login', user)\n  copy list -> call logUser(user), showToast(user), sendWelcome(user)\n  sendWelcome removes itself\nnext emit('login') -> only logUser, showToast"
+    },
+    "where": [
+     [
+      "Node.js",
+      "Streams, servers and sockets all emit events."
+     ],
+     [
+      "UI state",
+      "A small store that tells components when data changes."
+     ],
+     [
+      "Decoupling",
+      "An analytics module listens to app events without the app importing it."
+     ],
+     [
+      "Not a fit",
+      "When you need a reply (a value back), call a function or use a promise instead of an event."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Spot the bug",
+     "q": "<pre><code>emit(name, ...args) {\n  for (const fn of this.events.get(name)) fn(...args)\n}</code></pre>A <code>once</code> listener removes itself while this loop is running. What can happen?",
+     "opts": [
+      "Nothing, removing during a loop is safe",
+      "The next listener can be skipped, because the array shifted under the loop",
+      "An infinite loop",
+      "The removed listener runs twice"
+     ],
+     "ans": 1,
+     "why": [
+      "Removing an item from the array you are iterating moves the next item into the current slot, so the loop steps over it.",
+      "Iterate over a copy: <code>[...list]</code>."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "You call <code>e.on(\"x\", () =&gt; log())</code> and later <code>e.off(\"x\", () =&gt; log())</code>. Is the listener removed?",
+     "opts": [
+      "Yes, the code is the same",
+      "No; each arrow function is a new object, and off compares by reference",
+      "Only if the event fired once",
+      "Yes, but only in strict mode"
+     ],
+     "ans": 1,
+     "why": [
+      "Two arrow functions with the same text are still different functions.",
+      "Keep the function in a variable and pass that same variable to both <code>on</code> and <code>off</code>."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const { EventEmitter } = require(\"events\")\nconst e = new EventEmitter()\nconst hi = () =&gt; console.log(\"hi\")\ne.once(\"x\", hi)\ne.off(\"x\", hi)\nconsole.log(e.emit(\"x\"))</code></pre>",
+     "opts": [
+      "<code>hi</code> then <code>true</code>",
+      "<code>true</code>",
+      "<code>false</code>",
+      "<code>hi</code> then <code>false</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "<code>off</code> with the original function removes the <code>once</code> wrapper too. Node stores the original on the wrapper for this.",
+      "No listener is left, so <code>emit</code> returns <code>false</code>."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "Why does <code>on</code> return <code>this</code>?",
+     "opts": [
+      "It is required by JavaScript",
+      "So calls can be chained: <code>e.on(\"a\", f).on(\"b\", g)</code>",
+      "To make the emitter immutable",
+      "To return the listener count"
+     ],
+     "ans": 1,
+     "why": [
+      "Returning the instance enables a fluent API.",
+      "Node's emitter does the same for <code>on</code>, <code>once</code> and <code>off</code>."
+     ]
+    }
+   ],
+   "pseudo": "class EventEmitter:\n  events = new Map()            // name -> [listeners]\n\n  on(name, fn):    list(name).push(fn); return this\n  off(name, fn):\n    list = events.get(name) or stop\n    i = index of an entry e where e === fn or e.original === fn\n    remove it; return this\n  once(name, fn):\n    wrapper(...args) = { off(name, wrapper); fn(...args) }\n    wrapper.original = fn\n    on(name, wrapper)\n  emit(name, ...args):\n    list = events.get(name); if empty -> return false\n    for fn of a COPY of list: fn.apply(this, args)\n    return true\n  removeAllListeners(name?): delete one name, or clear all",
+   "watch": [
+    "What happens if a listener removes itself while <code>emit</code> is looping?",
+    "How will <code>off(name, fn)</code> find a listener added with <code>once</code>?",
+    "What should <code>emit</code> return?"
+   ],
+   "build": {
+    "minutes": 25,
+    "problem": "Build a class <b>EventEmitter</b> with <code>on</code>, <code>off</code>, <code>once</code>, <code>emit</code> and <code>removeAllListeners</code>.",
+    "reqs": [
+     "<code>on(name, fn)</code> adds a listener (many per event, called in order); returns <code>this</code>.",
+     "<code>emit(name, ...args)</code> calls them with the args and returns <code>true</code> if any existed, else <code>false</code>.",
+     "<code>off(name, fn)</code> removes that exact function; also works for <code>once</code> listeners.",
+     "<code>once(name, fn)</code> runs at most one time.",
+     "<code>removeAllListeners(name)</code> clears one event; with no argument, all events.",
+     "A listener removing itself during <code>emit</code> must not make others skip."
+    ],
+    "checks": [
+     {
+      "t": "on + emit call listeners in order with the arguments",
+      "test": "const e = new EventEmitter()\ne.on('sum', (a, b) => console.log('first', a + b)).on('sum', (a, b) => console.log('second', a * b))\nconsole.log(e.emit('sum', 2, 3)) // expected: first 5, second 6, true",
+      "verify": "const e = new EventEmitter(); const out = []; const r1 = e.on('sum', (a, b) => out.push(a + b)); assert(r1 === e, 'on must return this'); e.on('sum', (a, b) => out.push(a * b)); const r = e.emit('sum', 2, 3); assert(out.join() === '5,6', 'got ' + out.join()); assert(r === true, 'emit should return true')",
+      "gap": "Store listeners in an array per event and loop over them in <code>emit</code>."
+     },
+     {
+      "t": "emit returns false with no listeners",
+      "test": "console.log(new EventEmitter().emit('nobody')) // expected: false",
+      "verify": "const e = new EventEmitter(); assert(e.emit('nobody') === false, 'should be false'); e.on('a', () => {}); assert(e.emit('a') === true, 'should be true')",
+      "gap": "Return <code>false</code> when the list is missing or empty, <code>true</code> after calling listeners."
+     },
+     {
+      "t": "off removes that exact listener",
+      "test": "const e = new EventEmitter()\nconst a = () => console.log('a'), b = () => console.log('b')\ne.on('x', a); e.on('x', b); e.off('x', a); e.emit('x') // expected: b",
+      "verify": "const e = new EventEmitter(); const out = []; const a = () => out.push('a'); const b = () => out.push('b'); e.on('x', a); e.on('x', b); e.off('x', a); e.emit('x'); assert(out.join() === 'b', 'got ' + out.join())",
+      "gap": "Find the index with <code>===</code> and <code>splice</code> it out."
+     },
+     {
+      "t": "once runs one time, and off works on it",
+      "test": "const e = new EventEmitter()\ne.once('hi', (n) => console.log('hi', n))\ne.emit('hi', 1); e.emit('hi', 2) // expected: hi 1 (only once)",
+      "verify": "const e = new EventEmitter(); const out = []; e.once('hi', (n) => out.push(n)); e.emit('hi', 1); e.emit('hi', 2); assert(out.join() === '1', 'got ' + out.join()); const f = () => out.push('f'); e.once('y', f); e.off('y', f); assert(e.emit('y') === false, 'off(fn) must remove a once listener')",
+      "gap": "Wrap the listener; the wrapper removes itself first. Save <code>wrapper.original = fn</code> and let <code>off</code> match it."
+     },
+     {
+      "t": "Removing during emit does not skip others",
+      "test": "const e = new EventEmitter()\ne.once('t', () => console.log(1)); e.on('t', () => console.log(2))\ne.emit('t') // expected: 1 2",
+      "verify": "const e = new EventEmitter(); const out = []; e.once('t', () => out.push(1)); e.on('t', () => out.push(2)); e.on('t', () => out.push(3)); e.emit('t'); assert(out.join() === '1,2,3', 'got ' + out.join())",
+      "gap": "Loop over a copy of the list: <code>for (const fn of [...list])</code>."
+     },
+     {
+      "t": "removeAllListeners for one event or all",
+      "test": "const e = new EventEmitter()\ne.on('a', () => {}); e.on('b', () => {})\ne.removeAllListeners('a')\nconsole.log(e.emit('a'), e.emit('b')) // expected: false true",
+      "verify": "const e = new EventEmitter(); e.on('a', () => {}); e.on('b', () => {}); e.removeAllListeners('a'); assert(e.emit('a') === false && e.emit('b') === true, 'one event'); e.removeAllListeners(); assert(e.emit('b') === false, 'all events')",
+      "gap": "With a name, delete that key; without one, clear the whole Map."
+     }
+    ]
+   },
+   "solution": "class EventEmitter {\n  constructor() {\n    this.events = new Map();\n  }\n\n  on(name, fn) {\n    if (!this.events.has(name)) this.events.set(name, []);\n    this.events.get(name).push(fn);\n    return this;\n  }\n\n  off(name, fn) {\n    const list = this.events.get(name);\n    if (!list) return this;\n    const i = list.findIndex((l) => l === fn || l.original === fn);\n    if (i !== -1) list.splice(i, 1);\n    if (list.length === 0) this.events.delete(name);\n    return this;\n  }\n\n  once(name, fn) {\n    const wrapper = (...args) => {\n      this.off(name, wrapper);\n      fn.apply(this, args);\n    };\n    wrapper.original = fn;\n    return this.on(name, wrapper);\n  }\n\n  emit(name, ...args) {\n    const list = this.events.get(name);\n    if (!list || list.length === 0) return false;\n    for (const fn of [...list]) fn.apply(this, args);\n    return true;\n  }\n\n  removeAllListeners(name) {\n    if (name === undefined) this.events.clear();\n    else this.events.delete(name);\n    return this;\n  }\n}",
+   "notes": [
+    "A <code>Map</code> of arrays keeps listeners per event, in the order they were added.",
+    "Loop over a <b>copy</b> in <code>emit</code>, so listeners can remove themselves safely.",
+    "<code>once</code> is just a self-removing wrapper; <code>wrapper.original</code> lets <code>off(fn)</code> find it.",
+    "Listeners are compared by reference: keep the function in a variable if you want to remove it later."
+   ],
+   "next": [
+    "Add <code>listenerCount(name)</code> and a warning when one event gets more than 10 listeners (leak check).",
+    "Make <code>on</code> return an unsubscribe function, the style used by most UI libraries.",
+    "Add a wildcard <code>\"*\"</code> listener that receives every event."
+   ]
+  },
+  {
+   "id": "lru",
+   "diff": "Hard",
+   "fn": "LRUCache",
+   "signature": "class LRUCache(capacity) { get(key), put(key, value) }",
+   "learn": {
+    "what": [
+     "An <b>LRU cache</b> (Least Recently Used) holds at most <code>capacity</code> items. When it is full and a new key arrives, it throws out the item that was <b>used longest ago</b>.",
+     "\"Used\" means read with <code>get</code> or written with <code>put</code>. Both must be <b>O(1)</b>: no searching through a list.",
+     "In JavaScript, a <code>Map</code> remembers insertion order. Deleting a key and setting it again moves it to the <b>end</b> (newest), and <code>map.keys().next().value</code> is the <b>oldest</b>. That gives O(1) for everything."
+    ],
+    "how": {
+     "steps": [
+      "Keep a <code>Map</code>. Its order is the usage order: first = least recently used, last = most recently used.",
+      "<code>get(key)</code>: if missing, return <code>-1</code>. Otherwise read the value, <code>delete</code> the key and <code>set</code> it again (moves it to the end), return the value.",
+      "<code>put(key, value)</code>: if the key exists, delete it first. Then <code>set</code> it (it is now newest).",
+      "If <code>size &gt; capacity</code>, delete the first key: <code>map.keys().next().value</code>."
+     ],
+     "diagram": "capacity 2\nput(a,1)  Map: a\nput(b,2)  Map: a b\nget(a)    Map: b a      (a moved to the end)\nput(c,3)  Map: b a c -> too big -> evict first (b) -> a c\nget(b)    -1"
+    },
+    "where": [
+     [
+      "Browsers",
+      "Image and HTTP caches drop what you have not looked at for a while."
+     ],
+     [
+      "APIs",
+      "Cache the last N database lookups in memory."
+     ],
+     [
+      "Memoization",
+      "A memoize with a size limit so memory does not grow forever."
+     ],
+     [
+      "Not a fit",
+      "If old entries must expire by time (not by use), you need a TTL cache instead."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const m = new Map([[\"a\", 1], [\"b\", 2]])\nm.delete(\"a\"); m.set(\"a\", 1)\nconsole.log([...m.keys()].join(\"\"))</code></pre>",
+     "opts": [
+      "<code>ab</code>",
+      "<code>ba</code>",
+      "<code>a</code>",
+      "<code>bab</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Deleting and setting again puts the key at the end of the Map order.",
+      "That one move is how you mark a key as \"just used\"."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const m = new Map([[\"a\", 1]])\nm.set(\"b\", 2); m.set(\"a\", 9)\nconsole.log([...m.keys()].join(\"\"))</code></pre>",
+     "opts": [
+      "<code>ba</code>",
+      "<code>ab</code>",
+      "<code>aba</code>",
+      "<code>b</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "<code>set</code> on an existing key only changes the value; the position stays.",
+      "So <code>put</code> on an existing key must <code>delete</code> first, or it will not become \"recent\"."
+     ]
+    },
+    {
+     "tag": "Trace",
+     "q": "Capacity 2: <code>put(1)</code>, <code>put(2)</code>, <code>get(1)</code>, <code>put(3)</code>. Which key was evicted?",
+     "opts": [
+      "1",
+      "3",
+      "None",
+      "2"
+     ],
+     "ans": 3,
+     "why": [
+      "After <code>get(1)</code>, key 1 is the most recent and key 2 is the oldest.",
+      "<code>put(3)</code> overflows, so key 2 is evicted."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "Without a Map, which pair of structures gives O(1) get and put?",
+     "opts": [
+      "An array and a loop",
+      "A hash map pointing into a doubly linked list",
+      "Two stacks",
+      "A sorted array with binary search"
+     ],
+     "ans": 1,
+     "why": [
+      "The hash map finds a node in O(1); the doubly linked list moves it to the front or removes the tail in O(1).",
+      "This is the classic answer in languages whose maps do not keep order."
+     ]
+    }
+   ],
+   "pseudo": "class LRUCache(capacity):\n  map = new Map()                 // order = usage order (oldest first)\n\n  get(key):\n    if key not in map -> return -1\n    value = map.get(key)\n    map.delete(key); map.set(key, value)   // move to newest\n    return value\n\n  put(key, value):\n    if key in map -> map.delete(key)\n    map.set(key, value)\n    if map.size > capacity:\n      oldest = map.keys().next().value\n      map.delete(oldest)",
+   "watch": [
+    "How do you mark a key as \"just used\" in O(1)?",
+    "Does <code>put</code> on an existing key change its position?",
+    "How do you find the oldest key without a loop?"
+   ],
+   "build": {
+    "minutes": 35,
+    "problem": "Build <b>class LRUCache(capacity)</b> with O(1) <code>get(key)</code> and <code>put(key, value)</code>.",
+    "reqs": [
+     "<code>get(key)</code> returns the value, or <code>-1</code> if missing, and marks the key as recently used.",
+     "<code>put(key, value)</code> inserts or updates, and marks the key as recently used.",
+     "When over capacity, evict the least recently used key.",
+     "Works for capacity 1.",
+     "No loops over the entries in <code>get</code> or <code>put</code>."
+    ],
+    "checks": [
+     {
+      "t": "get returns values, -1 when missing",
+      "test": "const c = new LRUCache(2)\nc.put('a', 1)\nconsole.log(c.get('a'), c.get('zz')) // expected: 1 -1",
+      "verify": "const c = new LRUCache(2); c.put('a', 1); assert(c.get('a') === 1, 'should return 1'); assert(c.get('zz') === -1, 'missing should be -1')",
+      "gap": "Return <code>-1</code> when <code>!map.has(key)</code>."
+     },
+     {
+      "t": "Evicts the least recently used key",
+      "test": "const c = new LRUCache(2)\nc.put(1, 1); c.put(2, 2); c.put(3, 3)\nconsole.log(c.get(1), c.get(2), c.get(3)) // expected: -1 2 3",
+      "verify": "const c = new LRUCache(2); c.put(1, 1); c.put(2, 2); c.put(3, 3); assert(c.get(1) === -1, '1 should be evicted'); assert(c.get(2) === 2 && c.get(3) === 3, '2 and 3 should stay')",
+      "gap": "After setting, if <code>size &gt; capacity</code>, delete <code>map.keys().next().value</code>."
+     },
+     {
+      "t": "get makes a key recent",
+      "test": "const c = new LRUCache(2)\nc.put(1, 1); c.put(2, 2); c.get(1); c.put(3, 3)\nconsole.log(c.get(1), c.get(2)) // expected: 1 -1",
+      "verify": "const c = new LRUCache(2); c.put(1, 1); c.put(2, 2); c.get(1); c.put(3, 3); assert(c.get(1) === 1, '1 was used, it must stay'); assert(c.get(2) === -1, '2 should be evicted')",
+      "gap": "In <code>get</code>, delete the key and set it again so it moves to the end."
+     },
+     {
+      "t": "put on an existing key updates it and makes it recent",
+      "test": "const c = new LRUCache(2)\nc.put(1, 1); c.put(2, 2); c.put(1, 10); c.put(3, 3)\nconsole.log(c.get(1), c.get(2)) // expected: 10 -1",
+      "verify": "const c = new LRUCache(2); c.put(1, 1); c.put(2, 2); c.put(1, 10); c.put(3, 3); assert(c.get(1) === 10, 'value should be updated and kept'); assert(c.get(2) === -1, '2 should be evicted')",
+      "gap": "<code>map.set</code> alone keeps the old position. Delete the key before setting it."
+     },
+     {
+      "t": "Capacity 1",
+      "test": "const c = new LRUCache(1)\nc.put('a', 1); c.put('b', 2)\nconsole.log(c.get('a'), c.get('b')) // expected: -1 2",
+      "verify": "const c = new LRUCache(1); c.put('a', 1); c.put('b', 2); assert(c.get('a') === -1 && c.get('b') === 2, 'only the newest should stay'); c.put('b', 5); assert(c.get('b') === 5, 'updating the only key must not evict it')",
+      "gap": "Evict only when <code>size &gt; capacity</code>, after the new key is in."
+     },
+     {
+      "t": "Stays fast with many operations",
+      "test": "const c = new LRUCache(1000)\nfor (let i = 0; i < 200000; i++) { c.put(i, i); c.get(i - 500) }\nconsole.log(c.get(199999)) // expected: 199999, quickly",
+      "verify": "const c = new LRUCache(1000); const t = Date.now(); for (let i = 0; i < 200000; i++) { c.put(i, i); c.get(i - 500) } assert(c.get(199999) === 199999, 'wrong value'); assert(c.get(0) === -1, 'old keys must be gone'); assert(Date.now() - t < 1500, 'too slow: get/put are not O(1)')",
+      "gap": "Do not loop over the entries; use the Map order and <code>keys().next()</code>."
+     }
+    ]
+   },
+   "solution": "class LRUCache {\n  constructor(capacity) {\n    this.capacity = capacity;\n    this.map = new Map(); // first = least recently used\n  }\n\n  get(key) {\n    if (!this.map.has(key)) return -1;\n    const value = this.map.get(key);\n    this.map.delete(key);\n    this.map.set(key, value); // now the most recent\n    return value;\n  }\n\n  put(key, value) {\n    if (this.map.has(key)) this.map.delete(key);\n    this.map.set(key, value);\n    if (this.map.size > this.capacity) {\n      this.map.delete(this.map.keys().next().value);\n    }\n  }\n}",
+   "notes": [
+    "A JS <code>Map</code> keeps insertion order; delete + set moves a key to the newest end.",
+    "The oldest key is <code>map.keys().next().value</code>, an O(1) read.",
+    "<code>set</code> on an existing key keeps its old position, so <code>put</code> deletes first.",
+    "In other languages (or to show the theory), use a hash map plus a doubly linked list."
+   ],
+   "next": [
+    "Rewrite it with your own doubly linked list and a plain object/Map for lookups.",
+    "Add a TTL: entries also expire after <code>ms</code> milliseconds.",
+    "Build <code>memoizeLRU(fn, size)</code> on top of this class."
+   ]
+  },
+  {
+   "id": "promise-scratch",
+   "diff": "Hard",
+   "fn": "MyPromise",
+   "signature": "class MyPromise(executor) { then, catch, finally }",
+   "learn": {
+    "what": [
+     "A promise is a box for a value that arrives later. It starts <b>pending</b> and settles <b>once</b>: <b>fulfilled</b> with a value or <b>rejected</b> with a reason. After that it never changes.",
+     "<code>then(onFulfilled, onRejected)</code> registers handlers and returns a <b>new</b> promise, settled with whatever the handler returns (or throws). That is what makes chaining work.",
+     "Two rules make it feel \"right\": handlers always run <b>asynchronously</b> (in a microtask), and if a handler returns another promise or thenable, the new promise <b>waits for it</b>."
+    ],
+    "how": {
+     "steps": [
+      "Store <code>state</code>, <code>value</code> and a list of waiting callbacks. Call the executor with <code>resolve</code>/<code>reject</code>; if the executor throws, reject.",
+      "<code>reject(r)</code> and the final step of <code>resolve</code> set the state once (ignore later calls), then run the waiting callbacks.",
+      "<code>resolve(x)</code>: if <code>x</code> is a thenable, call <code>x.then(resolve, reject)</code> to adopt it; otherwise fulfil with <code>x</code>.",
+      "<code>then</code>: return a new <code>MyPromise</code>. Its job: when this one settles, in a <code>queueMicrotask</code>, call the right handler and resolve the new promise with the result (or reject if it throws). A missing handler passes the value/reason through.",
+      "<code>catch(f)</code> = <code>then(undefined, f)</code>. <code>finally(f)</code> runs <code>f</code> and passes the original value or reason on."
+     ],
+     "diagram": "new MyPromise(r => setTimeout(() => r(1), 10))\n  .then(v => v + 1)            // p2 resolves with 2\n  .then(v => { throw 'bad' })  // p3 rejects with 'bad'\n  .catch(e => 'fixed ' + e)    // p4 resolves with 'fixed bad'\n  .finally(() => log('done'))  // p5 still resolves with 'fixed bad'"
+    },
+    "where": [
+     [
+      "Every async API",
+      "fetch, timers wrapped in promises, file reads: all return promises."
+     ],
+     [
+      "async/await",
+      "<code>await</code> is <code>then</code> with nicer syntax."
+     ],
+     [
+      "Understanding order",
+      "Knowing microtasks explains why <code>then</code> callbacks run before <code>setTimeout</code> ones."
+     ],
+     [
+      "Not a fit",
+      "Values that arrive many times (clicks, sockets) are streams/observables, not promises."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log(1)\nPromise.resolve().then(() =&gt; console.log(2))\nsetTimeout(() =&gt; console.log(3))\nconsole.log(4)</code></pre>",
+     "opts": [
+      "<code>1 2 3 4</code>",
+      "<code>1 4 2 3</code>",
+      "<code>1 4 3 2</code>",
+      "<code>1 2 4 3</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Synchronous code first (1, 4). Then the microtask queue (2). Then timers (3).",
+      "Your MyPromise must also run handlers in a microtask: never synchronously inside <code>then</code>."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>new Promise((res, rej) =&gt; { res(\"a\"); rej(\"b\"); res(\"c\") })\n  .then(v =&gt; console.log(v), e =&gt; console.log(\"err\", e))</code></pre>",
+     "opts": [
+      "<code>c</code>",
+      "<code>err b</code>",
+      "<code>a</code>",
+      "<code>a</code> then <code>err b</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "A promise settles only once. The first call wins; later calls are ignored.",
+      "Your <code>settle</code> function must return early when the state is no longer pending."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>Promise.reject(new Error(\"x\"))\n  .then(v =&gt; \"A\")\n  .catch(e =&gt; \"B\")\n  .then(v =&gt; console.log(v))</code></pre>",
+     "opts": [
+      "<code>A</code>",
+      "<code>B</code>",
+      "<code>undefined</code>",
+      "An unhandled rejection"
+     ],
+     "ans": 1,
+     "why": [
+      "The first <code>then</code> has no rejection handler, so the rejection passes through to <code>catch</code>.",
+      "<code>catch</code> returns \"B\", which fulfils the next promise: the chain is healthy again."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>Promise.resolve(1)\n  .finally(() =&gt; 99)\n  .then(v =&gt; console.log(v))</code></pre>",
+     "opts": [
+      "<code>99</code>",
+      "<code>undefined</code>",
+      "<code>1</code>",
+      "<code>[1, 99]</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "<code>finally</code> ignores its callback's return value and passes the original value on.",
+      "Only a <b>throw</b> (or rejected promise) inside finally changes the result."
+     ]
+    }
+   ],
+   "pseudo": "class MyPromise(executor):\n  state = 'pending'; value; callbacks = []\n  settle(st, v): if state != pending -> return; state = st; value = v; run all callbacks\n  resolve(x):\n    if x is a thenable -> try x.then(resolve, reject) once; return\n    settle('fulfilled', x)\n  reject(r): settle('rejected', r)\n  try executor(resolve, reject) catch e -> reject(e)\n\n  then(onF, onR):\n    return new MyPromise((res, rej) =>\n      task = () => queueMicrotask(() =>\n        handler = state == fulfilled ? onF : onR\n        if handler is not a function -> pass value (res) or reason (rej) through\n        else try res(handler(value)) catch e -> rej(e))\n      if pending -> callbacks.push(task) else task())\n  catch(f)   = then(undefined, f)\n  finally(f) = then(v => MyPromise.resolve(f()).then(() => v),\n                    e => MyPromise.resolve(f()).then(() => { throw e }))",
+   "watch": [
+    "What stops a promise from settling twice?",
+    "Why must handlers run in a microtask, even if the promise is already settled?",
+    "What should the promise from <code>then</code> do if the handler returns another promise?"
+   ],
+   "build": {
+    "minutes": 45,
+    "problem": "Build <b>class MyPromise(executor)</b> with <code>then</code>, <code>catch</code> and <code>finally</code> (and a static <code>MyPromise.resolve</code> if you like).",
+    "reqs": [
+     "States pending → fulfilled / rejected; settles only once. A throwing executor rejects.",
+     "<code>then</code> returns a new MyPromise with the handler's result; a throwing handler rejects it; missing handlers pass values and reasons through.",
+     "Handlers always run asynchronously (microtask), in the order they were added.",
+     "Resolving with a promise or thenable adopts its result.",
+     "<code>catch(f)</code> = <code>then(undefined, f)</code>; <code>finally(f)</code> runs f and keeps the original value or reason.",
+     "Works with <code>await</code>."
+    ],
+    "checks": [
+     {
+      "t": "Resolves later and then gets the value",
+      "test": "new MyPromise((res) => setTimeout(() => res(42), 10)).then(console.log) // expected: 42",
+      "verify": "const v = await new Promise((done) => new MyPromise((res) => setTimeout(() => res(42), 5)).then(done)); assert(v === 42, 'got ' + v)",
+      "gap": "Keep the callbacks while pending, and run them when <code>resolve</code> is called."
+     },
+     {
+      "t": "Settles only once; a throwing executor rejects",
+      "test": "new MyPromise((res, rej) => { res('a'); rej('b'); res('c') }).then(console.log) // expected: a",
+      "verify": "const v = await new Promise((done) => new MyPromise((res, rej) => { res('a'); rej('b'); res('c') }).then(done, () => done('rejected'))); assert(v === 'a', 'got ' + v); const e = await new Promise((done) => new MyPromise(() => { throw new Error('boom') }).then(() => done('ok'), (x) => done(x.message))); assert(e === 'boom', 'executor throw should reject, got ' + e)",
+      "gap": "Return early from settle when <code>state !== \"pending\"</code>; wrap the executor call in <code>try/catch</code>."
+     },
+     {
+      "t": "Handlers run asynchronously",
+      "test": "const order = []\nnew MyPromise((res) => res()).then(() => order.push('then'))\norder.push('sync')\nsetTimeout(() => console.log(order.join(' '))) // expected: sync then",
+      "verify": "const order = []; new MyPromise((res) => res()).then(() => order.push('then')); order.push('sync'); await sleep(10); assert(order.join(' ') === 'sync then', 'got ' + order.join(' '))",
+      "gap": "Run handlers inside <code>queueMicrotask</code>, even when the promise is already settled."
+     },
+     {
+      "t": "Chaining passes values and turns throws into rejections",
+      "test": "new MyPromise((r) => r(1)).then((v) => v + 1).then((v) => { throw new Error('at ' + v) }).catch((e) => e.message).then(console.log)\n// expected: at 2",
+      "verify": "const v = await new Promise((done) => new MyPromise((r) => r(1)).then((x) => x + 1).then((x) => { throw new Error('at ' + x) }).catch((e) => e.message).then(done)); assert(v === 'at 2', 'got ' + v); const p = await new Promise((done) => new MyPromise((r, j) => j('no')).then((x) => 'skipped').then(null, (e) => done('passed ' + e))); assert(p === 'passed no', 'rejections must pass through then without onRejected, got ' + p)",
+      "gap": "Each <code>then</code> returns a new promise resolved with the handler's return value; missing handlers pass the value or reason on."
+     },
+     {
+      "t": "Adopts promises and thenables returned or resolved",
+      "test": "new MyPromise((r) => r(1)).then(() => new MyPromise((r) => setTimeout(() => r('inner'), 10))).then(console.log)\n// expected: inner",
+      "verify": "const a = await new Promise((done) => new MyPromise((r) => r(1)).then(() => new MyPromise((r) => setTimeout(() => r('inner'), 5))).then(done)); assert(a === 'inner', 'should wait for the inner promise, got ' + a); const b = await new Promise((done) => new MyPromise((r) => r({ then(ok) { ok('thenable') } })).then(done)); assert(b === 'thenable', 'should adopt thenables, got ' + b)",
+      "gap": "In <code>resolve(x)</code>: if <code>x</code> has a <code>then</code> function, call <code>x.then(resolve, reject)</code> instead of fulfilling with <code>x</code>."
+     },
+     {
+      "t": "finally keeps the value, and works with await",
+      "test": "const v = await new MyPromise((r) => r(5)).finally(() => 99)\nconsole.log(v) // expected: 5",
+      "verify": "let ran = false; const v = await new MyPromise((r) => r(5)).finally(() => { ran = true; return 99 }); assert(ran && v === 5, 'finally should keep 5, got ' + v); let reason; try { await new MyPromise((r, j) => j('x')).finally(() => {}) } catch (e) { reason = e } assert(reason === 'x', 'finally should keep the rejection')",
+      "gap": "<code>finally(f)</code>: <code>then(v =&gt; { f(); return v }, e =&gt; { f(); throw e })</code> (and wait if f returns a promise)."
+     },
+     {
+      "t": "Many handlers on one promise run in order",
+      "test": "const p = new MyPromise((r) => setTimeout(() => r('x'), 10))\np.then(() => console.log(1)); p.then(() => console.log(2)) // expected: 1 2",
+      "verify": "const out = []; const p = new MyPromise((r) => setTimeout(() => r('x'), 5)); p.then(() => out.push(1)); p.then(() => out.push(2)); await sleep(30); assert(out.join() === '1,2', 'got ' + out.join())",
+      "gap": "Keep an array of pending callbacks and run them in the order they were added."
+     }
+    ]
+   },
+   "solution": "class MyPromise {\n  constructor(executor) {\n    this.state = 'pending';\n    this.value = undefined;\n    this.callbacks = [];\n    let called = false; // resolve/reject work only once\n    const settle = (state, value) => {\n      if (this.state !== 'pending') return;\n      this.state = state;\n      this.value = value;\n      this.callbacks.forEach((cb) => cb());\n      this.callbacks = [];\n    };\n    const resolve = (x) => {\n      if (called) return;\n      called = true;\n      adopt(x);\n    };\n    const adopt = (x) => {\n      if (x === this) return settle('rejected', new TypeError('A promise cannot resolve to itself'));\n      if (x !== null && (typeof x === 'object' || typeof x === 'function')) {\n        let then;\n        try { then = x.then; } catch (e) { return settle('rejected', e); }\n        if (typeof then === 'function') {\n          let done = false;\n          try {\n            then.call(x, (y) => { if (!done) { done = true; adopt(y); } }, (r) => { if (!done) { done = true; settle('rejected', r); } });\n          } catch (e) {\n            if (!done) { done = true; settle('rejected', e); }\n          }\n          return;\n        }\n      }\n      settle('fulfilled', x);\n    };\n    const reject = (r) => {\n      if (called) return;\n      called = true;\n      settle('rejected', r);\n    };\n    try { executor(resolve, reject); } catch (e) { reject(e); }\n  }\n\n  then(onFulfilled, onRejected) {\n    return new MyPromise((resolve, reject) => {\n      const run = () => queueMicrotask(() => {\n        const handler = this.state === 'fulfilled' ? onFulfilled : onRejected;\n        if (typeof handler !== 'function') {\n          return this.state === 'fulfilled' ? resolve(this.value) : reject(this.value);\n        }\n        try { resolve(handler(this.value)); } catch (e) { reject(e); }\n      });\n      if (this.state === 'pending') this.callbacks.push(run);\n      else run();\n    });\n  }\n\n  catch(onRejected) {\n    return this.then(undefined, onRejected);\n  }\n\n  finally(fn) {\n    return this.then(\n      (v) => MyPromise.resolve(fn()).then(() => v),\n      (e) => MyPromise.resolve(fn()).then(() => { throw e; }),\n    );\n  }\n\n  static resolve(v) {\n    return v instanceof MyPromise ? v : new MyPromise((r) => r(v));\n  }\n}",
+   "notes": [
+    "Settle once: every later <code>resolve</code>/<code>reject</code> call is ignored.",
+    "<code>then</code> always returns a <b>new</b> promise; the handler's return value becomes its result.",
+    "Handlers run in <code>queueMicrotask</code>, so <code>then</code> callbacks never run synchronously.",
+    "Adopting thenables (calling <code>x.then(resolve, reject)</code>) is what lets handlers return promises.",
+    "<code>finally</code> waits for its callback but passes the original value or reason on."
+   ],
+   "next": [
+    "Add <code>MyPromise.reject</code>, <code>all</code> and <code>race</code> as static methods.",
+    "Run the official Promises/A+ test suite against your class.",
+    "Add unhandled rejection tracking: warn when a rejected promise has no handler after a tick."
+   ]
+  },
+  {
+   "id": "promise-combinators",
+   "diff": "Medium",
+   "fn": "promiseAll",
+   "signature": "promiseAll / promiseRace / promiseAllSettled / promiseAny (iterable)",
+   "learn": {
+    "what": [
+     "Four ways to wait for many promises: <b>all</b> (every one must succeed), <b>race</b> (the first to settle wins, success or failure), <b>allSettled</b> (wait for all, never fails), and <b>any</b> (the first <i>success</i> wins).",
+     "Results keep the <b>input order</b>, not the order in which promises finished. Plain values in the list are treated like already-resolved promises.",
+     "Empty input: <code>all</code> and <code>allSettled</code> resolve with <code>[]</code>, <code>any</code> rejects with an <code>AggregateError</code>, and <code>race</code> stays pending forever."
+    ],
+    "how": {
+     "steps": [
+      "Each function returns <code>new Promise(...)</code> and turns the iterable into an array.",
+      "Wrap every item with <code>Promise.resolve(item)</code> so plain values work.",
+      "<code>all</code>: store each value at its index and count; when the count reaches the length, resolve. Reject on the first rejection.",
+      "<code>allSettled</code>: store <code>{ status, value | reason }</code> at each index; resolve when all are in. <code>race</code>: resolve/reject with whatever settles first.",
+      "<code>any</code>: resolve on the first success; store reasons at their index and, when all have failed, reject with <code>new AggregateError(reasons)</code>."
+     ],
+     "diagram": "inputs:   A (300ms ok 1)   B (100ms ok 2)   C (200ms fail x)\nall         -> rejects with x at 200ms\nrace        -> 2 at 100ms (B settles first)\nallSettled  -> [{ok 1}, {ok 2}, {rejected x}] at 300ms\nany         -> 2 at 100ms"
+    },
+    "where": [
+     [
+      "all",
+      "Load user, settings and feed in parallel; the page needs all three."
+     ],
+     [
+      "allSettled",
+      "Send 10 notifications and report which ones failed."
+     ],
+     [
+      "race",
+      "A request vs a timeout timer."
+     ],
+     [
+      "any",
+      "Ask several mirrors/CDNs; use whichever answers first successfully."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>const slow = new Promise(r =&gt; setTimeout(() =&gt; r(\"slow\"), 50))\nconst fast = new Promise(r =&gt; setTimeout(() =&gt; r(\"fast\"), 10))\nPromise.all([slow, fast]).then(v =&gt; console.log(v.join(\",\")))</code></pre>",
+     "opts": [
+      "<code>fast,slow</code>",
+      "<code>slow,fast</code>",
+      "<code>slow</code>",
+      "<code>fast</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "Results are placed by <b>input index</b>, not finishing order.",
+      "So the polyfill must write <code>results[i] = value</code>, not <code>push</code>."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>Promise.any([Promise.reject(1), Promise.reject(2)])\n  .catch(e =&gt; console.log(e.constructor.name, e.errors.join(\"\")))</code></pre>",
+     "opts": [
+      "<code>Error 1</code>",
+      "<code>AggregateError 12</code>",
+      "<code>AggregateError 21</code>",
+      "<code>1</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "When every promise fails, <code>any</code> rejects with an <code>AggregateError</code> holding all reasons, in input order.",
+      "Store each reason at its index, like <code>all</code> does with values."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>Promise.all([1, Promise.resolve(2), 3]).then(v =&gt; console.log(v))</code></pre>",
+     "opts": [
+      "<code>[ 1, 2, 3 ]</code>",
+      "A TypeError, 1 and 3 are not promises",
+      "<code>[ 2 ]</code>",
+      "<code>[ 1, Promise { 2 }, 3 ]</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Every item is passed through <code>Promise.resolve</code>, so plain values count as instant successes.",
+      "Your polyfill should do the same: wrap each item before calling <code>then</code>."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "What does <code>Promise.all([])</code> do?",
+     "opts": [
+      "Rejects",
+      "Stays pending forever",
+      "Resolves with <code>[]</code> right away",
+      "Throws synchronously"
+     ],
+     "ans": 2,
+     "why": [
+      "There is nothing to wait for, so it resolves with an empty array.",
+      "Your counter logic never reaches the \"all done\" check for an empty list, so handle it explicitly."
+     ]
+    }
+   ],
+   "pseudo": "promiseAll(iterable):\n  items = [...iterable]\n  return new Promise((resolve, reject) =>\n    if items empty -> resolve([])\n    results = []; done = 0\n    items.forEach((item, i) =>\n      Promise.resolve(item).then(v =>\n        results[i] = v; done++\n        if done == items.length -> resolve(results)\n      , reject)))\n\npromiseAllSettled: same, but store {status:'fulfilled', value} / {status:'rejected', reason}, never reject\npromiseRace:  each item: Promise.resolve(item).then(resolve, reject)\npromiseAny:   first success -> resolve; reasons[i] on failure;\n              when all failed (or empty) -> reject(new AggregateError(reasons, 'All promises were rejected'))",
+   "watch": [
+    "How do you keep results in input order when they finish in any order?",
+    "How do you know that the last one is done?",
+    "What does each function do with an empty list?"
+   ],
+   "build": {
+    "minutes": 30,
+    "problem": "Implement <b>promiseAll</b>, <b>promiseRace</b>, <b>promiseAllSettled</b> and <b>promiseAny</b> without using the built-in versions.",
+    "reqs": [
+     "Each takes an iterable of promises or plain values and returns a Promise.",
+     "Results keep the input order.",
+     "<code>promiseAll</code> rejects on the first rejection; <code>promiseRace</code> settles like the first to settle.",
+     "<code>promiseAllSettled</code> never rejects and returns <code>{ status, value }</code> / <code>{ status, reason }</code> objects.",
+     "<code>promiseAny</code> resolves with the first success, or rejects with an <code>AggregateError</code> of all reasons.",
+     "Empty input: all/allSettled → <code>[]</code>; any → AggregateError."
+    ],
+    "checks": [
+     {
+      "t": "promiseAll keeps input order and accepts plain values",
+      "test": "const later = (v, ms) => new Promise((r) => setTimeout(() => r(v), ms))\npromiseAll([later('a', 30), 'b', later('c', 5)]).then(console.log) // expected: ['a', 'b', 'c']",
+      "verify": "const later = (v, ms) => new Promise((r) => setTimeout(() => r(v), ms)); const r = await promiseAll([later('a', 30), 'b', later('c', 5)]); assert(Array.isArray(r) && r.join() === 'a,b,c', 'got ' + r)",
+      "gap": "Write <code>results[i] = value</code> and wrap items with <code>Promise.resolve</code>."
+     },
+     {
+      "t": "promiseAll rejects on the first failure; empty gives []",
+      "test": "promiseAll([Promise.resolve(1), Promise.reject('bad')]).catch(console.log) // expected: bad",
+      "verify": "let e; try { await promiseAll([Promise.resolve(1), Promise.reject('bad'), new Promise(() => {})]) } catch (x) { e = x } assert(e === 'bad', 'should reject with bad, got ' + e); const empty = await promiseAll([]); assert(Array.isArray(empty) && empty.length === 0, 'empty should resolve with []')",
+      "gap": "Pass <code>reject</code> as the second argument of every <code>then</code>; resolve <code>[]</code> at once for empty input."
+     },
+     {
+      "t": "promiseRace settles with the first to settle",
+      "test": "const later = (v, ms, fail) => new Promise((r, j) => setTimeout(() => (fail ? j(v) : r(v)), ms))\npromiseRace([later('slow', 30), later('fast', 5)]).then(console.log) // expected: fast",
+      "verify": "const later = (v, ms, fail) => new Promise((r, j) => setTimeout(() => (fail ? j(v) : r(v)), ms)); assert(await promiseRace([later('slow', 30), later('fast', 5)]) === 'fast', 'fast should win'); let e; try { await promiseRace([later('ok', 30), later('boom', 5, true)]) } catch (x) { e = x } assert(e === 'boom', 'an early rejection should win')",
+      "gap": "For every item: <code>Promise.resolve(item).then(resolve, reject)</code>. The first call wins."
+     },
+     {
+      "t": "promiseAllSettled reports every result and never rejects",
+      "test": "promiseAllSettled([Promise.resolve(1), Promise.reject('x'), 3]).then((r) => console.log(JSON.stringify(r)))\n// expected: [{\"status\":\"fulfilled\",\"value\":1},{\"status\":\"rejected\",\"reason\":\"x\"},{\"status\":\"fulfilled\",\"value\":3}]",
+      "verify": "const r = await promiseAllSettled([Promise.resolve(1), Promise.reject('x'), 3]); assert(JSON.stringify(r) === '[{\"status\":\"fulfilled\",\"value\":1},{\"status\":\"rejected\",\"reason\":\"x\"},{\"status\":\"fulfilled\",\"value\":3}]', 'got ' + JSON.stringify(r)); const e = await promiseAllSettled([]); assert(Array.isArray(e) && e.length === 0, 'empty should be []')",
+      "gap": "Store an object at each index in both the success and the failure handler, and only resolve."
+     },
+     {
+      "t": "promiseAny resolves with the first success",
+      "test": "const later = (v, ms, fail) => new Promise((r, j) => setTimeout(() => (fail ? j(v) : r(v)), ms))\npromiseAny([later('e1', 5, true), later('ok', 20), later('ok2', 30)]).then(console.log) // expected: ok",
+      "verify": "const later = (v, ms, fail) => new Promise((r, j) => setTimeout(() => (fail ? j(v) : r(v)), ms)); assert(await promiseAny([later('e1', 5, true), later('ok', 20), later('ok2', 30)]) === 'ok', 'first success should win')",
+      "gap": "Resolve in the success handler; only count failures."
+     },
+     {
+      "t": "promiseAny rejects with AggregateError when all fail",
+      "test": "promiseAny([Promise.reject(1), Promise.reject(2)]).catch((e) => console.log(e instanceof AggregateError, e.errors))\n// expected: true [1, 2]",
+      "verify": "let e; try { await promiseAny([Promise.reject(1), new Promise((r, j) => setTimeout(() => j(2), 5))]) } catch (x) { e = x } assert(e instanceof AggregateError, 'should be an AggregateError'); assert(e.errors.join() === '1,2', 'reasons in input order, got ' + (e.errors && e.errors.join())); let f; try { await promiseAny([]) } catch (x) { f = x } assert(f instanceof AggregateError, 'empty input should reject with AggregateError')",
+      "gap": "Store reasons by index; when all have failed, <code>reject(new AggregateError(reasons, \"All promises were rejected\"))</code>."
+     }
+    ]
+   },
+   "solution": "function promiseAll(iterable) {\n  const items = [...iterable];\n  return new Promise((resolve, reject) => {\n    if (items.length === 0) return resolve([]);\n    const results = new Array(items.length);\n    let done = 0;\n    items.forEach((item, i) => {\n      Promise.resolve(item).then((v) => {\n        results[i] = v;\n        if (++done === items.length) resolve(results);\n      }, reject);\n    });\n  });\n}\n\nfunction promiseRace(iterable) {\n  return new Promise((resolve, reject) => {\n    for (const item of iterable) Promise.resolve(item).then(resolve, reject);\n  });\n}\n\nfunction promiseAllSettled(iterable) {\n  const items = [...iterable];\n  return new Promise((resolve) => {\n    if (items.length === 0) return resolve([]);\n    const results = new Array(items.length);\n    let done = 0;\n    const finish = (i, r) => {\n      results[i] = r;\n      if (++done === items.length) resolve(results);\n    };\n    items.forEach((item, i) => {\n      Promise.resolve(item).then(\n        (value) => finish(i, { status: 'fulfilled', value }),\n        (reason) => finish(i, { status: 'rejected', reason }),\n      );\n    });\n  });\n}\n\nfunction promiseAny(iterable) {\n  const items = [...iterable];\n  return new Promise((resolve, reject) => {\n    if (items.length === 0) return reject(new AggregateError([], 'All promises were rejected'));\n    const reasons = new Array(items.length);\n    let failed = 0;\n    items.forEach((item, i) => {\n      Promise.resolve(item).then(resolve, (r) => {\n        reasons[i] = r;\n        if (++failed === items.length) reject(new AggregateError(reasons, 'All promises were rejected'));\n      });\n    });\n  });\n}",
+   "notes": [
+    "<code>results[i] = v</code> plus a counter keeps input order and tells you when everything is done.",
+    "<code>Promise.resolve(item)</code> makes plain values and thenables work the same way.",
+    "Calling <code>resolve</code>/<code>reject</code> many times is harmless: only the first call counts. race relies on that.",
+    "Empty input is a special case for all, allSettled and any."
+   ],
+   "next": [
+    "Write <code>promiseAllWithLimit(tasks, n)</code> (see the Concurrency Limiter lesson).",
+    "Add a <code>timeout</code> option to <code>promiseAll</code>.",
+    "Implement <code>promiseProps(obj)</code>: like all, but for an object of promises."
+   ]
+  },
+  {
+   "id": "concurrency-limiter",
+   "diff": "Hard",
+   "fn": "runWithConcurrency",
+   "signature": "runWithConcurrency(tasks, limit)",
+   "learn": {
+    "what": [
+     "You have 100 uploads (or API calls) to do. Doing them one by one is slow; firing all 100 at once overloads the browser or the server. A <b>concurrency limiter</b> keeps at most <code>limit</code> running at the same time.",
+     "Each task is a <b>function that returns a promise</b> (not a promise), so nothing starts until the limiter decides. As soon as one finishes, the next one starts.",
+     "The final result is an array in the <b>original task order</b>, and the whole thing rejects if any task fails."
+    ],
+    "how": {
+     "steps": [
+      "Keep <code>next</code> (index of the next task to start) and a <code>results</code> array.",
+      "Write <code>worker()</code>: while there are tasks left, take index <code>i = next++</code>, <code>await tasks[i]()</code>, store <code>results[i]</code>.",
+      "Start <code>min(limit, tasks.length)</code> workers at once. Each worker keeps pulling tasks until none are left, so at most <code>limit</code> run together.",
+      "Return <code>Promise.all(workers).then(() =&gt; results)</code>; a failing task rejects the whole promise."
+     ],
+     "diagram": "limit 2, tasks A(30ms) B(10ms) C(10ms) D(10ms)\nt=0   worker1: A        worker2: B\nt=10  worker2: B done -> starts C\nt=20  worker2: C done -> starts D\nt=30  worker1: A done -> nothing left\nt=30  worker2: D done -> all done -> [A, B, C, D] in task order"
+    },
+    "where": [
+     [
+      "Uploads",
+      "Upload 200 photos, 4 at a time."
+     ],
+     [
+      "Scraping / APIs",
+      "Stay under a rate limit by capping parallel requests."
+     ],
+     [
+      "Builds",
+      "Tools run N jobs in parallel (like <code>make -j4</code>)."
+     ],
+     [
+      "Not a fit",
+      "A handful of independent calls: plain <code>Promise.all</code> is simpler."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Concept",
+     "q": "Why are tasks given as functions (<code>() =&gt; fetch(url)</code>) and not as promises (<code>fetch(url)</code>)?",
+     "opts": [
+      "Functions are faster",
+      "A promise has already started its work; only a function lets the limiter decide when to start",
+      "Promise.all needs functions",
+      "To support thisArg"
+     ],
+     "ans": 1,
+     "why": [
+      "Calling <code>fetch(url)</code> starts the request immediately. A list of 100 promises means 100 requests are already running.",
+      "Wrapping each in a function delays the start until the limiter calls it."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "limit 2, tasks taking 30, 10, 10, 10 ms. About how long does the whole run take?",
+     "opts": [
+      "60 ms",
+      "20 ms",
+      "30 ms",
+      "40 ms"
+     ],
+     "ans": 2,
+     "why": [
+      "Task 1 runs 0–30 ms. Tasks 2, 3, 4 run back-to-back on the other slot: 0–10, 10–20, 20–30.",
+      "Both slots finish at about 30 ms."
+     ]
+    },
+    {
+     "tag": "Spot the bug",
+     "q": "<pre><code>async function run(tasks, limit) {\n  const out = []\n  for (let i = 0; i &lt; tasks.length; i += limit) {\n    const batch = tasks.slice(i, i + limit).map(t =&gt; t())\n    out.push(...(await Promise.all(batch)))\n  }\n  return out\n}</code></pre>It is correct, but what is wasteful?",
+     "opts": [
+      "It runs everything at once",
+      "It waits for the whole batch: one slow task blocks the free slots until the batch ends",
+      "It loses the order",
+      "It never rejects"
+     ],
+     "ans": 1,
+     "why": [
+      "Batches leave slots idle. With a 30 ms task and three 1 ms tasks, the next batch still waits 30 ms.",
+      "A worker pool starts the next task as soon as <b>any</b> slot frees up."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "Inside a worker, why is <code>const i = next++</code> safe even though several workers share <code>next</code>?",
+     "opts": [
+      "JavaScript locks the variable",
+      "JS runs one piece of code at a time; workers only switch at <code>await</code>, so <code>next++</code> is never interrupted",
+      "It is not safe; you need a mutex",
+      "Because i is const"
+     ],
+     "ans": 1,
+     "why": [
+      "There is one thread. A worker reads and increments <code>next</code> in one synchronous step before it awaits.",
+      "So two workers can never take the same index."
+     ]
+    }
+   ],
+   "pseudo": "runWithConcurrency(tasks, limit):\n  results = new Array(tasks.length)\n  next = 0\n  worker():\n    while next < tasks.length:\n      i = next; next++\n      results[i] = await tasks[i]()\n  workers = start min(limit, tasks.length) workers\n  await Promise.all(workers)        // rejects if any task rejects\n  return results",
+   "watch": [
+    "How do you make sure at most <code>limit</code> tasks run at the same time?",
+    "How does each result land at its original index?",
+    "What happens to the outer promise when one task fails?"
+   ],
+   "build": {
+    "minutes": 35,
+    "problem": "Implement <b>runWithConcurrency(tasks, limit)</b>, where each task is a function returning a promise.",
+    "reqs": [
+     "Never more than <code>limit</code> tasks running at once.",
+     "Start the next task as soon as any running one finishes.",
+     "Resolve with all results in the original task order.",
+     "Reject if any task rejects.",
+     "Empty task list resolves with <code>[]</code>."
+    ],
+    "checks": [
+     {
+      "t": "Results keep task order",
+      "test": "const t = (v, ms) => () => new Promise((r) => setTimeout(() => r(v), ms))\nrunWithConcurrency([t('a', 30), t('b', 5), t('c', 10)], 2).then(console.log) // expected: ['a', 'b', 'c']",
+      "verify": "const t = (v, ms) => () => new Promise((r) => setTimeout(() => r(v), ms)); const r = await runWithConcurrency([t('a', 30), t('b', 5), t('c', 10)], 2); assert(Array.isArray(r) && r.join() === 'a,b,c', 'got ' + r)",
+      "gap": "Store each result at its task index: <code>results[i] = await tasks[i]()</code>."
+     },
+     {
+      "t": "Never more than limit at once",
+      "test": "// 8 tasks, limit 3 -> the max running count is 3",
+      "verify": "let running = 0; let max = 0; const tasks = Array.from({ length: 8 }, (_, i) => async () => { running++; max = Math.max(max, running); await sleep(5 + (i % 3) * 5); running--; return i }); const r = await runWithConcurrency(tasks, 3); assert(max === 3, 'max running was ' + max); assert(r.join() === '0,1,2,3,4,5,6,7', 'results ' + r)",
+      "gap": "Start exactly <code>limit</code> workers; each one takes the next task only after its current one finishes."
+     },
+     {
+      "t": "Fills a free slot at once (no batches)",
+      "test": "// limit 2: one 60ms task + four 10ms tasks finish in about 60ms, not 70-80ms",
+      "verify": "let done = 0; const t = (ms) => () => sleep(ms).then(() => ++done); const start = Date.now(); await runWithConcurrency([t(60), t(10), t(10), t(10), t(10)], 2); const took = Date.now() - start; assert(done === 5, 'only ' + done + ' tasks finished'); assert(took >= 55, 'finished too early (' + took + 'ms): tasks were not awaited'); assert(took < 75, 'took ' + took + 'ms; slots are waiting for batches')",
+      "gap": "Use a worker loop, not fixed batches with <code>Promise.all</code>."
+     },
+     {
+      "t": "Tasks do not start before their turn",
+      "test": "// with limit 1, task 2 starts only after task 1 ends",
+      "verify": "const log = []; const t = (n) => async () => { log.push('start' + n); await sleep(5); log.push('end' + n) }; await runWithConcurrency([t(1), t(2)], 1); assert(log.join() === 'start1,end1,start2,end2', 'order ' + log.join())",
+      "gap": "Only call <code>tasks[i]()</code> when a worker is free."
+     },
+     {
+      "t": "Rejects if a task fails",
+      "test": "runWithConcurrency([() => Promise.resolve(1), () => Promise.reject(new Error('nope'))], 2).catch((e) => console.log(e.message)) // expected: nope",
+      "verify": "let msg; try { await runWithConcurrency([() => Promise.resolve(1), () => Promise.reject(new Error('nope'))], 2) } catch (e) { msg = e.message } assert(msg === 'nope', 'should reject with nope, got ' + msg)",
+      "gap": "Let the error escape the worker; <code>Promise.all(workers)</code> then rejects."
+     },
+     {
+      "t": "Empty list and a limit larger than the list",
+      "test": "runWithConcurrency([], 3).then(console.log) // expected: []",
+      "verify": "const a = await runWithConcurrency([], 3); assert(Array.isArray(a) && a.length === 0, 'empty should be []'); const b = await runWithConcurrency([() => Promise.resolve('x')], 10); assert(Array.isArray(b) && b.join() === 'x', 'got ' + b)",
+      "gap": "Start <code>Math.min(limit, tasks.length)</code> workers, and return the results array even when it is empty."
+     }
+    ]
+   },
+   "solution": "async function runWithConcurrency(tasks, limit) {\n  const results = new Array(tasks.length);\n  let next = 0;\n  const worker = async () => {\n    while (next < tasks.length) {\n      const i = next++; // safe: no await between read and increment\n      results[i] = await tasks[i]();\n    }\n  };\n  const count = Math.max(1, Math.min(limit, tasks.length));\n  await Promise.all(Array.from({ length: count }, worker));\n  return results;\n}",
+   "notes": [
+    "Tasks are functions so they start only when the limiter calls them.",
+    "A pool of <code>limit</code> workers, each pulling the next index, keeps every slot busy.",
+    "<code>results[i]</code> keeps the original order regardless of finishing order.",
+    "One thread means <code>next++</code> needs no lock: workers only switch at <code>await</code>."
+   ],
+   "next": [
+    "Return <code>allSettled</code>-style results instead of failing fast.",
+    "Add <code>onProgress(done, total)</code>.",
+    "Build <code>createLimiter(limit)</code> that returns <code>limit(fn)</code>, like the p-limit package."
+   ]
+  },
+  {
+   "id": "deep-equal",
+   "diff": "Medium",
+   "fn": "deepEqual",
+   "signature": "deepEqual(a, b)",
+   "learn": {
+    "what": [
+     "<code>===</code> compares objects by <b>reference</b>: two different objects with the same content are not equal. <code>deepEqual</code> compares by <b>content</b>, all the way down.",
+     "It must handle the special cases: <code>NaN</code> equals <code>NaN</code>, Dates by their time, RegExps by source and flags, Maps and Sets by their entries, and arrays vs plain objects are not the same.",
+     "It is what test libraries use for <code>toEqual</code>, and what you need to answer \"did this state really change?\"."
+    ],
+    "how": {
+     "steps": [
+      "If <code>Object.is(a, b)</code> → <code>true</code> (covers same reference, equal primitives and <code>NaN</code>).",
+      "If either is not an object (or is <code>null</code>) → <code>false</code>. If their prototypes differ → <code>false</code> (so <code>[]</code> is not <code>{}</code>).",
+      "Date: compare <code>getTime()</code>. RegExp: compare <code>source</code> and <code>flags</code>.",
+      "Map: same size, and every key in <code>a</code> exists in <code>b</code> with a deep-equal value. Set: same size, and every value in <code>a</code> has a deep-equal partner in <code>b</code>.",
+      "Arrays and objects: same own keys (count and names), then recurse on each value."
+     ],
+     "diagram": "deepEqual({ a: [1, { b: 2 }] }, { a: [1, { b: 2 }] })\n  objects, same keys [a]\n    arrays, same length\n      1 vs 1        -> Object.is: true\n      {b:2} vs {b:2} -> objects, same keys [b] -> 2 vs 2 true\n=> true"
+    },
+    "where": [
+     [
+      "Tests",
+      "<code>expect(result).toEqual(expected)</code> is a deep equal."
+     ],
+     [
+      "React",
+      "Skip work when new props are deeply the same (use carefully: deep checks cost time)."
+     ],
+     [
+      "Forms",
+      "\"Unsaved changes?\" = not deepEqual(initial, current)."
+     ],
+     [
+      "Not a fit",
+      "Hot paths with big objects: prefer immutable updates and a cheap <code>===</code> check."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log(NaN === NaN, Object.is(NaN, NaN), Object.is(0, -0))</code></pre>",
+     "opts": [
+      "<code>false true false</code>",
+      "<code>true true true</code>",
+      "<code>false false true</code>",
+      "<code>false true true</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "<code>Object.is</code> treats <code>NaN</code> as equal to itself, which deepEqual wants.",
+      "It also says <code>0</code> and <code>-0</code> differ; this lesson keeps that strict behaviour."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>console.log(JSON.stringify({ a: 1, b: 2 }) === JSON.stringify({ b: 2, a: 1 }))</code></pre>",
+     "opts": [
+      "<code>true</code>",
+      "<code>false</code>",
+      "It throws",
+      "<code>undefined</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "JSON text depends on key order, so equal objects can produce different strings.",
+      "JSON also drops <code>undefined</code>, turns Dates into strings and cannot see Map/Set content. It is not a deep equal."
+     ]
+    },
+    {
+     "tag": "Spot the bug",
+     "q": "<pre><code>function deepEqual(a, b) {\n  if (typeof a !== \"object\") return a === b\n  return Object.keys(a).every(k =&gt; deepEqual(a[k], b[k]))\n}</code></pre>Which pair wrongly returns <code>true</code>?",
+     "opts": [
+      "<code>1, 1</code>",
+      "<code>{ a: 1 }, { a: 1, b: 2 }</code>",
+      "<code>\"x\", \"y\"</code>",
+      "<code>[1], [2]</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "It only checks the keys of <code>a</code>. Extra keys in <code>b</code> are never seen.",
+      "Compare the key counts (or check both directions) first."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "Why compare prototypes first?",
+     "opts": [
+      "It is faster than keys",
+      "So that <code>[]</code> and <code>{}</code>, or a Date and a plain object, are not called equal just because they have no own keys",
+      "Prototypes hold the values",
+      "To support NaN"
+     ],
+     "ans": 1,
+     "why": [
+      "An empty array and an empty object both have zero own keys.",
+      "Checking <code>Object.getPrototypeOf</code> tells them apart."
+     ]
+    }
+   ],
+   "pseudo": "deepEqual(a, b):\n  if Object.is(a, b) -> true\n  if a or b is not an object, or is null -> false\n  if prototypes differ -> false\n  Date   -> compare getTime()\n  RegExp -> compare source and flags\n  Map    -> same size; every [k, v] of a: b.has(k) and deepEqual(v, b.get(k))\n  Set    -> same size; every value of a has some deep-equal value in b\n  keysA = own keys of a, keysB = own keys of b\n  if lengths differ -> false\n  every key k: b has k and deepEqual(a[k], b[k])",
+   "watch": [
+    "What does <code>NaN === NaN</code> give, and what do you want?",
+    "How do you notice extra keys in <code>b</code>?",
+    "Which types need their own rule instead of comparing keys?"
+   ],
+   "build": {
+    "minutes": 25,
+    "problem": "Implement <b>deepEqual(a, b)</b>.",
+    "reqs": [
+     "Primitives compare with <code>Object.is</code> (so <code>NaN</code> equals <code>NaN</code>).",
+     "Arrays and plain objects: same keys and deeply equal values; key order does not matter.",
+     "Arrays and objects are never equal to each other; different prototypes are not equal.",
+     "Date by time; RegExp by source and flags.",
+     "Map by entries; Set by values (order does not matter)."
+    ],
+    "checks": [
+     {
+      "t": "Primitives and NaN",
+      "test": "console.log(deepEqual(1, 1), deepEqual('a', 'b'), deepEqual(NaN, NaN), deepEqual(null, undefined)) // expected: true false true false",
+      "verify": "assert(deepEqual(1, 1) === true, '1,1'); assert(deepEqual('a', 'b') === false, 'a,b'); assert(deepEqual(NaN, NaN) === true, 'NaN'); assert(deepEqual(null, undefined) === false, 'null vs undefined'); assert(deepEqual(null, {}) === false, 'null vs {}')",
+      "gap": "Start with <code>if (Object.is(a, b)) return true</code>, then return false for non-objects and <code>null</code>."
+     },
+     {
+      "t": "Nested objects and arrays, any key order",
+      "test": "console.log(deepEqual({ a: [1, { b: 2 }], c: 3 }, { c: 3, a: [1, { b: 2 }] })) // expected: true",
+      "verify": "assert(deepEqual({ a: [1, { b: 2 }], c: 3 }, { c: 3, a: [1, { b: 2 }] }) === true, 'should be equal'); assert(deepEqual({ a: [1, { b: 2 }] }, { a: [1, { b: 3 }] }) === false, 'deep difference not found')",
+      "gap": "Recurse into every value; compare keys by name, not by position."
+     },
+     {
+      "t": "Extra or missing keys are not equal",
+      "test": "console.log(deepEqual({ a: 1 }, { a: 1, b: 2 }), deepEqual([1, 2], [1, 2, 3])) // expected: false false",
+      "verify": "assert(deepEqual({ a: 1 }, { a: 1, b: 2 }) === false, 'extra key in b'); assert(deepEqual({ a: 1, b: 2 }, { a: 1 }) === false, 'extra key in a'); assert(deepEqual([1, 2], [1, 2, 3]) === false, 'longer array'); assert(deepEqual({ a: undefined }, { b: undefined }) === false, 'different key names')",
+      "gap": "Compare <code>Object.keys</code> lengths, and check that <code>b</code> really has each key."
+     },
+     {
+      "t": "Arrays are not plain objects",
+      "test": "console.log(deepEqual([], {}), deepEqual([1], { 0: 1 })) // expected: false false",
+      "verify": "assert(deepEqual([], {}) === false, '[] vs {}'); assert(deepEqual([1], { 0: 1, length: 1 }) === false, 'array vs array-like'); assert(deepEqual([], []) === true, 'two empty arrays')",
+      "gap": "Compare <code>Object.getPrototypeOf(a)</code> and <code>Object.getPrototypeOf(b)</code> first."
+     },
+     {
+      "t": "Date and RegExp",
+      "test": "console.log(deepEqual(new Date(5), new Date(5)), deepEqual(/a/g, /a/i)) // expected: true false",
+      "verify": "assert(deepEqual(new Date(5), new Date(5)) === true, 'same time'); assert(deepEqual(new Date(5), new Date(6)) === false, 'different time'); assert(deepEqual(/a/g, /a/g) === true, 'same regex'); assert(deepEqual(/a/g, /a/i) === false, 'different flags'); assert(deepEqual(new Date(0), {}) === false, 'date vs object')",
+      "gap": "Dates: <code>a.getTime() === b.getTime()</code>. RegExp: compare <code>source</code> and <code>flags</code>."
+     },
+     {
+      "t": "Map and Set compare by content",
+      "test": "console.log(deepEqual(new Map([['k', { x: 1 }]]), new Map([['k', { x: 1 }]])), deepEqual(new Set([1, 2]), new Set([2, 1]))) // expected: true true",
+      "verify": "assert(deepEqual(new Map([['k', { x: 1 }]]), new Map([['k', { x: 1 }]])) === true, 'equal maps'); assert(deepEqual(new Map([['k', 1]]), new Map([['k', 2]])) === false, 'different map values'); assert(deepEqual(new Set([1, 2]), new Set([2, 1])) === true, 'set order'); assert(deepEqual(new Set([1, 2]), new Set([1, 3])) === false, 'different sets'); assert(deepEqual(new Set([{ a: 1 }]), new Set([{ a: 1 }])) === true, 'objects in sets')",
+      "gap": "Map: check size and each key/value. Set: for each value of <code>a</code>, find a deep-equal value in <code>b</code>."
+     }
+    ]
+   },
+   "solution": "function deepEqual(a, b) {\n  if (Object.is(a, b)) return true;\n  if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false;\n  if (Object.getPrototypeOf(a) !== Object.getPrototypeOf(b)) return false;\n\n  if (a instanceof Date) return a.getTime() === b.getTime();\n  if (a instanceof RegExp) return a.source === b.source && a.flags === b.flags;\n\n  if (a instanceof Map) {\n    if (a.size !== b.size) return false;\n    for (const [k, v] of a) if (!b.has(k) || !deepEqual(v, b.get(k))) return false;\n    return true;\n  }\n  if (a instanceof Set) {\n    if (a.size !== b.size) return false;\n    for (const v of a) {\n      if (b.has(v)) continue;\n      let found = false;\n      for (const w of b) if (deepEqual(v, w)) { found = true; break; }\n      if (!found) return false;\n    }\n    return true;\n  }\n\n  const ka = Object.keys(a);\n  const kb = Object.keys(b);\n  if (ka.length !== kb.length) return false;\n  for (const k of ka) {\n    if (!Object.prototype.hasOwnProperty.call(b, k)) return false;\n    if (!deepEqual(a[k], b[k])) return false;\n  }\n  return true;\n}",
+   "notes": [
+    "<code>Object.is</code> as the first line handles same references, equal primitives and <code>NaN</code>.",
+    "Prototype check stops <code>[]</code> vs <code>{}</code> and Date vs object from looking equal.",
+    "Key count plus \"b has every key of a\" catches extra and missing keys.",
+    "Special types (Date, RegExp, Map, Set) need their own rule; their data is not in own keys."
+   ],
+   "next": [
+    "Handle circular objects: keep a <code>WeakMap</code> of pairs you are already comparing.",
+    "Add an option to treat <code>0</code> and <code>-0</code> as equal.",
+    "Write <code>diff(a, b)</code> that returns the paths that differ."
+   ]
+  },
+  {
+   "id": "retry",
+   "diff": "Medium",
+   "fn": "retry",
+   "signature": "retry(fn, { retries, delay, shouldRetry })",
+   "learn": {
+    "what": [
+     "Networks fail for a moment all the time. <code>retry</code> calls an async function, and if it fails, waits and tries again, up to <code>retries</code> more times.",
+     "The wait <b>doubles</b> each time (<b>exponential backoff</b>): 100 ms, 200 ms, 400 ms… so a struggling server gets breathing room instead of a flood.",
+     "Some errors are not worth retrying (a 404, a wrong password). A <code>shouldRetry(err)</code> function lets the caller stop at once for those."
+    ],
+    "how": {
+     "steps": [
+      "Loop with an <code>attempt</code> counter from 0.",
+      "Try <code>await fn(attempt)</code>; on success, return the value.",
+      "On failure: if <code>attempt === retries</code> or <code>shouldRetry(err)</code> is false, throw the error.",
+      "Otherwise wait <code>delay * 2 ** attempt</code> ms, increase <code>attempt</code>, and go again."
+     ],
+     "diagram": "retries = 3, delay = 100\ntry #0  fail -> wait 100\ntry #1  fail -> wait 200\ntry #2  fail -> wait 400\ntry #3  fail -> no retries left -> throw the last error\ntotal calls = retries + 1 = 4"
+    },
+    "where": [
+     [
+      "HTTP calls",
+      "Retry 502/503/timeouts, not 400/401/404."
+     ],
+     [
+      "Background jobs",
+      "Queue workers retry failed jobs with backoff."
+     ],
+     [
+      "Flaky services",
+      "Payment or email providers that sometimes time out."
+     ],
+     [
+      "Not a fit",
+      "Non-idempotent actions (charging a card) unless the API supports an idempotency key: a retry could do it twice."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Concept",
+     "q": "With <code>retries: 3</code>, how many times can <code>fn</code> be called at most?",
+     "opts": [
+      "3",
+      "4",
+      "2",
+      "6"
+     ],
+     "ans": 1,
+     "why": [
+      "One first try plus 3 retries = 4 calls.",
+      "Off-by-one here is the most common bug in retry code."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "Delay 100 ms, 3 retries, every call fails at once. Roughly how long until <code>retry</code> rejects?",
+     "opts": [
+      "300 ms",
+      "400 ms",
+      "700 ms",
+      "800 ms"
+     ],
+     "ans": 2,
+     "why": [
+      "Waits are 100 + 200 + 400 = 700 ms.",
+      "There is no wait after the last failure; it throws right away."
+     ]
+    },
+    {
+     "tag": "Spot the bug",
+     "q": "<pre><code>async function retry(fn, n) {\n  try { return fn() } catch (e) {\n    if (n === 0) throw e\n    return retry(fn, n - 1)\n  }\n}</code></pre>Why does it never retry an async failure?",
+     "opts": [
+      "Recursion is not allowed with async",
+      "<code>return fn()</code> returns the promise without awaiting it, so the catch never sees the rejection",
+      "n should start at 1",
+      "It retries forever"
+     ],
+     "ans": 1,
+     "why": [
+      "A rejected promise is not a thrown error until you <code>await</code> it inside the try.",
+      "Write <code>return await fn()</code>."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "Thousands of clients fail at the same moment and all retry after exactly 100, 200, 400 ms. What problem appears, and the common fix?",
+     "opts": [
+      "Memory leaks; use WeakMap",
+      "They all hit the server together again (\"thundering herd\"); add random jitter to each delay",
+      "Too few retries; use more",
+      "Nothing; backoff already solves it"
+     ],
+     "ans": 1,
+     "why": [
+      "Synchronised retries come back as synchronised spikes.",
+      "Jitter (for example a random value between 0 and the delay) spreads them out."
+     ]
+    }
+   ],
+   "pseudo": "retry(fn, { retries = 3, delay = 100, shouldRetry = () => true }):\n  attempt = 0\n  loop:\n    try:\n      return await fn(attempt)\n    catch err:\n      if attempt >= retries or not shouldRetry(err):\n        throw err\n      wait delay * 2^attempt ms\n      attempt++",
+   "watch": [
+    "How many calls in total for <code>retries = 3</code>?",
+    "Is the rejection really caught? (Think about <code>await</code>.)",
+    "Which error do you throw at the end: the first or the last?"
+   ],
+   "build": {
+    "minutes": 20,
+    "problem": "Implement <b>retry(fn, { retries, delay, shouldRetry })</b>, which returns a promise.",
+    "reqs": [
+     "Call <code>fn(attempt)</code>; resolve with its value on success.",
+     "On failure retry up to <code>retries</code> times (so at most <code>retries + 1</code> calls).",
+     "Wait <code>delay * 2 ** attempt</code> ms before each retry (exponential backoff).",
+     "If <code>shouldRetry(err)</code> returns false, reject immediately with that error.",
+     "After the last failure, reject with the <b>last</b> error."
+    ],
+    "checks": [
+     {
+      "t": "Returns the value when the first call works",
+      "test": "retry(async () => 'ok', { retries: 3, delay: 10 }).then(console.log) // expected: ok",
+      "verify": "let n = 0; const v = await retry(async () => { n++; return 'ok' }, { retries: 3, delay: 10 }); assert(v === 'ok', 'got ' + v); assert(n === 1, 'called ' + n + ' times')",
+      "gap": "Return <code>await fn(attempt)</code> inside a <code>try</code>."
+     },
+     {
+      "t": "Retries until it works",
+      "test": "let n = 0\nretry(async () => { if (++n < 3) throw new Error('fail ' + n); return 'done after ' + n }, { retries: 5, delay: 10 }).then(console.log)\n// expected: done after 3",
+      "verify": "let n = 0; const v = await retry(async () => { if (++n < 3) throw new Error('fail ' + n); return 'done after ' + n }, { retries: 5, delay: 5 }); assert(v === 'done after 3', 'got ' + v)",
+      "gap": "Catch the rejection (use <code>await</code>), wait, and loop again."
+     },
+     {
+      "t": "Gives up after retries + 1 calls with the last error",
+      "test": "let n = 0\nretry(async () => { n++; throw new Error('e' + n) }, { retries: 2, delay: 5 }).catch(e => console.log(e.message, n))\n// expected: e3 3",
+      "verify": "let n = 0; let msg; try { await retry(async () => { n++; throw new Error('e' + n) }, { retries: 2, delay: 5 }) } catch (e) { msg = e.message } assert(n === 3, 'should call 3 times, called ' + n); assert(msg === 'e3', 'should reject with the last error, got ' + msg)",
+      "gap": "Stop when <code>attempt === retries</code>, and throw the error you just caught."
+     },
+     {
+      "t": "Waits with exponential backoff",
+      "test": "// delay 20: waits 20, 40, 80 -> about 140ms before the final failure",
+      "verify": "const times = []; const start = Date.now(); try { await retry(async () => { times.push(Date.now() - start); throw new Error('x') }, { retries: 3, delay: 20 }) } catch (e) {} const gaps = times.slice(1).map((t, i) => t - times[i]); assert(gaps.length === 3, 'expected 3 waits'); assert(gaps[0] >= 15 && gaps[1] >= 35 && gaps[2] >= 70, 'gaps were ' + gaps.join(',')); assert(gaps[2] > gaps[0] * 2, 'waits should double: ' + gaps.join(','))",
+      "gap": "Wait <code>delay * 2 ** attempt</code> ms before the next try."
+     },
+     {
+      "t": "shouldRetry can stop at once",
+      "test": "let n = 0\nretry(async () => { n++; throw { status: 404 } }, { retries: 5, delay: 5, shouldRetry: (e) => e.status >= 500 }).catch(() => console.log(n))\n// expected: 1",
+      "verify": "let n = 0; let caught; try { await retry(async () => { n++; throw { status: 404 } }, { retries: 5, delay: 5, shouldRetry: (e) => e.status >= 500 }) } catch (e) { caught = e } assert(n === 1, 'should not retry, called ' + n); assert(caught && caught.status === 404, 'should reject with the error')",
+      "gap": "Before waiting, check <code>if (!shouldRetry(err)) throw err</code>."
+     },
+     {
+      "t": "fn receives the attempt number",
+      "test": "retry(async (attempt) => { if (attempt < 2) throw new Error(); return attempt }, { retries: 3, delay: 5 }).then(console.log) // expected: 2",
+      "verify": "const seen = []; const v = await retry(async (a) => { seen.push(a); if (a < 2) throw new Error(); return a }, { retries: 3, delay: 5 }); assert(v === 2 && seen.join() === '0,1,2', 'attempts ' + seen.join())",
+      "gap": "Pass the counter: <code>fn(attempt)</code>."
+     }
+    ]
+   },
+   "solution": "const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));\n\nasync function retry(fn, { retries = 3, delay = 100, shouldRetry = () => true } = {}) {\n  for (let attempt = 0; ; attempt++) {\n    try {\n      return await fn(attempt);\n    } catch (err) {\n      if (attempt >= retries || !shouldRetry(err)) throw err;\n      await wait(delay * 2 ** attempt);\n    }\n  }\n}",
+   "notes": [
+    "<code>return await</code> inside <code>try</code> is what makes the rejection catchable.",
+    "Total calls = <code>retries + 1</code>; the last failure is thrown without waiting.",
+    "Backoff <code>delay * 2 ** attempt</code> gives 1×, 2×, 4×… the base delay.",
+    "<code>shouldRetry</code> keeps you from hammering a server with requests that can never succeed."
+   ],
+   "next": [
+    "Add jitter: wait a random time between 0 and the backoff delay.",
+    "Add <code>maxDelay</code> so waits never exceed, say, 10 seconds.",
+    "Support cancelling with an <code>AbortSignal</code>."
+   ]
+  },
+  {
+   "id": "chainable",
+   "diff": "Hard",
+   "fn": "chain",
+   "signature": "chain(data).filter(fn).map(fn).sort(cmp).take(n).value()",
+   "learn": {
+    "what": [
+     "<code>chain(data)</code> gives you an object with <code>filter</code>, <code>map</code>, <code>sort</code> and <code>take</code>. Each one only <b>records</b> the step and returns the chain, so you can keep calling. Nothing runs until <code>value()</code>.",
+     "That is <b>lazy evaluation</b>. Done well, it also means less work: <code>chain(million).map(f).take(3).value()</code> should call <code>f</code> only 3 times, because items flow through the steps one at a time.",
+     "Generators are perfect for this: each step is a generator that pulls items from the step before it."
+    ],
+    "how": {
+     "steps": [
+      "Keep an array <code>ops</code> of recorded steps; every method pushes one and returns the chain.",
+      "Write one generator per step: <code>filter</code> yields items that pass, <code>map</code> yields <code>fn(item)</code>, <code>take</code> yields the first <code>n</code> and then <b>stops</b>.",
+      "<code>sort</code> needs all items before it can yield anything: collect into an array, copy, sort, yield.",
+      "<code>value()</code>: start with the data, wrap it step by step (<code>seq = step(seq, arg)</code>), then spread the final generator into an array."
+     ],
+     "diagram": "chain([1..1000000]).map(x => x * 2).filter(x => x % 3 === 0).take(2).value()\n\npull from take -> pull from filter -> pull from map -> pull from data\n  1 -> 2 (no)  2 -> 4 (no)  3 -> 6 (yes, #1)\n  4 -> 8 (no)  5 -> 10 (no) 6 -> 12 (yes, #2) -> take stops\nmap ran only 6 times, not 1,000,000"
+    },
+    "where": [
+     [
+      "Lodash",
+      "<code>_.chain(users).filter(...).map(...).value()</code>."
+     ],
+     [
+      "Query builders",
+      "Knex / Prisma record <code>.where().orderBy().limit()</code> and run once."
+     ],
+     [
+      "Streams",
+      "Process huge or endless data piece by piece."
+     ],
+     [
+      "Not a fit",
+      "Tiny arrays used once: plain <code>arr.filter().map()</code> is simpler and fast enough."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let calls = 0\nconst r = [1, 2, 3, 4, 5].map(x =&gt; { calls++; return x * 2 }).slice(0, 2)\nconsole.log(r.join(\",\"), calls)</code></pre>",
+     "opts": [
+      "<code>2,4 5</code>",
+      "<code>2,4 2</code>",
+      "<code>2,4,6,8,10 5</code>",
+      "<code>2,4 0</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "Array methods are <b>eager</b>: map processes all 5 items before slice keeps 2.",
+      "A lazy chain with take(2) would call the mapper only twice."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>function* nums() { let i = 0; while (true) yield i++ }\nconst it = nums()\nconsole.log(it.next().value, it.next().value)</code></pre>",
+     "opts": [
+      "It hangs forever",
+      "<code>0 1</code>",
+      "<code>1 2</code>",
+      "<code>undefined undefined</code>"
+     ],
+     "ans": 1,
+     "why": [
+      "A generator runs only until the next <code>yield</code>, then pauses.",
+      "That is why an endless generator is fine: you only pull what you need."
+     ]
+    },
+    {
+     "tag": "Spot the bug",
+     "q": "<pre><code>sort(cmp) { ops.push(arr =&gt; arr.sort(cmp)); return this }</code></pre>with <code>value()</code> starting from <code>data</code> itself. What is wrong?",
+     "opts": [
+      "sort needs no comparator",
+      "Array <code>sort</code> works in place, so <code>value()</code> reorders the caller's original array",
+      "sort must be the last step",
+      "It returns undefined"
+     ],
+     "ans": 1,
+     "why": [
+      "The source data belongs to the caller; a query must not change it.",
+      "Copy first: <code>[...arr].sort(cmp)</code>."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "Why can <code>sort</code> not be lazy like <code>map</code>?",
+     "opts": [
+      "Because comparators are slow",
+      "Generators cannot sort",
+      "It can; sort is lazy too",
+      "To know the first item in order, you must see every item first"
+     ],
+     "ans": 3,
+     "why": [
+      "The smallest item might be the very last one in the input.",
+      "So sort collects everything, then yields in order. Steps before it still run lazily."
+     ]
+    }
+   ],
+   "pseudo": "chain(data):\n  ops = []\n  api.filter(fn) = push ['filter', fn]; return api\n  api.map(fn)    = push ['map', fn];    return api\n  api.sort(cmp)  = push ['sort', cmp];  return api\n  api.take(n)    = push ['take', n];    return api\n  api.value():\n    seq = data\n    for [type, arg] of ops: seq = generator[type](seq, arg)\n    return [...seq]\n\ngenerators:\n  filter(src, fn): for x of src: if fn(x) yield x\n  map(src, fn):    for x of src: yield fn(x)\n  take(src, n):    if n <= 0 return; count; for x of src: yield x; if ++count >= n return\n  sort(src, cmp):  yield* [...src].sort(cmp)",
+   "watch": [
+    "When exactly do the callbacks run?",
+    "How does <code>take(3)</code> stop the steps before it from doing more work?",
+    "Does <code>value()</code> change the original data, or give a different result the second time?"
+   ],
+   "build": {
+    "minutes": 35,
+    "problem": "Implement <b>chain(data)</b> with lazy <code>filter</code>, <code>map</code>, <code>sort</code>, <code>take</code> and <code>value()</code>.",
+    "reqs": [
+     "Each method records the step and returns the chain (chainable).",
+     "No callback runs before <code>value()</code>.",
+     "<code>value()</code> applies the steps in order and returns an array.",
+     "Items flow one at a time: <code>take(n)</code> stops earlier steps from processing more items.",
+     "The source data is never changed, and <code>value()</code> can be called again with the same result."
+    ],
+    "checks": [
+     {
+      "t": "Runs the steps in order",
+      "test": "console.log(chain([5, 3, 8, 1, 9, 2]).filter((x) => x > 2).map((x) => x * 10).sort((a, b) => a - b).take(3).value())\n// expected: [30, 50, 80]",
+      "verify": "const r = chain([5, 3, 8, 1, 9, 2]).filter((x) => x > 2).map((x) => x * 10).sort((a, b) => a - b).take(3).value(); assert(Array.isArray(r) && r.join() === '30,50,80', 'got ' + r)",
+      "gap": "Record each step and apply them in the same order inside <code>value()</code>."
+     },
+     {
+      "t": "Nothing runs before value()",
+      "test": "let calls = 0\nconst c = chain([1, 2, 3]).map((x) => { calls++; return x })\nconsole.log(calls) // expected: 0",
+      "verify": "let calls = 0; const c = chain([1, 2, 3]).map((x) => { calls++; return x }).filter(() => { calls++; return true }); assert(calls === 0, 'callbacks ran before value()'); c.value(); assert(calls === 6, 'callbacks should run on value(), ran ' + calls)",
+      "gap": "Methods only push to <code>ops</code>; the work happens in <code>value()</code>."
+     },
+     {
+      "t": "take stops earlier steps early",
+      "test": "let calls = 0\nchain(Array.from({ length: 1000 }, (_, i) => i)).map((x) => { calls++; return x * 2 }).filter((x) => x % 3 === 0).take(2).value()\nconsole.log(calls) // expected: 4",
+      "verify": "let calls = 0; const r = chain(Array.from({ length: 1000 }, (_, i) => i)).map((x) => { calls++; return x * 2 }).filter((x) => x % 3 === 0).take(2).value(); assert(r.join() === '0,6', 'got ' + r); assert(calls === 4, 'map ran ' + calls + ' times; items should flow one at a time')",
+      "gap": "Use generators so each step pulls one item at a time, and let <code>take</code> return after <code>n</code> items."
+     },
+     {
+      "t": "Does not change the source; value() repeats",
+      "test": "const data = [3, 1, 2]\nconst c = chain(data).sort((a, b) => a - b)\nconsole.log(c.value(), c.value(), data) // expected: [1, 2, 3] [1, 2, 3] [3, 1, 2]",
+      "verify": "const data = [3, 1, 2]; const c = chain(data).sort((a, b) => a - b); const a = c.value(); const b = c.value(); assert(a.join() === '1,2,3' && b.join() === '1,2,3', 'value() should give the same result twice'); assert(data.join() === '3,1,2', 'source was changed')",
+      "gap": "Sort a copy (<code>[...items]</code>) and build a fresh pipeline every time <code>value()</code> is called."
+     },
+     {
+      "t": "Methods return the chain; empty data and take(0)",
+      "test": "console.log(chain([]).map((x) => x).value(), chain([1, 2]).take(0).value()) // expected: [] []",
+      "verify": "const c = chain([1]); assert(c.filter(() => true) === c, 'filter should return the chain'); assert(chain([]).map((x) => x).value().length === 0, 'empty data'); assert(chain([1, 2]).take(0).value().length === 0, 'take(0) should give []'); assert(chain([1, 2]).value().join() === '1,2', 'no steps should return the items')",
+      "gap": "Return the same api object from every method; make <code>take</code> handle <code>n &lt;= 0</code>."
+     },
+     {
+      "t": "Works on any iterable, even an endless one",
+      "test": "function* naturals() { let i = 1; while (true) yield i++ }\nconsole.log(chain(naturals()).filter((x) => x % 2 === 0).take(3).value()) // expected: [2, 4, 6]",
+      "verify": "function* naturals() { let i = 1; while (true) yield i++ } const r = chain(naturals()).filter((x) => x % 2 === 0).take(3).value(); assert(r.join() === '2,4,6', 'got ' + r)",
+      "gap": "Use <code>for…of</code> over the source instead of array methods, so any iterable works."
+     }
+    ]
+   },
+   "solution": "const steps = {\n  *filter(src, fn) { for (const x of src) if (fn(x)) yield x; },\n  *map(src, fn) { for (const x of src) yield fn(x); },\n  *take(src, n) {\n    if (n <= 0) return;\n    let count = 0;\n    for (const x of src) {\n      yield x;\n      if (++count >= n) return;\n    }\n  },\n  *sort(src, cmp) { yield* [...src].sort(cmp); },\n};\n\nfunction chain(data) {\n  const ops = [];\n  const api = {\n    filter(fn) { ops.push(['filter', fn]); return api; },\n    map(fn) { ops.push(['map', fn]); return api; },\n    sort(cmp) { ops.push(['sort', cmp]); return api; },\n    take(n) { ops.push(['take', n]); return api; },\n    value() {\n      let seq = data;\n      for (const [type, arg] of ops) seq = steps[type](seq, arg);\n      return [...seq];\n    },\n  };\n  return api;\n}",
+   "notes": [
+    "Methods only record; <code>value()</code> builds a generator pipeline and drains it.",
+    "Generators pull one item at a time, so <code>take</code> naturally stops the work before it.",
+    "<code>sort</code> is a barrier: it must see everything. It copies, so the source is safe.",
+    "A fresh pipeline per <code>value()</code> call makes results repeatable."
+   ],
+   "next": [
+    "Add <code>skip(n)</code>, <code>uniq()</code> and <code>first()</code>.",
+    "Make each method return a <b>new</b> chain, so <code>const base = chain(x).filter(f)</code> can branch safely.",
+    "Add an async version where steps may return promises."
+   ]
+  },
+  {
+   "id": "promise-timeout",
+   "diff": "Medium",
+   "fn": "withTimeout",
+   "signature": "withTimeout(promise, ms, options) / delay(ms) / class TimeoutError",
+   "learn": {
+    "what": [
+     "A promise can wait forever: a server that never answers, a lost callback. <code>withTimeout(p, ms)</code> gives you a promise that settles like <code>p</code>, or rejects with a <code>TimeoutError</code> if <code>p</code> takes longer than <code>ms</code>.",
+     "Optionally it resolves with a <b>fallback</b> value instead of failing (show cached data, a default).",
+     "Do it cleanly: clear the timer when <code>p</code> wins, so nothing keeps running, and do not create unhandled rejections from the losing side."
+    ],
+    "how": {
+     "steps": [
+      "<code>delay(ms)</code>: <code>new Promise(r =&gt; setTimeout(r, ms))</code>.",
+      "<code>class TimeoutError extends Error</code> with <code>name = \"TimeoutError\"</code>.",
+      "<code>withTimeout</code>: return a new Promise. Start a timer that, after <code>ms</code>, resolves with the fallback (if one was given) or rejects with a <code>TimeoutError</code>.",
+      "Attach to <code>p</code>: on success or failure, <code>clearTimeout</code> and pass the result or error through. The first one to settle wins."
+     ],
+     "diagram": "withTimeout(fetchUser(), 100)\ncase 1: fetchUser ok at 40ms   -> clear timer -> resolve(user)\ncase 2: fetchUser slow (500ms) -> timer at 100ms -> reject(TimeoutError)\n                                   later result is ignored\ncase 3: with { fallback: [] }  -> timer at 100ms -> resolve([])"
+    },
+    "where": [
+     [
+      "Network calls",
+      "Give up on a slow API after 5 s and show a retry button."
+     ],
+     [
+      "Tests",
+      "Fail a test that hangs instead of waiting forever."
+     ],
+     [
+      "Graceful degrade",
+      "Recommendations take too long? Show the page without them (fallback)."
+     ],
+     [
+      "Not a fit",
+      "A timeout does not stop the underlying work. To really cancel a fetch, also use an <code>AbortController</code>."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Concept",
+     "q": "The timeout fires first. What happens to the original fetch?",
+     "opts": [
+      "It is cancelled automatically",
+      "It keeps running in the background; its result is just ignored",
+      "It throws inside withTimeout",
+      "The browser blocks it"
+     ],
+     "ans": 1,
+     "why": [
+      "Promises cannot be cancelled. The race only decides which result you see.",
+      "Pass an <code>AbortSignal</code> to fetch and abort it on timeout to really stop the request."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>Promise.race([new Promise(r =&gt; setTimeout(() =&gt; r(\"slow\"), 50)), \"now\"]).then(console.log)</code></pre>What is printed?",
+     "opts": [
+      "<code>now</code>",
+      "<code>slow</code>",
+      "Both",
+      "Nothing"
+     ],
+     "ans": 0,
+     "why": [
+      "A plain value in race counts as already resolved, so it wins.",
+      "That is also why an already-settled promise beats a timer of 0 ms."
+     ]
+    },
+    {
+     "tag": "Spot the bug",
+     "q": "<pre><code>function withTimeout(p, ms) {\n  const timer = new Promise((_, rej) =&gt; setTimeout(() =&gt; rej(new Error(\"timeout\")), ms))\n  return Promise.race([p, timer])\n}</code></pre>p resolves in 10 ms, ms is 60000. What is wrong?",
+     "opts": [
+      "It rejects early",
+      "The 60-second timer keeps running after p wins: it holds the process open and fires a rejection nobody handles",
+      "race cannot take two promises",
+      "Nothing is wrong"
+     ],
+     "ans": 1,
+     "why": [
+      "The timer is never cleared. In Node it keeps the process alive; when it fires, the rejected promise has no handler.",
+      "Clear the timer when <code>p</code> settles."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "Why make a <code>TimeoutError</code> class instead of <code>new Error(\"timeout\")</code>?",
+     "opts": [
+      "It is faster",
+      "Error cannot have a message",
+      "Required by Promise.race",
+      "Callers can tell a timeout apart from other errors with <code>instanceof</code> (for example, retry only on timeouts)"
+     ],
+     "ans": 3,
+     "why": [
+      "Checking messages is fragile. <code>err instanceof TimeoutError</code> is clear and safe.",
+      "Setting <code>name</code> also makes logs readable."
+     ]
+    }
+   ],
+   "pseudo": "delay(ms) = new Promise(r => setTimeout(r, ms))\nclass TimeoutError extends Error: name = 'TimeoutError'\n\nwithTimeout(p, ms, { fallback } = {}):\n  hasFallback = 'fallback' was passed\n  return new Promise((resolve, reject) =>\n    timer = setTimeout(() =>\n      hasFallback ? resolve(fallback) : reject(new TimeoutError('Timed out after ' + ms + 'ms')), ms)\n    Promise.resolve(p).then(\n      v => { clearTimeout(timer); resolve(v) },\n      e => { clearTimeout(timer); reject(e) }))",
+   "watch": [
+    "What happens to the timer when the promise wins?",
+    "How will a caller recognise a timeout error?",
+    "How do you tell \"no fallback\" from \"fallback is undefined\"?"
+   ],
+   "build": {
+    "minutes": 20,
+    "problem": "Implement <b>delay(ms)</b>, <b>class TimeoutError</b> and <b>withTimeout(promise, ms, { fallback })</b>.",
+    "reqs": [
+     "If the promise settles first, its value or error passes through unchanged.",
+     "If it takes longer than <code>ms</code>, reject with a <code>TimeoutError</code> (a subclass of <code>Error</code>, <code>name</code> \"TimeoutError\").",
+     "With a <code>fallback</code> option, resolve with it on timeout instead.",
+     "Clear the timer when the promise wins (no timer left running).",
+     "<code>delay(ms)</code> resolves after about <code>ms</code> milliseconds."
+    ],
+    "checks": [
+     {
+      "t": "delay waits",
+      "test": "const t = Date.now(); await delay(30); console.log(Date.now() - t >= 25) // expected: true",
+      "verify": "const t = Date.now(); const r = delay(30); assert(r instanceof Promise, 'delay must return a promise'); await r; assert(Date.now() - t >= 25, 'did not wait')",
+      "gap": "<code>return new Promise((r) =&gt; setTimeout(r, ms))</code>."
+     },
+     {
+      "t": "Passes the value through when fast",
+      "test": "withTimeout(delay(10).then(() => 'data'), 100).then(console.log) // expected: data",
+      "verify": "const v = await withTimeout(new Promise((r) => setTimeout(() => r('data'), 10)), 100); assert(v === 'data', 'got ' + v)",
+      "gap": "Resolve with the promise's value when it settles first."
+     },
+     {
+      "t": "Rejects with TimeoutError when slow",
+      "test": "withTimeout(delay(200), 20).catch((e) => console.log(e instanceof TimeoutError, e.name)) // expected: true TimeoutError",
+      "verify": "let e; const t = Date.now(); try { await withTimeout(new Promise((r) => setTimeout(r, 200)), 20) } catch (x) { e = x } assert(e instanceof TimeoutError && e instanceof Error, 'should be a TimeoutError'); assert(e.name === 'TimeoutError', 'name is ' + (e && e.name)); assert(Date.now() - t < 150, 'should not wait for the slow promise')",
+      "gap": "Start a <code>setTimeout</code> that rejects with <code>new TimeoutError(...)</code>; set <code>this.name</code> in the class."
+     },
+     {
+      "t": "Errors from the promise pass through unchanged",
+      "test": "withTimeout(Promise.reject(new Error('404')), 100).catch((e) => console.log(e.message)) // expected: 404",
+      "verify": "const err = new Error('404'); let e; try { await withTimeout(Promise.reject(err), 100) } catch (x) { e = x } assert(e === err, 'should be the same error')",
+      "gap": "Forward the rejection: <code>e =&gt; { clearTimeout(timer); reject(e) }</code>."
+     },
+     {
+      "t": "fallback resolves instead of failing",
+      "test": "withTimeout(delay(200), 20, { fallback: [] }).then((v) => console.log(v)) // expected: []",
+      "verify": "const v = await withTimeout(new Promise((r) => setTimeout(r, 200)), 20, { fallback: 'cached' }); assert(v === 'cached', 'got ' + v); const u = await withTimeout(new Promise((r) => setTimeout(r, 200)), 10, { fallback: undefined }); assert(u === undefined, 'an explicit undefined fallback should resolve')",
+      "gap": "Use <code>\"fallback\" in options</code> to know whether a fallback was given."
+     },
+     {
+      "t": "Clears the timer when the promise wins",
+      "test": "// the process should exit right away, not after 60 seconds\nawait withTimeout(Promise.resolve(1), 60000)",
+      "verify": "const orig = globalThis.clearTimeout; let cleared = 0; globalThis.clearTimeout = (id) => { cleared++; return orig(id) }; try { const v = await withTimeout(Promise.resolve(1), 60000); assert(v === 1, 'should resolve with 1'); assert(cleared >= 1, 'the timer was not cleared') } finally { globalThis.clearTimeout = orig }",
+      "gap": "Call <code>clearTimeout(timer)</code> in both handlers of the original promise."
+     }
+    ]
+   },
+   "solution": "function delay(ms) {\n  return new Promise((resolve) => setTimeout(resolve, ms));\n}\n\nclass TimeoutError extends Error {\n  constructor(message = 'Timed out') {\n    super(message);\n    this.name = 'TimeoutError';\n  }\n}\n\nfunction withTimeout(promise, ms, options = {}) {\n  const hasFallback = 'fallback' in options;\n  return new Promise((resolve, reject) => {\n    const timer = setTimeout(() => {\n      if (hasFallback) resolve(options.fallback);\n      else reject(new TimeoutError('Timed out after ' + ms + 'ms'));\n    }, ms);\n    Promise.resolve(promise).then(\n      (value) => { clearTimeout(timer); resolve(value); },\n      (error) => { clearTimeout(timer); reject(error); },\n    );\n  });\n}",
+   "notes": [
+    "A new Promise with a timer and the original's handlers is a race you control: you can clean up.",
+    "<code>clearTimeout</code> when the original wins, so no stray timer fires or keeps Node alive.",
+    "A custom error class makes timeouts easy to detect with <code>instanceof</code>.",
+    "A timeout does not cancel the work itself; pair it with <code>AbortController</code> for fetch."
+   ],
+   "next": [
+    "Accept an <code>AbortController</code> and abort it on timeout.",
+    "Write <code>fetchWithTimeout(url, ms)</code> that really cancels the request.",
+    "Combine with retry: retry only when the error is a <code>TimeoutError</code>."
+   ]
+  },
+  {
+   "id": "circuit-breaker",
+   "diff": "Hard",
+   "fn": "CircuitBreaker",
+   "signature": "class CircuitBreaker(fn, options) { call, state, reset } / class CircuitOpenError",
+   "learn": {
+    "what": [
+     "When a service is down, retrying again and again just makes it worse and makes your users wait for timeouts. A <b>circuit breaker</b> wraps the call and, after several failures in a row, <b>stops calling</b> for a while and fails fast instead.",
+     "Three states: <b>CLOSED</b> (normal, calls go through), <b>OPEN</b> (calls fail at once with a <code>CircuitOpenError</code>, for a cooldown), and <b>HALF_OPEN</b> (after the cooldown, let one trial call through: success closes the circuit, failure opens it again).",
+     "The name comes from the electrical breaker in your house: it cuts the power to protect the system, and you can try to switch it back on later."
+    ],
+    "how": {
+     "steps": [
+      "Store <code>state = \"CLOSED\"</code>, a failure counter, and <code>openedAt</code>.",
+      "<code>call(...args)</code>: if OPEN and the cooldown has passed, switch to HALF_OPEN. If still OPEN (or HALF_OPEN with a trial already running), reject with <code>CircuitOpenError</code> without calling <code>fn</code>.",
+      "Otherwise call <code>fn</code>. On success: reset failures to 0 and set CLOSED.",
+      "On failure: in HALF_OPEN, open again at once; in CLOSED, count it and open when the count reaches <code>failureThreshold</code>. Always re-throw the original error.",
+      "<code>reset()</code> forces CLOSED with zero failures."
+     ],
+     "diagram": "CLOSED --(threshold failures in a row)--> OPEN\n  ^                                         |\n  |                                 cooldown passes\n  |                                         v\n  +----(trial call succeeds)---------- HALF_OPEN\n                 trial call fails -> OPEN again (new cooldown)"
+    },
+    "where": [
+     [
+      "Microservices",
+      "Stop calling a failing payment service; show \"try again later\" at once."
+     ],
+     [
+      "Frontends",
+      "Stop hammering an API that returns 503; retry after a pause."
+     ],
+     [
+      "Libraries",
+      "opossum (Node), Resilience4j (Java), Polly (.NET)."
+     ],
+     [
+      "Not a fit",
+      "Errors caused by the request itself (400, validation) should not count as service failures."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Trace",
+     "q": "Threshold 3. Results: fail, fail, success, fail, fail. What is the state?",
+     "opts": [
+      "OPEN",
+      "HALF_OPEN",
+      "CLOSED",
+      "It depends on the cooldown"
+     ],
+     "ans": 2,
+     "why": [
+      "The success in the middle resets the counter, so there are only 2 failures in a row at the end.",
+      "Breakers count <b>consecutive</b> failures (or a rate over a window), not a lifetime total."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "While OPEN, why not call the function and just ignore its result?",
+     "opts": [
+      "It would be the same thing",
+      "The point is to send no traffic: the failing service gets time to recover and callers get an instant answer",
+      "Calling is required by JavaScript",
+      "To keep stats accurate"
+     ],
+     "ans": 1,
+     "why": [
+      "Every call to a dead service costs a timeout and adds load.",
+      "Failing fast protects both sides."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "In HALF_OPEN, 50 requests arrive at the same moment. What should happen?",
+     "opts": [
+      "All 50 go through as trials",
+      "Only a few trial calls (often 1) go through; the rest fail fast until the trial decides",
+      "All 50 wait in a queue",
+      "The breaker closes"
+     ],
+     "ans": 1,
+     "why": [
+      "Letting everyone through would flood a service that might still be broken.",
+      "One (or a few) probes test it safely."
+     ]
+    },
+    {
+     "tag": "Spot the bug",
+     "q": "On failure in HALF_OPEN the code does <code>this.failures++</code> and opens only when <code>failures &gt;= threshold</code>. What goes wrong?",
+     "opts": [
+      "Nothing",
+      "A failed trial does not reopen the circuit, so traffic flows to a service that is still down",
+      "It opens twice",
+      "The cooldown doubles"
+     ],
+     "ans": 1,
+     "why": [
+      "The trial is the test. If it fails, the service is not healthy: go straight back to OPEN with a fresh cooldown.",
+      "Counting it like a normal failure would need several more failed calls to a dead service before opening again."
+     ]
+    }
+   ],
+   "pseudo": "class CircuitOpenError extends Error\n\nclass CircuitBreaker(fn, { failureThreshold = 3, cooldown = 1000 }):\n  state = 'CLOSED'; failures = 0; openedAt = 0; trial = false\n\n  async call(...args):\n    if state == 'OPEN' and now - openedAt >= cooldown: state = 'HALF_OPEN'\n    if state == 'OPEN' or (state == 'HALF_OPEN' and trial running):\n      throw new CircuitOpenError\n    if state == 'HALF_OPEN': trial = true\n    try:\n      result = await fn(...args)\n      failures = 0; state = 'CLOSED'; return result\n    catch err:\n      if state == 'HALF_OPEN' or ++failures >= failureThreshold:\n        state = 'OPEN'; openedAt = now\n      throw err\n    finally: trial = false\n\n  reset(): state = 'CLOSED'; failures = 0",
+   "watch": [
+    "Which event moves OPEN to HALF_OPEN: a timer, or the next call?",
+    "What resets the failure count?",
+    "What happens when the trial call fails?"
+   ],
+   "build": {
+    "minutes": 40,
+    "problem": "Build <b>class CircuitBreaker(fn, { failureThreshold, cooldown })</b> with <code>call(...args)</code>, a <code>state</code> property and <code>reset()</code>, plus <b>class CircuitOpenError</b>.",
+    "reqs": [
+     "CLOSED: calls go to <code>fn</code>; its result or error passes through.",
+     "After <code>failureThreshold</code> failures in a row → OPEN. A success resets the count.",
+     "OPEN: reject at once with <code>CircuitOpenError</code> without calling <code>fn</code>.",
+     "After <code>cooldown</code> ms the next call is a trial (HALF_OPEN): success → CLOSED, failure → OPEN again. Only one trial at a time.",
+     "<code>reset()</code> → CLOSED with zero failures."
+    ],
+    "checks": [
+     {
+      "t": "CLOSED passes results and errors through",
+      "test": "const cb = new CircuitBreaker(async (x) => x * 2)\nconsole.log(await cb.call(21), cb.state) // expected: 42 CLOSED",
+      "verify": "const cb = new CircuitBreaker(async (x) => x * 2); assert(await cb.call(21) === 42, 'result should pass through'); assert(cb.state === 'CLOSED', 'state ' + cb.state); const bad = new CircuitBreaker(async () => { throw new Error('down') }); let m; try { await bad.call() } catch (e) { m = e.message } assert(m === 'down', 'the original error should pass through')",
+      "gap": "In CLOSED, <code>return await fn(...args)</code> and re-throw errors."
+     },
+     {
+      "t": "Opens after N failures in a row; a success resets the count",
+      "test": "// threshold 3: fail, fail, ok, fail, fail -> CLOSED; one more fail -> OPEN",
+      "verify": "let ok = false; const cb = new CircuitBreaker(async () => { if (!ok) throw new Error('x'); return 'y' }, { failureThreshold: 3, cooldown: 1000 }); const tryCall = async () => { try { await cb.call() } catch (e) {} }; await tryCall(); await tryCall(); ok = true; await cb.call(); ok = false; await tryCall(); await tryCall(); assert(cb.state === 'CLOSED', 'should still be CLOSED, is ' + cb.state); await tryCall(); assert(cb.state === 'OPEN', 'should be OPEN, is ' + cb.state)",
+      "gap": "Set <code>failures = 0</code> on success; open when <code>++failures &gt;= failureThreshold</code>."
+     },
+     {
+      "t": "OPEN fails fast without calling fn",
+      "test": "// after opening: call() rejects with CircuitOpenError and fn is not called",
+      "verify": "let calls = 0; const cb = new CircuitBreaker(async () => { calls++; throw new Error('x') }, { failureThreshold: 2, cooldown: 1000 }); for (let i = 0; i < 2; i++) { try { await cb.call() } catch (e) {} } const before = calls; let e; try { await cb.call() } catch (x) { e = x } assert(e instanceof CircuitOpenError && e instanceof Error, 'should reject with CircuitOpenError'); assert(calls === before, 'fn must not be called while OPEN')",
+      "gap": "Check the state first and <code>throw new CircuitOpenError(...)</code> before calling <code>fn</code>."
+     },
+     {
+      "t": "After the cooldown a successful trial closes it",
+      "test": "// cooldown 40ms: wait, then call() -> trial succeeds -> CLOSED",
+      "verify": "let ok = false; const cb = new CircuitBreaker(async () => { if (!ok) throw new Error('x'); return 'back' }, { failureThreshold: 1, cooldown: 40 }); try { await cb.call() } catch (e) {} assert(cb.state === 'OPEN', 'should be OPEN'); await sleep(60); ok = true; assert(await cb.call() === 'back', 'trial should run'); assert(cb.state === 'CLOSED', 'should close after a good trial, is ' + cb.state)",
+      "gap": "When OPEN and <code>Date.now() - openedAt &gt;= cooldown</code>, switch to HALF_OPEN and let the call through."
+     },
+     {
+      "t": "A failed trial opens it again with a new cooldown",
+      "test": "// trial fails -> OPEN, and calls right after still fail fast",
+      "verify": "let calls = 0; const cb = new CircuitBreaker(async () => { calls++; throw new Error('x') }, { failureThreshold: 1, cooldown: 40 }); try { await cb.call() } catch (e) {} await sleep(60); try { await cb.call() } catch (e) {} assert(calls === 2, 'the trial should call fn'); assert(cb.state === 'OPEN', 'should be OPEN again, is ' + cb.state); let e; try { await cb.call() } catch (x) { e = x } assert(e instanceof CircuitOpenError, 'should fail fast again'); assert(calls === 2, 'fn called during the new cooldown')",
+      "gap": "On failure in HALF_OPEN, set OPEN and a fresh <code>openedAt</code> straight away."
+     },
+     {
+      "t": "Only one trial call at a time",
+      "test": "// HALF_OPEN: two calls at once -> one runs, the other gets CircuitOpenError",
+      "verify": "let calls = 0; let fail = true; const cb = new CircuitBreaker(async () => { calls++; if (fail) throw new Error('x'); await sleep(30); return 'ok' }, { failureThreshold: 1, cooldown: 30 }); try { await cb.call() } catch (e) {} fail = false; await sleep(50); const [a, b] = await Promise.allSettled([cb.call(), cb.call()]); assert(a.status === 'fulfilled' && a.value === 'ok', 'the first call should be the trial'); assert(b.status === 'rejected' && b.reason instanceof CircuitOpenError, 'the second should fail fast'); assert(calls === 2, 'fn called ' + calls + ' times')",
+      "gap": "Keep a <code>trial</code> flag: set it when the trial starts and clear it in <code>finally</code>."
+     },
+     {
+      "t": "reset() closes the circuit",
+      "test": "cb.reset(); console.log(cb.state) // expected: CLOSED",
+      "verify": "let calls = 0; const cb = new CircuitBreaker(async () => { calls++; return calls }, { failureThreshold: 1, cooldown: 10000 }); cb.state = 'OPEN'; cb.openedAt = Date.now(); cb.reset(); assert(cb.state === 'CLOSED', 'state ' + cb.state); assert(await cb.call() === 1, 'calls should go through after reset')",
+      "gap": "<code>reset()</code> sets <code>state = \"CLOSED\"</code> and <code>failures = 0</code>."
+     }
+    ]
+   },
+   "solution": "class CircuitOpenError extends Error {\n  constructor(message = 'Circuit is open') {\n    super(message);\n    this.name = 'CircuitOpenError';\n  }\n}\n\nclass CircuitBreaker {\n  constructor(fn, { failureThreshold = 3, cooldown = 1000 } = {}) {\n    this.fn = fn;\n    this.failureThreshold = failureThreshold;\n    this.cooldown = cooldown;\n    this.state = 'CLOSED';\n    this.failures = 0;\n    this.openedAt = 0;\n    this.trial = false;\n  }\n\n  async call(...args) {\n    if (this.state === 'OPEN' && Date.now() - this.openedAt >= this.cooldown) this.state = 'HALF_OPEN';\n    if (this.state === 'OPEN' || (this.state === 'HALF_OPEN' && this.trial)) {\n      throw new CircuitOpenError();\n    }\n    const isTrial = this.state === 'HALF_OPEN';\n    if (isTrial) this.trial = true;\n    try {\n      const result = await this.fn(...args);\n      this.failures = 0;\n      this.state = 'CLOSED';\n      return result;\n    } catch (err) {\n      if (isTrial || ++this.failures >= this.failureThreshold) {\n        this.state = 'OPEN';\n        this.openedAt = Date.now();\n      }\n      throw err;\n    } finally {\n      if (isTrial) this.trial = false;\n    }\n  }\n\n  reset() {\n    this.state = 'CLOSED';\n    this.failures = 0;\n    this.trial = false;\n  }\n}",
+   "notes": [
+    "The move from OPEN to HALF_OPEN happens lazily, on the next call after the cooldown: no timers needed.",
+    "Count <b>consecutive</b> failures; any success resets the counter.",
+    "A failed trial reopens immediately with a fresh cooldown.",
+    "A <code>trial</code> flag cleared in <code>finally</code> keeps HALF_OPEN to one probe at a time.",
+    "Always re-throw the real error, so callers still see why the call failed."
+   ],
+   "next": [
+    "Add <code>onStateChange(from, to)</code> callbacks for logging and metrics.",
+    "Use a failure <b>rate</b> over the last N calls instead of a consecutive count.",
+    "Add an <code>isFailure(err)</code> option so 4xx errors do not trip the breaker."
+   ]
+  },
+  {
+   "id": "stopwatch",
+   "diff": "Medium",
+   "fn": "Stopwatch",
+   "signature": "class Stopwatch({ now }) { start, pause, reset, lap, getElapsed, getLaps, onTick }",
+   "learn": {
+    "what": [
+     "A stopwatch measures time while it runs. You can <b>pause</b> and <b>start</b> again, record <b>laps</b>, and <b>reset</b>.",
+     "Do not count ticks of a timer: <code>setInterval</code> is never exact. Store the <b>moment you started</b> and the time already <b>banked</b> before the last pause, and compute <code>elapsed = banked + (now − startedAt)</code> whenever someone asks.",
+     "A clock function (<code>now</code>) is passed in, so tests can control time. UI updates come from <code>onTick(cb)</code>, which only reads the elapsed time."
+    ],
+    "how": {
+     "steps": [
+      "State: <code>running</code>, <code>startedAt</code>, <code>banked</code> (ms from earlier runs), <code>laps</code>, <code>lastLapAt</code>.",
+      "<code>start()</code>: if already running, do nothing; else <code>startedAt = now()</code>, <code>running = true</code>.",
+      "<code>pause()</code>: if running, <code>banked += now() − startedAt</code>, <code>running = false</code>.",
+      "<code>getElapsed()</code>: <code>banked + (running ? now() − startedAt : 0)</code>. <code>lap()</code>: <code>total = getElapsed()</code>, <code>split = total − lastLapAt</code>, store and update <code>lastLapAt</code>.",
+      "<code>onTick(cb, every)</code>: a <code>setInterval</code> that calls <code>cb(getElapsed())</code> only while running; return a function that clears it."
+     ],
+     "diagram": "t=0     start        banked 0\nt=3000  pause        banked 3000\nt=8000  start        startedAt 8000   (the 5s paused are not counted)\nt=10000 getElapsed   3000 + (10000 - 8000) = 5000\nt=10000 lap          { lap: 1, split: 5000, total: 5000 }"
+    },
+    "where": [
+     [
+      "Fitness apps",
+      "Lap times for runs and workouts."
+     ],
+     [
+      "Games",
+      "Level timers that pause with the game."
+     ],
+     [
+      "Performance",
+      "Measure how long steps of a task take."
+     ],
+     [
+      "Not a fit",
+      "Counting down to a deadline: that is a countdown timer (same idea, reversed)."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Concept",
+     "q": "Why compute elapsed from <code>now() − startedAt</code> instead of adding 100 every 100 ms tick?",
+     "opts": [
+      "It is shorter",
+      "Timers can fire late (busy thread, background tab), so counting ticks drifts; real timestamps do not",
+      "setInterval does not exist in Node",
+      "Ticks cannot be paused"
+     ],
+     "ans": 1,
+     "why": [
+      "A tab in the background may run your interval once per second or less.",
+      "Timestamps are always right no matter how late the tick is."
+     ]
+    },
+    {
+     "tag": "Trace",
+     "q": "Start at 0, pause at 4000, start at 6000, pause at 7000. What is the elapsed time?",
+     "opts": [
+      "7000",
+      "1000",
+      "3000",
+      "5000"
+     ],
+     "ans": 3,
+     "why": [
+      "First run 4000 ms is banked; second run adds 7000 − 6000 = 1000.",
+      "The 2000 ms paused gap is not counted."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "What is a lap \"split\"?",
+     "opts": [
+      "Time since the previous lap (or since start, for the first lap)",
+      "Total time since start",
+      "Time spent paused",
+      "Average lap time"
+     ],
+     "ans": 0,
+     "why": [
+      "Split = this lap's length. Total = time since the very start.",
+      "Keep <code>lastLapAt</code> (in elapsed time, not clock time) to compute it."
+     ]
+    },
+    {
+     "tag": "Spot the bug",
+     "q": "<pre><code>start() {\n  this.startedAt = this.now()\n  this.running = true\n}</code></pre>Someone calls <code>start()</code> twice. What breaks?",
+     "opts": [
+      "Nothing",
+      "The second call moves <code>startedAt</code> forward, so time between the two calls is lost",
+      "It throws",
+      "Laps are cleared"
+     ],
+     "ans": 1,
+     "why": [
+      "Elapsed is measured from <code>startedAt</code>; resetting it while running throws away time.",
+      "Guard with <code>if (this.running) return</code>."
+     ]
+    }
+   ],
+   "pseudo": "class Stopwatch({ now = Date.now }):\n  running = false; startedAt = 0; banked = 0; laps = []; lastLapAt = 0\n\n  start(): if running return; startedAt = now(); running = true\n  pause(): if not running return; banked += now() - startedAt; running = false\n  reset(): running = false; banked = 0; laps = []; lastLapAt = 0\n  getElapsed(): banked + (running ? now() - startedAt : 0)\n  lap():\n    total = getElapsed(); split = total - lastLapAt; lastLapAt = total\n    laps.push({ lap: laps.length + 1, split, total }); return that lap\n  getLaps(): copy of laps\n  onTick(cb, every = 100):\n    id = setInterval(() => if running: cb(getElapsed()), every)\n    return () => clearInterval(id)",
+   "watch": [
+    "Where does the time from before a pause live?",
+    "What should a second <code>start()</code> do?",
+    "Is a lap split measured in clock time or elapsed time?"
+   ],
+   "build": {
+    "minutes": 25,
+    "problem": "Build <b>class Stopwatch({ now })</b> with <code>start</code>, <code>pause</code>, <code>reset</code>, <code>lap</code>, <code>getElapsed</code>, <code>getLaps</code> and <code>onTick(cb, every)</code>.",
+    "reqs": [
+     "<code>now</code> is a clock function (default <code>Date.now</code>); never count ticks.",
+     "Paused time is not counted; start/pause can repeat; a second <code>start()</code> while running does nothing.",
+     "<code>lap()</code> returns and stores <code>{ lap, split, total }</code>.",
+     "<code>reset()</code> stops, zeroes the time and clears laps.",
+     "<code>onTick(cb, every)</code> calls <code>cb(elapsed)</code> while running and returns an unsubscribe function."
+    ],
+    "checks": [
+     {
+      "t": "Counts time while running",
+      "test": "let t = 0\nconst sw = new Stopwatch({ now: () => t })\nsw.start(); t = 1500\nconsole.log(sw.getElapsed()) // expected: 1500",
+      "verify": "let t = 0; const sw = new Stopwatch({ now: () => t }); assert(sw.getElapsed() === 0, 'should start at 0'); sw.start(); t = 1500; assert(sw.getElapsed() === 1500, 'got ' + sw.getElapsed())",
+      "gap": "<code>getElapsed()</code> = <code>banked + (running ? now() - startedAt : 0)</code>."
+     },
+     {
+      "t": "Paused time is not counted",
+      "test": "let t = 0\nconst sw = new Stopwatch({ now: () => t })\nsw.start(); t = 4000; sw.pause(); t = 6000; sw.start(); t = 7000\nconsole.log(sw.getElapsed()) // expected: 5000",
+      "verify": "let t = 0; const sw = new Stopwatch({ now: () => t }); sw.start(); t = 4000; sw.pause(); t = 6000; assert(sw.getElapsed() === 4000, 'paused should stay 4000, got ' + sw.getElapsed()); sw.start(); t = 7000; assert(sw.getElapsed() === 5000, 'got ' + sw.getElapsed())",
+      "gap": "On pause, add the running time to <code>banked</code>; on start, set a new <code>startedAt</code>."
+     },
+     {
+      "t": "A second start while running does nothing",
+      "test": "let t = 0\nconst sw = new Stopwatch({ now: () => t })\nsw.start(); t = 1000; sw.start(); t = 2000\nconsole.log(sw.getElapsed()) // expected: 2000",
+      "verify": "let t = 0; const sw = new Stopwatch({ now: () => t }); sw.start(); t = 1000; sw.start(); t = 2000; assert(sw.getElapsed() === 2000, 'got ' + sw.getElapsed())",
+      "gap": "Begin <code>start()</code> with <code>if (this.running) return</code>."
+     },
+     {
+      "t": "Laps record split and total",
+      "test": "let t = 0\nconst sw = new Stopwatch({ now: () => t })\nsw.start(); t = 1000; sw.lap(); t = 2500; sw.lap()\nconsole.log(sw.getLaps()) // expected: [{lap:1,split:1000,total:1000},{lap:2,split:1500,total:2500}]",
+      "verify": "let t = 0; const sw = new Stopwatch({ now: () => t }); sw.start(); t = 1000; const first = sw.lap(); t = 2500; sw.lap(); assert(first && first.split === 1000, 'lap() should return the lap'); assert(JSON.stringify(sw.getLaps()) === JSON.stringify([{ lap: 1, split: 1000, total: 1000 }, { lap: 2, split: 1500, total: 2500 }]), 'got ' + JSON.stringify(sw.getLaps()))",
+      "gap": "split = total − the total at the previous lap; keep <code>lastLapAt</code>."
+     },
+     {
+      "t": "reset clears time and laps",
+      "test": "sw.reset(); console.log(sw.getElapsed(), sw.getLaps()) // expected: 0 []",
+      "verify": "let t = 0; const sw = new Stopwatch({ now: () => t }); sw.start(); t = 900; sw.lap(); sw.reset(); t = 5000; assert(sw.getElapsed() === 0, 'elapsed should be 0, got ' + sw.getElapsed()); assert(sw.getLaps().length === 0, 'laps should be empty'); sw.start(); t = 5300; sw.lap(); assert(sw.getLaps()[0].split === 300, 'laps should restart from 0')",
+      "gap": "Reset <code>running</code>, <code>banked</code>, <code>laps</code> and <code>lastLapAt</code>."
+     },
+     {
+      "t": "onTick reports while running and can be stopped",
+      "test": "const sw = new Stopwatch()\nconst off = sw.onTick((ms) => console.log(ms), 20)\nsw.start() // prints growing numbers every 20ms",
+      "verify": "const seen = []; const sw = new Stopwatch(); const off = sw.onTick((ms) => seen.push(ms), 10); await sleep(35); assert(seen.length === 0, 'should not tick while stopped'); sw.start(); await sleep(60); off(); const n = seen.length; assert(n >= 3, 'ticked ' + n + ' times'); assert(seen[n - 1] >= seen[0], 'values should grow'); await sleep(40); assert(seen.length === n, 'should stop after unsubscribe')",
+      "gap": "Use <code>setInterval</code> that calls <code>cb(this.getElapsed())</code> only when running; return <code>() =&gt; clearInterval(id)</code>."
+     }
+    ]
+   },
+   "solution": "class Stopwatch {\n  constructor({ now = () => Date.now() } = {}) {\n    this.now = now;\n    this.reset();\n  }\n\n  start() {\n    if (this.running) return;\n    this.startedAt = this.now();\n    this.running = true;\n  }\n\n  pause() {\n    if (!this.running) return;\n    this.banked += this.now() - this.startedAt;\n    this.running = false;\n  }\n\n  reset() {\n    this.running = false;\n    this.startedAt = 0;\n    this.banked = 0;\n    this.laps = [];\n    this.lastLapAt = 0;\n  }\n\n  getElapsed() {\n    return this.banked + (this.running ? this.now() - this.startedAt : 0);\n  }\n\n  lap() {\n    const total = this.getElapsed();\n    const lap = { lap: this.laps.length + 1, split: total - this.lastLapAt, total };\n    this.lastLapAt = total;\n    this.laps.push(lap);\n    return lap;\n  }\n\n  getLaps() {\n    return this.laps.map((l) => ({ ...l }));\n  }\n\n  onTick(cb, every = 100) {\n    const id = setInterval(() => {\n      if (this.running) cb(this.getElapsed());\n    }, every);\n    return () => clearInterval(id);\n  }\n}",
+   "notes": [
+    "Store moments, not counts: <code>banked + (now − startedAt)</code> never drifts.",
+    "Guard <code>start()</code> and <code>pause()</code> so repeated calls are harmless.",
+    "Laps are measured in elapsed time, so paused periods never sneak into a split.",
+    "Injecting <code>now</code> makes time-based code easy to test."
+   ],
+   "next": [
+    "Add <code>format(ms)</code> that prints <code>mm:ss.cc</code>.",
+    "Use <code>performance.now()</code> for sub-millisecond precision.",
+    "Build a React <code>useStopwatch()</code> hook on top of this class."
+   ]
+  },
+  {
+   "id": "consistent-hashing",
+   "diff": "Hard",
+   "fn": "ConsistentHashing",
+   "signature": "class ConsistentHashing({ vnodes }) { addServer, removeServer, getServer, size } / hash(str)",
+   "learn": {
+    "what": [
+     "You spread keys (users, cache entries) over N servers. The simple way, <code>hash(key) % N</code>, breaks badly when N changes: going from 4 to 5 servers moves almost <b>every</b> key.",
+     "Consistent hashing puts servers on a <b>ring</b> of numbers (0 to 2³²−1). A key goes to the first server marker <b>clockwise</b> from its hash. Adding a server only takes the keys just before its markers: about <b>1/N</b> of all keys move.",
+     "Each server gets many <b>virtual nodes</b> (say 150 markers) so the load spreads evenly instead of in a few big arcs."
+    ],
+    "how": {
+     "steps": [
+      "<code>hash(str)</code>: a fast 32-bit hash (FNV-1a) with a final mix step, returning an unsigned integer.",
+      "<code>addServer(name)</code>: for <code>i = 0 … vnodes−1</code>, add a marker <code>{ pos: hash(name + \"#\" + i), server: name }</code>; keep the ring sorted by <code>pos</code>.",
+      "<code>removeServer(name)</code>: drop every marker of that server.",
+      "<code>getServer(key)</code>: <code>h = hash(key)</code>; binary-search the first marker with <code>pos &gt;= h</code>; if none, wrap to marker 0. Return its server (or <code>null</code> if the ring is empty)."
+     ],
+     "diagram": "ring 0 ............................................. 2^32\nmarkers:   A#3   B#0     A#1    C#2    B#7    C#0   A#5\nkey k:            ^ hash(k)\n                  -> first marker clockwise is A#1 -> server A\nadd D: its markers cut a few arcs; only keys in those arcs move to D"
+    },
+    "where": [
+     [
+      "Caches",
+      "Memcached/Redis clients pick a node per key; adding a node keeps most hits."
+     ],
+     [
+      "Databases",
+      "Cassandra and DynamoDB place data on a ring."
+     ],
+     [
+      "Load balancers",
+      "Sticky routing of a user to the same backend."
+     ],
+     [
+      "Not a fit",
+      "A fixed number of servers that never changes: plain modulo is fine."
+     ]
+    ]
+   },
+   "think": [
+    {
+     "tag": "Concept",
+     "q": "With <code>hash(key) % N</code>, roughly what share of keys move when N goes from 4 to 5?",
+     "opts": [
+      "About 80%",
+      "About 20%",
+      "Exactly 25%",
+      "None"
+     ],
+     "ans": 0,
+     "why": [
+      "A key stays only if <code>h % 4 === h % 5</code>, which is true for about 1 in 5 keys. So around 80% move.",
+      "With consistent hashing only about 1/5 (20%) move: the ones the new server takes."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "Why give each server ~150 virtual nodes instead of 1 marker?",
+     "opts": [
+      "To store more data",
+      "One marker per server makes uneven arcs, so some servers get far more keys; many markers average it out",
+      "It makes hashing faster",
+      "Rings need at least 150 points"
+     ],
+     "ans": 1,
+     "why": [
+      "Random positions leave big and small gaps. With many markers per server, each server owns many small arcs and the totals even out.",
+      "More vnodes = better balance, at the cost of a bigger ring."
+     ]
+    },
+    {
+     "tag": "Concept",
+     "q": "A key's hash is larger than every marker on the ring. Which server gets it?",
+     "opts": [
+      "None, it is lost",
+      "The server of the last marker",
+      "The server of the first (smallest) marker: the ring wraps around",
+      "A random server"
+     ],
+     "ans": 2,
+     "why": [
+      "It is a circle: after the top value you continue from 0.",
+      "In code: if the binary search finds no marker, use index 0."
+     ]
+    },
+    {
+     "tag": "Predict the output",
+     "q": "<pre><code>let moved = 0\nfor (let h = 0; h &lt; 1000; h++) if (h % 4 !== h % 5) moved++\nconsole.log(moved)</code></pre>",
+     "opts": [
+      "<code>200</code>",
+      "<code>250</code>",
+      "<code>800</code>",
+      "<code>1000</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Only values where both remainders match stay: 0–3 of every 20, so 200 of 1000 stay and 800 move.",
+      "That is the problem consistent hashing solves."
+     ]
+    }
+   ],
+   "pseudo": "hash(str): FNV-1a 32-bit over the characters, then a mix step; return unsigned\n\nclass ConsistentHashing({ vnodes = 150 }):\n  ring = []                // sorted [{ pos, server }]\n  servers = new Set()\n  addServer(name):\n    if servers has name -> return\n    for i in 0..vnodes-1: ring.push({ pos: hash(name + '#' + i), server: name })\n    sort ring by pos; servers.add(name)\n  removeServer(name): ring = ring without name's markers; servers.delete(name)\n  getServer(key):\n    if ring empty -> null\n    h = hash(key)\n    binary search smallest index with ring[i].pos >= h\n    if none -> i = 0\n    return ring[i].server\n  size = ring.length",
+   "watch": [
+    "What happens to keys hashed after the last marker?",
+    "How do you find the next marker fast (not a loop over the whole ring)?",
+    "What should adding the same server twice do?"
+   ],
+   "build": {
+    "minutes": 40,
+    "problem": "Build <b>class ConsistentHashing({ vnodes })</b> with <code>addServer</code>, <code>removeServer</code>, <code>getServer(key)</code> and a <code>size</code> getter, plus a <b>hash(str)</b> function.",
+    "reqs": [
+     "<code>hash(str)</code> returns the same unsigned 32-bit integer for the same string.",
+     "Each server places <code>vnodes</code> markers (default 150); <code>size</code> is the number of markers. Adding a server twice changes nothing.",
+     "<code>getServer(key)</code> returns the server of the first marker clockwise from <code>hash(key)</code> (wrapping), or <code>null</code> with no servers. Use binary search.",
+     "Adding a server moves only about 1/N of the keys, all of them to the new server.",
+     "Removing a server moves only the keys it owned."
+    ],
+    "checks": [
+     {
+      "t": "hash is stable, unsigned and 32-bit",
+      "test": "console.log(hash('user:1') === hash('user:1'), hash('a') !== hash('b')) // expected: true true",
+      "verify": "const a = hash('user:1'); assert(Number.isInteger(a) && a >= 0 && a <= 4294967295, 'must be an unsigned 32-bit integer, got ' + a); assert(hash('user:1') === a, 'not stable'); assert(hash('a') !== hash('b'), 'too many collisions')",
+      "gap": "FNV-1a: start at 2166136261, for each char <code>h ^= code; h = Math.imul(h, 16777619)</code>; return <code>h &gt;&gt;&gt; 0</code>."
+     },
+     {
+      "t": "Empty ring gives null; markers per server",
+      "test": "const ring = new ConsistentHashing({ vnodes: 10 })\nconsole.log(ring.getServer('k'), (ring.addServer('A'), ring.size)) // expected: null 10",
+      "verify": "const ring = new ConsistentHashing({ vnodes: 10 }); assert(ring.getServer('k') === null, 'empty ring should give null'); ring.addServer('A'); ring.addServer('B'); assert(ring.size === 20, 'size should be 20, got ' + ring.size); ring.addServer('A'); assert(ring.size === 20, 'adding A twice should change nothing'); const d = new ConsistentHashing(); d.addServer('X'); assert(d.size === 150, 'default vnodes should be 150')",
+      "gap": "Add <code>vnodes</code> markers per server; skip servers you already have; return <code>null</code> when the ring is empty."
+     },
+     {
+      "t": "Same key, same server; load is spread",
+      "test": "// 3 servers, 3000 keys: each server gets a fair share",
+      "verify": "const ring = new ConsistentHashing(); ['A', 'B', 'C'].forEach((s) => ring.addServer(s)); assert(ring.getServer('user:42') === ring.getServer('user:42'), 'not stable'); const count = { A: 0, B: 0, C: 0 }; for (let i = 0; i < 3000; i++) count[ring.getServer('key-' + i)]++; for (const s of ['A', 'B', 'C']) assert(count[s] > 600 && count[s] < 1400, 'uneven: ' + JSON.stringify(count))",
+      "gap": "Use many virtual nodes per server and a hash with a good mix."
+     },
+     {
+      "t": "Adding a server moves about 1/N of the keys, all to it",
+      "test": "// 3 -> 4 servers: about 25% of keys move, and only to the new server",
+      "verify": "const ring = new ConsistentHashing(); ['A', 'B', 'C'].forEach((s) => ring.addServer(s)); const before = []; for (let i = 0; i < 4000; i++) before.push(ring.getServer('k' + i)); ring.addServer('D'); let moved = 0; for (let i = 0; i < 4000; i++) { const now = ring.getServer('k' + i); if (now !== before[i]) { moved++; assert(now === 'D', 'a key moved to ' + now + ', not to the new server') } } const share = moved / 4000; assert(share > 0.12 && share < 0.4, 'moved ' + share)",
+      "gap": "A key only changes owner if a new marker lands between its hash and its old marker. With a ring this is automatic."
+     },
+     {
+      "t": "Removing a server moves only its keys",
+      "test": "// remove B: keys on A and C stay where they are",
+      "verify": "const ring = new ConsistentHashing(); ['A', 'B', 'C'].forEach((s) => ring.addServer(s)); const before = []; for (let i = 0; i < 3000; i++) before.push(ring.getServer('k' + i)); ring.removeServer('B'); assert(ring.size === 300, 'markers left: ' + ring.size); for (let i = 0; i < 3000; i++) { const now = ring.getServer('k' + i); assert(now !== 'B', 'B still used'); if (before[i] !== 'B') assert(now === before[i], 'a key not on B moved') }",
+      "gap": "Filter out only that server's markers; everything else stays in place."
+     },
+     {
+      "t": "Wraps around the end of the ring",
+      "test": "// a key whose hash is past the last marker goes to the first marker",
+      "verify": "const ring = new ConsistentHashing({ vnodes: 1 }); ring.addServer('only'); assert(ring.getServer('anything') === 'only', 'single marker should own every key'); const r2 = new ConsistentHashing({ vnodes: 3 }); r2.addServer('A'); r2.addServer('B'); let seen = new Set(); for (let i = 0; i < 500; i++) seen.add(r2.getServer('w' + i)); assert(seen.size === 2 && !seen.has(undefined) && !seen.has(null), 'every key must map to a server')",
+      "gap": "If the binary search finds no marker with <code>pos &gt;= h</code>, use marker 0."
+     }
+    ]
+   },
+   "solution": "function hash(str) {\n  let h = 2166136261; // FNV-1a offset basis\n  for (let i = 0; i < str.length; i++) {\n    h ^= str.charCodeAt(i);\n    h = Math.imul(h, 16777619);\n  }\n  // final mix (from MurmurHash3) spreads similar strings across the ring\n  h ^= h >>> 16;\n  h = Math.imul(h, 0x85ebca6b);\n  h ^= h >>> 13;\n  h = Math.imul(h, 0xc2b2ae35);\n  h ^= h >>> 16;\n  return h >>> 0;\n}\n\nclass ConsistentHashing {\n  constructor({ vnodes = 150 } = {}) {\n    this.vnodes = vnodes;\n    this.ring = []; // sorted by pos\n    this.servers = new Set();\n  }\n\n  get size() {\n    return this.ring.length;\n  }\n\n  addServer(name) {\n    if (this.servers.has(name)) return;\n    this.servers.add(name);\n    for (let i = 0; i < this.vnodes; i++) this.ring.push({ pos: hash(name + '#' + i), server: name });\n    this.ring.sort((a, b) => a.pos - b.pos);\n  }\n\n  removeServer(name) {\n    if (!this.servers.delete(name)) return;\n    this.ring = this.ring.filter((m) => m.server !== name);\n  }\n\n  getServer(key) {\n    if (this.ring.length === 0) return null;\n    const h = hash(String(key));\n    let lo = 0;\n    let hi = this.ring.length; // first index with pos >= h\n    while (lo < hi) {\n      const mid = (lo + hi) >>> 1;\n      if (this.ring[mid].pos < h) lo = mid + 1;\n      else hi = mid;\n    }\n    return this.ring[lo === this.ring.length ? 0 : lo].server;\n  }\n}",
+   "notes": [
+    "Servers and keys share one hash space; a key belongs to the next server marker clockwise.",
+    "Virtual nodes turn a few big uneven arcs into many small ones: balanced load.",
+    "Binary search over the sorted markers makes lookups O(log M).",
+    "Adding or removing a server only touches the arcs next to its own markers."
+   ],
+   "next": [
+    "Add weights: a server with weight 2 gets twice the virtual nodes.",
+    "Return the next K distinct servers for a key (replication).",
+    "Measure how the balance changes with 10, 50, 150 and 500 virtual nodes."
+   ]
+  }
+ ]
+}

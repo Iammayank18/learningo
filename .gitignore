@@ -8,11 +8,15 @@ pnpm-debug.log*
 lerna-debug.log*
 _backup-journals-2026-10-23/
 Claude outputs/
-
+.opencode/
+_backup-en-pre-polish/
+content/
+CLAUDE.md
 node_modules
 dist
 dist-ssr
 *.local
+
 
 # Editor directories and files
 .vscode/*

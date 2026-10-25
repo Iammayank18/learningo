@@ -1,0 +1,780 @@
+{
+ "course": "react-mastery",
+ "items": [
+  {
+   "id": "rtl-philosophy",
+   "prereqs": [
+    "streaming-ssr"
+   ],
+   "dryRun": {
+    "title": "Which query should a test use? (Testing Library priority)",
+    "columns": [
+     "query",
+     "finds by",
+     "use when"
+    ],
+    "rows": [
+     [
+      "getByRole(\"button\", { name: \"Save\" })",
+      "accessible role + name",
+      "almost always first choice"
+     ],
+     [
+      "getByLabelText(\"Email\")",
+      "form label",
+      "form fields"
+     ],
+     [
+      "getByText(\"Welcome\")",
+      "visible text",
+      "non-interactive text"
+     ],
+     [
+      "getByTestId(\"x\")",
+      "data-testid",
+      "last resort"
+     ],
+     [
+      "container.querySelector(\".btn\")",
+      "CSS",
+      "avoid: tests implementation"
+     ]
+    ],
+    "hit": 0,
+    "note": "\"The more your tests resemble the way your software is used, the more confidence they give you.\" Query like a user (roles, labels, text), interact through events, and assert on what the user sees, not on state or internal methods. Bonus: role-based queries force accessible markup."
+   },
+   "think": [
+    {
+     "tag": "Pick the query",
+     "q": "Best query for the submit button labelled \"Log in\"?",
+     "opts": [
+      "<code>screen.getByTestId(\"submit\")</code>",
+      "<code>container.querySelector(\"button.primary\")</code>",
+      "<code>screen.getByRole(\"button\", { name: \"Log in\" })</code>",
+      "<code>screen.getByText(\"Log in\").parentNode</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "Role + accessible name is how users and screen readers find it."
+     ]
+    },
+    {
+     "tag": "get vs query vs find",
+     "q": "Which should you use to assert that an element is NOT on the page?",
+     "opts": [
+      "<code>queryBy… (returns null)</code>",
+      "<code>getBy… (throws)</code>",
+      "<code>findBy… (waits, rejects)</code>",
+      "<code>getAllBy…</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "getBy throws when missing; queryBy returns null so you can expect(…).toBeNull()."
+     ]
+    },
+    {
+     "tag": "Implementation details",
+     "q": "Why not assert on a component's internal state value?",
+     "opts": [
+      "State is private in JS",
+      "RTL cannot read state",
+      "It is slower",
+      "Refactoring the internals breaks the test although the user sees no difference"
+     ],
+     "ans": 3,
+     "why": [
+      "Test behaviour; let internals change freely."
+     ]
+    },
+    {
+     "tag": "Side effect",
+     "q": "How do role-based queries improve the app itself?",
+     "opts": [
+      "They make it faster",
+      "If the test cannot find a button by role and name, a screen reader user cannot either: they push you to accessible markup",
+      "They add aria attributes automatically",
+      "They do nothing for the app"
+     ],
+     "ans": 1,
+     "why": [
+      "Tests become an accessibility check."
+     ]
+    },
+    {
+     "tag": "Events",
+     "q": "user-event vs fireEvent?",
+     "opts": [
+      "They are identical",
+      "user-event simulates full interactions (focus, keydown, input, keyup…) and is closer to real use; fireEvent dispatches one event",
+      "fireEvent is newer",
+      "user-event is only for mobile"
+     ],
+     "ans": 1,
+     "why": [
+      "This course uses fireEvent to keep setup small; prefer user-event in real projects."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write an accessible <code>LoginForm({ onLogin })</code> that these role/label-based tests can drive: labelled \"Email\" and \"Password\" inputs, a \"Log in\" button, and an error message with <code>role=\"alert\"</code> (\"Email and password are required\") when either is empty.",
+    "examples": [
+     "screen.getByLabelText(\"Email\")",
+     "screen.getByRole(\"button\", { name: \"Log in\" })"
+    ],
+    "hint": "Wrap inputs in &lt;label&gt; (or use htmlFor/id). Keep values in state; on submit validate and call onLogin({ email, password }).",
+    "fn": "LoginForm",
+    "starter": "export function LoginForm({ onLogin }) {\n  return null // your code\n}\n",
+    "solution": "import { useState } from 'react'\n\nexport function LoginForm({ onLogin }) {\n  const [email, setEmail] = useState('')\n  const [password, setPassword] = useState('')\n  const [error, setError] = useState('')\n  return (\n    <form\n      onSubmit={(e) => {\n        e.preventDefault()\n        if (!email || !password) return setError('Email and password are required')\n        setError('')\n        onLogin({ email, password })\n      }}\n    >\n      <label>Email <input type=\"email\" value={email} onChange={(e) => setEmail(e.target.value)} /></label>\n      <label>Password <input type=\"password\" value={password} onChange={(e) => setPassword(e.target.value)} /></label>\n      {error && <p role=\"alert\">{error}</p>}\n      <button>Log in</button>\n    </form>\n  )\n}\n",
+    "starterFile": "src/LoginForm.jsx",
+    "tests": {
+     "file": "src/LoginForm.test.jsx",
+     "run": "npx vitest run LoginForm",
+     "code": "import { render, screen, fireEvent, act, waitFor } from '@testing-library/react'\nimport { expect, test, vi } from 'vitest'\nimport { LoginForm } from './LoginForm'\n\ntest('fields and button are reachable by label and role', () => {\n  render(<LoginForm onLogin={() => {}} />)\n  expect(screen.getByLabelText('Email')).toBeTruthy()\n  expect(screen.getByLabelText('Password')).toBeTruthy()\n  expect(screen.getByRole('button', { name: 'Log in' })).toBeTruthy()\n})\n\ntest('shows an alert when fields are empty', () => {\n  const onLogin = vi.fn()\n  render(<LoginForm onLogin={onLogin} />)\n  fireEvent.click(screen.getByRole('button', { name: 'Log in' }))\n  expect(screen.getByRole('alert').textContent).toBe('Email and password are required')\n  expect(onLogin).not.toHaveBeenCalled()\n})\n\ntest('submits what the user typed', () => {\n  const onLogin = vi.fn()\n  render(<LoginForm onLogin={onLogin} />)\n  fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'a@b.c' } })\n  fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'pw' } })\n  fireEvent.click(screen.getByRole('button', { name: 'Log in' }))\n  expect(onLogin).toHaveBeenCalledWith({ email: 'a@b.c', password: 'pw' })\n  expect(screen.queryByRole('alert')).toBeNull()\n})\n"
+    },
+    "checks": [
+     {
+      "t": "fields and button are reachable by label and role",
+      "verify": ""
+     },
+     {
+      "t": "shows an alert when fields are empty",
+      "verify": ""
+     },
+     {
+      "t": "submits what the user typed",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Query like a user (role, label, text), interact with events, assert on visible output. getBy throws, queryBy returns null, findBy waits.",
+    "mistakes": [
+     "querySelector by class names.",
+     "Asserting on internal state.",
+     "Test IDs everywhere."
+    ]
+   }
+  },
+  {
+   "id": "what-to-test",
+   "prereqs": [
+    "rtl-philosophy"
+   ],
+   "dryRun": {
+    "title": "Testing a <Pagination> component",
+    "columns": [
+     "test idea",
+     "worth it?"
+    ],
+    "rows": [
+     [
+      "\"Next\" on the last page is disabled",
+      "yes: user-visible behaviour"
+     ],
+     [
+      "clicking 3 calls onChange(3)",
+      "yes: the contract with the parent"
+     ],
+     [
+      "it renders a <ul> with class \"pages\"",
+      "no: markup detail"
+     ],
+     [
+      "useState was called with 1",
+      "no: implementation"
+     ],
+     [
+      "snapshot of the whole HTML",
+      "rarely: breaks on every tweak, says little"
+     ]
+    ],
+    "hit": 1,
+    "note": "Test what a user or a caller relies on: what shows up, what happens on interaction, edge cases (empty, first/last, errors), and the props/callback contract. Skip internals, styling details and giant snapshots. Integration tests of a feature give the best confidence per test."
+   },
+   "think": [
+    {
+     "tag": "Confidence",
+     "q": "Which test gives the most confidence for the least maintenance?",
+     "opts": [
+      "A snapshot of every component",
+      "Unit tests of every private helper",
+      "Testing that useState was called",
+      "An integration test that renders a feature and drives it like a user"
+     ],
+     "ans": 3,
+     "why": [
+      "The \"testing trophy\": mostly integration tests."
+     ]
+    },
+    {
+     "tag": "Edge cases",
+     "q": "For a Pagination component, which edge case is most valuable to test?",
+     "opts": [
+      "First and last page (prev/next disabled) and a total of 0",
+      "Font size",
+      "The number of divs",
+      "The order of CSS classes"
+     ],
+     "ans": 0,
+     "why": [
+      "Boundaries are where bugs live."
+     ]
+    },
+    {
+     "tag": "Snapshots",
+     "q": "Main problem with large snapshots?",
+     "opts": [
+      "They are slow to write",
+      "They cannot be stored in git",
+      "They change on every markup tweak and get updated without being read",
+      "They need a browser"
+     ],
+     "ans": 2,
+     "why": [
+      "Small, focused inline snapshots can be fine."
+     ]
+    },
+    {
+     "tag": "Callbacks",
+     "q": "How do you test that a child tells its parent about a change?",
+     "opts": [
+      "Read the parent's state",
+      "Spy on useState",
+      "Check console.log",
+      "Pass a mock function (vi.fn()) as the prop and assert it was called with the right arguments"
+     ],
+     "ans": 3,
+     "why": [
+      "The callback is the public contract."
+     ]
+    },
+    {
+     "tag": "Coverage",
+     "q": "100% line coverage means…",
+     "opts": [
+      "The code has no bugs",
+      "Every line ran during tests, not that the behaviour is correct or the edge cases are covered",
+      "Every edge case is tested",
+      "You can skip reviews"
+     ],
+     "ans": 1,
+     "why": [
+      "Coverage shows what is untested, not what is tested well."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>Pagination({ total, pageSize, page, onChange })</code>: \"Prev\" and \"Next\" buttons (disabled at the ends), one button per page (the current has <code>aria-current=\"page\"</code>), and \"No results\" when total is 0.",
+    "examples": [
+     "<Pagination total={25} pageSize={10} page={1} onChange={go} /> → pages 1 2 3, Prev disabled",
+     "click 3 → onChange(3)"
+    ],
+    "hint": "pages = Math.ceil(total / pageSize); Array.from({ length: pages }, (_, i) =&gt; i + 1).",
+    "fn": "Pagination",
+    "starter": "export function Pagination({ total, pageSize, page, onChange }) {\n  return null // your code\n}\n",
+    "solution": "export function Pagination({ total, pageSize, page, onChange }) {\n  const pages = Math.ceil(total / pageSize)\n  if (pages === 0) return <p>No results</p>\n  return (\n    <nav aria-label=\"pagination\">\n      <button disabled={page === 1} onClick={() => onChange(page - 1)}>Prev</button>\n      {Array.from({ length: pages }, (_, i) => i + 1).map((p) => (\n        <button key={p} aria-current={p === page ? 'page' : undefined} onClick={() => onChange(p)}>{p}</button>\n      ))}\n      <button disabled={page === pages} onClick={() => onChange(page + 1)}>Next</button>\n    </nav>\n  )\n}\n",
+    "starterFile": "src/Pagination.jsx",
+    "tests": {
+     "file": "src/Pagination.test.jsx",
+     "run": "npx vitest run Pagination",
+     "code": "import { render, screen, fireEvent, act, waitFor } from '@testing-library/react'\nimport { expect, test, vi } from 'vitest'\nimport { Pagination } from './Pagination'\n\ntest('prev disabled on the first page, next on the last', () => {\n  const { rerender } = render(<Pagination total={25} pageSize={10} page={1} onChange={() => {}} />)\n  expect(screen.getByRole('button', { name: 'Prev' }).disabled).toBe(true)\n  expect(screen.getByRole('button', { name: 'Next' }).disabled).toBe(false)\n  rerender(<Pagination total={25} pageSize={10} page={3} onChange={() => {}} />)\n  expect(screen.getByRole('button', { name: 'Next' }).disabled).toBe(true)\n})\n\ntest('clicking a page calls onChange and marks the current page', () => {\n  const onChange = vi.fn()\n  render(<Pagination total={25} pageSize={10} page={2} onChange={onChange} />)\n  expect(screen.getByRole('button', { name: '2' }).getAttribute('aria-current')).toBe('page')\n  fireEvent.click(screen.getByRole('button', { name: '3' }))\n  fireEvent.click(screen.getByRole('button', { name: 'Prev' }))\n  expect(onChange.mock.calls).toEqual([[3], [1]])\n})\n\ntest('empty state', () => {\n  render(<Pagination total={0} pageSize={10} page={1} onChange={() => {}} />)\n  expect(screen.getByText('No results')).toBeTruthy()\n  expect(screen.queryByRole('button')).toBeNull()\n})\n"
+    },
+    "checks": [
+     {
+      "t": "prev disabled on the first page, next on the last",
+      "verify": ""
+     },
+     {
+      "t": "clicking a page calls onChange and marks the current page",
+      "verify": ""
+     },
+     {
+      "t": "empty state",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Test behaviour and contracts: what users see, what interactions do, edge cases, callbacks. Skip internals and giant snapshots.",
+    "mistakes": [
+     "Testing implementation details.",
+     "Chasing coverage numbers instead of edge cases."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Pagination Component",
+     "diff": "easy",
+     "mc": "pagination",
+     "course": "react-machine-coding"
+    }
+   ]
+  },
+  {
+   "id": "testing-hooks",
+   "prereqs": [
+    "what-to-test"
+   ],
+   "dryRun": {
+    "title": "renderHook(() => useCounter(5))",
+    "columns": [
+     "call",
+     "result.current"
+    ],
+    "rows": [
+     [
+      "renderHook(...)",
+      "{ count: 5, inc, reset }"
+     ],
+     [
+      "act(() => result.current.inc())",
+      "{ count: 6, … }"
+     ],
+     [
+      "rerender({ step: 2 }) with initialProps",
+      "hook re-runs with new args"
+     ],
+     [
+      "unmount()",
+      "cleanup effects run"
+     ]
+    ],
+    "hit": 1,
+    "note": "<code>renderHook</code> renders a tiny test component that calls your hook and exposes the latest return value as <code>result.current</code>. Wrap state changes in <code>act()</code>; pass changing arguments through <code>initialProps</code> + <code>rerender</code>; use a <code>wrapper</code> for providers. If a hook is only ever used in one component, test that component instead."
+   },
+   "think": [
+    {
+     "tag": "Why act",
+     "q": "Why wrap <code>result.current.inc()</code> in <code>act()</code>?",
+     "opts": [
+      "act makes it async",
+      "act is required for every line",
+      "So React processes the update and effects before you assert",
+      "To silence console logs"
+     ],
+     "ans": 2,
+     "why": [
+      "Testing Library wraps its own events in act; direct hook calls need it."
+     ]
+    },
+    {
+     "tag": "Stale",
+     "q": "You store <code>const { count } = result.current</code>, then call inc() in act. What does count hold?",
+     "opts": [
+      "The old value: always read result.current again after an update",
+      "The new value",
+      "undefined",
+      "An error"
+     ],
+     "ans": 0,
+     "why": [
+      "result.current is replaced on each render."
+     ]
+    },
+    {
+     "tag": "Context",
+     "q": "A hook calls useContext(ThemeContext). How do you test it?",
+     "opts": [
+      "<code>Mock React.useContext</code>",
+      "<code>Set a global variable</code>",
+      "<code>renderHook(() =&gt; useX(), { wrapper: ThemeProvider })</code>",
+      "<code>You cannot test it</code>"
+     ],
+     "ans": 2,
+     "why": [
+      "wrapper renders providers around the test component."
+     ]
+    },
+    {
+     "tag": "Changing args",
+     "q": "How do you test that a hook reacts to a changed argument?",
+     "opts": [
+      "<code>renderHook(({ id }) =&gt; useUser(id), { initialProps: { id: 1 } }) then rerender({ id: 2 })</code>",
+      "<code>Call the hook twice</code>",
+      "<code>Change a global</code>",
+      "<code>Unmount and mount again only</code>"
+     ],
+     "ans": 0,
+     "why": [
+      "rerender re-runs the hook with new props."
+     ]
+    },
+    {
+     "tag": "When not",
+     "q": "When is renderHook the wrong tool?",
+     "opts": [
+      "Never",
+      "For async hooks",
+      "For hooks with state",
+      "When the hook is an implementation detail of one component: test the component's behaviour instead"
+     ],
+     "ans": 3,
+     "why": [
+      "Test at the level users (or other developers) use it."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>useCounter({ initial = 0, step = 1, max = Infinity } = {})</code> returning <code>{ count, inc, dec, reset }</code>; inc never goes above max; reset goes back to initial. The tests show how to use renderHook, act, rerender and initialProps.",
+    "examples": [
+     "const { result } = renderHook(() => useCounter({ initial: 5 }))",
+     "act(() => result.current.inc())"
+    ],
+    "hint": "useState(initial); inc = () =&gt; setCount((c) =&gt; Math.min(max, c + step)).",
+    "fn": "useCounter",
+    "starter": "export function useCounter({ initial = 0, step = 1, max = Infinity } = {}) {\n  // your code\n}\n",
+    "solution": "import { useState } from 'react'\n\nexport function useCounter({ initial = 0, step = 1, max = Infinity } = {}) {\n  const [count, setCount] = useState(initial)\n  return {\n    count,\n    inc: () => setCount((c) => Math.min(max, c + step)),\n    dec: () => setCount((c) => c - step),\n    reset: () => setCount(initial),\n  }\n}\n",
+    "starterFile": "src/useCounter.js",
+    "tests": {
+     "file": "src/useCounter.test.jsx",
+     "run": "npx vitest run useCounter",
+     "code": "import { renderHook, act } from '@testing-library/react'\nimport { expect, test } from 'vitest'\nimport { useCounter } from './useCounter'\n\ntest('starts at initial and counts by step', () => {\n  const { result } = renderHook(() => useCounter({ initial: 5, step: 2 }))\n  expect(result.current.count).toBe(5)\n  act(() => result.current.inc())\n  act(() => result.current.dec())\n  act(() => result.current.inc())\n  expect(result.current.count).toBe(7)\n})\n\ntest('never goes above max, reset works', () => {\n  const { result } = renderHook(() => useCounter({ max: 2 }))\n  act(() => { result.current.inc(); result.current.inc(); result.current.inc() })\n  expect(result.current.count).toBe(2)\n  act(() => result.current.reset())\n  expect(result.current.count).toBe(0)\n})\n\ntest('reads new options on rerender', () => {\n  const { result, rerender } = renderHook((opts) => useCounter(opts), { initialProps: { step: 1 } })\n  rerender({ step: 10 })\n  act(() => result.current.inc())\n  expect(result.current.count).toBe(10)\n})\n"
+    },
+    "checks": [
+     {
+      "t": "starts at initial and counts by step",
+      "verify": ""
+     },
+     {
+      "t": "never goes above max, reset works",
+      "verify": ""
+     },
+     {
+      "t": "reads new options on rerender",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "renderHook + act + result.current (re-read after updates), initialProps/rerender for arguments, wrapper for providers.",
+    "mistakes": [
+     "Destructuring result.current once and reading stale values.",
+     "Testing hooks that should be tested through their component."
+    ]
+   }
+  },
+  {
+   "id": "mocking",
+   "prereqs": [
+    "testing-hooks"
+   ],
+   "dryRun": {
+    "title": "Testing <Weather city=\"Pune\" /> that calls fetch",
+    "columns": [
+     "strategy",
+     "how",
+     "trade-off"
+    ],
+    "rows": [
+     [
+      "inject the dependency",
+      "<Weather fetchWeather={fake} />",
+      "simplest; changes the API slightly"
+     ],
+     [
+      "spy on fetch",
+      "vi.spyOn(globalThis, \"fetch\").mockResolvedValue(...)",
+      "no code changes; restore after"
+     ],
+     [
+      "mock a module",
+      "vi.mock(\"./api\")",
+      "powerful; easy to over-mock"
+     ],
+     [
+      "MSW",
+      "intercept HTTP at the network level",
+      "most realistic; shared across tests"
+     ],
+     [
+      "real API",
+      "—",
+      "slow, flaky: avoid in unit tests"
+     ]
+    ],
+    "hit": 3,
+    "note": "Mock the edges (network, time, storage), not your own components. Prefer dependency injection or MSW (Mock Service Worker) handlers so your component code runs for real. Always reset mocks between tests."
+   },
+   "think": [
+    {
+     "tag": "What to mock",
+     "q": "Which should you usually NOT mock in a component test?",
+     "opts": [
+      "The network",
+      "Your own child components",
+      "Timers",
+      "Random numbers"
+     ],
+     "ans": 1,
+     "why": [
+      "Mocking children hides integration bugs."
+     ]
+    },
+    {
+     "tag": "MSW",
+     "q": "Why is MSW popular for React tests?",
+     "opts": [
+      "It replaces React",
+      "It intercepts real fetch/XHR requests, so the component's data code runs unchanged; the same handlers work in the browser",
+      "It is faster than JS",
+      "It mocks CSS"
+     ],
+     "ans": 1,
+     "why": [
+      "Mock at the network boundary."
+     ]
+    },
+    {
+     "tag": "Cleanup",
+     "q": "You used <code>vi.spyOn(globalThis, \"fetch\")</code>. What must happen after the test?",
+     "opts": [
+      "Nothing",
+      "Delete fetch",
+      "Reload the page",
+      "Restore it (mockRestore or vi.restoreAllMocks in afterEach) so other tests get the real function"
+     ],
+     "ans": 3,
+     "why": [
+      "Leaking mocks makes tests order-dependent."
+     ]
+    },
+    {
+     "tag": "Assertions",
+     "q": "A mock was called. What else is worth asserting?",
+     "opts": [
+      "The arguments it was called with (e.g. the right URL and city)",
+      "Nothing",
+      "How long it took",
+      "Its source code"
+     ],
+     "ans": 0,
+     "why": [
+      "toHaveBeenCalledWith checks the contract."
+     ]
+    },
+    {
+     "tag": "Errors",
+     "q": "How do you test the error state of a data component?",
+     "opts": [
+      "Unplug the network",
+      "Throw in the test body",
+      "Make the mock reject (mockRejectedValue) or return a 500, then assert the error UI",
+      "Skip it"
+     ],
+     "ans": 2,
+     "why": [
+      "Every async component has an error state worth testing."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>Weather({ city, fetchWeather = defaultFetch })</code>: shows \"Loading…\", then \"<code>Pune: 31°C</code>\" from <code>fetchWeather(city)</code> (resolves to { temp }), or an alert \"Could not load weather\" if it rejects. defaultFetch calls <code>fetch(`/api/weather?city=${city}`)</code> and returns the JSON.",
+    "examples": [
+     "<Weather city=\"Pune\" fetchWeather={async () => ({ temp: 31 })} />",
+     "tests also spy on global fetch for the default"
+    ],
+    "hint": "useEffect with an ignore flag; state { status, temp }; .catch sets the error status.",
+    "fn": "Weather",
+    "starter": "export function Weather({ city, fetchWeather }) {\n  return null // your code\n}\n",
+    "solution": "import { useEffect, useState } from 'react'\n\nconst defaultFetch = (city) => fetch(`/api/weather?city=${encodeURIComponent(city)}`).then((r) => r.json())\n\nexport function Weather({ city, fetchWeather = defaultFetch }) {\n  const [s, setS] = useState({ status: 'loading' })\n  useEffect(() => {\n    let ignore = false\n    setS({ status: 'loading' })\n    fetchWeather(city).then(\n      (d) => { if (!ignore) setS({ status: 'ok', temp: d.temp }) },\n      () => { if (!ignore) setS({ status: 'error' }) },\n    )\n    return () => { ignore = true }\n  }, [city, fetchWeather])\n  if (s.status === 'loading') return <p>Loading…</p>\n  if (s.status === 'error') return <p role=\"alert\">Could not load weather</p>\n  return <p>{city}: {s.temp}°C</p>\n}\n",
+    "starterFile": "src/Weather.jsx",
+    "tests": {
+     "file": "src/Weather.test.jsx",
+     "run": "npx vitest run Weather",
+     "code": "import { render, screen } from '@testing-library/react'\nimport { afterEach, expect, test, vi } from 'vitest'\nimport { Weather } from './Weather'\n\nafterEach(() => vi.restoreAllMocks())\n\ntest('injected fake: loading then data', async () => {\n  const fake = vi.fn().mockResolvedValue({ temp: 31 })\n  render(<Weather city=\"Pune\" fetchWeather={fake} />)\n  expect(screen.getByText('Loading…')).toBeTruthy()\n  expect(await screen.findByText('Pune: 31°C')).toBeTruthy()\n  expect(fake).toHaveBeenCalledWith('Pune')\n})\n\ntest('rejected request shows an alert', async () => {\n  render(<Weather city=\"Pune\" fetchWeather={vi.fn().mockRejectedValue(new Error('500'))} />)\n  expect((await screen.findByRole('alert')).textContent).toBe('Could not load weather')\n})\n\ntest('default uses fetch with the city in the URL', async () => {\n  const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ temp: 20 })))\n  render(<Weather city=\"New Delhi\" />)\n  expect(await screen.findByText('New Delhi: 20°C')).toBeTruthy()\n  expect(spy).toHaveBeenCalledWith('/api/weather?city=New%20Delhi')\n})\n"
+    },
+    "checks": [
+     {
+      "t": "injected fake: loading then data",
+      "verify": ""
+     },
+     {
+      "t": "rejected request shows an alert",
+      "verify": ""
+     },
+     {
+      "t": "default uses fetch with the city in the URL",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Mock edges (network, time, storage), not your components. Prefer injection or MSW, assert call arguments, test error states, restore mocks.",
+    "mistakes": [
+     "Mocking your own child components.",
+     "Forgetting to restore spies."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Weather App",
+     "diff": "medium",
+     "mc": "weather-app",
+     "course": "react-machine-coding"
+    }
+   ]
+  },
+  {
+   "id": "async-testing",
+   "prereqs": [
+    "mocking"
+   ],
+   "dryRun": {
+    "title": "Waiting for async UI",
+    "columns": [
+     "tool",
+     "does",
+     "use for"
+    ],
+    "rows": [
+     [
+      "await screen.findByText(\"Done\")",
+      "retries until it appears (default 1 s)",
+      "something that will appear"
+     ],
+     [
+      "await waitFor(() => expect(…))",
+      "retries an assertion",
+      "conditions without a query"
+     ],
+     [
+      "waitForElementToBeRemoved(…)",
+      "waits until gone",
+      "spinners"
+     ],
+     [
+      "vi.useFakeTimers() + advanceTimersByTime",
+      "controls time",
+      "debounce, intervals, timeouts"
+     ],
+     [
+      "getBy right after an async action",
+      "fails: not there yet",
+      "—"
+     ]
+    ],
+    "hit": 0,
+    "note": "Async UI needs waiting, not sleeping. findBy* and waitFor retry until success or timeout. For timers, use fake timers and move time yourself (inside act). Never use arbitrary setTimeout delays in tests."
+   },
+   "think": [
+    {
+     "tag": "Pick one",
+     "q": "A list appears after a fetch resolves. Best assertion?",
+     "opts": [
+      "<code>expect(screen.getByRole(\"list\")).toBeTruthy()</code>",
+      "<code>await new Promise((r) =&gt; setTimeout(r, 1000))</code>",
+      "<code>expect(screen.queryByRole(\"list\")).toBeNull()</code>",
+      "<code>expect(await screen.findByRole(\"list\")).toBeTruthy()</code>"
+     ],
+     "ans": 3,
+     "why": [
+      "findBy waits as long as needed, up to the timeout."
+     ]
+    },
+    {
+     "tag": "waitFor",
+     "q": "What should go inside waitFor?",
+     "opts": [
+      "Clicks and typing",
+      "Only the assertion that may need retrying, not side effects like clicks",
+      "The whole test",
+      "Nothing"
+     ],
+     "ans": 1,
+     "why": [
+      "Side effects inside waitFor may run many times."
+     ]
+    },
+    {
+     "tag": "Fake timers",
+     "q": "Testing a 5-second auto-dismiss toast. How?",
+     "opts": [
+      "Wait 5 real seconds",
+      "Mock setTimeout to return 0",
+      "vi.useFakeTimers(), render, act(() =&gt; vi.advanceTimersByTime(5000)), assert it is gone",
+      "Skip the test"
+     ],
+     "ans": 2,
+     "why": [
+      "Fake timers make time-based tests instant and deterministic."
+     ]
+    },
+    {
+     "tag": "Warning",
+     "q": "\"An update to X inside a test was not wrapped in act(...)\". Usual cause?",
+     "opts": [
+      "A state update happened after the test stopped waiting (e.g. a fetch resolved later)",
+      "Using getBy",
+      "Too many tests",
+      "A missing key"
+     ],
+     "ans": 0,
+     "why": [
+      "Await the result (findBy/waitFor) so the update happens inside the test."
+     ]
+    },
+    {
+     "tag": "Flaky",
+     "q": "A test passes locally and fails in CI sometimes. Common async reason?",
+     "opts": [
+      "CI has no DOM",
+      "Vitest is random",
+      "It relies on timing (fixed sleeps) instead of waiting for a condition",
+      "React differs in CI"
+     ],
+     "ans": 2,
+     "why": [
+      "Wait for state, not for time."
+     ]
+    }
+   ],
+   "try": {
+    "task": "Write <code>useAsync(fn, deps)</code> returning <code>{ status, data, error }</code> (status: \"loading\" | \"success\" | \"error\"), ignoring results that arrive after deps change or unmount. Then pass the async tests (findBy, waitFor, fake timers).",
+    "examples": [
+     "const { status, data } = useAsync(() => api.user(id), [id])",
+     "id changes quickly → only the latest result is kept"
+    ],
+    "hint": "useEffect: set loading, call fn(), use an ignore flag in cleanup.",
+    "fn": "useAsync",
+    "starter": "export function useAsync(fn, deps) {\n  // your code\n}\n",
+    "solution": "import { useEffect, useState } from 'react'\n\nexport function useAsync(fn, deps) {\n  const [s, setS] = useState({ status: 'loading', data: undefined, error: undefined })\n  useEffect(() => {\n    let ignore = false\n    setS({ status: 'loading', data: undefined, error: undefined })\n    fn().then(\n      (data) => { if (!ignore) setS({ status: 'success', data, error: undefined }) },\n      (error) => { if (!ignore) setS({ status: 'error', data: undefined, error }) },\n    )\n    return () => { ignore = true }\n    // eslint-disable-next-line react-hooks/exhaustive-deps\n  }, deps)\n  return s\n}\n",
+    "starterFile": "src/useAsync.js",
+    "tests": {
+     "file": "src/useAsync.test.jsx",
+     "run": "npx vitest run useAsync",
+     "code": "import { renderHook, waitFor, act } from '@testing-library/react'\nimport { afterEach, expect, test, vi } from 'vitest'\nimport { useAsync } from './useAsync'\n\nafterEach(() => vi.useRealTimers())\n\ntest('loading then success', async () => {\n  const { result } = renderHook(() => useAsync(async () => 42, []))\n  expect(result.current.status).toBe('loading')\n  await waitFor(() => expect(result.current.status).toBe('success'))\n  expect(result.current.data).toBe(42)\n})\n\ntest('error state', async () => {\n  const { result } = renderHook(() => useAsync(() => Promise.reject(new Error('nope')), []))\n  await waitFor(() => expect(result.current.status).toBe('error'))\n  expect(result.current.error.message).toBe('nope')\n})\n\ntest('ignores a slow old result after deps change (fake timers)', async () => {\n  vi.useFakeTimers()\n  const load = (id, ms) => new Promise((r) => setTimeout(() => r('user ' + id), ms))\n  const { result, rerender } = renderHook(({ id }) => useAsync(() => load(id, id === 1 ? 500 : 100), [id]), { initialProps: { id: 1 } })\n  rerender({ id: 2 })\n  await act(async () => { await vi.advanceTimersByTimeAsync(600) })\n  expect(result.current.data).toBe('user 2')\n})\n"
+    },
+    "checks": [
+     {
+      "t": "loading then success",
+      "verify": ""
+     },
+     {
+      "t": "error state",
+      "verify": ""
+     },
+     {
+      "t": "ignores a slow old result after deps change (fake timers)",
+      "verify": ""
+     }
+    ]
+   },
+   "takeaway": {
+    "key": "Wait for conditions (findBy, waitFor), control time with fake timers inside act, and ignore stale async results in your code.",
+    "mistakes": [
+     "Fixed sleeps in tests.",
+     "Side effects inside waitFor.",
+     "Stale responses overwriting newer ones."
+    ]
+   },
+   "problems": [
+    {
+     "name": "Autocomplete with Debounce + Highlighting",
+     "diff": "medium",
+     "mc": "autocomplete",
+     "course": "react-machine-coding"
+    }
+   ]
+  }
+ ]
+}

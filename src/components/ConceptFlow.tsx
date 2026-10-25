@@ -13,7 +13,6 @@ import { t } from '../lib/i18n'
 import { problemsForLesson, moreForLesson, lcUrl, type CatalogItem } from '../data/practice/catalog'
 import { useProgress, solveProblem } from '../lib/store'
 
-const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 const H = ({ html }: { html: string }) => <span dangerouslySetInnerHTML={{ __html: html }} />
 const P = ({ html }: { html: string }) => <p dangerouslySetInnerHTML={{ __html: html }} />
 
@@ -226,19 +225,30 @@ function TryView({ tr, setTried }: { tr: NonNullable<DsaConcept['try']>; setTrie
       <P html={tr.task} />
       <pre className="mc-pre sm"><code>{tr.examples.join('\n')}</code></pre>
       <p className="muted small">{t('dsa.tryRule')}</p>
-      <div className="dsa-row"><b>{t('dsa.starter')}</b><Copy text={tr.starter} /></div>
+      <div className="dsa-row"><b>{t('dsa.starter')}{tr.starterFile ? <span className="muted small"> · {tr.starterFile}</span> : null}</b><Copy text={tr.starter} /></div>
       <pre className="mc-pre"><code>{tr.starter}</code></pre>
       <div className="mc-peek"><details><summary>{t('dsa.hint')}</summary><P html={tr.hint} /></details></div>
       <h3 className="mc-h3">{t('dsa.selfCheck')}</h3>
-      <p className="muted small">{t('dsa.selfCheckHint')}</p>
-      <div className="dsa-row"><b>{t('dsa.tests')}</b><Copy text={tests} /></div>
+      {tr.tests ? (
+        <>
+          <p className="muted small">{t('dsa.selfCheckHintFile')}</p>
+          <div className="dsa-row"><b>{t('dsa.testFile')} <span className="muted small">· {tr.tests.file}</span></b><Copy text={tr.tests.code} /></div>
+          <div className="mc-peek"><details><summary>{t('dsa.showTests')}</summary><pre className="mc-pre sm"><code>{tr.tests.code}</code></pre></details></div>
+          <pre className="mc-pre sm"><code>{'$ ' + tr.tests.run}</code></pre>
+        </>
+      ) : (
+        <>
+          <p className="muted small">{t('dsa.selfCheckHint')}</p>
+          <div className="dsa-row"><b>{t('dsa.tests')}</b><Copy text={tests} /></div>
+        </>
+      )}
       {tr.checks.map((c, i) => (
         <label key={i} className={'mc-chk' + (ticks[i] ? ' on' : '')}>
           <input type="checkbox" checked={ticks[i]} onChange={() => toggle(i)} />
-          <span><b>{c.t}</b><pre className="mc-pre sm"><code>{c.verify}</code></pre></span>
+          <span><b>{tr.tests ? '✓ ' + c.t : c.t}</b>{c.verify ? <pre className="mc-pre sm"><code>{c.verify}</code></pre> : null}</span>
         </label>
       ))}
-      <div className="mc-peek"><details><summary>{t('dsa.solution')}</summary><pre className="mc-pre"><code>{esc(tr.solution)}</code></pre></details></div>
+      <div className="mc-peek"><details><summary>{t('dsa.solution')}</summary><pre className="mc-pre"><code>{tr.solution}</code></pre></details></div>
     </>
   )
 }
@@ -269,7 +279,7 @@ export function ConceptReadExtra({ concept }: { concept: DsaConcept }) {
 }
 
 const extKey = (c: ConceptProblem) => (c.lc ? `lc:${c.lc}` : `mc:${c.mc}`)
-const extHref = (c: ConceptProblem) => (c.lc ? lcUrl(c.lc) : href('lesson', 'machine-coding', c.mc!))
+const extHref = (c: ConceptProblem) => (c.lc ? lcUrl(c.lc) : href('lesson', c.course ?? 'machine-coding', c.mc!))
 
 /** A practice problem of a non-DSA concept lesson: LeetCode (opens in a new tab, honest tick) or a Machine Coding lesson. */
 export function ExtProbCard({ c, solved }: { c: ConceptProblem; solved: boolean }) {

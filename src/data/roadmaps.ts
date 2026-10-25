@@ -27,7 +27,7 @@ export const roadmaps: Roadmap[] = [
       { titleKey: 'roadmap.frontend.stage.framework.title', blurbKey: 'roadmap.frontend.stage.framework.blurb', courses: ['nextjs'] },
       { titleKey: 'roadmap.frontend.stage.quality.title', blurbKey: 'roadmap.frontend.stage.quality.blurb', courses: ['performance', 'testing'] },
       { titleKey: 'roadmap.frontend.stage.design.title', blurbKey: 'roadmap.frontend.stage.design.blurb', courses: ['frontend-system-design'] },
-      { titleKey: 'roadmap.frontend.stage.practice.title', blurbKey: 'roadmap.frontend.stage.practice.blurb', courses: ['machine-coding', 'dsa'] },
+      { titleKey: 'roadmap.frontend.stage.practice.title', blurbKey: 'roadmap.frontend.stage.practice.blurb', courses: ['machine-coding', 'react-machine-coding', 'dsa'] },
     ],
   },
   {
@@ -64,7 +64,7 @@ export const roadmaps: Roadmap[] = [
       { titleKey: 'roadmap.fullstack.stage.backend.title', blurbKey: 'roadmap.fullstack.stage.backend.blurb', courses: ['nodejs-internals', 'api-design', 'database'] },
       { titleKey: 'roadmap.fullstack.stage.projects.title', blurbKey: 'roadmap.fullstack.stage.projects.blurb', courses: ['fullstack', 'real-world-scenarios'] },
       { titleKey: 'roadmap.fullstack.stage.deploy.title', blurbKey: 'roadmap.fullstack.stage.deploy.blurb', courses: ['security', 'testing', 'devops'] },
-      { titleKey: 'roadmap.fullstack.stage.interview.title', blurbKey: 'roadmap.fullstack.stage.interview.blurb', courses: ['machine-coding', 'system-design'] },
+      { titleKey: 'roadmap.fullstack.stage.interview.title', blurbKey: 'roadmap.fullstack.stage.interview.blurb', courses: ['machine-coding', 'react-machine-coding', 'system-design'] },
     ],
   },
   {
@@ -95,7 +95,7 @@ export const roadmaps: Roadmap[] = [
     taglineKey: 'roadmap.sprint.tagline', audienceKey: 'roadmap.sprint.audience',
     stages: [
       { titleKey: 'roadmap.sprint.stage.dsa.title', blurbKey: 'roadmap.sprint.stage.dsa.blurb', courses: ['dsa'] },
-      { titleKey: 'roadmap.sprint.stage.machine.title', blurbKey: 'roadmap.sprint.stage.machine.blurb', courses: ['machine-coding', 'backend-machine-coding'] },
+      { titleKey: 'roadmap.sprint.stage.machine.title', blurbKey: 'roadmap.sprint.stage.machine.blurb', courses: ['machine-coding', 'react-machine-coding', 'backend-machine-coding'] },
       { titleKey: 'roadmap.sprint.stage.design.title', blurbKey: 'roadmap.sprint.stage.design.blurb', courses: ['system-design', 'real-world-scenarios'] },
     ],
   },

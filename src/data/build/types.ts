@@ -11,6 +11,8 @@ export interface BuildStep {
   /** what should appear on screen */
   expect?: string
   note?: string
+  /** long code (like a test file): folded, copy button still visible */
+  fold?: boolean
 }
 export interface BuildLesson {
   id: string
@@ -21,6 +23,8 @@ export interface BuildLesson {
     where: [string, string][]
     rules: string[]
     result?: string
+    /** names, labels and texts the tests look for */
+    contract?: string[]
     diagram?: string
   }
   /** 0-3 MCQs, only when the topic is asked in interviews. Empty = step skipped. */
